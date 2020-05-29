@@ -1,95 +1,17 @@
 #include "mckay.hpp"
 #include "trie.hpp"
-
+#include "runtime_status.h"
+#include "union_find.hpp"
 #include <iostream>
-vertex_list::iterator firstNonTrivialCell(vertex_list *pList) {
-  auto beginSentinel = std::begin(*pList);
-  auto endSentinel = beginSentinel;
+#include <string>
+propagation_list::iterator firstNonTrivialCell(propagation_list &pList) {
 
-  do {
-    endSentinel = getNextSentinel(beginSentinel);
-
-    if (std::next(beginSentinel, 2) != endSentinel) {
-      return beginSentinel;
+  for (auto it = pList.begin(); it != pList.end(); ++it) {
+    if (it->size() > 1) {
+      return it;
     }
-    beginSentinel = endSentinel;
-  } while (endSentinel != std::end(*pList));
-
-  return std::end(*pList);
-}
-
-Order compareDiscretePropagationListOfInheritedVerticesWithAdjacentLabelsInner(
-    InheritedVertex *iVertexA, InheritedVertex *iVertexB) {
-  if (iVertexA == nullptr && iVertexB == nullptr) {
-    return EQ;
-  } else if (iVertexA == nullptr && iVertexB != nullptr) {
-    CHECKER("CLASS_SENTINEL is invalid\n");
-    exit(EXIT_FAILURE);
-  } else if (iVertexA != nullptr && iVertexB == nullptr) {
-    CHECKER("CLASS_SENTINEL is invalid\n");
-    exit(EXIT_FAILURE);
-  } else if (iVertexA->type < iVertexB->type) {
-    return LT;
-  } else if (iVertexA->type > iVertexB->type) {
-    return GT;
-  } else if (strcmp(iVertexA->name, iVertexB->name) < 0) {
-    return LT;
-  } else if (strcmp(iVertexA->name, iVertexB->name) > 0) {
-    return GT;
-  } else if (iVertexA->conventionalPropagationMemo->size() <
-             iVertexB->conventionalPropagationMemo->size()) {
-    return LT;
-  } else if (iVertexA->conventionalPropagationMemo->size() >
-             iVertexB->conventionalPropagationMemo->size()) {
-    return GT;
-  } else {
-    int degree = iVertexA->conventionalPropagationMemo->size();
-    int i;
-    auto &iStackA = *iVertexA->conventionalPropagationMemo;
-    auto &iStackB = *iVertexB->conventionalPropagationMemo;
-
-    for (i = 0; i < degree; i++) {
-      if (iStackA[i] < iStackB[i]) {
-        return LT;
-      } else if (iStackA[i] > iStackB[i]) {
-        return GT;
-      }
-    }
-
-    return EQ;
   }
-}
-
-Order compareDiscretePropagationListOfInheritedVerticesWithAdjacentLabelsInnerCaster(
-    void *iVertexA, void *iVertexB) {
-  return compareDiscretePropagationListOfInheritedVerticesWithAdjacentLabelsInner(
-      (InheritedVertex *)iVertexA, (InheritedVertex *)iVertexB);
-}
-
-void initializeInheritedVertexAdjacentLabels(InheritedVertex *iVertex) {
-  if (iVertex == nullptr) {
-    return;
-  } else {
-    iVertex->conventionalPropagationMemo->clear();
-
-    return;
-  }
-}
-
-void initializeInheritedVertexAdjacentLabelsCaster(void *iVertex) {
-  initializeInheritedVertexAdjacentLabels((InheritedVertex *)iVertex);
-
-  return;
-}
-
-void freeInheritedVertexOfPreserveDiscretePropagationList(
-    InheritedVertex *iVertex) {
-  if (iVertex != nullptr) {
-    delete (iVertex->conventionalPropagationMemo);
-    free(iVertex);
-  }
-
-  return;
+  return pList.end();
 }
 
 void freePreserveDiscreteProapgationList(vertex_list *pdpList) {
@@ -103,56 +25,54 @@ void freePreserveDiscreteProapgationList(vertex_list *pdpList) {
   delete pdpList;
 }
 
-Bool insertDiscretePropagationListOfInheritedVerticesWithAdjacentLabelToTable(
+bool insertDiscretePropagationListOfInheritedVerticesWithAdjacentLabelToTable(
     discrete_propagation_lists
-        *discretePropagationListsOfInheritedVerticesWithAdjacentLabels,
-    vertex_list *dpList, ConvertedGraph *cAfterGraph,
-    int gapOfGlobalRootMemID) {
-  Bool isExisting;
+        &discretePropagationListsOfInheritedVerticesWithAdjacentLabels,
+    propagation_list &dpList, ConvertedGraph *cAfterGraph,
+    int gapOfGlobalRootMemID, UnionFind &u) {
+#ifdef PROFILE
+  if (lmn_env.profile_level >= 3) {
+    profile_start_timer(PROFILE_TIME__INSERTDP);
+  }
+#endif
+  bool isExisting = true;
 
-  putLabelsToAdjacentVertices(dpList, cAfterGraph, gapOfGlobalRootMemID);
-  vertex_list *preserveDPList = new vertex_list();
-  for (auto &v : *dpList)
-    preserveDPList->push_back(v);
-  for (auto &v : *dpList)
-    initializeInheritedVertexAdjacentLabels(
-        &slim::element::get<InheritedVertex>(v));
+  propagation_list *preserveDPList = new propagation_list(dpList);
+  //auto lable = putLabelsToAdjacentVertices(dpList);
+  ComparablePropagationList cp;
+  cp.plist = *preserveDPList;
+  auto lm = putLabelsToAdjacentVertices(dpList);
+  for(auto &v : lm) {
+    for(auto &e : v.second) {
+      cp.labels[v.first].push_back(e.second);
+    }
+  }
+  //auto &key = *preserveDPList;
 
-  auto &key = *preserveDPList;
   auto seniorDPList =
-      discretePropagationListsOfInheritedVerticesWithAdjacentLabels->find(key);
+      discretePropagationListsOfInheritedVerticesWithAdjacentLabels.find(cp);
 
   if (seniorDPList ==
-      std::end(
-          *discretePropagationListsOfInheritedVerticesWithAdjacentLabels)) {
-
-    discretePropagationListsOfInheritedVerticesWithAdjacentLabels->insert(
-        std::make_pair(key, preserveDPList));
-    isExisting = FALSE;
-    return isExisting;
+      discretePropagationListsOfInheritedVerticesWithAdjacentLabels.end()) {
+    discretePropagationListsOfInheritedVerticesWithAdjacentLabels.insert(
+        std::make_pair(cp, preserveDPList));
+    isExisting = false;
   } else {
-    auto iteratorCell = std::begin(*preserveDPList);
-    auto iteratorCellSenior = std::begin(*seniorDPList->second);
-
-    while (iteratorCell != std::end(*preserveDPList)) {
-      if (*iteratorCell != CLASS_SENTINEL) {
-        auto &iVertex = slim::element::get<InheritedVertex>(*iteratorCell);
-        auto &iVertexSenior =
-            slim::element::get<InheritedVertex>(*iteratorCellSenior);
-
-        unionDisjointSetForest(iVertex.equivalenceClassOfIsomorphism,
-                               iVertexSenior.equivalenceClassOfIsomorphism);
-      }
-
-      iteratorCell = std::next(iteratorCell, 1);
-      iteratorCellSenior = std::next(iteratorCellSenior, 1);
+    auto itp = preserveDPList->begin();
+    auto its = seniorDPList->second->begin();
+    for (; itp != preserveDPList->end(); itp++, its++) {
+      u.merge(itp->front(), its->front());
     }
-
-    freePreserveDiscreteProapgationList(preserveDPList);
-
-    isExisting = TRUE;
-    return isExisting;
+#ifdef DIFFISO_DEB
+    std::cout << "EXIST" << std::endl;
+#endif
   }
+#ifdef PROFILE
+    if (lmn_env.profile_level >= 3) {
+      profile_finish_timer(PROFILE_TIME__INSERTDP);
+    }
+#endif
+  return isExisting;
 }
 
 void discretePropagationListDump(vertex_list *dpList) {
@@ -180,111 +100,159 @@ Bool isNewSplit(vertex_list::iterator sentinelCell,
   return TRUE;
 }
 
-Bool listMcKayInner(
-    vertex_list *propagationListOfInheritedVertices,
+bool listMcKayInner(
+    propagation_list &propagationListOfInheritedVertices,
     ConvertedGraph *cAfterGraph, int gapOfGlobalRootMemID,
     discrete_propagation_lists
-        *discretePropagationListsOfInheritedVerticesWithAdjacentLabels) {
-  Bool isUsefulBranch = TRUE;
-  printf("%s:%d\n", __FUNCTION__, __LINE__);
-  auto stabilizer = new vertex_list(*propagationListOfInheritedVertices);
-  printf("%s:%d\n", __FUNCTION__, __LINE__);
-  getStableRefinementOfConventionalPropagationList(stabilizer, cAfterGraph,
-                                                   gapOfGlobalRootMemID);
-  printf("%s:%d\n", __FUNCTION__, __LINE__);
-  /*
-  CHECKER("###### after stable refinement ######\n");
-  std::cout << *stabilizer << std::endl;
-  //*/
+        &discretePropagationListsOfInheritedVerticesWithAdjacentLabels,
+    UnionFind &u) {
+#ifdef PROFILE
+  if (lmn_env.profile_level >= 3) {
+    profile_start_timer(PROFILE_TIME__LISTMCKAY_INNER);
+  }
+#endif
+  bool isUsefulBranch = true;
+  auto stabilizer = propagation_list(propagationListOfInheritedVertices);
+#ifdef DIFFISO_DEB
+  std::cout << "###### before stabilizer ######" << std::endl;
+  std::cout << stabilizer << std::endl;
 
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
+#endif
+#ifdef PROFILE
+  if (lmn_env.profile_level >= 3) {
+    profile_start_timer(PROFILE_TIME__REFINE);
+  }
+#endif
+  refineConventionalPropagationListByPropagation(stabilizer);
+#ifdef PROFILE
+    if (lmn_env.profile_level >= 3) {
+      profile_finish_timer(PROFILE_TIME__REFINE);
+    }
+#endif
+
+#ifdef DIFFISO_DEB
+  std::cout << "###### after stable refinement ######" << std::endl;
+  std::cout << stabilizer << std::endl;
+#endif
   auto beginSentinel = firstNonTrivialCell(stabilizer);
 
-  if (beginSentinel == std::end(*stabilizer)) {
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
+  if (beginSentinel == stabilizer.end()) {
     isUsefulBranch =
         !insertDiscretePropagationListOfInheritedVerticesWithAdjacentLabelToTable(
             discretePropagationListsOfInheritedVerticesWithAdjacentLabels,
-            stabilizer, cAfterGraph, gapOfGlobalRootMemID);
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
+            stabilizer, cAfterGraph, gapOfGlobalRootMemID, u);
   } else {
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
-    Bool isFirstLoop = TRUE;
-
-    auto endSentinel = getNextSentinel(beginSentinel);
-    auto sentinelCell =
-        stabilizer->insert(std::next(beginSentinel, 1), CLASS_SENTINEL);
-
-    for (auto iteratorCell = sentinelCell;
-         std::next(iteratorCell, 1) != endSentinel;
-         iteratorCell = std::next(iteratorCell, 1)) {
-      auto splitCell = std::next(iteratorCell, 1);
-
-      if (isNewSplit(sentinelCell, splitCell)) {
-        printf("%s:%d\n", __FUNCTION__, __LINE__);
-        stabilizer->splice(std::next(beginSentinel, 1), *stabilizer, splitCell);
-
-        Bool isUsefulChild = listMcKayInner(
-            stabilizer, cAfterGraph, gapOfGlobalRootMemID,
-            discretePropagationListsOfInheritedVerticesWithAdjacentLabels);
-        printf("%s:%d\n", __FUNCTION__, __LINE__);
-        stabilizer->splice(std::next(iteratorCell, 1), *stabilizer, splitCell);
-        printf("%s:%d\n", __FUNCTION__, __LINE__);
-        if (isFirstLoop) {
-          isFirstLoop = FALSE;
-          if (!isUsefulChild) {
-            isUsefulBranch = FALSE;
-            break;
-          } else {
-            isUsefulBranch = TRUE;
-          }
+    bool isFirstLoop = true;
+    for (auto i = 0; i < beginSentinel->size(); i++) {
+      bool isSame = false;
+      for (auto j = 0; j < i; j++) {
+        if (u.issame(*std::next(beginSentinel->begin(), i),
+                     *std::next(beginSentinel->begin(), j))) {
+          isSame = true;
+          break;
         }
+      }
+      if (isSame)
+        continue;
+      auto new_l = stabilizer.emplace(beginSentinel,
+                                      std::list<ConvertedGraphVertex *>());
+      new_l->splice(new_l->begin(), *beginSentinel,
+                    std::next(beginSentinel->begin(), i),
+                    std::next(std::next(beginSentinel->begin(), i)));
+#ifdef PROFILE
+    if (lmn_env.profile_level >= 3) {
+      profile_finish_timer(PROFILE_TIME__LISTMCKAY_INNER);
+    }
+#endif
+      listMcKayInner(
+          stabilizer, cAfterGraph, gapOfGlobalRootMemID,
+          discretePropagationListsOfInheritedVerticesWithAdjacentLabels, u);
+#ifdef PROFILE
+  if (lmn_env.profile_level >= 3) {
+    profile_start_timer(PROFILE_TIME__LISTMCKAY_INNER);
+  }
+#endif
+      beginSentinel->splice(std::next(beginSentinel->begin(), i), *new_l,
+                            new_l->begin(), std::next(new_l->begin()));
+      stabilizer.erase(new_l);
+      if(isFirstLoop) {
+	isFirstLoop = false;
+	if(!isUsefulBranch) {
+	  isUsefulBranch = false;
+	  break;
+	} else {
+	  isUsefulBranch = true;
+	}
       }
     }
   }
-
-  delete (stabilizer);
-
+#ifdef PROFILE
+    if (lmn_env.profile_level >= 3) {
+      profile_finish_timer(PROFILE_TIME__LISTMCKAY_INNER);
+    }
+#endif
   return isUsefulBranch;
 }
 
-propagation_list listMcKay(propagation_list &propagationList,
+propagation_list listMcKay(Trie *trie,
+			   propagation_list &propagationList,
                            ConvertedGraph *cAfterGraph,
                            int gapOfGlobalRootMemID) {
+#ifdef PROFILE
+  if (lmn_env.profile_level >= 3) {
+    profile_start_timer(PROFILE_TIME__LISTMCKAY);
+  }
+#endif
   propagation_list canonicalDiscreteRefinement;
   if (propagationList.empty()) {
     canonicalDiscreteRefinement = propagation_list(propagationList);
     return canonicalDiscreteRefinement;
   } else {
-    auto discretePropagationListsOfInheritedVerticesWithAdjacentLabels =
-        new discrete_propagation_lists();
+    discrete_propagation_lists
+        discretePropagationListsOfInheritedVerticesWithAdjacentLabels;
+    UnionFind u(propagationList);
+    trie->orbit->clear();
 
+#ifdef DIFFISO_DEB
     std::cout << "+++++ start classify +++++" << std::endl;
     classifyWithAttribute(propagationList, cAfterGraph, gapOfGlobalRootMemID);
     std::cout << "###### after attribute classifying ######" << std::endl;
     std::cout << propagationList << std::endl;
+#endif
     listMcKayInner(
-        propagationListOfInheritedVertices, cAfterGraph, gapOfGlobalRootMemID,
-        discretePropagationListsOfInheritedVerticesWithAdjacentLabels);
+        propagationList, cAfterGraph, gapOfGlobalRootMemID,
+        discretePropagationListsOfInheritedVerticesWithAdjacentLabels, u);
 
-    //   vertex_list *canonicalDiscreteRefinement = new vertex_list();
-    //   for (auto &v :
-    //   *discretePropagationListsOfInheritedVerticesWithAdjacentLabels->begin()->second)
-    //     canonicalDiscreteRefinement->push_back(v);
+    propagation_list canonicalDiscreteRefinement = propagation_list();
+    for (auto &v :
+         *discretePropagationListsOfInheritedVerticesWithAdjacentLabels.begin()
+              ->second)
+      canonicalDiscreteRefinement.push_back(v);
 
-    //   std::cout << "########### candidates of canonical discrete
-    //   refinement###########" << std::endl; std::cout <<
-    //   *discretePropagationListsOfInheritedVerticesWithAdjacentLabels <<
-    //   std::endl;;
+    for(auto &list : canonicalDiscreteRefinement) {
+      for(auto &vertex : list) {
+	trie->orbit->insert(std::make_pair(vertex->ID, u.root(u.idmap[vertex->ID])));
+      }
+    }
+    // printf("%s:%d\n", __FUNCTION__, __LINE__);
+    // for(auto it : *trie->orbit) {
+    //   std::cout << it.first << " " << it.second << std::endl;
+    // }
 
-    //   for (auto &v :
-    //   *discretePropagationListsOfInheritedVerticesWithAdjacentLabels)
-    //     freePreserveDiscreteProapgationList(v.second);
-    //   delete discretePropagationListsOfInheritedVerticesWithAdjacentLabels;
-
-    //   return canonicalDiscreteRefinement;
+    for (auto &v :
+         discretePropagationListsOfInheritedVerticesWithAdjacentLabels) {
+      delete v.second;
+    }
+#ifdef PROFILE
+    if (lmn_env.profile_level >= 3) {
+      profile_finish_timer(PROFILE_TIME__LISTMCKAY);
+    }
+#endif
+    return canonicalDiscreteRefinement;
   }
   // printf("%s:%d\n", __FUNCTION__, __LINE__);
-  return canonicalDiscreteRefinement;
+  // return canonicalDiscreteRefinement;
 }
 
 Bool checkIsomorphismValidity(unbound_vector<vertex_list *> *slimKeyCollection,
@@ -326,32 +294,151 @@ Bool checkIsomorphismValidity(unbound_vector<vertex_list *> *slimKeyCollection,
   return isValid;
 }
 
-propagation_list trieMcKay(Trie *trie, DiffInfo *diffInfo,
-                           Graphinfo *cAfterGraph, Graphinfo *cBeforeGraph) {
+bool propagationList_is_discrete(propagation_list &p) {
+  bool f = true;
+  for (auto &list : p) {
+    if (list.size() != 1)
+      f = false;
+  }
+  return f;
+}
+
+std::vector<std::vector<std::string>> trieMcKay(Trie *trie, DiffInfo *diffInfo,
+                                                Graphinfo *cAfterGraph,
+                                                Graphinfo *cBeforeGraph,
+                                                std::map<int, int> &id_map, bool only_propagate) {
+#ifdef PROFILE
+  if (lmn_env.profile_level >= 3) {
+    profile_start_timer(PROFILE_TIME__TRIEMCKAY);
+  }
+#endif
+  std::vector<std::vector<std::string>> canonical_label;
+  trie->orbit->clear();
   int gapOfGlobalRootMemID =
       cBeforeGraph->globalRootMemID - cAfterGraph->globalRootMemID;
   int stepOfPropagation;
+#ifdef PROFILE
+  if (lmn_env.profile_level >= 3) {
+    profile_start_timer(PROFILE_TIME__TRIEPROPAGATE);
+  }
+#endif
   Bool verticesAreCompletelySorted =
       trie->propagate(diffInfo, cAfterGraph, cBeforeGraph, gapOfGlobalRootMemID,
-                      &stepOfPropagation);
+                      &stepOfPropagation, id_map);
+#ifdef PROFILE
+  if (lmn_env.profile_level >= 3)   {
+    profile_finish_timer(PROFILE_TIME__TRIEPROPAGATE);
+  }
+  if(only_propagate) {
+#ifdef PROFILE
+    if (lmn_env.profile_level >= 3) {
+      profile_finish_timer(PROFILE_TIME__TRIEMCKAY);
+    }
+#endif
+    return canonical_label;
+  }
+#endif
   if (IS_DIFFERENCE_APPLICATION_MODE && verticesAreCompletelySorted && false) {
-    return propagation_list();
+#ifdef PROFILE
+    if (lmn_env.profile_level >= 3) {
+      profile_finish_timer(PROFILE_TIME__TRIEMCKAY);
+    }
+#endif
+    return canonical_label;
   } else {
+#ifdef DIFFISO_DEB
     printf("%s:%d\n", __FUNCTION__, __LINE__);
-    for (auto i = cAfterGraph->cv->atoms.begin();
-         i != cAfterGraph->cv->atoms.end(); ++i)
-      std::cout << *(i->second->correspondingVertexInTrie) << std::endl;
+#endif
+    // for (auto i = cAfterGraph->cv->atoms.begin();
+    //      i != cAfterGraph->cv->atoms.end(); ++i)
+    //   std::cout << *(i->second->correspondingVertexInTrie) << std::endl;
     propagation_list propagationList;
     trie->conventionalPropagationList(trie->body, propagationList);
+#ifdef DIFFISO_DEB
     std::cout << "###### before list propagate ######" << std::endl;
     std::cout << propagationList << std::endl;
+#endif
+    propagation_list canonicalDiscreteRefinement;
+    if (propagationList_is_discrete(propagationList)) {
+      canonicalDiscreteRefinement = propagationList;
+    } else {
+      canonicalDiscreteRefinement = listMcKay(trie, propagationList, cAfterGraph->cv, gapOfGlobalRootMemID);
+    }
 
-    auto canonicalDiscreteRefinement =
-        listMcKay(propagationList, cAfterGraph->cv, gapOfGlobalRootMemID);
 
-    std::cout << "###### after list propagate ######" << std::endl;
-    std::cout << canonicalDiscreteRefinement << std::endl;
-
-    return canonicalDiscreteRefinement;
+#ifdef DIFFISO_DEB
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
+    std::cout << *cAfterGraph->cv << std::endl;
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
+#endif
+    std::map<ConvertedGraphVertex *, int> m;
+    int counter = 0;
+    for (auto &v : canonicalDiscreteRefinement) {
+      auto cv = v.begin();
+      m[(*cv)] = counter;
+      counter++;
+    }
+    for (auto &v : canonicalDiscreteRefinement) {
+      auto cv = v.begin();
+#ifdef DIFFISO_DEB
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
+      std::cout << *(*cv) << std::endl;
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
+      std::cout << (*cv)->correspondingVertexInTrie->canonicalLabel.first << std::endl;
+#endif
+      std::vector<std::string> l;
+      std::string s = (*cv)->name +  std::to_string(m[*cv]);
+#ifdef DIFFISO_DEB
+      std::cout << s << std::endl;
+#endif
+      l.push_back(s);
+      for (auto &link : (*cv)->links) {
+#ifdef DIFFISO_DEB
+        std::cout << link << std::endl;
+#endif
+        auto &attr = link.attr;
+        if (attr == INTEGER_ATTR) {
+#ifdef DIFFISO_DEB
+          std::cout << link.data.integer << std::endl;
+#endif
+          l.push_back(std::to_string(link.data.integer));
+        } else if (attr == GLOBAL_ROOT_MEM_ATTR) {
+#ifdef DIFFISO_DEB
+          std::cout << "GR" << std::endl;
+#endif
+        } else if (attr < 128) {
+#ifdef DIFFISO_DEB
+	  printf("%s:%d\n", __FUNCTION__, __LINE__);
+#endif
+	  auto adjVertex = cAfterGraph->cv->atoms[link.data.ID];
+#ifdef DIFFISO_DEB
+	  std::cout << *adjVertex << std::endl;
+#endif
+	  l.push_back(adjVertex->name + std::to_string(m[adjVertex]));
+        } else {
+          std::cout << "unexpected attr" << std::endl;
+        }
+      }
+      canonical_label.push_back(l);
+    }
+#ifdef DIFFISO_DEB
+    std::cout << "!!CANONICAL LABEL!!" << std::endl;
+    std::cout << "[";
+    for (auto &l : canonical_label) {
+      std::cout << "[";
+      for (auto &v : l) {
+        std::cout << v << ", ";
+      }
+      std::cout << "]";
+    }
+    std::cout << "]" << std::endl;
+    std::cout << "!!!!!!!!!!!!!!!!!!!" << std::endl;
+#endif
+#ifdef PROFILE
+    if (lmn_env.profile_level >= 3) {
+      profile_finish_timer(PROFILE_TIME__TRIEMCKAY);
+    }
+#endif
+    return canonical_label;
   }
 }

@@ -53,6 +53,7 @@ bool json_dump_gen;
 Graphinfo * parent_graphinfo;
 ProcessTableRef copymap_at_commit;
 std::map<int, int> id_to_id_at_commit;
+extern std::map<int, int> auto_orbit;
 extern bool diff_gen_finish;
 typedef void (*callback_0)(LmnReactCxtRef, LmnMembraneRef);
 typedef void (*callback_1)(LmnReactCxtRef, LmnMembraneRef, LmnAtomRef,
@@ -395,7 +396,6 @@ BOOL react_rule(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule) {
   LmnTranslated translated;
   BYTE *inst_seq;
   BOOL result;
-
   translated = rule->translated;
   inst_seq = rule->inst_seq;
 
@@ -833,6 +833,10 @@ bool findatom(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr,
               LmnMembrane *mem, LmnFunctor f, LmnRegister &reg) {
   auto atomlist_ent = lmn_mem_get_atomlist(mem, f);
 
+  std::set<int> s;
+  // for(auto x:color_m) {
+  //   std::cout << x.first <<"-->"<<x.second << std::endl;
+  // }
   if (!atomlist_ent)
     return false;
 
@@ -840,7 +844,17 @@ bool findatom(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr,
   reg.tt = TT_ATOM;
   for (auto atom : *atomlist_ent) {
     reg.wt = (LmnWord)atom;
-
+    //printf("%s:%d\n", __FUNCTION__, __LINE__);
+    //std::cout << LMN_SATOM_ID(atom) <<" : " << auto_orbit[LMN_SATOM_ID(atom)] << std::endl;
+    if(RC_GET_MODE(rc, REACT_ND)) {
+      auto key = auto_orbit.find(LMN_SATOM_ID(atom));
+      if(key != auto_orbit.end()) {
+	if(s.find(key->second) == s.end())
+	  s.insert(key->second);
+	else
+	  continue;
+      }
+    }
     if (interpret(rc, rule, instr))
       return true;
 
@@ -865,6 +879,7 @@ bool findatom_original_hyperlink(LmnReactCxtRef rc, LmnRuleRef rule,
   reg.tt = TT_ATOM;
   for (auto atom : *atomlist_ent) {
     reg.wt = (LmnWord)atom;
+
 
     if (lmn_sameproccxt_all_pc_check_original(spc, (LmnSymbolAtomRef)reg.wt,
                                               atom_arity) &&
@@ -1139,7 +1154,6 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
     }
     case INSTR_COMMIT: {
       lmn_interned_str rule_name;
-
       READ_VAL(lmn_interned_str, instr, rule_name);
       SKIP_VAL(LmnLineNum, instr);
 
@@ -1224,21 +1238,15 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
           }
 #endif
 
+
+	  //lmn_dump_mem_dev(RC_GROOT_MEM(rc));
+
           warray_size_org = warray_size(rc);
           warray_use_org = warray_use_size(rc);
           warray_cur_org = warray_cur_size(rc);
 
-#ifdef DEBUG
-	  lmn_dump_mem_dev(RC_GROOT_MEM(rc));
-#endif DEBUG
           tmp_global_root =
               lmn_mem_copy_with_map_ex(RC_GROOT_MEM(rc), &copymap);
-
-#ifdef DEBUG
-	  printf("%s:%d\n", __FUNCTION__, __LINE__);
-	  lmn_dump_mem_dev(tmp_global_root);
-#endif
-
 
 	  if(json_dump_gen // and !diff_gen_finish
 	     ) {
@@ -1249,6 +1257,10 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
 	    std::map<int,int> tmp_id_to_id;
 	    make_id_to_id(copymap, RC_GROOT_MEM(rc), &tmp_id_to_id);
 	    id_to_id_at_commit=tmp_id_to_id;
+	    // printf("%s:%d\n", __FUNCTION__, __LINE__);
+	    // for(auto x : tmp_id_to_id) {
+	    //   std::cout << x.first << "--> "<<x.second << std::endl;
+	    // }
 	    parent_graphinfo = new Graphinfo(tmp_global_root);
 	  }
           /** 変数配列および属性配列のコピー */
@@ -1355,7 +1367,6 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
           env_set_next_id(org_next_id);
         /* 反応中の膜も記録しておく */
         RC_SET_CUR_MEM(rc, cur_mem);
-
         return FALSE; /* matching backtrack! */
       } else if (RC_GET_MODE(rc, REACT_PROPERTY)) {
         return TRUE; /* propertyはmatchingのみ */
@@ -1366,7 +1377,6 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
     case INSTR_FINDATOM: {
       LmnInstrVar atomi, memi;
       LmnLinkAttr attr;
-
       READ_VAL(LmnInstrVar, instr, atomi);
       READ_VAL(LmnInstrVar, instr, memi);
       READ_VAL(LmnLinkAttr, instr, attr);
@@ -2423,7 +2433,6 @@ BOOL interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
     }
     case INSTR_REMOVEATOM: {
       LmnInstrVar atomi, memi;
-
       READ_VAL(LmnInstrVar, instr, atomi);
       READ_VAL(LmnInstrVar, instr, memi);
 

@@ -39,16 +39,16 @@
 #include "mc.h"
 #include "binstr_compress.h"
 #include "delta_membrane.h"
+#include "diff_info.hpp"
 #include "dpor.h"
+#include "graphinfo.hpp"
 #include "ltl2ba_adapter.h"
 #include "mc_worker.h"
+#include "mckay.hpp"
 #include "mhash.h"
 #include "propositional_symbol.h"
 #include "runtime_status.h"
-#include "mckay.hpp"
 #include "trie.hpp"
-#include "graphinfo.hpp"
-#include "diff_info.hpp"
 #include <iostream>
 #ifdef DEBUG
 #include "vm/dumper.h"
@@ -56,10 +56,12 @@
 #include "state.h"
 #include "state.hpp"
 // #define DIFFISO_GEN
-bool diff_gen_finish=false;
-std::map<int,int> iso_m;
-extern Graphinfo * parent_graphinfo;
-extern std::map<int,int> id_to_id_at_commit;
+// #define DIFFISO_DEB
+bool diff_gen_finish = false;
+std::map<int, int> iso_m;
+std::map<int, int> auto_orbit;
+extern Graphinfo *parent_graphinfo;
+extern std::map<int, int> id_to_id_at_commit;
 /** =======================================
  *  ==== Entrance for model checking ======
  *  =======================================
@@ -143,19 +145,26 @@ static inline void do_mc(LmnMembraneRef world_mem_org, AutomataRef a,
   Graphinfo *init = new Graphinfo(mem);
   // printf("%s:%d\n", __FUNCTION__, __LINE__);
   // lmn_dump_mem_dev(mem);
-  // convertedGraphDump(init->cv);
-
+  //std::cout << *init->cv << std::endl;
   DiffInfo *diff = new DiffInfo(init);
-  diff->diffInfoDump();
   init_s->trie = new Trie();
   init_s->graphinfo = init;
-  auto l = trieMcKay(init_s->trie, diff, init, empty);
-  std::cout<< l <<std::endl;
+#ifdef DIFFISO_DEB
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
+  printf("%s:%d:graphinfo_address:%p\n", __FUNCTION__, __LINE__, init);
+  printf("%s:%d:cv_address:%p\n", __FUNCTION__, __LINE__, init->cv);
+#endif
+  std::map<int, int> emp;
+  init_s->canonical_label = trieMcKay(init_s->trie, diff, init, empty, emp, false);
+#ifdef DIFFISO_DEB
+  std::cout << init_s->canonical_label << std::endl;
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
   init_s->trie->dump();
+#endif
+  delete diff;
   /*
     ===== Diffiso ====
    */
-
 
 #ifdef KWBT_OPT
   if (lmn_env.opt_mode != OPT_NONE)
@@ -235,8 +244,6 @@ static void mc_dump(LmnWorkerGroup *wp) {
     lmn_prof.found_err = TRUE;
 }
 
-
-
 std::map<int, int> make_iso_morphism(LmnBinStrRef bs) {
   std::map<int, int> ret_m;
 
@@ -245,14 +252,15 @@ std::map<int, int> make_iso_morphism(LmnBinStrRef bs) {
   //   printf("[%d]:%d %d\n", it->first, it->second.first, it->second.second);
   // }
   // printf("===id_to_id_at_commit===\n");
-  // for(auto it=id_to_id_at_commit.begin(); it!=id_to_id_at_commit.end(); it++) {
+  // for(auto it=id_to_id_at_commit.begin(); it!=id_to_id_at_commit.end(); it++)
+  // {
   //   printf("%d %d\n", it->first, it->second);
   // }
 
-  for(auto it=bs->pos_to_id.begin(); it!=bs->pos_to_id.end(); it++) {
+  for (auto it = bs->pos_to_id.begin(); it != bs->pos_to_id.end(); it++) {
     auto itr = id_to_id_at_commit.find(it->second.second);
-    if(itr!=id_to_id_at_commit.end()) {
-      ret_m[it->second.first]=itr->second;
+    if (itr != id_to_id_at_commit.end()) {
+      ret_m[it->second.first] = itr->second;
     }
   }
   return ret_m;
@@ -281,13 +289,85 @@ void mc_expand(const StateSpaceRef ss, State *s, AutomataStateRef p_s,
     ===== Diffiso ====
    */
   /** restore : 膜の復元 */
-  mem = state_restore_mem(s);
-  // lmn_dump_mem_dev(mem);
 
+#ifdef DIFFISO_DEB
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
+  std::cout << "--CV--" << std::endl;
+  std::cout << *s->graphinfo->cv << std::endl;
+#endif
+  if (s->parent == nullptr) {
+#ifdef DIFFISO_DEB
+    std::cout << "parent is NULL!!" << std::endl;
+#endif
+  } else {
+#ifdef DIFFISO_DEB
+    std::cout << "parentID is " << s->parent->state_id << std::endl;
+#endif
+    if (s->parent->trie) {
+#ifdef DIFFISO_DEB
+      std::cout << "--Parent TRIE--" << std::endl;
+      s->parent->trie->dump();
+      std::cout << "DIFF: (" << s->parent->state_id << ")-->(" << s->state_id
+                << ")" << std::endl;
+
+      s->parent->diff_map[s->state_id].second->diffInfoDump();
+
+      cg_trie_reference_check(s->parent->graphinfo->cv);
+#endif
+      trieMcKay(s->parent->trie, s->parent->diff_map[s->state_id].second,
+                s->graphinfo, s->parent->graphinfo,
+                s->parent->diff_map[s->state_id].first, false);
+      s->trie = s->parent->trie;
+      s->parent->trie = nullptr;
+#ifdef DIFFISO_DEB
+      cg_trie_reference_check(s->graphinfo->cv);
+#endif
+      // s->parent->graphinfo->cv->moveReferencesToAfterCG(s->graphinfo->cv,
+      // s->parent->diff_map[s->state_id].first);
+    }
+
+  }
+
+#ifdef DIFFISO_DEB
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
+  if (s->diff_map.size() != 0) {
+    for (auto &v : s->diff_map) {
+      std::cout << "(" << v.first << ")" << std::endl;
+      v.second.second->diffInfoDump();
+    }
+  }
+#endif
+  // printf("%s:%d\n", __FUNCTION__, __LINE__);
+  // std::cout << s->canonical_label << std::endl;
+  mem = state_restore_mem(s);
+  // printf("%s:%d\n", __FUNCTION__, __LINE__);
+  // lmn_dump_mem_dev(mem);
+  
+  
   LmnBinStrRef bs = s->state_binstr();
 
+  std::map<int, int> id_to_id_map;
+  for(auto i = bs->pos_to_id.begin(); i != bs->pos_to_id.end(); i++) { 
+    id_to_id_map[i->second.first] = i->second.second;
+  }
+
+  // printf("%s:%d\n", __FUNCTION__, __LINE__);
+  // s->trie->dump();
+  auto_orbit.clear();
+  for(auto it : *(s->trie->orbit)) {
+    auto_orbit[id_to_id_map[it.first]] = it.second;
+  }
 #ifdef DIFFISO_GEN
-  if(!diff_gen_finish) {
+  for(auto p : auto_orbit) {
+    std::cout << p.first << "-->" << p.second << std::endl;
+  }
+#endif
+  //s->trie->make_color_map(s->trie->body, color_m, id_to_id_map);
+  // for(auto x:color_m) {
+  //   std::cout << x.first <<"-->"<<x.second << std::endl;
+  // }
+#ifdef DIFFISO_GEN
+  if (!diff_gen_finish) {
     printf("Succ number Information\n");
     printf("%s:%d\n", __FUNCTION__, __LINE__);
   }
@@ -299,20 +379,17 @@ void mc_expand(const StateSpaceRef ss, State *s, AutomataStateRef p_s,
     mc_gen_successors(s, mem, DEFAULT_STATE_ID, rc, f);
   }
 #ifdef DIFFISO_GEN
-  if(!diff_gen_finish) {
+  if (!diff_gen_finish) {
     printf("%d\n", mc_react_cxt_expanded_num(rc));
     printf("Parent Graph\n");
     printf("%s:%d\n", __FUNCTION__, __LINE__);
-    std::cout<<parent_graphinfo->json_string<<std::endl;
+    std::cout << parent_graphinfo->json_string << std::endl;
   }
-
 #endif
 
 
-
-
   if (mc_react_cxt_expanded_num(rc) == 0) {
-    diff_gen_finish=true;
+    diff_gen_finish = true;
     /* sを最終状態集合として記録 */
     statespace_add_end_state(ss, s);
   } else if (mc_enable_por(f) && !s->s_is_reduced()) {
@@ -327,14 +404,17 @@ void mc_expand(const StateSpaceRef ss, State *s, AutomataStateRef p_s,
     // printf("===copy converted graph===\n");
     // convertedGraphDump(parent_graphinfo->cv);
     iso_m = make_iso_morphism(bs);
+    // printf("%s:%d\n", __FUNCTION__, __LINE__);
     // printf("===iso_m===\n");
     // for(auto it = iso_m.begin(); it!=iso_m.end(); it++) {
     //   printf("%d %d\n", it->first, it->second);
     // }
-    if(!check_iso_morphism(s->graphinfo->cv, parent_graphinfo->cv, iso_m)) {
+#ifdef DIFFISO_DEB
+    if (!check_iso_morphism(s->graphinfo->cv, parent_graphinfo->cv, iso_m)) {
       printf("%s:%d\n", __FUNCTION__, __LINE__);
       exit(1);
     }
+#endif
     mc_store_successors(ss, s, rc, new_ss, f);
   }
 
@@ -394,6 +474,76 @@ void mc_update_cost(State *s, Vector *new_ss, EWLock *ewlock) {
 #endif
 }
 
+void back_trie_to_parent(State *s) {
+  if (s->parent == nullptr or s->succ_num_in_openlist != 0)
+    return;
+#ifdef DIFFISO_DEB
+  std::cout << "$$$$$$$$$ BACK TRIE TO PARENT(" << s->state_id << ") $$$$$$$$$$"
+            << std::endl;
+  s->trie->dump();
+  std::cout << "CURRENT(" << s->state_id << ") CV" << std::endl;
+  std::cout << *s->graphinfo->cv << std::endl;
+  std::cout << "PARENT(" << s->parent->state_id << ") CV" << std::endl;
+  std::cout << *s->parent->graphinfo->cv << std::endl;
+#endif
+  // std::cout << "DIFF: (" << s->parent->state_id << ")-->(" << s->state_id
+  // <<")"<< std::endl; s->parent->diff_map[s->state_id].second->diffInfoDump();
+  std::map<int, int> iso;
+  for (auto &v : s->parent->diff_map[s->state_id].first) {
+    iso[v.second] = v.first;
+  }
+#ifdef DIFFISO_DEB
+  std::cout << "ID-MAP: (" << s->state_id << ")-->(" << s->parent->state_id
+            << ")" << std::endl;
+  for (auto &v : iso) {
+    std::cout << v.first << "-->" << v.second << std::endl;
+  }
+#endif
+
+  DiffInfo *rev_dif = new DiffInfo();
+  for (auto &v : *s->parent->diff_map[s->state_id].second->addedVertices) {
+    rev_dif->deletedVertices->push_back(v);
+  }
+  for (auto &v : *s->parent->diff_map[s->state_id].second->deletedVertices) {
+    rev_dif->addedVertices->push_back(v);
+  }
+  for (auto &v : *s->parent->diff_map[s->state_id].second->relinkedVertices) {
+    auto it = s->parent->graphinfo->cv->atoms.find(iso[v->ID]);
+    if (it == s->parent->graphinfo->cv->atoms.end()) {
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
+      std::cout << "FIND BUG!!!!!!!!!!!" << std::endl;
+      exit(0);
+    }
+    rev_dif->relinkedVertices->push_back(it->second);
+  }
+#ifdef DIFFISO_DEB
+  std::cout << "DIFF:(" << s->state_id << ")-->(" << s->parent->state_id << ")"
+            << std::endl;
+  rev_dif->diffInfoDump();
+#endif
+  trieMcKay(s->trie, rev_dif, s->parent->graphinfo, s->graphinfo, iso, true);
+#ifdef DIFFISO_DEB
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
+  cg_trie_reference_check(s->parent->graphinfo->cv);
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
+#endif
+  s->parent->trie = s->trie;
+  delete s->parent->trie->info;
+  s->parent->trie->info = new TerminationConditionInfo(*s->parent->tinfo);
+  s->trie = nullptr;
+#ifdef DIFFISO_DEB
+  s->parent->trie->dump();
+#endif
+  s->parent->succ_num_in_openlist--;
+  back_trie_to_parent(s->parent);
+  // std::cout << "ID-MAP: (" << s->parent->state_id << ")-->("<< s->state_id <<
+  // ")" << std::endl;
+
+  // for (auto &v : s->parent->diff_map[s->state_id].first) {
+  //   std::cout << v.first << "-->" << v.second << std::endl;
+  // }
+}
+
 /** 生成した各Successor Stateが既出か否かを検査し,
  * 遷移元の状態sのサクセッサに設定する.
  *   + 多重辺を除去する.
@@ -401,14 +551,35 @@ void mc_update_cost(State *s, Vector *new_ss, EWLock *ewlock) {
 void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
                          Vector *new_ss, BOOL f) {
   unsigned int i, succ_i;
+  DiffInfo *dif;
+  DiffInfo *rev_dif;
+  std::map<int, int> rev_iso;
+  std::map<int, int> revrev;
   // printf("----------------------------------------\n");
 
   // printf("******************************************\n");
   /** 状態登録 */
   succ_i = 0;
+  TerminationConditionInfo *org_tinfo = new TerminationConditionInfo(*s->trie->info);
+  s->tinfo = new TerminationConditionInfo(*org_tinfo);
+#ifdef DIFFISO_DEB
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
+  std::cout << mc_react_cxt_expanded_num(rc) << std::endl;
+  std::cout << "======= START EXPANDED LOOP (" << s->state_id << ")"
+            << "======" << std::endl;
+  std::cout << "--ORG TINFO--" << std::endl;
+  terminationConditionInfoDump(s->trie->info);
+  std::cout << "-------------" << std::endl;
+
+  std::cout << "--CP TINFO--" << std::endl;
+  terminationConditionInfoDump(org_tinfo);
+  std::cout << "------------" << std::endl;
+#endif
+
   for (i = 0; i < mc_react_cxt_expanded_num(rc); i++) {
+
 #ifdef DIFFISO_GEN
-    if(!diff_gen_finish)
+    if (!diff_gen_finish)
       printf("Child Graph\n");
 #endif
     TransitionRef src_t;
@@ -440,52 +611,180 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
         src_succ->calc_binstr_delta();
       succ = statespace_insert(ss, src_succ);
       src_succ_m = NULL;
-    } else {                            /* default */
+    } else {                              /* default */
       src_succ_m = src_succ->state_mem(); /* for free mem pointed by src_succ */
+
+      /*
+        ===== Diffiso ====
+       */
+      src_succ->graphinfo = new Graphinfo(src_succ_m);
+      dif = new DiffInfo(parent_graphinfo, src_succ->graphinfo);
+#ifdef DIFFISO_DEB
+      std::cout << "==(succ)dump_mem==" << std::endl;
+      lmn_dump_mem_stdout(src_succ_m);
+
+      std::cout << "===parent_graphinfo===" << std::endl;
+      std::cout << *parent_graphinfo->cv << std::endl;
+      printf("===org===\n");
+      printf("graphinfo_address:%p\n", s->graphinfo);
+      printf("cv_address:%p\n", s->graphinfo->cv);
+      std::cout << *s->graphinfo->cv << std::endl;
+      printf("===succ===\n");
+      std::cout << *src_succ->graphinfo->cv << std::endl;
+
+      std::cout << "========ORG DIFFINFO========" << std::endl;
+      dif->diffInfoDump();
+      std::cout << "============================" << std::endl;
+#endif
+      for (auto i = iso_m.begin(); i != iso_m.end(); ++i) {
+        rev_iso[i->second] = i->first;
+      }
+      dif->change_ref_before_graph(rev_iso, parent_graphinfo, s->graphinfo);
+      //#ifdef DIFFISO_DEB
+      //dif->diffInfoDump();
+      // std::cout << "-----------ISO_M-----------" << std::endl;
+      // for (auto &v : iso_m) {
+      //   std::cout << v.first << "-->" << v.second << std::endl;
+      // }
+      // std::cout << "----------------------------" << std::endl;
+      //#endif
+      for (auto it = rev_iso.begin(); it != rev_iso.end(); ++it) {
+        revrev[it->second] = it->first;
+      }
+
+      rev_dif = new DiffInfo();
+      for (auto &v : *dif->addedVertices) {
+        rev_dif->deletedVertices->push_back(v);
+      }
+      for (auto &v : *dif->deletedVertices) {
+        rev_dif->addedVertices->push_back(v);
+      }
+      for (auto &v : *dif->relinkedVertices) {
+#ifdef DIFFISO_DEB
+	printf("%s:%d\n", __FUNCTION__, __LINE__);
+	std::cout << *v << std::endl;
+	std::cout << rev_iso[v->ID] << std::endl;
+#endif
+	auto it = s->graphinfo->cv->atoms.find(rev_iso[v->ID]);
+	if (it == s->graphinfo->cv->atoms.end()) {
+	  printf("%s:%d\n", __FUNCTION__, __LINE__);
+	  std::cout << "FIND BUG!!!!!!!!!!!" << std::endl;
+	  std::cout << "---REVREV---" << std::endl;
+	  for (auto &x : rev_iso) {
+	    std::cout << x.first << "-->" << x.second << std::endl;
+	  }
+	  std::cout << "------------" << std::endl;
+	  exit(0);
+	}
+	rev_dif->relinkedVertices->push_back(it->second);
+      }
+      if (s->trie) {
+        // printf("%s:%d\n", __FUNCTION__, __LINE__);
+        // s->trie->dump();
+
+#ifdef DIFFISO_DEB
+        printf("%s:%d\n", __FUNCTION__, __LINE__);
+        cg_trie_reference_check(s->graphinfo->cv);
+        s->trie->dump();
+        std::cout << "=======START APPLY[" << i << "]"
+                  << "=======" << std::endl;
+#endif
+        src_succ->canonical_label = trieMcKay(s->trie, dif, src_succ->graphinfo, s->graphinfo, iso_m, false);
+#ifdef DIFFISO_DEB	
+        printf("%s:%d\n", __FUNCTION__, __LINE__);
+        std::cout << "=======FINISH APPLY[" << i << "]"
+                  << "=======" << std::endl;
+        // s->graphinfo->cv->moveReferencesToAfterCG(src_succ->graphinfo->cv,
+        // rev_iso); s->graphinfo->id_map = rev_iso;
+        printf("%s:%d\n", __FUNCTION__, __LINE__);
+#endif
+        src_succ->trie = s->trie;
+        s->trie = nullptr;
+#ifdef DIFFISO_DEB
+	printf("%s:%d\n", __FUNCTION__, __LINE__);
+	src_succ->trie->dump();
+        printf("%s:%d\n", __FUNCTION__, __LINE__);
+        printf("===org===\n");
+        // printf("graphinfo_address:%p\n", src_succ->graphinfo);
+        // printf("cv_address:%p\n", s->graphinfo->cv);
+        std::cout << *src_succ->graphinfo->cv << std::endl;
+        printf("===succ===\n");
+        std::cout << *s->graphinfo->cv << std::endl;
+        rev_dif->diffInfoDump();
+        std::cout << "-----------REVREV-----------" << std::endl;
+        for (auto &v : revrev) {
+          std::cout << v.first << ", " << v.second << std::endl;
+        }
+        std::cout << "----------------------------" << std::endl;
+        cg_trie_reference_check(src_succ->graphinfo->cv);
+        std::cout << "=======START REVERSE APPLY[" << i << "]"
+                  << "=======" << std::endl;
+#endif 
+        trieMcKay(src_succ->trie, rev_dif, s->graphinfo, src_succ->graphinfo,
+                  rev_iso, true);
+        s->trie = src_succ->trie;
+#ifdef DIFFISO_DEB
+        s->trie->dump();
+        printf("%s:%d\n", __FUNCTION__, __LINE__);
+        std::cout << "=======FINISH REVERSE APPLY[" << i << "]"
+                  << "=======" << std::endl;
+
+        // src_succ->graphinfo->cv->moveReferencesToAfterCG(s->graphinfo->cv,
+        // revrev);
+        printf("%s:%d\n", __FUNCTION__, __LINE__);
+        for (auto &v : s->graphinfo->cv->atoms) {
+          printf("%s:%d\n", __FUNCTION__, __LINE__);
+          std::cout << v.first << std::endl;
+          std::cout << *v.second << std::endl;
+          if (v.second->correspondingVertexInTrie == nullptr)
+            std::cout << "NULLPOINTER!" << std::endl;
+          std::cout << *v.second->correspondingVertexInTrie << std::endl;
+        }
+#endif
+        s->trie = src_succ->trie;
+	delete s->trie->info;
+	s->trie->info = new TerminationConditionInfo(*org_tinfo);
+        src_succ->trie = nullptr;
+      }
+
+      /*
+        ==================
+       */
       succ = statespace_insert(ss, src_succ);
     }
 
-
-  /*
-    ===== Diffiso ====
-   */
-    if(!diff_gen_finish) {
+    /*
+      ===== Diffiso ====
+     */
+    if (!diff_gen_finish) {
       // Graphinfo *child_gi = new Graphinfo(src_succ_m);
       // convertedGraphDump(parent_graphinfo->cv);
 
-      // Trie * tmp_trie = org_trie->gen_tmp_trie_from_originaltrie_and_gi(org_gi, parent_graphinfo);
-      // tmp_trie->dump();
-      // DiffInfo *di = new DiffInfo(parent_graphinfo, child_gi);
-      // di->diffInfoDump();
+      // Trie * tmp_trie =
+      // org_trie->gen_tmp_trie_from_originaltrie_and_gi(org_gi,
+      // parent_graphinfo); tmp_trie->dump(); DiffInfo *di = new
+      // DiffInfo(parent_graphinfo, child_gi); di->diffInfoDump();
       // trieMcKay(tmp_trie, di, parent_graphinfo, child_gi);
       // tmp_trie->dump();
     }
 #ifdef DIFFISO_GEN
-    if(!diff_gen_finish) {
+    if (!diff_gen_finish) {
       printf("%s:%d\n", __FUNCTION__, __LINE__);
       lmn_dump_mem_stdout(src_succ_m);
     }
 #endif
-  /*
-    ===== Diffiso ====
-   */
+    /*
+      =================
+     */
 
-    src_succ->graphinfo = new Graphinfo(src_succ_m);
-    // printf("===org===\n");
-    // convertedGraphDump(s->graphinfo->cv);
-    // printf("===succ===\n");
-    // convertedGraphDump(src_succ->graphinfo->cv);
-    DiffInfo *dif = new DiffInfo(parent_graphinfo, src_succ->graphinfo);
-    // dif->diffInfoDump();
-    std::map<int, int> rev_iso;
-    for(auto i = iso_m.begin(); i!=iso_m.end(); ++i) {
-      rev_iso[i->second]=i->first;
-    }
-    dif->change_ref_before_graph(rev_iso, parent_graphinfo, s->graphinfo);
-    // dif->diffInfoDump();
     if (succ == src_succ) {
       /* new state */
       state_id_issue(succ);
+      s->succ_num_in_openlist++;
+      std::pair<std::map<int, int>, DiffInfo *> p = std::make_pair(iso_m, dif);
+      s->diff_map[succ->state_id] = p;
+      p = std::make_pair(rev_iso, rev_dif);
+      succ->diff_map[s->state_id] = p;
       if (mc_use_compress(f) && src_succ_m) {
         lmn_mem_free_rec(src_succ_m);
       }
@@ -495,7 +794,7 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
         dump_state_data(succ, (LmnWord)stdout, (LmnWord)NULL);
     } else {
       /* contains */
-      delete(src_succ);
+      delete (src_succ);
       if (s->has_trans_obj()) {
         /* Transitionオブジェクトが指すサクセッサを検出した等価な状態の方へ設定し直す
          */
@@ -529,15 +828,15 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
     */
   }
 #ifdef DIFFISO_GEN
-  if(!diff_gen_finish){
+  if (!diff_gen_finish) {
     printf("Parent State ID\n");
     printf("%s:%d\n", __FUNCTION__, __LINE__);
     printf("%d\n", s->state_id);
-    for(i = 0; i < mc_react_cxt_expanded_num(rc); i++) {
+    for (i = 0; i < mc_react_cxt_expanded_num(rc); i++) {
       printf("Child State ID\n");
       printf("%s:%d\n", __FUNCTION__, __LINE__);
       printf("%d\n", ((State *)vec_get(RC_EXPANDED(rc), i))->state_id);
-    }    
+    }
   }
 #endif
   st_clear(RC_SUCC_TBL(rc));
@@ -550,7 +849,8 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
   //  if (RC_MC_USE_DMEM(rc)) {
   //    RC_MEM_DELTAS(rc)->num = succ_i;
   //  }
-
+  if (s->succ_num_in_openlist == 0)
+    back_trie_to_parent(s);
   state_D_progress(s, rc);
   s->succ_set(RC_EXPANDED(rc)); /* successorを登録 */
   delete parent_graphinfo;
@@ -573,6 +873,8 @@ BOOL mc_expand_inner(LmnReactCxtRef rc, LmnMembraneRef cur_mem) {
       ret_flag = TRUE;
     }
     if (lmn_mem_is_active(cur_mem)) {
+      // printf("%s:%d\n", __FUNCTION__, __LINE__);
+      // lmn_dump_mem_stdout(cur_mem);
       react_all_rulesets(rc, cur_mem);
     }
     /* 子膜からルール適用を試みることで, 本膜の子膜がstableか否かを判定できる */
@@ -605,6 +907,9 @@ void mc_gen_successors(State *src, LmnMembraneRef mem, BYTE state_name,
   expanded_roots = RC_EXPANDED(rc); /* DeltaMembrane時は空 */
   expanded_rules = RC_EXPANDED_RULES(rc);
   n = mc_react_cxt_expanded_num(rc);
+  if (n == 0) {
+    back_trie_to_parent(src);
+  }
 
   for (i = old; i < n; i++) {
     State *news;
@@ -615,7 +920,7 @@ void mc_gen_successors(State *src, LmnMembraneRef mem, BYTE state_name,
       news = new State();
     } else {
       news = new State((LmnMembraneRef)vec_get(expanded_roots, i), state_name,
-                        mc_use_canonical(f));
+                       mc_use_canonical(f));
     }
 
     state_set_property_state(news, state_name);
@@ -624,7 +929,7 @@ void mc_gen_successors(State *src, LmnMembraneRef mem, BYTE state_name,
       lmn_interned_str nid;
       nid = ((LmnRuleRef)vec_get(expanded_rules, i))->name;
       data = (vec_data_t)transition_make(news, nid);
-     src->set_trans_obj();
+      src->set_trans_obj();
     } else {
       data = (vec_data_t)news;
     }
@@ -711,7 +1016,7 @@ void mc_gen_successors_with_property(State *s, LmnMembraneRef mem,
 #ifdef KWBT_OPT
         transition_set_cost((Transition)data, transition_cost(src_succ_t));
 #endif
-       s->set_trans_obj();
+        s->set_trans_obj();
       } else {
         data = (vec_data_t)new_s;
       }
@@ -767,7 +1072,7 @@ static inline void stutter_extension(State *s, LmnMembraneRef mem,
 
   if (mc_has_trans(f)) {
     data = (vec_data_t)transition_make(new_s, lmn_intern("ε"));
-   s->set_trans_obj();
+    s->set_trans_obj();
   } else {
     data = (vec_data_t)new_s;
   }

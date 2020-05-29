@@ -125,7 +125,7 @@ struct ConvertedGraphVertex {
     strcpy(name, Name);
     isPushedIntoDiffInfoStack = FALSE;
     isVisitedInBFS = FALSE;
-    correspondingVertexInTrie = NULL;
+    correspondingVertexInTrie = nullptr;
   }
 
   ~ConvertedGraphVertex() {}
@@ -344,17 +344,20 @@ public:
   ConvertedGraphVertex *at(const InheritedVertex &iVertex, int gapOfGlobalRootMemID);
   ConvertedGraphVertex *at(int ID, ConvertedGraphVertexType type);
   void clearReferencesFromConvertedVerticesToInheritedVertices();
+  void moveReferencesToAfterCG(ConvertedGraph *cg, std::map<int, int> &iso);
 };
 
 bool check_iso_morphism(ConvertedGraph *org, ConvertedGraph *copy,
                         const std::map<int, int> &iso_m);
+void cg_trie_reference_check(ConvertedGraph *cg);
 inline void pushConvertedVertexIntoDiffInfoStackWithoutOverlap(
     std::vector<ConvertedGraphVertex *> *stack, ConvertedGraphVertex *cVertex) {
-  if (!cVertex)
+  if (!cVertex) {
     return;
-  if (cVertex->isPushedIntoDiffInfoStack)
+  }
+  if (cVertex->isPushedIntoDiffInfoStack) {
     return;
-
+  }
   stack->push_back(cVertex);
   cVertex->isPushedIntoDiffInfoStack = true;
 }
@@ -404,13 +407,13 @@ inline std::ostream &operator<<(std::ostream &os, const ConvertedGraph &cGraph) 
   os << "CONVERTED ATOMS:\n";
   for (auto &kv : cGraph.atoms) {
     os << kv.first << ":";
-    os << kv.second;
+    os << *kv.second;
     os << "\n";
   }
   os << "CONVERTED HYPERLINKS:\n";
   for (auto &kv : cGraph.hyperlinks) {
     os << kv.first << ":";
-    os << kv.second;
+    os << *kv.second;
     os << "\n";
   }
   return os;

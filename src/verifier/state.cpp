@@ -92,6 +92,76 @@ void tcd_set_byte_length(TreeCompressData *data, unsigned short byte_length) {
 /* 膜memを用いて状態sのハッシュ値を計算する.
  * canonicalをTRUEで入力した場合, バイナリストリングの設定まで行う */
 
+bool cmp_canonical_label(State *s0, State *s1) {
+#ifdef DIFFISO_DEB
+  std::cout << "^^^^^^^^^^^^^^ CHECK ISOMORPHISM ^^^^^^^^^^^^^^^" << std::endl;
+  std::cout << "s0:CANONICAL LABEL" << std::endl;
+  std::cout << "[";
+  for (auto &l : s0->canonical_label) {
+    std::cout << "[";
+    for (auto &v : l) {
+      std::cout << v << ", ";
+    }
+    std::cout << "]";
+  }
+  std::cout << "]" << std::endl;
+  std::cout << "---------------------" << std::endl;
+
+  std::cout << "s1:CANONICAL LABEL" << std::endl;
+  std::cout << "[";
+  for (auto &l : s1->canonical_label) {
+    std::cout << "[";
+    for (auto &v : l) {
+      std::cout << v << ", ";
+    }
+    std::cout << "]";
+  }
+  std::cout << "]" << std::endl;
+  std::cout << "---------------------" << std::endl;
+#endif
+
+  auto s0z = s0->canonical_label.size();
+  auto s1z = s1->canonical_label.size();
+  if (s0z != s1z) {
+#ifdef DIFFISO_DEB
+    std::cout << "               FALSE" << std::endl;
+    std::cout << "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+              << std::endl;
+#endif
+    return false;
+  }
+
+  for (int i = 0; i < s0z; i++) {
+    auto &v0 = s0->canonical_label[i];
+    auto &v1 = s1->canonical_label[i];
+    auto v0z = v0.size();
+    auto v1z = v1.size();
+    if (v0z != v1z) {
+#ifdef DIFFISO_DEB
+      std::cout << "               FALSE" << std::endl;
+      std::cout << "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+                << std::endl;
+#endif
+      return false;
+    }
+
+    for (int j = 0; j < v0z; j++) {
+      if (v0[j] != v1[j]) {
+#ifdef DIFFISO_DEB
+        std::cout << "               FALSE" << std::endl;
+        std::cout << "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+                  << std::endl;
+#endif
+        return false;
+      }
+    }
+  }
+#ifdef DIFFISO_DEB
+  std::cout << "               TRUE" << std::endl;
+  std::cout << "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^" << std::endl;
+#endif
+  return true;
+}
 
 /**
  * 引数としてあたえられたStateが等しいかどうかを判定する
@@ -99,7 +169,6 @@ void tcd_set_byte_length(TreeCompressData *data, unsigned short byte_length) {
 static int state_equals_with_compress(State *check, State *stored) {
   LmnBinStrRef bs1, bs2;
   int t;
-
 #ifdef PROFILE
   if (lmn_env.prof_no_memeq) {
     /* 本フラグが真の場合はグラフ同形成判定を行わず,
@@ -131,8 +200,21 @@ static int state_equals_with_compress(State *check, State *stored) {
         binstr_compare(bs1, bs2) == 0;
   } else if (check->state_mem() && bs2) {
     /* 同型性判定 */
-    t = check->state_name == stored->state_name &&
-        lmn_mem_equals_enc(bs2, check->state_mem());
+    // t = check->state_name == stored->state_name &&
+    //     lmn_mem_equals_enc(bs2, check->state_mem());
+#ifdef PROFILE
+    if (lmn_env.profile_level >= 3) {
+      profile_start_timer(PROFILE_TIME__STATE_COMPARE_CL);
+    }
+#endif
+    t = cmp_canonical_label(check, stored);
+#ifdef PROFILE
+    if (lmn_env.profile_level >= 3) {
+      profile_finish_timer(PROFILE_TIME__STATE_COMPARE_CL);
+    }
+#endif
+    
+    // t = false;
   } else if (bs1 && bs2) {
     /* このブロックは基本的には例外処理なので注意.
      * PORなどでコピー状態を挿入する際に呼ばれることがある. */
@@ -290,7 +372,6 @@ int state_cmp_with_tree(State *s1, State *s2) {
 
 int state_cmp(State *s1, State *s2) { return !state_equals(s1, s2); }
 
-
 /* バイナリストリングorgと状態ref_sのバイナリストリングとの差分バイナリストリングを返す.
  * orgのメモリ管理は呼出し側で行う. */
 static inline LmnBinStrRef state_binstr_D_compress(LmnBinStrRef org,
@@ -311,17 +392,13 @@ static inline LmnBinStrRef state_binstr_D_compress(LmnBinStrRef org,
   return dif;
 }
 
-LmnBinStrRef state_calc_mem_dump(State *s) {
-  return s->mem_dump();
-}
-
+LmnBinStrRef state_calc_mem_dump(State *s) { return s->mem_dump(); }
 
 /* 状態sに対応した階層グラフ構造のバイナリストリングをzlibで圧縮して返す.
  * 状態sはread only */
 LmnBinStrRef state_calc_mem_dump_with_z(State *s) {
   return s->mem_dump_with_z();
 }
-
 
 /* 状態sに対応する階層グラフ構造をバイナリストリングにエンコードして返す.
  * sのフラグを操作する. */
@@ -615,9 +692,7 @@ void state_print_label(State *s, LmnWord _fp, LmnWord _owner) {
 /* 状態sに対応する階層グラフ構造memへのアドレスを返す.
  * memがエンコードされている場合は, デコードしたオブジェクトのアドレスを返す.
  * デコードが発生した場合のメモリ管理は呼び出し側で行う. */
-LmnMembraneRef state_restore_mem(State *s) {
-  return s->restore_membrane();
-}
+LmnMembraneRef state_restore_mem(State *s) { return s->restore_membrane(); }
 
 /* 状態sに割り当てた整数IDを返す. */
 unsigned long state_id(State *s) { return s->state_id; }
@@ -663,14 +738,12 @@ void state_set_property_state(State *s, BYTE label) { s->state_name = label; }
 unsigned long state_hash(State *s) {
   /* state_property_stateは0の場合があるので+1する */
   return s->hash * (state_property_state(s) + 1);
+  // return 10;
 }
-
-
 
 /* 状態sに階層グラフ構造memを割り当てる.
  * sに対してバイナリストリングBを割り当てている場合は,
  * Bのメモリ管理は呼出し側で行う*/
-
 
 /* 状態sが参照する階層グラフ構造用の領域をクリアする.
  * 階層グラフ構造の参照を持たない場合は, なにもしない. */
@@ -679,7 +752,6 @@ void state_unset_mem(State *s) {
     s->state_set_mem(NULL);
   }
 }
-
 
 /* 状態sに対応する階層グラフ構造からエンコードしたバイナリストリングbsを,
  * sに割り当てる　*/
@@ -700,7 +772,6 @@ State *state_get_parent(State *s) { return s->parent; }
 void state_set_parent(State *s, State *parent) { s->parent = parent; }
 
 /* 状態sから遷移可能な状態数を返す. */
-
 
 /* 状態sから遷移可能な状態の集合から, idx番目の状態を返す. */
 State *state_succ_state(State *s, int idx) {

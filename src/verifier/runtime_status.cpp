@@ -40,6 +40,7 @@
 #include "state.h"
 #include "vm/vm.h"
 #include "state.hpp"
+#include <iostream>
 
 struct RuleProfiler {
   LmnRulesetId ref_rs_id;
@@ -894,7 +895,7 @@ void dump_profile_data(FILE *f) {
         fprintf(f, "%-24s %10s%10s%8s\n", "", "[calls]", "[total]", "[%]");
         for (i = 0; i < ARY_SIZEOF(total.times); i++) {
           total_time += total.times[i].total_time;
-          fprintf(f, "%-24s:%10lu%10.2lf%8.1lf\n", profile_time_id_to_name(i),
+          fprintf(f, "%-24s:%10lu:%10.10lf%8.1lf\n", profile_time_id_to_name(i),
                   total.times[i].called_num, total.times[i].total_time,
                   100.0 * total.times[i].total_time / tmp_total_cpu_time_main);
         }
@@ -974,8 +975,38 @@ static const char *profile_time_id_to_name(int type) {
   case PROFILE_TIME__STATE_COMPARE_MEQ:
     ret = "state mem compare";
     break;
+  case PROFILE_TIME__STATE_COMPARE_CL:
+    ret = "state cl compare";
+    break;
+  case PROFILE_TIME__TRIEMCKAY:
+    ret = "trie mckay";
+    break;
+  case PROFILE_TIME__TRIEPROPAGATE:
+    ret = "trie propagate";
+    break;
+  case PROFILE_TIME__LISTMCKAY_INNER:
+    ret = "list mckay inner";
+    break;
+  case PROFILE_TIME__INSERTDP:
+    ret = "insert dp";
+    break;
+  case PROFILE_TIME__REFINE:
+    ret = "refine";
+    break;
+  case PROFILE_TIME__CLASSIFY:
+    ret = "classify";
+    break;
+  case PROFILE_TIME__MAKELABEL:
+    ret = "make label";
+    break;
+  case PROFILE_TIME__LISTMCKAY:
+    ret = "list mckay";
+    break;
   case PROFILE_TIME__STATE_COMPARE_MID:
     ret = "state binstr compare";
+    break;
+  case PROFILE_TIME__PUTLABELS:
+    ret = "put labels";
     break;
   case PROFILE_TIME__STATE_COPY:
     ret = "state copy";

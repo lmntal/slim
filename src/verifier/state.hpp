@@ -109,6 +109,11 @@ struct State {                /* Total:72(36)byte */
   State *map; /*  8(4)byte: MAP値 or 最適化実行時の前状態 */
   Graphinfo *graphinfo;
   Trie *trie;
+  std::vector<std::vector<std::string>> canonical_label;
+  std::map<unsigned long, std::pair<std::map<int, int>, DiffInfo *>> diff_map;
+  TerminationConditionInfo *tinfo;
+  int succ_num_in_openlist;
+  bool on_stack;
 #ifndef MINIMAL_STATE
   BYTE *
       local_flags; /*  8(4)byte:
@@ -541,7 +546,7 @@ public:
   State()
       : data(NULL), state_name(0x00U), flags(0x00U), flags2(0x00U),
         flags3(0x00U), hash(0), next(NULL), successors(NULL), successor_num(0),
-        parent(NULL), state_id(0), map(NULL) {
+        parent(NULL), state_id(0), map(NULL), succ_num_in_openlist(0) {
     memset(&tcd, 0x00, sizeof(TreeCompressData));
 #ifndef MINIMAL_STATE
     state_set_expander_id(LONG_MAX);
@@ -549,7 +554,10 @@ public:
     state_expand_lock_init();
 #endif
     s_set_fresh();
-
+    graphinfo=nullptr;
+    trie=nullptr;
+    canonical_label=std::vector<std::vector<std::string>>();
+    on_stack = false;
 #ifdef KWBT_OPT
     if (lmn_env.opt_mode != OPT_NONE) {
       cost = lmn_env.opt_mode == OPT_MINIMIZE ? ULONG_MAX : 0;

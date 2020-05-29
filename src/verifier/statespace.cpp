@@ -869,7 +869,6 @@ static State *statetable_insert(StateTable *st, State *ins)
         profile_countup(PROFILE_COUNT__HASH_CONFLICT_ENTRY);
       }
 #endif
-
       if (hash == state_hash(str)) {
         /* >>>>>>> ハッシュ値が等しい状態に対する処理ここから <<<<<<<<　*/
         if (lmn_env.hash_compaction) {
@@ -890,7 +889,6 @@ static State *statetable_insert(StateTable *st, State *ins)
            *    (オリジナルテーブルのdummy状態のバイト列は任意のタイミングで破棄されるため,
            *     直接dummy状態上のメモリを比較対象とするとスレッドセーフでなくなる)
            */
-
           if (ins->is_binstr_user()) {
             ins->free_binstr();
           } else if (compress) {

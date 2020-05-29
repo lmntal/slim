@@ -239,12 +239,19 @@ ConvertedGraphVertex *ConvertedGraph::at(int ID,
   }
 }
 
-void ConvertedGraph::
-    clearReferencesFromConvertedVerticesToInheritedVertices() {
+void ConvertedGraph::clearReferencesFromConvertedVerticesToInheritedVertices() {
   for (auto &v : this->atoms) {
     auto cBeforeVertex = v.second;
-    if (!cBeforeVertex) {
-      cBeforeVertex->correspondingVertexInTrie = nullptr;
+
+    // std::cout << *cBeforeVertex << std::endl;
+    if (cBeforeVertex->correspondingVertexInTrie != nullptr) {
+
+      // std::cout << "^^^^^^^^^^^^^^^FIND PTR BUG^^^^^^^^^^^^^^^^^^^^" << std::endl;
+#ifdef DIFFISO_DEB
+      std::cout << *cBeforeVertex << std::endl;
+#endif
+      // std::cout << *cBeforeVertex->correspondingVertexInTrie << std::endl;
+      // cBeforeVertex->correspondingVertexInTrie = nullptr;
     }
   }
 
@@ -254,4 +261,61 @@ void ConvertedGraph::
       cBeforeVertex->correspondingVertexInTrie = nullptr;
     }
   }
+}
+
+void ConvertedGraph::moveReferencesToAfterCG(ConvertedGraph *cg,
+                                             std::map<int, int> &iso) {
+  for (auto &v : this->atoms) {
+    auto cBeforeVertex = v.second;
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
+    if (cBeforeVertex->correspondingVertexInTrie != nullptr) {
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
+      auto cAfterVertex = cg->at(iso[v.first], convertedAtom);
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
+      std::cout << *cAfterVertex << std::endl;
+      if (cAfterVertex->correspondingVertexInTrie == nullptr) {
+	printf("%s:%d\n", __FUNCTION__, __LINE__);
+	std::cout << "NULLPTR" << std::endl;
+	std::cout << *cAfterVertex << std::endl;
+      }
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
+      // cAfterVertex->correspondingVertexInTrie = cBeforeVertex->correspondingVertexInTrie;
+      // cBeforeVertex->correspondingVertexInTrie = nullptr;
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
+      std::cout << *cAfterVertex << std::endl;
+      std::cout << *cAfterVertex->correspondingVertexInTrie << std::endl;
+    }
+  }
+}
+
+void cg_trie_reference_check(ConvertedGraph *cg) {
+  std::cout << "----START REFERENCE CHECK----" << std::endl;
+  bool f = true;
+  for (auto &v : cg->atoms) {
+    std::cout << "---------------" << std::endl;
+    printf("pointer:%p\n", v.second);
+    // std::cout << "pointer:" << v.second << std::endl;
+    std::cout << *v.second << std::endl;
+    std::cout << "--->" << std::endl;
+    printf("cvIT pointer:%p\n", v.second->correspondingVertexInTrie);
+    if (v.second->correspondingVertexInTrie == nullptr) {
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
+      std::cout << "NULLPTR!!!" << std::endl;
+    }
+
+    std::cout << *v.second->correspondingVertexInTrie << std::endl;
+    printf("cvITcv pointer:%p\n", v.second->correspondingVertexInTrie->correspondingVertex);
+    std::cout << *v.second->correspondingVertexInTrie->correspondingVertex << std::endl;
+    if (v.second->correspondingVertexInTrie->correspondingVertex != v.second) {
+
+      std::cout << "POINTER IS NOT CORRECT!!!" << std::endl;
+      f = false;
+
+    }
+
+    std::cout << "---------------" << std::endl;
+  }
+  if (!f)
+    exit(0);
+  std::cout << "----FINISH REFERENCE CHECK----" << std::endl;
 }

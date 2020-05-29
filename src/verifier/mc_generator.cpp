@@ -520,12 +520,13 @@ static inline void dfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
     if (!worker_on_parallel(w)) { /* Nested-DFS:
                                      postorder順を求めるDFS(再度到達した未展開状態がStackに積み直される)
                                    */
-     s->set_on_stack();
+      s->set_on_stack();
       n = s->successor_num;
       for (i = 0; i < n; i++) {
         State *succ = state_succ_state(s, i);
 
-        if (!succ->is_expanded()) {
+        if (!succ->is_expanded() and !succ->on_stack) {
+	  succ->on_stack = true;
           put_stack(stack, succ);
         }
       }

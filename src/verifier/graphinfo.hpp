@@ -57,6 +57,7 @@ struct Graphinfo {
   int state_id;
   ConvertedGraph *cv;
   int globalRootMemID;
+  std::map<int, int> id_map;
 
   void json_dump() {
     jsonDump(json_val);

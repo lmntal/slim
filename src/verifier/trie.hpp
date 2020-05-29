@@ -6,13 +6,18 @@
 #include "element/element.h"
 #include "hash.hpp"
 #include "omegaArray.hpp"
-// #include"convertedgraph.hpp"
 #include <list>
 
+using propagation_list = std::list<std::list<ConvertedGraphVertex *>>;
 struct ConvertedGraph;
 struct InheritedVertex;
 struct TrieBody;
 struct TerminationConditionInfo;
+
+struct ComparablePropagationList {
+  propagation_list plist;
+  std::map<int, std::vector<int>> labels;
+};
 
 typedef struct _CanonicalLabel {
   Hash first;
@@ -21,35 +26,105 @@ typedef struct _CanonicalLabel {
 
 struct HashString {
   int creditIndex;
-  std::vector<uint32_t> *body;
+  std::map<int, uint32_t> body;
 
   HashString() {
     creditIndex = 0;
-    body = new std::vector<uint32_t>();
   }
 
   HashString(const HashString &h) {
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
     this->creditIndex = h.creditIndex;
-    this->body = new std::vector<uint32_t>();
-    for (auto v = h.body->begin(); v!=h.body->end(); ++v) {
-      this->body->push_back(*v);
+    for (auto &v : h.body) {
+      this->body[v.first] = v.second;
     }
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
   }
 
   ~HashString() {
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
-    delete (this->body);
   }
 };
 
 using vertex_list = std::list<
-  slim::element::variant<slim::element::monostate, InheritedVertex>>;
+    slim::element::variant<slim::element::monostate, InheritedVertex>>;
 using trie_body_map = std::map<uint32_t, TrieBody *>;
 using vertex_vec = std::vector<
-  slim::element::variant<slim::element::monostate, InheritedVertex>>;
-using propagation_list = std::list<std::list<InheritedVertex>>;
+    slim::element::variant<slim::element::monostate, InheritedVertex>>;
+
+std::map<int, std::map<int, int>>
+putLabelsToAdjacentVertices(const propagation_list &pList);
+
+inline bool
+converted_graph_vertex_cmp(const ConvertedGraphVertex *lhs,
+                           const ConvertedGraphVertex *rhs,
+                           const std::map<int, std::vector<int>> &l_m,
+                           const std::map<int, std::vector<int>> &r_m) {
+  if (lhs->type < rhs->type) {
+    return true;
+  } else if (lhs->type > rhs->type) {
+    return false;
+  } else if (strcmp(lhs->name, rhs->name) < 0) {
+    return true;
+  } else if (strcmp(lhs->name, rhs->name) > 0) {
+    return false;
+  } else {
+    auto l_key = l_m.find(lhs->ID);
+    auto r_key = r_m.find(rhs->ID);
+    if (l_key == l_m.end() and r_key == r_m.end()) {
+      return false;
+    } else if (l_key == l_m.end() and r_key != r_m.end()) {
+      return true;
+    } else if (l_key != l_m.end() and r_key == r_m.end()) {
+      return false;
+    } else {
+      auto l_it = l_m.at(lhs->ID).begin();
+      auto r_it = r_m.at(rhs->ID).begin();
+      for (; l_it != l_m.at(lhs->ID).end() and r_it != r_m.at(rhs->ID).end();
+           l_it++, r_it++) {
+        if (*l_it < *r_it) {
+          return true;
+        } else if (*l_it > *r_it) {
+          return false;
+        }
+      }
+      return false;
+    }
+  }
+}
+struct PropagationListCmp {
+  bool operator()(const ComparablePropagationList &lhs,
+                  const ComparablePropagationList &rhs) const {
+    //auto l_mm = lhs.lables;
+    // std::map<int, std::vector<int>> l_m;
+    // for (auto &v : lhs.labels) {
+    //   for (auto &e : v.second) {
+    // 	l_m[v.first].push_back(e.second);
+    //   }
+    // }
+    //auto r_mm = rhs.labels;
+    // std::map<int, std::vector<int>> r_m;
+    // for (auto &v : rhs.labels) {
+    //   for (auto &e : v.second) {
+    // 	r_m[v.first].push_back(e.second);
+    //   }
+    // }
+    auto it_l = lhs.plist.begin();
+    auto it_r = rhs.plist.begin();
+    for (; it_l != lhs.plist.end() and it_r != rhs.plist.end(); it_l++, it_r++) {
+      if (it_l->size() != 1 or it_r->size() != 1)
+        throw("propagation list is'nt discrete");
+      if (converted_graph_vertex_cmp(it_l->front(), it_r->front(), lhs.labels, rhs.labels))
+        return true;
+      else if (converted_graph_vertex_cmp(it_r->front(), it_l->front(), rhs.labels,
+                                          lhs.labels))
+        return false;
+    }
+    if (it_l == lhs.plist.end() and it_r != rhs.plist.end())
+      return true;
+    else
+      return false;
+    return true;
+  }
+};
+
 struct TrieBody {
   uint32_t key;
   vertex_list *inheritedVertices;
@@ -101,6 +176,14 @@ struct TerminationConditionInfo {
     distribution = new OmegaArray();
     increase = new OmegaArray();
   };
+  TerminationConditionInfo(const TerminationConditionInfo &tinfo) {
+    this->distribution = new OmegaArray(*tinfo.distribution);
+    this->increase = new OmegaArray(*tinfo.increase);
+  }
+  ~TerminationConditionInfo() {
+    delete distribution;
+    delete increase;
+  }
 };
 
 struct InheritedVertex {
@@ -115,9 +198,9 @@ struct InheritedVertex {
   vertex_list::iterator ownerCell;
   std::vector<int> *conventionalPropagationMemo;
   DisjointSetForest *equivalenceClassOfIsomorphism;
+  ConvertedGraphVertex *correspondingVertex;
 
   InheritedVertex(ConvertedGraphVertex *cVertex, int gapOfGlobalRootMemID) {
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
     type = cVertex->type;
     strcpy(name, cVertex->name);
     canonicalLabel.first = 0;
@@ -130,15 +213,14 @@ struct InheritedVertex {
     ownerList = nullptr;
     conventionalPropagationMemo = new std::vector<int>();
     equivalenceClassOfIsomorphism = new DisjointSetForest();
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
+    correspondingVertex = cVertex;
   };
- 
+
   InheritedVertex(const InheritedVertex &iVertex) {
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
     this->type = iVertex.type;
     strcpy(this->name, iVertex.name);
-    this->canonicalLabel = iVertex.canonicalLabel;
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
+    this->canonicalLabel.first = iVertex.canonicalLabel.first;
+    this->canonicalLabel.second = iVertex.canonicalLabel.second;
     this->hashString = new HashString(*iVertex.hashString);
     this->isPushedIntoFixCreditIndex = iVertex.isPushedIntoFixCreditIndex;
     this->beforeID = iVertex.beforeID;
@@ -149,36 +231,61 @@ struct InheritedVertex {
         new std::vector<int>(iVertex.conventionalPropagationMemo->begin(),
                              iVertex.conventionalPropagationMemo->end());
     this->equivalenceClassOfIsomorphism = iVertex.equivalenceClassOfIsomorphism;
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
+    this->correspondingVertex = iVertex.correspondingVertex;
+    this->correspondingVertex->correspondingVertexInTrie = this;
   }
 
   ~InheritedVertex() {
+#ifdef DIFFISO_DEB
     printf("%s:%d\n", __FUNCTION__, __LINE__);
-    delete (hashString);
-    printf("%s:%d\n", __FUNCTION__, __LINE__);
-    delete (conventionalPropagationMemo);
+    printf("DELETE IVERTEX:%p\n", this);
+    // delete (hashString);
+    // delete (conventionalPropagationMemo);
+    // this->correspondingVertex->correspondingVertexInTrie = nullptr;
     // freeDisjointSetForest(equivalenceClassOfIsomorphism);
     printf("%s:%d\n", __FUNCTION__, __LINE__);
+#endif
   }
 };
 
-const slim::element::variant<slim::element::monostate, InheritedVertex> CLASS_SENTINEL = slim::element::monostate();
+const slim::element::variant<slim::element::monostate, InheritedVertex>
+    CLASS_SENTINEL = slim::element::monostate();
 
 struct Trie {
   TrieBody *body;
   TerminationConditionInfo *info;
+  std::map<int, int> *orbit;
   Trie() {
     body = new TrieBody();
     info = new TerminationConditionInfo();
+    orbit = new std::map<int, int>();
   };
   // HashTable *trieLeavesTable;
+  void make_color_map(TrieBody *body, std::map<int, std::string> &m, std::map<int, int> &id_to_id) {
+    if(body->children->empty()) {
+      for(auto &v : *body->inheritedVertices) {
+	std::string s="";
+	for(int i=0; i<slim::element::get<InheritedVertex>(v).hashString->creditIndex; i++) {
+	  s+=std::to_string(slim::element::get<InheritedVertex>(v).hashString->body[i]);
+	}
 
+	m[id_to_id[slim::element::get<InheritedVertex>(v).correspondingVertex->ID]] = s;
+      }
+    } else {
+      for (auto &v : *body->children)
+	make_color_map(v.second, m, id_to_id);
+    }
+  }
 
-  void conventionalPropagationList(TrieBody *body,  propagation_list &list) {
+  void conventionalPropagationList(TrieBody *body, propagation_list &list) {
     if (body->children->empty()) {
-      std::list<InheritedVertex> l;
+      std::list<ConvertedGraphVertex *> l;
       for (auto &v : *body->inheritedVertices) {
-        l.push_back(slim::element::get<InheritedVertex>(v));
+#ifdef DIFFISO_DEB
+	printf("%s:%d\n", __FUNCTION__, __LINE__);
+	std::cout << *(slim::element::get<InheritedVertex>(v).correspondingVertex) << std::endl;
+#endif
+        l.push_back(slim::element::get<InheritedVertex>(v).correspondingVertex);
       }
       list.push_back(l);
     } else {
@@ -189,7 +296,7 @@ struct Trie {
 
   bool propagate(DiffInfo *diffInfo, Graphinfo *cAfterGraph,
                  Graphinfo *cBeforeGraph, int gapOfGlobalRootMemID,
-                 int *stepOfPropagationPtr);
+                 int *stepOfPropagationPtr, std::map<int, int> &id_map);
 
   Trie *gen_tmp_trie_from_originaltrie_and_gi(Graphinfo *org_gi,
                                               Graphinfo *tmp_gi);
@@ -271,6 +378,12 @@ inline bool operator!=(const InheritedVertex &a, const InheritedVertex &b) {
 
 inline std::ostream &operator<<(std::ostream &os,
                                 const InheritedVertex &iVertex) {
+  for(int i=0; i<iVertex.hashString->creditIndex; i++) {
+    std::cout << iVertex.hashString->body[i] << " ";
+  }
+  // for(auto x:iVertex.hashString->body) {
+  //   std::cout << x.second<<" ";
+  // }
   os << "<";
 
   switch (iVertex.type) {
@@ -293,10 +406,30 @@ inline std::ostream &operator<<(std::ostream &os,
   return os;
 }
 
+inline std::ostream &operator<<(std::ostream &os,
+                                const ConvertedGraphVertex *c) {
+  os << "<";
+  switch (c->type) {
+  case convertedAtom:
+    os << "SYMBOLATOM,";
+    break;
+  case convertedHyperLink:
+    os << "HYPERLINK,";
+    break;
+  default:
+    throw("This is unexpected vertex type");
+    break;
+  }
+  os << "ID=" << c->ID;
+  os << "NAME:\"" << c->name << "\"";
+  os << ">";
+  return os;
+}
+
 inline std::ostream &operator<<(std::ostream &os, const HashString &h) {
   os << "<" << h.creditIndex << ": ";
-  for (auto &x : *h.body) {
-    os << x << ", ";
+  for (auto &x : h.body) {
+    os <<"<" <<x.first << ", "<<x.second<<">";
   }
   os << ">";
   return os;
@@ -329,9 +462,9 @@ inline std::ostream &operator<<(std::ostream &os, const std::list<T> &list) {
 template <typename T>
 inline std::ostream &operator<<(std::ostream &os, const std::vector<T> &vec) {
   os << "[";
-  for(auto it = vec.begin(); it != vec.end(); ++it) {
+  for (auto it = vec.begin(); it != vec.end(); ++it) {
     os << (*it);
-    if(std::next(it, 1) != vec.end()) {
+    if (std::next(it, 1) != vec.end()) {
       os << ",";
     }
   }
@@ -343,12 +476,9 @@ template <typename S>
 void pushTrieBodyIntoGoAheadStackWithoutOverlap(S *stack, TrieBody *body);
 void freeInheritedVertex(InheritedVertex *iVertex);
 vertex_list::iterator getNextSentinel(vertex_list::iterator beginSentinel);
-void putLabelsToAdjacentVertices(vertex_list *pList,
-                                 ConvertedGraph *cAfterGraph,
-                                 int gapOfGlobalRootMemID);
-void classifyWithAttribute(propagation_list &l, ConvertedGraph *cAfterGraph, int gapOfGlobalRootMemID);
-Bool getStableRefinementOfConventionalPropagationList(
-    vertex_list *pList, ConvertedGraph *cAfterGraph, int gapOfGlobalRootMemID);
+void classifyWithAttribute(propagation_list &l, ConvertedGraph *cAfterGraph,
+                           int gapOfGlobalRootMemID);
+void refineConventionalPropagationListByPropagation(propagation_list &pList);
 void inheritedVertexDump(InheritedVertex *iVertex);
 void terminationConditionInfoDump(TerminationConditionInfo *tInfo);
 void trieDump(Trie *trie);
