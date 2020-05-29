@@ -1262,7 +1262,7 @@ template <typename T> bool classify(propagation_list &l, T score) {
          ++j) {
       if (score(*j) > score(*std::next(j, 1))) {
         std::list<ConvertedGraphVertex *> ll;
-        ll.splice(ll.end(), *i, i->begin(), std::next(j, 1));
+        ll.splice(ll.end(), *i, std::next(j, 1), std::next(std::next(j,1)));
         l.insert(i, ll);
         j = i->end();
         changed = true;
@@ -1350,32 +1350,32 @@ putLabelsToAdjacentVertices(const propagation_list &pList) {
 
 void refineConventionalPropagationListByPropagation(propagation_list &pList) {
   bool refined = false;
-#ifdef MUTEX_OPT
-  std::set<int> s;
-  for (auto cell = pList.begin(); cell != pList.end(); cell++) {
-    for(auto v = cell->begin(); v != cell->end(); v++) {
-      if((*v)->links.size() == 2) { // degree is one
-	auto tmpType = (*v)->type;
-	auto &tmpLink = (*v)->links[0];
-	if(tmpLink.attr < 128 and tmpType == convertedAtom) {
-	  if (cell->size() == 1) { // cell is a singleton
-	    s.insert(tmpLink.data.ID); // v's adj will be migrated to a new singleton cell
-	  } else { // cell is not a singleton
-	    auto it = s.find((*v)->ID);
-	    if(it != s.end()) { // v has to be migrated
-	      std::list<ConvertedGraphVertex *> new_cell;
-	      new_cell.splice(new_cell.end(), *cell, v);
-	      pList.insert(cell, new_cell);
-	      break;
-	    }
-	  }
-	}
-      }
-    }
-  }
-  return;
+// #ifdef MUTEX_OPT
+//   std::set<int> s;
+//   for (auto cell = pList.begin(); cell != pList.end(); cell++) {
+//     for(auto v = cell->begin(); v != cell->end(); v++) {
+//       if((*v)->links.size() == 2) { // degree is one
+// 	auto tmpType = (*v)->type;
+// 	auto &tmpLink = (*v)->links[0];
+// 	if(tmpLink.attr < 128 and tmpType == convertedAtom) {
+// 	  if (cell->size() == 1) { // cell is a singleton
+// 	    s.insert(tmpLink.data.ID); // v's adj will be migrated to a new singleton cell
+// 	  } else { // cell is not a singleton
+// 	    auto it = s.find((*v)->ID);
+// 	    if(it != s.end()) { // v has to be migrated
+// 	      std::list<ConvertedGraphVertex *> new_cell;
+// 	      new_cell.splice(new_cell.end(), *cell, v);
+// 	      pList.insert(cell, new_cell);
+// 	      break;
+// 	    }
+// 	  }
+// 	}
+//       }
+//     }
+//   }
+//   return;
 
-#endif
+// #endif
 
 
   do {
