@@ -1351,8 +1351,8 @@ putLabelsToAdjacentVertices(const propagation_list &pList) {
 void refineConventionalPropagationListByPropagation(propagation_list &pList) {
   bool refined = false;
 #ifdef MUTEX_OPT
-  std::set<int> s;
-  for (auto cell = pList.begin(); cell != pList.end(); cell++) {
+  bool ff = true;
+  for (auto cell = pList.begin(); cell != pList.end() and ff; cell++) {
     for(auto v = cell->begin(); v != cell->end(); v++) {
       if((*v)->links.size() == 2) { // degree is one
 	auto tmpType = (*v)->type;
@@ -1367,6 +1367,7 @@ void refineConventionalPropagationListByPropagation(propagation_list &pList) {
 		  new_cell.splice(new_cell.end(), *c, x);
 		  pList.insert(c, new_cell);
 		  f = false;
+		  ff = false;
 		  break;
 		}
 	      }
