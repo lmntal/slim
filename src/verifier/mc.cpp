@@ -357,6 +357,11 @@ void mc_expand(const StateSpaceRef ss, State *s, AutomataStateRef p_s,
   for(auto it : *(s->trie->orbit)) {
     auto_orbit[id_to_id_map[it.first]] = it.second;
   }
+#ifdef DIFFISO_GEN
+  for(auto p : auto_orbit) {
+    std::cout << p.first << "-->" << p.second << std::endl;
+  }
+#endif
   //s->trie->make_color_map(s->trie->body, color_m, id_to_id_map);
   // for(auto x:color_m) {
   //   std::cout << x.first <<"-->"<<x.second << std::endl;
