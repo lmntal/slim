@@ -54,6 +54,7 @@
 #include "state_defs.h"
 #include "tree_compress.h"
 #include "vm/vm.h"
+#include "runtime_status.h"
 
 #include <memory>
 
@@ -135,6 +136,7 @@ void state_cost_unlock(EWLock *EWLOCK, mtx_data_t ID);
 /** ------------
  *  Transition
  */
+unsigned long transition_space(TransitionRef t);
 
 struct Transition {
   State *s; /*  8byte: 遷移先状態 */
@@ -151,7 +153,7 @@ struct Transition {
   ~Transition() {
 #ifdef PROFILE
     if (lmn_env.profile_level >= 3) {
-      profile_remove_space(PROFILE_SPACE__TRANS_OBJECT, transition_space(t));
+      profile_remove_space(PROFILE_SPACE__TRANS_OBJECT, transition_space(this));
     }
 #endif
     this->rule_names.destroy();
@@ -159,7 +161,7 @@ struct Transition {
 };
 
 TransitionRef transition_make(State *s, lmn_interned_str rule_name);
-unsigned long transition_space(TransitionRef t);
+
 void transition_free(TransitionRef t);
 void transition_add_rule(TransitionRef t, lmn_interned_str rule_name,
                          LmnCost cost);
