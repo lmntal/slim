@@ -364,6 +364,9 @@ State *StateTable::insert(State *ins, unsigned long *col) {
 
       if (this->use_rehasher() && str->is_dummy() && !str->is_encoded() &&
           !lmn_env.tree_compress) {
+	if (slim::config::profile && lmn_env.profile_level >= 3) {
+	  profile_countup(PROFILE_COUNT__HASH_CONFLICT_A);
+	}
         /* A. オリジナルテーブルにおいて, dummy状態が比較対象
          * 　 --> memidテーブル側の探索へ切り替える.
          *    (オリジナルテーブルのdummy状態のバイト列は任意のタイミングで破棄されるため,
@@ -385,6 +388,9 @@ State *StateTable::insert(State *ins, unsigned long *col) {
           ret = this->rehash_tbl_->insert(ins);
         break;
       } else if (!STATE_EQUAL(this, ins, str)) {
+	if (slim::config::profile && lmn_env.profile_level >= 3) {
+	  profile_countup(PROFILE_COUNT__HASH_CONFLICT_B);
+	}
         /** B. memidテーブルへのlookupの場合,
          *     もしくはオリジナルテーブルへのlookupで非dummy状態と等価な場合
          */
@@ -398,12 +404,18 @@ State *StateTable::insert(State *ins, unsigned long *col) {
         LMN_ASSERT(ret);
         break;
       } else if (str->is_encoded()) {
+	if (slim::config::profile && lmn_env.profile_level >= 3) {
+	  profile_countup(PROFILE_COUNT__HASH_CONFLICT_C);
+	}
         /** C. memidテーブルへのlookupでハッシュ値が衝突した場合.
          * (同形成判定結果が偽) */
         if (slim::config::profile && lmn_env.profile_level >= 3) {
           profile_countup(PROFILE_COUNT__HASH_CONFLICT_HASHV);
         }
       } else {
+	if (slim::config::profile && lmn_env.profile_level >= 3) {
+	  profile_countup(PROFILE_COUNT__HASH_CONFLICT_D);
+	}
         /** D.
          * オリジナルテーブルへのlookupで非dummy状態とハッシュ値が衝突した場合.
          */
@@ -447,6 +459,11 @@ State *StateTable::insert(State *ins, unsigned long *col) {
         }
       }
       /* >>>>>>> ハッシュ値が等しい状態に対する処理ここまで <<<<<<<< */
+    } else {
+      if (slim::config::profile && lmn_env.profile_level >= 3 &&
+	  hash % this->cap() == state_hash(str) % this->cap()) {
+	profile_countup(PROFILE_COUNT__HASH_CONFLICT_NOT_EQ);
+      }
     }
 
     /** エントリリストへの状態追加操作:

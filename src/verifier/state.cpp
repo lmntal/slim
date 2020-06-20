@@ -105,6 +105,10 @@ static int state_equals_with_compress(State *check, State *stored) {
   LmnBinStrRef bs1, bs2;
   int t;
 
+  if (slim::config::profile && lmn_env.profile_level >= 3) {
+    profile_countup(PROFILE_COUNT__STATE_EQ_WITH_CMP);
+  }
+
 #ifdef PROFILE
   if (lmn_env.prof_no_memeq) {
     /* 本フラグが真の場合はグラフ同形成判定を行わず,
@@ -132,10 +136,16 @@ static int state_equals_with_compress(State *check, State *stored) {
 
   if (check->is_encoded() && stored->is_encoded()) {
     /* 膜のIDで比較 */
+    if (slim::config::profile && lmn_env.profile_level >= 3) {
+      profile_countup(PROFILE_COUNT__STATE_EQ_BY_BINSTR);
+    }
     t = check->state_name == stored->state_name &&
         binstr_compare(bs1, bs2) == 0;
   } else if (check->state_mem() && bs2) {
     /* 同型性判定 */
+    if (slim::config::profile && lmn_env.profile_level >= 3) {
+      profile_countup(PROFILE_COUNT__STATE_EQ_BY_ISO);
+    }
     t = check->state_name == stored->state_name &&
         lmn_mem_equals_enc(bs2, check->state_mem());
   } else if (bs1 && bs2) {

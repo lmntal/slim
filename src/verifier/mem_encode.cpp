@@ -374,7 +374,7 @@ static BOOL mem_equals_enc_sub(LmnBinStrRef bs, LmnMembraneRef mem,
                                unsigned long tbl_size) {
 #ifdef PROFILE
   if (lmn_env.profile_level >= 3) {
-    profile_start_timer(PROFILE_TIME__STATE_COMPARE_MEQ);
+    profile_start_timer(PROFILE_TIME__STATE_COMPARE_ENCEQ);
   }
 #endif
 
@@ -401,7 +401,7 @@ static BOOL mem_equals_enc_sub(LmnBinStrRef bs, LmnMembraneRef mem,
 
 #ifdef PROFILE
   if (lmn_env.profile_level >= 3) {
-    profile_finish_timer(PROFILE_TIME__STATE_COMPARE_MEQ);
+    profile_finish_timer(PROFILE_TIME__STATE_COMPARE_ENCEQ);
   }
 #endif
 

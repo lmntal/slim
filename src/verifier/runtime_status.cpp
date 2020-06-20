@@ -975,6 +975,9 @@ static const char *profile_time_id_to_name(int type) {
   case PROFILE_TIME__STATE_COMPARE_MEQ:
     ret = "state mem compare";
     break;
+  case PROFILE_TIME__STATE_COMPARE_ENCEQ:
+    ret = "state mem eq enc";
+    break;
   case PROFILE_TIME__STATE_COMPARE_MID:
     ret = "state binstr compare";
     break;
@@ -1048,6 +1051,21 @@ static const char *profile_counter_id_to_name(int type) {
   case PROFILE_COUNT__HASH_CONFLICT_HASHV:
     ret = "conflict hash value";
     break;
+  case PROFILE_COUNT__HASH_CONFLICT_A:
+    ret = "conflict pattern A";
+    break;
+  case PROFILE_COUNT__HASH_CONFLICT_B:
+    ret = "conflict pattern B";
+    break;
+  case PROFILE_COUNT__HASH_CONFLICT_C:
+    ret = "conflict pattern C";
+    break;
+  case PROFILE_COUNT__HASH_CONFLICT_D:
+    ret = "conflict pattern D";
+    break;
+  case PROFILE_COUNT__HASH_CONFLICT_NOT_EQ:
+    ret = "hash congruence";
+    break;
   case PROFILE_COUNT__HASH_RESIZE_TRIAL:
     ret = "trial tbl resize";
     break;
@@ -1056,6 +1074,15 @@ static const char *profile_counter_id_to_name(int type) {
     break;
   case PROFILE_COUNT__HASH_FAIL_TO_INSERT:
     ret = "fail to insert tbl";
+    break;
+  case PROFILE_COUNT__STATE_EQ_WITH_CMP:
+    ret = "state eq with cmp";
+    break;
+  case PROFILE_COUNT__STATE_EQ_BY_BINSTR:
+    ret = "state eq by binstr";
+    break;
+  case PROFILE_COUNT__STATE_EQ_BY_ISO:
+    ret = "state eq by isomorphism";
     break;
   default:
     ret = "unknown";
