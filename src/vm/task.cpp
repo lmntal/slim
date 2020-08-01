@@ -2334,7 +2334,9 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
 
     mp = (LmnMembraneRef)rc->wt(memi);
     delete mp;
-    if (rc->is_zerostep) {
+    // 0step実行は膜スタックの順序を無視して実行されることがあるため
+    // 膜スタックに残っている膜を解放してしまうことがある
+    if (RC_GET_MODE(rc, REACT_MEM_ORIENTED) && rc->is_zerostep) {
       lmn_memstack_delete(((MemReactContext *)rc)->MEMSTACK(), mp);
     }
     break;
