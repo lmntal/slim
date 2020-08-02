@@ -270,9 +270,10 @@ static void mem_oriented_loop(LmnReactCxtRef rc, LmnMembraneRef mem) {
 /**
  * @brief 膜内の0stepルールセットを適用できるだけ適用する
  */
-void react_zerostep_rulesets(LmnReactCxtRef rc, LmnMembraneRef cur_mem) {
+bool react_zerostep_rulesets(LmnReactCxtRef rc, LmnMembraneRef cur_mem) {
   auto &rulesets = cur_mem->get_rulesets();
   BOOL reacted = FALSE;
+  bool reacted_any = false;
 
   rc->is_zerostep = true;
   do {
@@ -283,8 +284,11 @@ void react_zerostep_rulesets(LmnReactCxtRef rc, LmnMembraneRef cur_mem) {
         continue;
       reacted |= react_ruleset(rc, cur_mem, rs);
     }
+    reacted_any |= reacted;
   } while (reacted);
   rc->is_zerostep = false;
+
+  return reacted_any;
 }
 
 /**
@@ -388,8 +392,14 @@ BOOL react_rule(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule) {
     rule_wall_time_finish();
 
   /* 適用に成功したら0step実行に入る。既に入っていれば何もしない */
-  if (result && !rc->is_zerostep)
-    react_zerostep_rulesets(rc, mem);
+  if (result && !rc->is_zerostep) {
+    bool reacted = react_zerostep_rulesets(rc, mem);
+    if (reacted && RC_GET_MODE(rc, REACT_MEM_ORIENTED)) {
+      // zerostep中に生成した膜が消えたりすると膜スタック中の膜が解放されメモリアクセス違反になるので膜スタックを作り直す
+      // 反応開始時点ではmemが膜スタックの先頭にあるはずなのでmem以下だけ作り直せばいいかも？
+      lmn_memstack_reconstruct(((MemReactContext *)rc)->MEMSTACK(), RC_GROOT_MEM(rc));
+    }
+  }
 
   profile_finish_trial();
 
@@ -2334,11 +2344,6 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
 
     mp = (LmnMembraneRef)rc->wt(memi);
     delete mp;
-    // 0step実行は膜スタックの順序を無視して実行されることがあるため
-    // 膜スタックに残っている膜を解放してしまうことがある
-    if (RC_GET_MODE(rc, REACT_MEM_ORIENTED) && rc->is_zerostep) {
-      lmn_memstack_delete(((MemReactContext *)rc)->MEMSTACK(), mp);
-    }
     break;
   }
   case INSTR_ADDMEM: {
