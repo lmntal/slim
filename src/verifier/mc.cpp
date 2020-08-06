@@ -248,7 +248,7 @@ void mc_expand(const StateSpaceRef ss, State *s, AutomataStateRef p_s,
    *  フラグセットのタイミングは重要.) */
 
   s->set_expanded();
-  RC_CLEAR_DATA(rc);
+  RC_CLEAR_DATA(dynamic_cast<MCReactContext *>(rc));
 
 #ifdef PROFILE
   if (lmn_env.profile_level >= 3) {
@@ -429,7 +429,7 @@ void mc_gen_successors(State *src, LmnMembraneRef mem, BYTE state_name,
   Vector *expanded_roots, *expanded_rules;
   unsigned int i, n, old;
 
-  RC_SET_GROOT_MEM(rc, mem);
+  dynamic_cast<MCReactContext *>(rc)->set_global_root(mem);
 
   /* 性質遷移数だけ本関数を呼び出している.
    * 一つ前までの展開遷移数をメモしておくことで, 今回の展開遷移数を計算する */

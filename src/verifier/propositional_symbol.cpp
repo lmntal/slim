@@ -172,13 +172,12 @@ PropositionRef propsym_get_proposition(SymbolDefinitionRef s) {
 }
 
 BOOL proposition_eval(PropositionRef prop, LmnMembraneRef mem) {
-  LmnReactCxt rc(REACT_PROPERTY);
+  LmnReactCxt rc(mem, REACT_PROPERTY);
   BOOL b;
 
   if (!prop)
     return FALSE;
 
-  RC_SET_GROOT_MEM(&rc, mem);
   b = react_rule(&rc, mem, proposition_get_rule(prop));
 
   return b;

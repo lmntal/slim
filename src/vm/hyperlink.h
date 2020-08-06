@@ -297,9 +297,6 @@ struct SameProcCxt {
   LmnLinkAttr start_attr;
 };
 
-void lmn_sameproccxt_init(LmnReactCxtRef rc);
-void lmn_sameproccxt_clear(LmnReactCxtRef rc);
-
 /* ハイパーリンクhlのハッシュ値を返す. */
 
 /* @} */

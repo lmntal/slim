@@ -160,7 +160,7 @@ void lmn_run(Vector *start_rulesets) {
   static std::unique_ptr<MemReactContext> mrc = nullptr;
 
   if (!mrc)
-    mrc = c14::make_unique<MemReactContext>();
+    mrc = c14::make_unique<MemReactContext>(nullptr);
 
 #ifdef USE_FIRSTCLASS_RULE
   first_class_rule_tbl_init();
@@ -185,9 +185,8 @@ void lmn_run(Vector *start_rulesets) {
 
   /* interactive : (normal_remain時でnormal_remaining=ON)以外の場合は初期化 */
   if (!lmn_env.normal_remain && !lmn_env.normal_remaining) {
-    mrc = c14::make_unique<MemReactContext>();
+    mrc = c14::make_unique<MemReactContext>(mem);
     mem = new LmnMembrane();
-    RC_SET_GROOT_MEM(mrc.get(), mem);
   }
   lmn_memstack_push(((MemReactContext *)mrc.get())->MEMSTACK(), mem);
 
@@ -427,12 +426,12 @@ BOOL react_rule(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule) {
   }
 
   if (rc->get_hl_sameproccxt()) {
-    lmn_sameproccxt_clear(rc); /* とりあえずここに配置 */
+    rc->clear_hl_spc(); /* とりあえずここに配置 */
     // normal parallel destroy
     if (lmn_env.enable_parallel && !lmn_env.nd) {
       int i;
       for (i = 0; i < lmn_env.core_num; i++) {
-        lmn_sameproccxt_clear(thread_info[i]->rc);
+        thread_info[i]->rc->clear_hl_spc();
       }
     }
   }
@@ -443,10 +442,8 @@ BOOL react_rule(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule) {
 /* 膜memでrulesetsのルールの適用を行う.
  * 適用結果は無視する */
 void react_start_rulesets(LmnMembraneRef mem, Vector *rulesets) {
-  LmnReactCxt rc(REACT_STAND_ALONE);
+  LmnReactCxt rc(mem, REACT_STAND_ALONE);
   int i;
-
-  RC_SET_GROOT_MEM(&rc, mem);
 
   for (i = 0; i < rulesets->get_num(); i++) {
     react_ruleset(&rc, mem, (LmnRuleSetRef)rulesets->get(i));
@@ -1319,7 +1316,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     if (rc_hlink_opt(atomi, rc)) {
       /* hyperlink の接続関係を利用したルールマッチング最適化 */
       if (!rc->get_hl_sameproccxt())
-        lmn_sameproccxt_init(rc);
+        rc->prepare_hl_spc();
       auto spc =
           (SameProcCxt *)hashtbl_get(rc->get_hl_sameproccxt(), (HashKeyType)atomi);
       findatom_through_hyperlink(rc, rule, instr, spc, mem, f, atomi);
@@ -1425,7 +1422,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
         SameProcCxt *spc;
 
         if (!rc->get_hl_sameproccxt()) {
-          lmn_sameproccxt_init(rc);
+          rc->prepare_hl_spc();
         }
 
         /* 型付きプロセス文脈atomiがoriginal/cloneのどちらであるか判別 */
@@ -2853,7 +2850,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     READ_VAL(LmnInstrVar, instr, arg2);
 
     if (!rc->get_hl_sameproccxt()) {
-      lmn_sameproccxt_init(rc);
+      rc->prepare_hl_spc();
     }
 
     if (!hashtbl_contains(rc->get_hl_sameproccxt(), (HashKeyType)atom1)) {
@@ -2877,7 +2874,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     if (lmn_env.enable_parallel && !lmn_env.nd) {
       for (i = 0; i < lmn_env.core_num; i++) {
         if (!thread_info[i]->rc->get_hl_sameproccxt()) {
-          lmn_sameproccxt_init(thread_info[i]->rc);
+          thread_info[i]->rc->prepare_hl_spc();
         }
 
         if (!hashtbl_contains(thread_info[i]->rc->get_hl_sameproccxt(),
@@ -4062,8 +4059,8 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     READ_VAL(LmnSubInstrSize, instr, subinstr_size);
 
     if (rc->get_hl_sameproccxt()) {
-      lmn_sameproccxt_clear(
-          rc); /*branchとhyperlinkを同時起動するための急場しのぎ */
+      /*branchとhyperlinkを同時起動するための急場しのぎ */
+      rc->clear_hl_spc();
     }
 
     auto next = instr + subinstr_size;

@@ -839,10 +839,6 @@ void hs_print(HashSet *hs) {
 //  commit      = FALSE;
 //}
 
-void lmn_sameproccxt_init(LmnReactCxtRef rc) {
-  RC_SET_HLINK_SPC(rc, hashtbl_make(2));
-}
-
 static inline void sameproccxt_destroy(SimpleHashtbl *hl_sameproccxt) {
   HashIterator it;
 
@@ -856,11 +852,6 @@ static inline void sameproccxt_destroy(SimpleHashtbl *hl_sameproccxt) {
   }
 
   hashtbl_free(hl_sameproccxt);
-}
-
-void lmn_sameproccxt_clear(LmnReactCxtRef rc) {
-  sameproccxt_destroy(rc->get_hl_sameproccxt());
-  RC_SET_HLINK_SPC(rc, NULL);
 }
 
 /* rootの子を全てtreeに格納する(withoutは除く) */

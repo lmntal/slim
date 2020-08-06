@@ -84,11 +84,28 @@ struct RuleContext {
                          時のアトム番号と、同名型付きプロセス文脈を持つアトム引数との対応関係を保持
                        */
 
-  RuleContext() { work_array = LmnRegisterArray(1024); }
-  virtual ~RuleContext() {}
+  RuleContext() : hl_sameproccxt(nullptr), work_array(1024) {
+#ifdef USE_FIRSTCLASS_RULE
+    insertion_events = new Vector(4);
+#endif
+  }
+  virtual ~RuleContext() {
+    if (hl_sameproccxt) {
+      clear_hl_spc();
+    }
+#ifdef USE_FIRSTCLASS_RULE
+    if (this->insertion_events) {
+      delete this->insertion_events;
+    }
+#endif
+  }
 
   RuleContext &operator=(const RuleContext &cxt) {
     this->work_array = cxt.work_array;
+#ifdef USE_FIRSTCLASS_RULE
+    delete this->insertion_events;
+    this->insertion_events = new Vector(*from.insertion_events);
+#endif
     return *this;
   }
 
@@ -105,11 +122,14 @@ struct RuleContext {
   LmnWord &wt(unsigned int i) { return reg(i).wt; }
   LmnByte &at(unsigned int i) { return reg(i).at; }
   LmnByte &tt(unsigned int i) { return reg(i).tt; }
+
+  void prepare_hl_spc() {
+    hl_sameproccxt = hashtbl_make(2);
+  }
+  void clear_hl_spc();
 };
 } // namespace vm
 } // namespace slim
-
-void lmn_sameproccxt_clear(LmnReactCxtRef rc);
 
 #define REACT_MEM_ORIENTED (0x01U) /* 膜主導テスト */
 #define REACT_ND (0x01U << 1)      /* 非決定実行: 状態の展開 */
@@ -132,37 +152,16 @@ public:
   constexpr static size_t warray_DEF_SIZE = 1024U;
 
   LmnReactCxt() : is_zerostep(false), keep_process_id_in_nd_mode(false), trace_num(0) {}
-  LmnReactCxt(BYTE mode)
-      : is_zerostep(false), keep_process_id_in_nd_mode(false) {
-    this->mode = mode;
-    global_root = NULL;
-    hl_sameproccxt = NULL;
-    trace_num = 0;
-#ifdef USE_FIRSTCLASS_RULE
-    insertion_events = new Vector(4);
-#endif
+  LmnReactCxt(LmnMembrane *groot, BYTE mode)
+      : is_zerostep(false), keep_process_id_in_nd_mode(false), trace_num(0),
+        mode(mode), global_root(groot) {
   }
 
   LmnReactCxt &operator=(const LmnReactCxt &from) {
     this->RuleContext::operator=(from);
     this->mode = from.mode;
     this->global_root = from.global_root;
-#ifdef USE_FIRSTCLASS_RULE
-    delete this->insertion_events;
-    this->insertion_events = new Vector(*from.insertion_events);
-#endif
     return *this;
-  }
-
-  virtual ~LmnReactCxt() {
-    if (hl_sameproccxt) {
-      lmn_sameproccxt_clear(this);
-    }
-#ifdef USE_FIRSTCLASS_RULE
-    if (this->insertion_events) {
-      delete this->insertion_events;
-    }
-#endif
   }
 
   unsigned int get_reaction_count() const { return trace_num; }
@@ -183,26 +182,16 @@ public:
 LmnMemStack lmn_memstack_make(void);
 void lmn_memstack_free(LmnMemStack memstack);
 
-struct MemReactContext;
-
 class MemReactContext : public LmnReactCxt {
   LmnMemStack memstack; /* 膜主導実行時に使用 */
 public:
   ~MemReactContext() { lmn_memstack_free(MEMSTACK()); }
 
-  MemReactContext() : LmnReactCxt(REACT_MEM_ORIENTED) {
-    MEMSTACK_SET(lmn_memstack_make());
+  MemReactContext(LmnMembrane *mem) : LmnReactCxt(mem, REACT_MEM_ORIENTED) {
+    memstack = lmn_memstack_make();
   }
   LmnMemStack MEMSTACK();
-  void MEMSTACK_SET(LmnMemStack s);
 };
-
-void RC_SET_GROOT_MEM(LmnReactCxtRef cxt, LmnMembraneRef mem);
-
-void RC_SET_HLINK_SPC(LmnReactCxtRef cxt, SimpleHashtbl *spc);
-
-struct MCReactContext;
-struct McReactCxtData *RC_ND_DATA(MCReactContext *cxt);
 
 BOOL rc_hlink_opt(LmnInstrVar atomi, LmnReactCxtRef rc);
 
@@ -255,6 +244,9 @@ struct McReactCxtData {
   }
 };
 
+
+struct McReactCxtData *RC_ND_DATA(struct MCReactContext *cxt);
+
 #define RC_MC_DREC_MAX (3)
 
 #define RC_MC_DMEM_MASK (0x01U)
@@ -302,7 +294,7 @@ struct McReactCxtData {
   } while (0)
 #define RC_CLEAR_DATA(RC)                                                      \
   do {                                                                         \
-    RC_SET_GROOT_MEM(RC, NULL);                                                \
+    (RC)->set_global_root(nullptr);                                              \
     st_clear(RC_SUCC_TBL(RC));                                                 \
     RC_EXPANDED_RULES(RC)->clear();                                          \
     RC_EXPANDED(RC)->clear();                                                \
@@ -322,7 +314,7 @@ struct McReactCxtData {
   } while (0)
 
 struct MCReactContext : LmnReactCxt {
-  MCReactContext() : LmnReactCxt(REACT_ND) {
+  MCReactContext(LmnMembrane *mem) : LmnReactCxt(mem, REACT_ND) {
     if (data.mem_deltas) {
       RC_MC_SET_DMEM(this);
     }
@@ -336,6 +328,10 @@ struct MCReactContext : LmnReactCxt {
     if (lmn_env.d_compress) {
       RC_MC_SET_D(this);
     }
+  }
+
+  void set_global_root(LmnMembrane *mem) {
+    global_root = mem;
   }
 
   McReactCxtData data;

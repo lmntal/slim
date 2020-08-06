@@ -131,7 +131,6 @@ void normal_parallel_init(void) {
     thread_info[i]->rc = new LmnReactCxt();
     thread_info[i]->rc->warray_set(
         LmnRegisterArray(thread_info[i]->rc->capacity()));
-    RC_SET_HLINK_SPC(thread_info[i]->rc, NULL);
     thread_info[i]->register_size = LmnReactCxt::warray_DEF_SIZE;
     thread_info[i]->id = i;
     thread_info[i]->next_atom = NULL;

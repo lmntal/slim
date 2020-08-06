@@ -562,10 +562,9 @@ static BOOL dpor_explore_subgraph(McDporData *mc, ContextC1Ref c,
   unsigned int i;
   BOOL ret;
 
-  MCReactContext rc;
   cur = DMEM_ROOT_MEM(c->d);
   nxt_checked_ids.init(4);
-  RC_SET_GROOT_MEM(&rc, cur);
+  MCReactContext rc(cur);
 
   POR_DEBUG({
     printf("explore rec%u, delta_reacted_id=%u\n", mc->cur_depth, c->id);
@@ -1006,7 +1005,7 @@ void dpor_start(StateSpaceRef ss, State *s, LmnReactCxtRef rc, Vector *new_s,
 void dpor_explore_redundunt_graph(StateSpaceRef ss) {
   if (reduced_stack) {
     Vector *new_ss, *search;
-    MCReactContext rc;
+    MCReactContext rc(nullptr);
     BYTE f, org_por, org_old, org_del;
 
     org_por = lmn_env.enable_por;

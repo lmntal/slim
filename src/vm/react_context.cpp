@@ -79,14 +79,20 @@
 //#endif
 //};
 
-void RC_SET_GROOT_MEM(LmnReactCxtRef cxt, LmnMembraneRef mem) {
-  cxt->global_root = mem;
-}
+void slim::vm::RuleContext::clear_hl_spc() {
+  HashIterator it;
 
-SimpleHashtbl *RC_HLINK_SPC(LmnReactCxtRef cxt) { return cxt->hl_sameproccxt; }
+  if (!hl_sameproccxt)
+    return;
 
-void RC_SET_HLINK_SPC(LmnReactCxtRef cxt, SimpleHashtbl *spc) {
-  cxt->hl_sameproccxt = spc;
+  for (it = hashtbl_iterator(hl_sameproccxt); !hashtbliter_isend(&it);
+       hashtbliter_next(&it)) {
+    SameProcCxt *spc = (SameProcCxt *)(hashtbliter_entry(&it)->data);
+    delete spc;
+  }
+
+  hashtbl_free(hl_sameproccxt);
+  hl_sameproccxt = nullptr;
 }
 
 BOOL rc_hlink_opt(LmnInstrVar atomi, LmnReactCxtRef rc) {
@@ -107,8 +113,6 @@ void react_context_copy(LmnReactCxtRef to, LmnReactCxtRef from) { *to = *from; }
  */
 
 LmnMemStack MemReactContext::MEMSTACK() { return this->memstack; }
-
-void MemReactContext::MEMSTACK_SET(LmnMemStack s) { this->memstack = s; }
 
 /*----------------------------------------------------------------------
  * ND React Context
