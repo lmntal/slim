@@ -79,15 +79,6 @@
 //#endif
 //};
 
-BOOL RC_GET_MODE(LmnReactCxtRef cxt, BYTE mode) {
-  return (cxt->mode & mode) == mode;
-}
-
-unsigned int RC_TRACE_NUM(LmnReactCxtRef cxt) { return cxt->trace_num; }
-unsigned int RC_TRACE_NUM_INC(LmnReactCxtRef cxt) { return cxt->trace_num++; }
-
-LmnMembraneRef RC_GROOT_MEM(LmnReactCxtRef cxt) { return cxt->global_root; }
-
 void RC_SET_GROOT_MEM(LmnReactCxtRef cxt, LmnMembraneRef mem) {
   cxt->global_root = mem;
 }
@@ -101,8 +92,8 @@ void RC_SET_HLINK_SPC(LmnReactCxtRef cxt, SimpleHashtbl *spc) {
 BOOL rc_hlink_opt(LmnInstrVar atomi, LmnReactCxtRef rc) {
   /*  return hl_sameproccxtが初期化済み && atomiは同名プロセス文脈を持つアトム
    */
-  return RC_HLINK_SPC(rc) &&
-         hashtbl_contains(RC_HLINK_SPC(rc), (HashKeyType)atomi);
+  return rc->get_hl_sameproccxt() &&
+         hashtbl_contains(rc->get_hl_sameproccxt(), (HashKeyType)atomi);
 }
 
 struct McReactCxtData *RC_ND_DATA(MCReactContext *cxt) {

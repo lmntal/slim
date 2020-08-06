@@ -120,7 +120,9 @@ void lmn_sameproccxt_clear(LmnReactCxtRef rc);
 struct LmnReactCxt : slim::vm::RuleContext {
   LmnMembrane
       *global_root; /* ルール適用対象となるグローバルルート膜. != wt[0] */
+private:
   unsigned int trace_num; /* ルール適用回数 (通常実行用トレース実行で使用)  */
+public:
   BYTE mode;
   bool is_zerostep;
   /* 非決定実行:
@@ -129,7 +131,7 @@ struct LmnReactCxt : slim::vm::RuleContext {
 
   constexpr static size_t warray_DEF_SIZE = 1024U;
 
-  LmnReactCxt() : is_zerostep(false), keep_process_id_in_nd_mode(false) {}
+  LmnReactCxt() : is_zerostep(false), keep_process_id_in_nd_mode(false), trace_num(0) {}
   LmnReactCxt(BYTE mode)
       : is_zerostep(false), keep_process_id_in_nd_mode(false) {
     this->mode = mode;
@@ -162,6 +164,16 @@ struct LmnReactCxt : slim::vm::RuleContext {
     }
 #endif
   }
+
+  unsigned int get_reaction_count() const { return trace_num; }
+  void increment_reaction_count() { trace_num++; }
+
+  bool has_mode(BYTE mode) const {
+    return (this->mode & mode) != 0;
+  }
+
+  LmnMembrane *get_global_root() { return global_root; }
+  SimpleHashtbl *get_hl_sameproccxt() { return hl_sameproccxt; }
 };
 
 /*----------------------------------------------------------------------
@@ -185,15 +197,8 @@ public:
   void MEMSTACK_SET(LmnMemStack s);
 };
 
-BOOL RC_GET_MODE(LmnReactCxtRef cxt, BYTE mode);
-
-unsigned int RC_TRACE_NUM(LmnReactCxtRef cxt);
-unsigned int RC_TRACE_NUM_INC(LmnReactCxtRef cxt);
-
-LmnMembraneRef RC_GROOT_MEM(LmnReactCxtRef cxt);
 void RC_SET_GROOT_MEM(LmnReactCxtRef cxt, LmnMembraneRef mem);
 
-SimpleHashtbl *RC_HLINK_SPC(LmnReactCxtRef cxt);
 void RC_SET_HLINK_SPC(LmnReactCxtRef cxt, SimpleHashtbl *spc);
 
 struct MCReactContext;

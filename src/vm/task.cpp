@@ -206,8 +206,10 @@ void lmn_run(Vector *start_rulesets) {
   lmn_memstack_reconstruct(((MemReactContext *)mrc.get())->MEMSTACK(), mem);
 
   if (lmn_env.trace) {
-    if (lmn_env.output_format != JSON)
-      fprintf(stdout, "%d: ", RC_TRACE_NUM_INC(mrc.get()));
+    if (lmn_env.output_format != JSON) {
+      mrc->increment_reaction_count();
+      fprintf(stdout, "%d: ", mrc->get_reaction_count());
+    }
     lmn_dump_cell_stdout(mem);
     if (lmn_env.show_hyperlink)
       lmn_hyperlink_print(mem);
@@ -394,36 +396,37 @@ BOOL react_rule(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule) {
   /* 適用に成功したら0step実行に入る。既に入っていれば何もしない */
   if (result && !rc->is_zerostep) {
     bool reacted = react_zerostep_rulesets(rc, mem);
-    if (reacted && RC_GET_MODE(rc, REACT_MEM_ORIENTED)) {
+    if (reacted && rc->has_mode(REACT_MEM_ORIENTED)) {
       // zerostep中に生成した膜が消えたりすると膜スタック中の膜が解放されメモリアクセス違反になるので膜スタックを作り直す
       // 反応開始時点ではmemが膜スタックの先頭にあるはずなのでmem以下だけ作り直せばいいかも？
-      lmn_memstack_reconstruct(((MemReactContext *)rc)->MEMSTACK(), RC_GROOT_MEM(rc));
+      lmn_memstack_reconstruct(((MemReactContext *)rc)->MEMSTACK(), rc->get_global_root());
     }
   }
 
   profile_finish_trial();
 
-  if (RC_GET_MODE(rc, REACT_MEM_ORIENTED) && !rc->is_zerostep) {
+  if (rc->has_mode(REACT_MEM_ORIENTED) && !rc->is_zerostep) {
     if (lmn_env.trace && result) {
       if (lmn_env.sp_dump_format == LMN_SYNTAX) {
-        lmn_dump_mem_stdout(RC_GROOT_MEM(rc));
+        lmn_dump_mem_stdout(rc->get_global_root());
         fprintf(stdout, ".\n");
-        lmn_dump_mem_stdout(RC_GROOT_MEM(rc));
+        lmn_dump_mem_stdout(rc->get_global_root());
         fprintf(stdout, ":- ");
-        RC_TRACE_NUM_INC(rc);
+        rc->increment_reaction_count();
       } else if (lmn_env.output_format == JSON) {
-        lmn_dump_cell_stdout(RC_GROOT_MEM(rc));
+        lmn_dump_cell_stdout(rc->get_global_root());
       } else {
         fprintf(stdout, "---->%s\n", lmn_id_to_name(rule->name));
-        fprintf(stdout, "%d: ", RC_TRACE_NUM_INC(rc));
-        lmn_dump_cell_stdout(RC_GROOT_MEM(rc));
+        rc->increment_reaction_count();
+        fprintf(stdout, "%d: ", rc->get_reaction_count());
+        lmn_dump_cell_stdout(rc->get_global_root());
         if (lmn_env.show_hyperlink)
-          lmn_hyperlink_print(RC_GROOT_MEM(rc));
+          lmn_hyperlink_print(rc->get_global_root());
       }
     }
   }
 
-  if (RC_HLINK_SPC(rc)) {
+  if (rc->get_hl_sameproccxt()) {
     lmn_sameproccxt_clear(rc); /* とりあえずここに配置 */
     // normal parallel destroy
     if (lmn_env.enable_parallel && !lmn_env.nd) {
@@ -1155,7 +1158,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
      *
      * CONTRACT: COMMIT命令に到達したルールはマッチング検査に成功している
      */
-    if (RC_GET_MODE(rc, REACT_ND) && !rc->is_zerostep) {
+    if (rc->has_mode(REACT_ND) && !rc->is_zerostep) {
       ProcessID org_next_id = env_next_id();
 
       if (RC_MC_USE_DMEM(rc)) {
@@ -1163,7 +1166,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
         /** >>>>>>>> enable delta-membrane <<<<<<< **/
         /** >>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<< **/
         struct MemDeltaRoot *d =
-            new MemDeltaRoot(RC_GROOT_MEM(rc), rule, env_next_id());
+            new MemDeltaRoot(rc->get_global_root(), rule, env_next_id());
         RC_ND_SET_MEM_DELTA_ROOT(rc, d);
 
         /* dmem_commit/revertとの整合性を保つため,
@@ -1207,7 +1210,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
         }
 #endif
 
-        tmp_global_root = lmn_mem_copy_with_map_ex(RC_GROOT_MEM(rc), &copymap);
+        tmp_global_root = lmn_mem_copy_with_map_ex(rc->get_global_root(), &copymap);
 
         /** 変数配列および属性配列のコピー */
         auto v = LmnRegisterArray(rc->capacity());
@@ -1245,7 +1248,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
             }
           } else if (r->register_tt() == TT_MEM) {
             if (rc->wt(i) ==
-                (LmnWord)RC_GROOT_MEM(rc)) { /* グローバルルート膜 */
+                (LmnWord)rc->get_global_root()) { /* グローバルルート膜 */
               r->register_set_wt((LmnWord)tmp_global_root);
             } else if (proc_tbl_get_by_mem(copymap, (LmnMembraneRef)rc->wt(i),
                                            &t)) {
@@ -1289,7 +1292,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       }
 
       return FALSE; /* matching backtrack! */
-    } else if (RC_GET_MODE(rc, REACT_PROPERTY)) {
+    } else if (rc->has_mode(REACT_PROPERTY)) {
       return TRUE; /* propertyはmatchingのみ */
     }
 
@@ -1315,10 +1318,10 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
 
     if (rc_hlink_opt(atomi, rc)) {
       /* hyperlink の接続関係を利用したルールマッチング最適化 */
-      if (!RC_HLINK_SPC(rc))
+      if (!rc->get_hl_sameproccxt())
         lmn_sameproccxt_init(rc);
       auto spc =
-          (SameProcCxt *)hashtbl_get(RC_HLINK_SPC(rc), (HashKeyType)atomi);
+          (SameProcCxt *)hashtbl_get(rc->get_hl_sameproccxt(), (HashKeyType)atomi);
       findatom_through_hyperlink(rc, rule, instr, spc, mem, f, atomi);
     } else {
       findatom(rc, rule, instr, mem, f, atomi);
@@ -1330,7 +1333,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     LmnInstrVar atomi, memi, findatomid;
     LmnLinkAttr attr;
 
-    if (RC_GET_MODE(rc, REACT_ND) && !rc->is_zerostep) {
+    if (rc->has_mode(REACT_ND) && !rc->is_zerostep) {
       lmn_fatal("This mode:exhaustive search can't use instruction:FindAtom2");
     }
 
@@ -1421,12 +1424,12 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       if (rc_hlink_opt(atomi, rc)) {
         SameProcCxt *spc;
 
-        if (!RC_HLINK_SPC(rc)) {
+        if (!rc->get_hl_sameproccxt()) {
           lmn_sameproccxt_init(rc);
         }
 
         /* 型付きプロセス文脈atomiがoriginal/cloneのどちらであるか判別 */
-        spc = (SameProcCxt *)hashtbl_get(RC_HLINK_SPC(rc), (HashKeyType)atomi);
+        spc = (SameProcCxt *)hashtbl_get(rc->get_hl_sameproccxt(), (HashKeyType)atomi);
         if (spc->is_clone(atom_arity)) {
           lmn_fatal(
               "Can't use hyperlink searching in parallel-runtime mode.\n");
@@ -1449,7 +1452,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
         if (check_exist(atom, f)) {
           rc->reg(atomi) = {(LmnWord)atom, LMN_ATTR_MAKE_LINK(0), TT_ATOM};
           if (rc_hlink_opt(atomi, rc)) {
-            auto spc = (SameProcCxt *)hashtbl_get(RC_HLINK_SPC(rc),
+            auto spc = (SameProcCxt *)hashtbl_get(rc->get_hl_sameproccxt(),
                                                   (HashKeyType)atomi);
 
             if (spc->is_consistent_with((LmnSymbolAtomRef)rc->wt(atomi))) {
@@ -1575,7 +1578,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       return FALSE;
     }
 
-    if (RC_GET_MODE(rc, REACT_ND) && RC_MC_USE_DPOR(rc) && !rc->is_zerostep) {
+    if (rc->has_mode(REACT_ND) && RC_MC_USE_DPOR(rc) && !rc->is_zerostep) {
       LmnMembraneRef m = (LmnMembraneRef)rc->wt(memi);
       dpor_LHS_flag_add(RC_POR_DATA(rc), m->mem_id(), LHS_MEM_NMEMS);
       this->push_stackframe([=](interpreter &itr, bool result) {
@@ -1595,7 +1598,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     if (!((LmnMembraneRef)rc->wt(memi))->get_rulesets().empty())
       return FALSE;
 
-    if (RC_GET_MODE(rc, REACT_ND) && RC_MC_USE_DPOR(rc) && !rc->is_zerostep) {
+    if (rc->has_mode(REACT_ND) && RC_MC_USE_DPOR(rc) && !rc->is_zerostep) {
       LmnMembraneRef m = (LmnMembraneRef)rc->wt(memi);
       dpor_LHS_flag_add(RC_POR_DATA(rc), m->mem_id(), LHS_MEM_NORULES);
       this->push_stackframe([=](interpreter &itr, bool result) {
@@ -1644,7 +1647,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       return FALSE;
     }
 
-    if (RC_GET_MODE(rc, REACT_ND) && RC_MC_USE_DPOR(rc) && !rc->is_zerostep) {
+    if (rc->has_mode(REACT_ND) && RC_MC_USE_DPOR(rc) && !rc->is_zerostep) {
       LmnMembraneRef m = (LmnMembraneRef)rc->wt(memi);
       dpor_LHS_flag_add(RC_POR_DATA(rc), m->mem_id(), LHS_MEM_NATOMS);
       this->push_stackframe([=](interpreter &itr, bool result) {
@@ -1667,7 +1670,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       return FALSE;
     }
 
-    if (RC_GET_MODE(rc, REACT_ND) && RC_MC_USE_DPOR(rc) && !rc->is_zerostep) {
+    if (rc->has_mode(REACT_ND) && RC_MC_USE_DPOR(rc) && !rc->is_zerostep) {
       LmnMembraneRef m = (LmnMembraneRef)rc->wt(memi);
       dpor_LHS_flag_add(RC_POR_DATA(rc), m->mem_id(), LHS_MEM_NATOMS);
       this->push_stackframe([=](interpreter &itr, bool result) {
@@ -2287,7 +2290,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     rc->wt(newmemi) = (LmnWord)mp;
     rc->tt(newmemi) = TT_MEM;
     mp->set_active(TRUE);
-    if (RC_GET_MODE(rc, REACT_MEM_ORIENTED)) {
+    if (rc->has_mode(REACT_MEM_ORIENTED)) {
       lmn_memstack_push(((MemReactContext *)rc)->MEMSTACK(), mp);
     }
     break;
@@ -2362,7 +2365,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     LmnInstrVar memi;
     READ_VAL(LmnInstrVar, instr, memi);
 
-    if (RC_GET_MODE(rc, REACT_MEM_ORIENTED)) {
+    if (rc->has_mode(REACT_MEM_ORIENTED)) {
       lmn_memstack_push(((MemReactContext *)rc)->MEMSTACK(),
                         (LmnMembraneRef)rc->wt(memi));
     }
@@ -2465,7 +2468,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
           return FALSE;
         }
         if (rc_hlink_opt(atomi, rc)) {
-          auto spc = ((SameProcCxt *)hashtbl_get(RC_HLINK_SPC(rc),
+          auto spc = ((SameProcCxt *)hashtbl_get(rc->get_hl_sameproccxt(),
                                                  (HashKeyType)atomi));
 
           auto atom = (LmnSymbolAtomRef)rc->wt(atomi);
@@ -2577,7 +2580,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
 
     rc->reg(funci) = {natoms, LMN_INT_ATTR, TT_OTHER};
 
-    if (RC_GET_MODE(rc, REACT_ND) && RC_MC_USE_DPOR(rc) && !rc->is_zerostep) {
+    if (rc->has_mode(REACT_ND) && RC_MC_USE_DPOR(rc) && !rc->is_zerostep) {
       auto addr = atoms.get();
       atoms.release();
       dpor_LHS_add_ground_atoms(RC_POR_DATA(rc), addr);
@@ -2849,22 +2852,22 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     READ_VAL(LmnInstrVar, instr, length2);
     READ_VAL(LmnInstrVar, instr, arg2);
 
-    if (!RC_HLINK_SPC(rc)) {
+    if (!rc->get_hl_sameproccxt()) {
       lmn_sameproccxt_init(rc);
     }
 
-    if (!hashtbl_contains(RC_HLINK_SPC(rc), (HashKeyType)atom1)) {
+    if (!hashtbl_contains(rc->get_hl_sameproccxt(), (HashKeyType)atom1)) {
       spc1 = new SameProcCxt(length1);
-      hashtbl_put(RC_HLINK_SPC(rc), (HashKeyType)atom1, (HashValueType)spc1);
+      hashtbl_put(rc->get_hl_sameproccxt(), (HashKeyType)atom1, (HashValueType)spc1);
     } else {
-      spc1 = (SameProcCxt *)hashtbl_get(RC_HLINK_SPC(rc), (HashKeyType)atom1);
+      spc1 = (SameProcCxt *)hashtbl_get(rc->get_hl_sameproccxt(), (HashKeyType)atom1);
     }
 
-    if (!hashtbl_contains(RC_HLINK_SPC(rc), (HashKeyType)atom2)) {
+    if (!hashtbl_contains(rc->get_hl_sameproccxt(), (HashKeyType)atom2)) {
       spc2 = new SameProcCxt(length2);
-      hashtbl_put(RC_HLINK_SPC(rc), (HashKeyType)atom2, (HashValueType)spc2);
+      hashtbl_put(rc->get_hl_sameproccxt(), (HashKeyType)atom2, (HashValueType)spc2);
     } else {
-      spc2 = (SameProcCxt *)hashtbl_get(RC_HLINK_SPC(rc), (HashKeyType)atom2);
+      spc2 = (SameProcCxt *)hashtbl_get(rc->get_hl_sameproccxt(), (HashKeyType)atom2);
     }
 
     spc1->add_proccxt_if_absent(atom1, arg1);
@@ -2873,27 +2876,27 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     ////normal parallel init
     if (lmn_env.enable_parallel && !lmn_env.nd) {
       for (i = 0; i < lmn_env.core_num; i++) {
-        if (!RC_HLINK_SPC(thread_info[i]->rc)) {
+        if (!thread_info[i]->rc->get_hl_sameproccxt()) {
           lmn_sameproccxt_init(thread_info[i]->rc);
         }
 
-        if (!hashtbl_contains(RC_HLINK_SPC(thread_info[i]->rc),
+        if (!hashtbl_contains(thread_info[i]->rc->get_hl_sameproccxt(),
                               (HashKeyType)atom1)) {
           spc1 = new SameProcCxt(length1);
-          hashtbl_put(RC_HLINK_SPC(thread_info[i]->rc), (HashKeyType)atom1,
+          hashtbl_put(thread_info[i]->rc->get_hl_sameproccxt(), (HashKeyType)atom1,
                       (HashValueType)spc1);
         } else {
-          spc1 = (SameProcCxt *)hashtbl_get(RC_HLINK_SPC(thread_info[i]->rc),
+          spc1 = (SameProcCxt *)hashtbl_get(thread_info[i]->rc->get_hl_sameproccxt(),
                                             (HashKeyType)atom1);
         }
 
-        if (!hashtbl_contains(RC_HLINK_SPC(thread_info[i]->rc),
+        if (!hashtbl_contains(thread_info[i]->rc->get_hl_sameproccxt(),
                               (HashKeyType)atom2)) {
           spc2 = new SameProcCxt(length2);
-          hashtbl_put(RC_HLINK_SPC(thread_info[i]->rc), (HashKeyType)atom2,
+          hashtbl_put(thread_info[i]->rc->get_hl_sameproccxt(), (HashKeyType)atom2,
                       (HashValueType)spc2);
         } else {
-          spc2 = (SameProcCxt *)hashtbl_get(RC_HLINK_SPC(thread_info[i]->rc),
+          spc2 = (SameProcCxt *)hashtbl_get(thread_info[i]->rc->get_hl_sameproccxt(),
                                             (HashKeyType)atom2);
         }
 
@@ -3238,7 +3241,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       return FALSE;
     }
 
-    if (RC_GET_MODE(rc, REACT_ND) && RC_MC_USE_DPOR(rc) && !rc->is_zerostep) {
+    if (rc->has_mode(REACT_ND) && RC_MC_USE_DPOR(rc) && !rc->is_zerostep) {
       LmnMembraneRef m = (LmnMembraneRef)rc->wt(memi);
       dpor_LHS_flag_add(RC_POR_DATA(rc), m->mem_id(), LHS_MEM_STABLE);
       this->push_stackframe([=](interpreter &itr, bool result) {
@@ -3919,7 +3922,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     if (!((LmnMembraneRef)rc->wt(memi))->nfreelinks(count))
       return FALSE;
 
-    if (RC_GET_MODE(rc, REACT_ND) && RC_MC_USE_DPOR(rc) && !rc->is_zerostep) {
+    if (rc->has_mode(REACT_ND) && RC_MC_USE_DPOR(rc) && !rc->is_zerostep) {
       LmnMembraneRef m = (LmnMembraneRef)rc->wt(memi);
       dpor_LHS_flag_add(RC_POR_DATA(rc), m->mem_id(), LHS_MEM_NFLINKS);
       this->push_stackframe([=](interpreter &itr, bool result) {
@@ -4058,7 +4061,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     LmnSubInstrSize subinstr_size;
     READ_VAL(LmnSubInstrSize, instr, subinstr_size);
 
-    if (RC_HLINK_SPC(rc)) {
+    if (rc->get_hl_sameproccxt()) {
       lmn_sameproccxt_clear(
           rc); /*branchとhyperlinkを同時起動するための急場しのぎ */
     }
@@ -4196,8 +4199,8 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
   }
   case INSTR_CELLDUMP: {
     printf("CELL DUMP:\n");
-    lmn_dump_cell_stdout(RC_GROOT_MEM(rc));
-    lmn_hyperlink_print(RC_GROOT_MEM(rc));
+    lmn_dump_cell_stdout(rc->get_global_root());
+    lmn_hyperlink_print(rc->get_global_root());
     break;
   }
   default:
@@ -4502,7 +4505,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
       rc->wt(newmemi) = (LmnWord)mp;
       rc->tt(newmemi) = TT_OTHER;
       mp->set_active(TRUE);
-      if (RC_GET_MODE(rc, REACT_MEM_ORIENTED)) {
+      if (rc->has_mode(REACT_MEM_ORIENTED)) {
         lmn_memstack_push(((MemReactContext *)rc)->MEMSTACK(), mp);
       }
       break;
@@ -4576,7 +4579,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
     }
     case INSTR_ENQUEUEMEM: {
       SKIP_VAL(LmnInstrVar, instr);
-      //      if (RC_GET_MODE(rc, REACT_ND) && !rc->is_zerostep)
+      //      if (rc->has_mode(REACT_ND) && !rc->is_zerostep)
       //      {
       //        lmn_mem_activate_ancestors((LmnMembraneRef)rc->wt( memi)); /* MC
       //        */
@@ -4585,7 +4588,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
        * ただ,
        * 通常実行用dmemはテスト用やinteractive実行用として作っておいてもよさそう
        */
-      //      if (RC_GET_MODE(rc, REACT_MEM_ORIENTED)) {
+      //      if (rc->has_mode(REACT_MEM_ORIENTED)) {
       //        lmn_memstack_push(((MemReactContext*)rc) -> MEMSTACK(),
       //        (LmnMembraneRef)rc->wt( memi)); /* 通常実行時 */
       //      }

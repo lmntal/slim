@@ -80,7 +80,7 @@ void *normal_thread(void *arg) {
           thread_data->rc->reg(thread_data->atomi) = {
               (LmnWord)atom, LMN_ATTR_MAKE_LINK(0), TT_ATOM};
           if (rc_hlink_opt(thread_data->atomi, thread_data->rc)) {
-            spc = (SameProcCxt *)hashtbl_get(RC_HLINK_SPC(thread_data->rc),
+            spc = (SameProcCxt *)hashtbl_get(thread_data->rc->get_hl_sameproccxt(),
                                              (HashKeyType)thread_data->atomi);
             if (spc->is_consistent_with((LmnSymbolAtomRef)thread_data->rc->wt(
                     thread_data->atomi))) {

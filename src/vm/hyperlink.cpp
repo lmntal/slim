@@ -859,7 +859,7 @@ static inline void sameproccxt_destroy(SimpleHashtbl *hl_sameproccxt) {
 }
 
 void lmn_sameproccxt_clear(LmnReactCxtRef rc) {
-  sameproccxt_destroy(RC_HLINK_SPC(rc));
+  sameproccxt_destroy(rc->get_hl_sameproccxt());
   RC_SET_HLINK_SPC(rc, NULL);
 }
 
