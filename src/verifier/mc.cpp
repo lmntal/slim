@@ -51,12 +51,14 @@
 #include "state.h"
 #include "state.hpp"
 #include "../memory_count.h"
-
+#include<fstream>
+#include<mutex>
 /** =======================================
  *  ==== Entrance for model checking ======
  *  =======================================
  */
-
+using namespace std;
+std::mutex mtx_mc;
 static inline void do_mc(LmnMembraneRef world_mem, AutomataRef a, Vector *psyms,
                          int thread_num);
 static void mc_dump(LmnWorkerGroup *wp);
@@ -110,6 +112,30 @@ static inline void do_mc(LmnMembraneRef world_mem_org, AutomataRef a,
   init_s = new State(mem, p_label, states->use_memenc());
   //memory_count_statedesc+=sizeof(State);
   state_id_issue(init_s); /* 状態に整数IDを発行 */
+  {
+    std::lock_guard<std::mutex> lock(mtx_mc);
+    ofstream outputfile("statedesc_state_id.bin");
+    outputfile<<std::hex<<init_s->state_id;
+    outputfile.close();
+    ofstream outputfile1("statedesc_hash.bin");
+    outputfile1<<std::hex<<init_s->hash;
+    outputfile1.close();
+    ofstream outputfile2("statedesc_next.bin");
+    outputfile2<<std::hex<<&(init_s->next);
+    outputfile2.close();
+    ofstream outputfile3("statedesc_parent.bin");
+    outputfile3<<std::hex<<&(init_s->parent);
+    outputfile3.close();
+    ofstream outputfile4("statedesc_map.bin");
+    outputfile4<<std::hex<<&(init_s->map);
+    outputfile4.close();
+    ofstream outputfile5("statedesc_local_flags.bin");
+    outputfile5<<std::hex<<&(init_s->local_flags);
+    outputfile5.close();
+    ofstream outputfile6("statedesc_expander_id.bin");
+    outputfile6<<std::hex<<init_s->expander_id;
+    outputfile6.close();
+  }
 #ifdef KWBT_OPT
   if (lmn_env.opt_mode != OPT_NONE)
     state_set_cost(init_s, 0U, NULL); /* 初期状態のコストは0 */
@@ -335,6 +361,30 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
     if (succ == src_succ) {
       /* new state */
       state_id_issue(succ);
+      {
+	std::lock_guard<std::mutex> lock(mtx_mc);
+	ofstream outputfile("statedesc_state_id.bin",std::ios::app);
+	outputfile<<std::hex<<src_succ->state_id;
+	outputfile.close();
+	ofstream outputfile1("statedesc_hash.bin",std::ios::app);
+	outputfile1<<std::hex<<src_succ->hash;
+	outputfile1.close();
+	ofstream outputfile2("statedesc_next.bin",std::ios::app);
+	outputfile2<<std::hex<<&(src_succ->next);
+	outputfile2.close();
+	ofstream outputfile3("statedesc_parent.bin",std::ios::app);
+	outputfile3<<std::hex<<&(src_succ->parent);
+	outputfile3.close();
+	ofstream outputfile4("statedesc_map.bin",std::ios::app);
+	outputfile4<<std::hex<<&(src_succ->map);
+	outputfile4.close();
+	ofstream outputfile5("statedesc_local_flags.bin",std::ios::app);
+	outputfile5<<std::hex<<&(src_succ->local_flags);
+	outputfile5.close();
+	ofstream outputfile6("statedesc_expander_id.bin",std::ios::app);
+	outputfile6<<std::hex<<src_succ->expander_id;
+	outputfile6.close();
+      }
       if (mc_use_compress(f) && src_succ_m) {
         lmn_mem_free_rec(src_succ_m);
       }
@@ -454,20 +504,21 @@ void mc_gen_successors(State *src, LmnMembraneRef mem, BYTE state_name,
     } else {
       news = new State((LmnMembraneRef)expanded_roots->get(i), state_name,
                         mc_use_canonical(f));
+      
       //memory_count_statedesc+=sizeof(State);
     }
-
+    
     state_set_property_state(news, state_name);
     state_set_parent(news, src);
     if (mc_has_trans(f)) {
       lmn_interned_str nid;
       nid = ((LmnRuleRef)expanded_rules->get(i))->name;
       data = (vec_data_t)transition_make(news, nid);
-     src->set_trans_obj();
+      src->set_trans_obj();
     } else {
       data = (vec_data_t)news;
     }
-
+    
     /* DeltaMembrane時は, expanded_rootsが空であるため, 生成した空の状態を積む
      * 通常時は, expanded_rootsのi番目のデータを
      *           Successor MembraneからSuccessor Stateへ設定し直す */
@@ -477,7 +528,7 @@ void mc_gen_successors(State *src, LmnMembraneRef mem, BYTE state_name,
       expanded_roots->set(i, data);
     }
   }
-
+  
   RC_ND_SET_ORG_SUCC_NUM(rc, (n - old));
 }
 

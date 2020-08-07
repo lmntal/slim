@@ -224,6 +224,9 @@ redo:
 	    std::lock_guard<std::mutex> lock(mtx);
 	    nodecount_level[treedepth]++;
 	    nodeintree1++;
+	    if(treedepth>tree_database_max_depth){
+	      tree_database_max_depth=treedepth;
+	    }
 	  }
           return FALSE;
         } else {
@@ -291,12 +294,6 @@ TreeNodeElement TreeDatabase::tree_find_or_put_rec(TreeNodeStrRef str,
   if(depth>tree_database_max_depth){
     tree_database_max_depth=depth;
     }*/
-  {
-    std::lock_guard<std::mutex> lock(mtx);
-    if(treedepth>tree_database_max_depth){
-      tree_database_max_depth=treedepth;
-    }
-  }
   split = tree_get_split_position(start, end);
   TreeNodeElement left =
     this->tree_find_or_put_rec(str, start, start + split, found,treedepth+1);

@@ -479,7 +479,6 @@ void dfs_start(LmnWorker *w) {
 static inline void dfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
                             AutomataRef a, Vector *psyms) {
   while (!stack->is_empty()) {
-    //無限ループする場所
     State *s;
     AutomataStateRef p_s;
     unsigned int i, n;

@@ -114,9 +114,9 @@ struct State {                /* Total:72(36)byte */
                       並列実行時、スレッド事に保持しておきたいフラグ(mcndfsのcyanフラグ等)
                     */
   pthread_mutex_t expand_lock;
-  unsigned long expander_id;
+  unsigned long expander_id;//8byte
   void state_set_expander_id(unsigned long id) { expander_id = id; }
-  unsigned long state_expander_id() { return expander_id; }
+  unsigned long state_expander_id() { return expander_id; }//8byte
   void state_expand_lock_init() { lmn_mutex_init(&(expand_lock)); }
   void state_expand_lock_destroy() { lmn_mutex_destroy(&(expand_lock)); }
   void state_expand_lock() { lmn_mutex_lock(&(expand_lock)); }
@@ -130,7 +130,7 @@ struct State {                /* Total:72(36)byte */
   }
 #else
   void state_set_expander_id(unsigned long id) {}
-  unsigned long state_expander_id() { return 0; }
+  unsigned long state_expander_id() { return 0; }//8byte
   void state_expand_lock_init() {}
   void state_expand_lock_destroy() {}
   void state_expand_lock() {}
@@ -186,7 +186,7 @@ struct State {                /* Total:72(36)byte */
     } else {
       return NULL;
     }
-  }
+  }//8byte
 
   void state_set_binstr(LmnBinStrRef bs) {
     data = (state_data_t)bs;
@@ -216,7 +216,7 @@ struct State {                /* Total:72(36)byte */
     } else {
       return (LmnMembraneRef)data;
     }
-  }
+  }//8byte
 
   /* 状態srcと等価な状態を新たに構築して返す.
    * srcに階層グラフ構造が割り当てられている場合, その階層グラフ構造までを,
@@ -261,7 +261,7 @@ struct State {                /* Total:72(36)byte */
     }
 #endif
     return dst;
-  }
+  }//8byte
 
   void succ_set(Vector *v) {
     if (!v->is_empty() && !successors) {
@@ -362,7 +362,7 @@ struct State {                /* Total:72(36)byte */
     }
 
     return ret;
-  }
+  }//8byte
 
   /* 状態sに対応する階層グラフ構造をバイナリストリングにエンコードして返す.
    * sのフラグを操作する. */
@@ -377,7 +377,7 @@ struct State {                /* Total:72(36)byte */
     }
     lmn_fatal("unexpected.");
     return NULL;
-  }
+  }//8byte
 
   /* 状態sに対応した階層グラフ構造のバイナリストリングをzlibで圧縮して返す.
    * 状態sはread only */
@@ -398,7 +398,7 @@ struct State {                /* Total:72(36)byte */
     }
 
     return ret;
-  }
+  }//8byte
 
   /* 状態sに対応する階層グラフ構造と等価な階層グラフ構造を新たに構築して返す.
    * 構築できなかった場合はNULLを返す. */
@@ -417,7 +417,7 @@ struct State {                /* Total:72(36)byte */
 #endif
 
     return ret;
-  }
+  }//8byte
 
   /* 状態sに対応する階層グラフ構造Xを,
    * Xに対して一意なIDとなるバイナリストリングへエンコードする.
@@ -482,13 +482,13 @@ struct State {                /* Total:72(36)byte */
     }
 
     return dif;
-  }
+  }//8byte
 
   /* 状態sとの差分計算の対象とする状態に対する参照を返す. */
   State *state_D_ref() {
     /* とりあえず親ノードにした */
     return this->parent;
-  }
+  }//8byte
 
   /* 状態sに対応するバイナリストリングを, sがrefする状態を基に再構築して返す. */
   LmnBinStrRef reconstruct_binstr() {
@@ -503,14 +503,14 @@ struct State {                /* Total:72(36)byte */
       lmn_binstr_free(ref);
 
     return ret;
-  }
+  }//8byte
 
   /* 状態sに対応する階層グラフ構造memへのアドレスを返す.
    * memがエンコードされている場合は, デコードしたオブジェクトのアドレスを返す.
    * デコードが発生した場合のメモリ管理は呼び出し側で行う. */
   LmnMembraneRef restore_membrane() {
     return this->restore_membrane_inner(TRUE);
-  }
+  }//8byte
 
   /* delta-compression用のinner関数.
    * flagが真の場合, デコード済みのバイナリストリングをキャッシュから取得する.
@@ -538,7 +538,7 @@ struct State {                /* Total:72(36)byte */
 
     LMN_ASSERT(b);
     return lmn_binstr_decode(b);
-  }
+  }//8byte
 
 public:
   State()
