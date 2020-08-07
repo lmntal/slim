@@ -40,7 +40,6 @@
 #include "functor.h"
 #include "lmntal.h"
 #include "membrane.hpp"
-#include "memstack.h"
 #include "react_context.hpp"
 #include "rule.hpp"
 #include "symbol.h"

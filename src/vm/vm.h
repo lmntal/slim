@@ -52,7 +52,6 @@
 #include "ccallback.h"
 #include "dumper.h"
 #include "membrane.h"
-#include "memstack.h"
 #include "process_table.h"
 #include "rule.h"
 #include "simply_process_table.h"

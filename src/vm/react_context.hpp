@@ -42,6 +42,8 @@
 #define LMN_REACT_CONTEXT_HPP
 
 #include <cstdint>
+#include <vector>
+#include <algorithm>
 
 typedef struct LmnRegister *LmnRegisterRef;
 
@@ -51,7 +53,6 @@ using LmnReactCxtRef = LmnReactCxt *;
 #include "element/element.h"
 #include "hyperlink.h"
 #include "lmntal.h"
-#include "memstack.h"
 #include "rule.h"
 
 struct LmnMembrane;
@@ -177,46 +178,52 @@ public:
 
 /*----------------------------------------------------------------------
  * Mem React Context
+ * 膜主導実行時に使用
  */
 
-LmnMemStack lmn_memstack_make(void);
-void lmn_memstack_free(LmnMemStack memstack);
-BOOL lmn_memstack_isempty(LmnMemStack memstack);
-void lmn_memstack_push(LmnMemStack memstack, LmnMembraneRef mem);
-LmnMembraneRef lmn_memstack_pop(LmnMemStack memstack);
-LmnMembraneRef lmn_memstack_peek(LmnMemStack memstack);
-void lmn_memstack_delete(LmnMemStack memstack, LmnMembraneRef mem);
-void lmn_memstack_reconstruct(LmnMemStack memstack, LmnMembraneRef mem);
-
 class MemReactContext : public LmnReactCxt {
-  LmnMemStack memstack; /* 膜主導実行時に使用 */
+  std::vector<LmnMembrane *> memstack;
+
 public:
-  ~MemReactContext() { lmn_memstack_free(MEMSTACK()); }
+  MemReactContext(LmnMembrane *mem) :
+      LmnReactCxt(mem, REACT_MEM_ORIENTED) {}
 
-  MemReactContext(LmnMembrane *mem) : LmnReactCxt(mem, REACT_MEM_ORIENTED) {
-    memstack = lmn_memstack_make();
-  }
-  LmnMemStack MEMSTACK();
-
-  // LmnMemStack lmn_memstack_make(void);
-  // void lmn_memstack_free(LmnMemStack memstack);
   bool memstack_isempty() const {
-    return lmn_memstack_isempty(memstack);
+    return memstack.empty();
   }
   void memstack_push(LmnMembrane *mem) {
-    lmn_memstack_push(memstack, mem);
+    memstack.push_back(mem);
+    mem->set_active(true);
   }
   LmnMembrane *memstack_pop() {
-    return lmn_memstack_pop(memstack);
+    auto result = memstack.back();
+    memstack.pop_back();
+    result->set_active(false);
+    return result;
   }
   LmnMembrane *memstack_peek() {
-    return lmn_memstack_peek(memstack);
+    return memstack.back();
   }
+
+  /* 実行膜スタックからmemを削除する。外部関数が膜の削除しようとするとき
+   に、その膜がスタックに積まれている事がある。そのため、安全な削除を行
+   うために、この手続きが必要になる。外部の機能を使わない通常の実行時に
+   はこの手続きは必要ない*/
   void memstack_remove(LmnMembrane *mem) {
-    lmn_memstack_delete(memstack, mem);
+    memstack.erase(std::remove(memstack.begin(), memstack.end(), mem), memstack.end());
   }
   void memstack_reconstruct(LmnMembrane *mem) {
-    lmn_memstack_reconstruct(memstack, mem);
+    memstack.clear();
+    memstack_reconstruct_rec(mem);
+  }
+
+private:
+  /* 親膜を子膜よりも先に積む */
+  void memstack_reconstruct_rec(LmnMembrane *parent) {
+    memstack_push(parent);
+    for (auto m = parent->mem_child_head(); m; m = m->mem_next()) {
+      memstack_reconstruct_rec(m);
+    }
   }
 };
 

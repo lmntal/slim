@@ -39,7 +39,6 @@
 #include "dumper.h"
 #include "atomlist.hpp"
 #include "ccallback.h"
-#include "memstack.h"
 #include "rule.hpp"
 #include "symbol.h"
 #include <ctype.h>

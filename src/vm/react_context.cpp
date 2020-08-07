@@ -40,7 +40,6 @@
 #include "react_context.hpp"
 
 #include "hyperlink.h"
-#include "memstack.h"
 #include "task.h"
 #include "verifier/verifier.h"
 
@@ -107,12 +106,6 @@ struct McReactCxtData *RC_ND_DATA(MCReactContext *cxt) {
 }
 
 void react_context_copy(LmnReactCxtRef to, LmnReactCxtRef from) { *to = *from; }
-
-/*----------------------------------------------------------------------
- * Mem React Context
- */
-
-LmnMemStack MemReactContext::MEMSTACK() { return this->memstack; }
 
 /*----------------------------------------------------------------------
  * ND React Context

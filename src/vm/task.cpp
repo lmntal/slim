@@ -41,7 +41,6 @@
 #include "dumper.h"
 #include "interpret/false_driven_enumerator.hpp"
 #include "interpret/interpreter.hpp"
-#include "memstack.h"
 #include "normal_thread.h"
 #include "special_atom.h"
 #include "symbol.h"
@@ -137,7 +136,7 @@ static inline BOOL react_ruleset_in_all_mem(LmnReactCxtRef rc, LmnRuleSetRef rs,
 static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
                            LmnRuleInstr instr);
 
-static void mem_oriented_loop(LmnReactCxtRef rc, LmnMembraneRef mem);
+static void mem_oriented_loop(MemReactContext *ctx, LmnMembraneRef mem);
 
 void lmn_dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
                         LmnRuleInstr instr) {
@@ -256,12 +255,10 @@ void lmn_run(Vector *start_rulesets) {
 }
 
 /** 膜スタックに基づいた通常実行 */
-static void mem_oriented_loop(LmnReactCxtRef rc, LmnMembraneRef mem) {
-  auto ctx = dynamic_cast<MemReactContext *>(rc);
-
+static void mem_oriented_loop(MemReactContext *ctx, LmnMembraneRef mem) {
   while (!ctx->memstack_isempty()) {
     LmnMembraneRef mem = ctx->memstack_peek();
-    if (!react_all_rulesets(rc, mem)) {
+    if (!react_all_rulesets(ctx, mem)) {
       /* ルールが何も適用されなければ膜スタックから先頭を取り除く */
       ctx->memstack_pop();
     }
