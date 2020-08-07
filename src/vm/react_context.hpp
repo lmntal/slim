@@ -181,6 +181,12 @@ public:
 
 LmnMemStack lmn_memstack_make(void);
 void lmn_memstack_free(LmnMemStack memstack);
+BOOL lmn_memstack_isempty(LmnMemStack memstack);
+void lmn_memstack_push(LmnMemStack memstack, LmnMembraneRef mem);
+LmnMembraneRef lmn_memstack_pop(LmnMemStack memstack);
+LmnMembraneRef lmn_memstack_peek(LmnMemStack memstack);
+void lmn_memstack_delete(LmnMemStack memstack, LmnMembraneRef mem);
+void lmn_memstack_reconstruct(LmnMemStack memstack, LmnMembraneRef mem);
 
 class MemReactContext : public LmnReactCxt {
   LmnMemStack memstack; /* 膜主導実行時に使用 */
@@ -191,6 +197,27 @@ public:
     memstack = lmn_memstack_make();
   }
   LmnMemStack MEMSTACK();
+
+  // LmnMemStack lmn_memstack_make(void);
+  // void lmn_memstack_free(LmnMemStack memstack);
+  bool memstack_isempty() const {
+    return lmn_memstack_isempty(memstack);
+  }
+  void memstack_push(LmnMembrane *mem) {
+    lmn_memstack_push(memstack, mem);
+  }
+  LmnMembrane *memstack_pop() {
+    return lmn_memstack_pop(memstack);
+  }
+  LmnMembrane *memstack_peek() {
+    return lmn_memstack_peek(memstack);
+  }
+  void memstack_remove(LmnMembrane *mem) {
+    lmn_memstack_delete(memstack, mem);
+  }
+  void memstack_reconstruct(LmnMembrane *mem) {
+    lmn_memstack_reconstruct(memstack, mem);
+  }
 };
 
 BOOL rc_hlink_opt(LmnInstrVar atomi, LmnReactCxtRef rc);

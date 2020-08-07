@@ -1081,7 +1081,7 @@ void cb_dump_mem(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
   lmn_mem_newlink(mem, a0, t0, 0, a2, t2, LMN_ATTR_GET_VALUE(t2));
 
   if (rc->has_mode(REACT_MEM_ORIENTED)) {
-    lmn_memstack_delete(((MemReactContext *)rc)->MEMSTACK(), m);
+    ((MemReactContext *)rc)->memstack_remove(m);
   }
   (m->mem_parent())->delete_mem(m);
 }

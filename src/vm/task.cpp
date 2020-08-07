@@ -188,7 +188,7 @@ void lmn_run(Vector *start_rulesets) {
     mrc = c14::make_unique<MemReactContext>(mem);
     mem = new LmnMembrane();
   }
-  lmn_memstack_push(((MemReactContext *)mrc.get())->MEMSTACK(), mem);
+  mrc->memstack_push(mem);
 
   // normal parallel mode init
   if (lmn_env.enable_parallel && !lmn_env.nd) {
@@ -202,7 +202,7 @@ void lmn_run(Vector *start_rulesets) {
   }
 
   react_start_rulesets(mem, start_rulesets);
-  lmn_memstack_reconstruct(((MemReactContext *)mrc.get())->MEMSTACK(), mem);
+  mrc->memstack_reconstruct(mem);
 
   if (lmn_env.trace) {
     if (lmn_env.output_format != JSON) {
@@ -257,13 +257,13 @@ void lmn_run(Vector *start_rulesets) {
 
 /** 膜スタックに基づいた通常実行 */
 static void mem_oriented_loop(LmnReactCxtRef rc, LmnMembraneRef mem) {
-  LmnMemStack memstack = ((MemReactContext *)rc)->MEMSTACK();
+  auto ctx = dynamic_cast<MemReactContext *>(rc);
 
-  while (!lmn_memstack_isempty(memstack)) {
-    LmnMembraneRef mem = lmn_memstack_peek(memstack);
+  while (!ctx->memstack_isempty()) {
+    LmnMembraneRef mem = ctx->memstack_peek();
     if (!react_all_rulesets(rc, mem)) {
       /* ルールが何も適用されなければ膜スタックから先頭を取り除く */
-      lmn_memstack_pop(memstack);
+      ctx->memstack_pop();
     }
   }
 }
@@ -398,7 +398,7 @@ BOOL react_rule(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule) {
     if (reacted && rc->has_mode(REACT_MEM_ORIENTED)) {
       // zerostep中に生成した膜が消えたりすると膜スタック中の膜が解放されメモリアクセス違反になるので膜スタックを作り直す
       // 反応開始時点ではmemが膜スタックの先頭にあるはずなのでmem以下だけ作り直せばいいかも？
-      lmn_memstack_reconstruct(((MemReactContext *)rc)->MEMSTACK(), rc->get_global_root());
+      ((MemReactContext *)rc)->memstack_reconstruct(rc->get_global_root());
     }
   }
 
@@ -2288,7 +2288,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     rc->tt(newmemi) = TT_MEM;
     mp->set_active(TRUE);
     if (rc->has_mode(REACT_MEM_ORIENTED)) {
-      lmn_memstack_push(((MemReactContext *)rc)->MEMSTACK(), mp);
+      ((MemReactContext *)rc)->memstack_push(mp);
     }
     break;
   }
@@ -2363,8 +2363,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     READ_VAL(LmnInstrVar, instr, memi);
 
     if (rc->has_mode(REACT_MEM_ORIENTED)) {
-      lmn_memstack_push(((MemReactContext *)rc)->MEMSTACK(),
-                        (LmnMembraneRef)rc->wt(memi));
+      ((MemReactContext *)rc)->memstack_push((LmnMembraneRef)rc->wt(memi));
     }
     break;
   }
@@ -4503,7 +4502,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
       rc->tt(newmemi) = TT_OTHER;
       mp->set_active(TRUE);
       if (rc->has_mode(REACT_MEM_ORIENTED)) {
-        lmn_memstack_push(((MemReactContext *)rc)->MEMSTACK(), mp);
+        ((MemReactContext *)rc)->memstack_push(mp);
       }
       break;
     }
@@ -4586,7 +4585,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
        * 通常実行用dmemはテスト用やinteractive実行用として作っておいてもよさそう
        */
       //      if (rc->has_mode(REACT_MEM_ORIENTED)) {
-      //        lmn_memstack_push(((MemReactContext*)rc) -> MEMSTACK(),
+      //        ((MemReactContext *)rc)->memstack_push(
       //        (LmnMembraneRef)rc->wt( memi)); /* 通常実行時 */
       //      }
       break;
