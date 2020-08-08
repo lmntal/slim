@@ -133,7 +133,7 @@ void McPorData::free_por_vars() {
 void McPorData::por_calc_ampleset(StateSpaceRef ss, State *s, LmnReactCxtRef rc,
                        Vector *new_s, BOOL f) {
   if (!this->rc) {
-    this->rc = c14::make_unique<MCReactContext>();
+    this->rc = c14::make_unique<MCReactContext>(nullptr);
     this->flags = f;
     mc_unset_por(this->flags);
     mc_set_trans(this->flags);

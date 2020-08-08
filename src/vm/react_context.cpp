@@ -40,7 +40,6 @@
 #include "react_context.hpp"
 
 #include "hyperlink.h"
-#include "memstack.h"
 #include "task.h"
 #include "verifier/verifier.h"
 
@@ -79,30 +78,27 @@
 //#endif
 //};
 
-BOOL RC_GET_MODE(LmnReactCxtRef cxt, BYTE mode) {
-  return (cxt->mode & mode) == mode;
-}
+void slim::vm::RuleContext::clear_hl_spc() {
+  HashIterator it;
 
-unsigned int RC_TRACE_NUM(LmnReactCxtRef cxt) { return cxt->trace_num; }
-unsigned int RC_TRACE_NUM_INC(LmnReactCxtRef cxt) { return cxt->trace_num++; }
+  if (!hl_sameproccxt)
+    return;
 
-LmnMembraneRef RC_GROOT_MEM(LmnReactCxtRef cxt) { return cxt->global_root; }
+  for (it = hashtbl_iterator(hl_sameproccxt); !hashtbliter_isend(&it);
+       hashtbliter_next(&it)) {
+    SameProcCxt *spc = (SameProcCxt *)(hashtbliter_entry(&it)->data);
+    delete spc;
+  }
 
-void RC_SET_GROOT_MEM(LmnReactCxtRef cxt, LmnMembraneRef mem) {
-  cxt->global_root = mem;
-}
-
-SimpleHashtbl *RC_HLINK_SPC(LmnReactCxtRef cxt) { return cxt->hl_sameproccxt; }
-
-void RC_SET_HLINK_SPC(LmnReactCxtRef cxt, SimpleHashtbl *spc) {
-  cxt->hl_sameproccxt = spc;
+  hashtbl_free(hl_sameproccxt);
+  hl_sameproccxt = nullptr;
 }
 
 BOOL rc_hlink_opt(LmnInstrVar atomi, LmnReactCxtRef rc) {
   /*  return hl_sameproccxtが初期化済み && atomiは同名プロセス文脈を持つアトム
    */
-  return RC_HLINK_SPC(rc) &&
-         hashtbl_contains(RC_HLINK_SPC(rc), (HashKeyType)atomi);
+  return rc->get_hl_sameproccxt() &&
+         hashtbl_contains(rc->get_hl_sameproccxt(), (HashKeyType)atomi);
 }
 
 struct McReactCxtData *RC_ND_DATA(MCReactContext *cxt) {
@@ -110,14 +106,6 @@ struct McReactCxtData *RC_ND_DATA(MCReactContext *cxt) {
 }
 
 void react_context_copy(LmnReactCxtRef to, LmnReactCxtRef from) { *to = *from; }
-
-/*----------------------------------------------------------------------
- * Mem React Context
- */
-
-LmnMemStack MemReactContext::MEMSTACK() { return this->memstack; }
-
-void MemReactContext::MEMSTACK_SET(LmnMemStack s) { this->memstack = s; }
 
 /*----------------------------------------------------------------------
  * ND React Context
