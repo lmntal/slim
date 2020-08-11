@@ -130,7 +130,7 @@ void McPorData::free_por_vars() {
   }
 }
 
-void McPorData::por_calc_ampleset(StateSpaceRef ss, State *s, LmnReactCxtRef rc,
+void McPorData::por_calc_ampleset(StateSpaceRef ss, State *s, MCReactContext *rc,
                        Vector *new_s, BOOL f) {
   if (!this->rc) {
     this->rc = c14::make_unique<MCReactContext>(nullptr);
@@ -209,7 +209,7 @@ void McPorData::finalize_ample(BOOL org_f) {
  * reduced state graphに必要なサクセッサを状態空間ssとsに登録する.
  * ample(s)=en(s)の場合にFALSEを返す. */
 
-BOOL McPorData::ample(StateSpaceRef ss, State *s, LmnReactCxtRef rc, Vector *new_s,
+BOOL McPorData::ample(StateSpaceRef ss, State *s, MCReactContext *rc, Vector *new_s,
                   BOOL org_f) {
   set_ample(s);
   set_por_expanded(s);
@@ -299,7 +299,7 @@ BOOL McPorData::ample(StateSpaceRef ss, State *s, LmnReactCxtRef rc, Vector *new
 }
 
 
-void McPorData::por_gen_successors(State *s, LmnReactCxtRef rc, AutomataRef a,
+void McPorData::por_gen_successors(State *s, MCReactContext *rc, AutomataRef a,
                                Vector *psyms) {
   LmnMembraneRef mem;
   mem = state_restore_mem(s);
@@ -384,7 +384,7 @@ inline State *McPorData::por_state_insert_statespace(StateSpaceRef ss,
   return t;
 }
 
-inline void McPorData::por_store_successors_inner(State *s, LmnReactCxtRef rc) {
+inline void McPorData::por_store_successors_inner(State *s, MCReactContext *rc) {
   st_table_t succ_tbl;
   unsigned int i, succ_i;
 
@@ -406,7 +406,7 @@ inline void McPorData::por_store_successors_inner(State *s, LmnReactCxtRef rc) {
           src_succ, (lmn_interned_str)RC_EXPANDED_RULES(rc)->get(i));
     }
 
-    d = dynamic_cast<MCReactContext *>(rc)->has_optmode(DeltaMembrane) ? (MemDeltaRoot *)RC_MEM_DELTAS(rc)->get(i)
+    d = rc->has_optmode(DeltaMembrane) ? (MemDeltaRoot *)RC_MEM_DELTAS(rc)->get(i)
                            : NULL;
     succ = this->por_state_insert(src_succ, d);
     if (succ != src_succ) {
@@ -418,7 +418,7 @@ inline void McPorData::por_store_successors_inner(State *s, LmnReactCxtRef rc) {
     if (!st_lookup(succ_tbl, (st_data_t)succ, (st_data_t *)&tmp)) {
       st_add_direct(succ_tbl, (st_data_t)succ, (st_data_t)src_t);
       RC_EXPANDED(rc)->set(succ_i, (vec_data_t)src_t);
-      if (dynamic_cast<MCReactContext *>(rc)->has_optmode(DeltaMembrane)) {
+      if (rc->has_optmode(DeltaMembrane)) {
         RC_MEM_DELTAS(rc)->set(succ_i, RC_MEM_DELTAS(rc)->get(i));
       }
       succ_i++;
@@ -431,7 +431,7 @@ inline void McPorData::por_store_successors_inner(State *s, LmnReactCxtRef rc) {
 
   RC_EXPANDED(rc)->set_num(succ_i);
   RC_EXPANDED_RULES(rc)->set_num(succ_i);
-  if (dynamic_cast<MCReactContext *>(rc)->has_optmode(DeltaMembrane)) {
+  if (rc->has_optmode(DeltaMembrane)) {
     RC_MEM_DELTAS(rc)->set_num(succ_i);
   }
 
@@ -454,7 +454,7 @@ inline void McPorData::por_store_successors_inner(State *s, LmnReactCxtRef rc) {
  * サクセッサに対する遷移オブジェクトが存在しない場合はこの時点でmallocを行う.
  * 入力したis_storeが真である場合は,
  * IDの発行と同時に独立性情報テーブルの拡張を行う */
-void McPorData::por_store_successors(State *s, LmnReactCxtRef rc, BOOL is_store) {
+void McPorData::por_store_successors(State *s, MCReactContext *rc, BOOL is_store) {
   unsigned int i;
 
   this->por_store_successors_inner(s, rc);

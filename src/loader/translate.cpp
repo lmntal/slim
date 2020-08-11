@@ -100,7 +100,8 @@ void tr_instr_commit_ready(LmnReactCxtRef rc, LmnRuleRef rule,
 
   if (rc->has_mode(REACT_ND))
   {
-    if (dynamic_cast<MCReactContext *>(rc)->has_optmode(DeltaMembrane))
+    auto mcrc = dynamic_cast<MCReactContext *>(rc);
+    if (mcrc->has_optmode(DeltaMembrane))
     {
       /* dmemインタプリタ(body命令)を書かないとだめだ */
       lmn_fatal("translater mode, delta-membrane execution is not supported.");

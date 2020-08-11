@@ -195,7 +195,7 @@ static void mc_dump(LmnWorkerGroup *wp) {
  *  =====================================================
  */
 
-static inline void mc_gen_successors_inner(LmnReactCxtRef rc,
+static inline void mc_gen_successors_inner(MCReactContext *rc,
                                            LmnMembraneRef cur_mem);
 static inline void stutter_extension(State *s, LmnMembraneRef mem,
                                      BYTE next_label, LmnReactCxtRef rc,
@@ -204,7 +204,7 @@ static inline void stutter_extension(State *s, LmnMembraneRef mem,
 /* 状態sから1stepで遷移する状態を計算し, 遷移元状態と状態空間に登録を行う
  * 遷移先状態のうち新規状態がnew_statesに積まれる */
 void mc_expand(const StateSpaceRef ss, State *s, AutomataStateRef p_s,
-               LmnReactCxtRef rc, Vector *new_ss, Vector *psyms, BOOL f) {
+               MCReactContext *rc, Vector *new_ss, Vector *psyms, BOOL f) {
   LmnMembraneRef mem;
 
   /** restore : 膜の復元 */
@@ -248,7 +248,7 @@ void mc_expand(const StateSpaceRef ss, State *s, AutomataStateRef p_s,
    *  フラグセットのタイミングは重要.) */
 
   s->set_expanded();
-  RC_CLEAR_DATA(dynamic_cast<MCReactContext *>(rc));
+  RC_CLEAR_DATA(rc);
 
 #ifdef PROFILE
   if (lmn_env.profile_level >= 3) {
@@ -289,7 +289,7 @@ void mc_update_cost(State *s, Vector *new_ss, EWLock *ewlock) {
  * 遷移元の状態sのサクセッサに設定する.
  *   + 多重辺を除去する.
  *   + "新規"状態をnew_ssへ積む.　 */
-void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
+void mc_store_successors(const StateSpaceRef ss, State *s, MCReactContext *rc,
                          Vector *new_ss, BOOL f) {
   unsigned int i, succ_i;
 
@@ -311,13 +311,13 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
       src_succ = transition_next_state(src_t);
     }
 
-    if (dynamic_cast<MCReactContext *>(rc)->has_optmode(BinaryStringDeltaCompress) && RC_D_COND(rc)) {
+    if (rc->has_optmode(BinaryStringDeltaCompress) && RC_D_COND(rc)) {
       /* delta-stringフラグをこの時点で初めて立てる */
       src_succ->s_set_d();
     }
 
     /* 状態空間に状態src_succを記録 */
-    if (dynamic_cast<MCReactContext *>(rc)->has_optmode(DeltaMembrane)) { /* --delta-mem */
+    if (rc->has_optmode(DeltaMembrane)) { /* --delta-mem */
       MemDeltaRoot *d = (struct MemDeltaRoot *)RC_MEM_DELTAS(rc)->get(i);
       succ = ss->insert_delta(src_succ, d);
       src_succ_m = NULL;
@@ -385,7 +385,7 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
   /*  上記につられて以下のコードを記述すると実行時エラーになる. (r436でdebug)
    *  RC_MEM_DELTASはmc_store_successors終了後に, struct
    * MemDeltaRootの開放処理を行うため要素数に手を加えてはならない. */
-  //  if (dynamic_cast<MCReactContext *>(rc)->has_optmode(DeltaMembrane)) {
+  //  if (rc->has_optmode(DeltaMembrane)) {
   //    RC_MEM_DELTAS(rc)->set_num(succ_i);
   //  }
 
@@ -399,7 +399,7 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
  * ルール適用検査を行う
  * 子膜からルール適用を行っていく
  */
-BOOL mc_expand_inner(LmnReactCxtRef rc, LmnMembraneRef cur_mem) {
+BOOL mc_expand_inner(MCReactContext *rc, LmnMembraneRef cur_mem) {
   BOOL ret_flag = FALSE;
 
   for (; cur_mem; cur_mem = cur_mem->mem_next()) {
@@ -425,11 +425,11 @@ BOOL mc_expand_inner(LmnReactCxtRef rc, LmnMembraneRef cur_mem) {
  *  TransitionをRC_EXPANDEDへセットする.
  *  生成された状態は重複（多重辺）を含む */
 void mc_gen_successors(State *src, LmnMembraneRef mem, BYTE state_name,
-                       LmnReactCxtRef rc, BOOL f) {
+                       MCReactContext *rc, BOOL f) {
   Vector *expanded_roots, *expanded_rules;
   unsigned int i, n, old;
 
-  dynamic_cast<MCReactContext *>(rc)->set_global_root(mem);
+  rc->set_global_root(mem);
 
   /* 性質遷移数だけ本関数を呼び出している.
    * 一つ前までの展開遷移数をメモしておくことで, 今回の展開遷移数を計算する */
@@ -483,7 +483,7 @@ void mc_gen_successors(State *src, LmnMembraneRef mem, BYTE state_name,
  * 性質ルールとシステムルールの同期積によって遷移可能な全状態(or遷移)をベクタに積む
  */
 void mc_gen_successors_with_property(State *s, LmnMembraneRef mem,
-                                     AutomataStateRef p_s, LmnReactCxtRef rc,
+                                     AutomataStateRef p_s, MCReactContext *rc,
                                      Vector *propsyms, BOOL f) {
   unsigned int i, j;
 
@@ -557,7 +557,7 @@ void mc_gen_successors_with_property(State *s, LmnMembraneRef mem,
       /* 差分オブジェクトは状態展開時のみの一時データなので,
        * 効率化のためにポインタcopyのみにしている(deep copyしない)
        * !! 開放処理は要注意 (r435でdebug) !! */
-      if (dynamic_cast<MCReactContext *>(rc)->has_optmode(DeltaMembrane)) {
+      if (rc->has_optmode(DeltaMembrane)) {
         RC_MEM_DELTAS(rc)->push(RC_MEM_DELTAS(rc)->get(j));
       }
     }
@@ -611,7 +611,7 @@ static inline void stutter_extension(State *s, LmnMembraneRef mem,
   RC_EXPANDED(rc)->push(data);
 }
 
-static inline void mc_gen_successors_inner(LmnReactCxtRef rc,
+static inline void mc_gen_successors_inner(MCReactContext *rc,
                                            LmnMembraneRef cur_mem) {
 #ifdef PROFILE
   if (lmn_env.profile_level >= 3) {

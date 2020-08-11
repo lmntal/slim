@@ -153,17 +153,17 @@ void mc_react_cxt_add_mem_delta(LmnReactCxtRef cxt, struct MemDeltaRoot *d,
   RC_EXPANDED_RULES(cxt)->push((vec_data_t)rule);
 }
 
-LmnWord mc_react_cxt_expanded_pop(LmnReactCxtRef cxt) {
+LmnWord mc_react_cxt_expanded_pop(MCReactContext *cxt) {
   RC_EXPANDED_RULES(cxt)->pop();
-  if (dynamic_cast<MCReactContext *>(cxt)->has_optmode(DeltaMembrane)) {
+  if (cxt->has_optmode(DeltaMembrane)) {
     return RC_MEM_DELTAS(cxt)->pop();
   } else {
     return RC_EXPANDED(cxt)->pop();
   }
 }
 
-LmnWord mc_react_cxt_expanded_get(LmnReactCxtRef cxt, unsigned int i) {
-  if (dynamic_cast<MCReactContext *>(cxt)->has_optmode(DeltaMembrane)) {
+LmnWord mc_react_cxt_expanded_get(MCReactContext *cxt, unsigned int i) {
+  if (cxt->has_optmode(DeltaMembrane)) {
     return RC_MEM_DELTAS(cxt)->get(i);
   } else {
     return RC_EXPANDED(cxt)->get(i);
@@ -174,8 +174,8 @@ unsigned int mc_react_cxt_succ_num_org(LmnReactCxtRef cxt) {
   return RC_ND_ORG_SUCC_NUM(cxt);
 }
 
-unsigned int mc_react_cxt_expanded_num(LmnReactCxtRef cxt) {
-  return dynamic_cast<MCReactContext *>(cxt)->has_optmode(DeltaMembrane) ? RC_MEM_DELTAS(cxt)->get_num()
+unsigned int mc_react_cxt_expanded_num(MCReactContext *cxt) {
+  return cxt->has_optmode(DeltaMembrane) ? RC_MEM_DELTAS(cxt)->get_num()
                              : RC_EXPANDED(cxt)->get_num();
 }
 

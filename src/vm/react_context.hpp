@@ -277,7 +277,7 @@ const unsigned int ModelCheckerOptimazeModeSize = 4;
 #define RC_D_COND(RC) (RC_D_CUR(RC) > 0)
 #define RC_D_PROGRESS(RC)                                                      \
   do {                                                                         \
-    if (dynamic_cast<MCReactContext *>(RC)->has_optmode(BinaryStringDeltaCompress)) {                                                     \
+    if ((RC)->has_optmode(BinaryStringDeltaCompress)) {                                                     \
       (RC_D_CUR(RC) = (RC_D_CUR(RC) + 1) % RC_MC_DREC_MAX);                    \
     }                                                                          \
   } while (0)
@@ -288,7 +288,7 @@ const unsigned int ModelCheckerOptimazeModeSize = 4;
     RC_EXPANDED_RULES(RC)->clear();                                          \
     RC_EXPANDED(RC)->clear();                                                \
     RC_EXPANDED_PROPS(RC)->clear();                                          \
-    if (dynamic_cast<MCReactContext *>(RC)->has_optmode(DeltaMembrane)) {                                                  \
+    if ((RC)->has_optmode(DeltaMembrane)) {                                                  \
       unsigned int _fr_;                                                       \
       for (_fr_ = 0;                                                           \
            _fr_ < RC_ND_ORG_SUCC_NUM(RC) && _fr_ < RC_MEM_DELTAS(RC)->get_num(); \
@@ -356,12 +356,12 @@ void mc_react_cxt_add_expanded(LmnReactCxtRef cxt, LmnMembraneRef mem,
 void mc_react_cxt_add_mem_delta(LmnReactCxtRef cxt, struct MemDeltaRoot *d,
                                 LmnRuleRef rule);
 
-LmnWord mc_react_cxt_expanded_pop(LmnReactCxtRef cxt);
+LmnWord mc_react_cxt_expanded_pop(MCReactContext *cxt);
 
-LmnWord mc_react_cxt_expanded_get(LmnReactCxtRef cxt, unsigned int i);
+LmnWord mc_react_cxt_expanded_get(MCReactContext *cxt, unsigned int i);
 
 unsigned int mc_react_cxt_succ_num_org(LmnReactCxtRef cxt);
 
-unsigned int mc_react_cxt_expanded_num(LmnReactCxtRef cxt);
+unsigned int mc_react_cxt_expanded_num(MCReactContext *cxt);
 
 #endif

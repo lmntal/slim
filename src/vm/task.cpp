@@ -1148,9 +1148,10 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
      * CONTRACT: COMMIT命令に到達したルールはマッチング検査に成功している
      */
     if (rc->has_mode(REACT_ND) && !rc->is_zerostep) {
+      auto mcrc = dynamic_cast<MCReactContext *>(rc);
       ProcessID org_next_id = env_next_id();
 
-      if (dynamic_cast<MCReactContext *>(rc)->has_optmode(DeltaMembrane)) {
+      if (mcrc->has_optmode(DeltaMembrane)) {
         /** >>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<< **/
         /** >>>>>>>> enable delta-membrane <<<<<<< **/
         /** >>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<< **/
@@ -1162,14 +1163,14 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
          * uniq処理の特殊性を吸収しておく */
         rule->undo_history();
 
-        if (dynamic_cast<MCReactContext *>(rc)->has_optmode(DynamicPartialOrderReduction)) {
+        if (mcrc->has_optmode(DynamicPartialOrderReduction)) {
           dpor_transition_gen_LHS(RC_POR_DATA(rc), d, rc);
         }
 
         dmem_interpret(rc, rule, instr);
         dmem_root_finish(d);
 
-        if (dynamic_cast<MCReactContext *>(rc)->has_optmode(DynamicPartialOrderReduction)) {
+        if (mcrc->has_optmode(DynamicPartialOrderReduction)) {
           if (!dpor_transition_gen_RHS(RC_POR_DATA(rc), d, rc)) {
             delete d;
           } else {
@@ -1567,15 +1568,18 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       return FALSE;
     }
 
-    if (rc->has_mode(REACT_ND) && dynamic_cast<MCReactContext *>(rc)->has_optmode(DynamicPartialOrderReduction) && !rc->is_zerostep) {
-      LmnMembraneRef m = (LmnMembraneRef)rc->wt(memi);
-      dpor_LHS_flag_add(RC_POR_DATA(rc), m->mem_id(), LHS_MEM_NMEMS);
-      this->push_stackframe([=](interpreter &itr, bool result) {
-        dpor_LHS_flag_remove(RC_POR_DATA(rc), m->mem_id(), LHS_MEM_NMEMS);
-        return command_result::
-            Failure; /* 全ての候補取得のためにNDは常にFALSEを返す仕様
-                      */
-      });
+    if (rc->has_mode(REACT_ND)) {
+      auto mcrc = dynamic_cast<MCReactContext *>(rc);
+      if (mcrc->has_optmode(DynamicPartialOrderReduction) && !rc->is_zerostep) {
+        LmnMembraneRef m = (LmnMembraneRef)rc->wt(memi);
+        dpor_LHS_flag_add(RC_POR_DATA(rc), m->mem_id(), LHS_MEM_NMEMS);
+        this->push_stackframe([=](interpreter &itr, bool result) {
+          dpor_LHS_flag_remove(RC_POR_DATA(rc), m->mem_id(), LHS_MEM_NMEMS);
+          return command_result::
+              Failure; /* 全ての候補取得のためにNDは常にFALSEを返す仕様
+                        */
+        });
+      }
     }
 
     break;
@@ -1587,15 +1591,18 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     if (!((LmnMembraneRef)rc->wt(memi))->get_rulesets().empty())
       return FALSE;
 
-    if (rc->has_mode(REACT_ND) && dynamic_cast<MCReactContext *>(rc)->has_optmode(DynamicPartialOrderReduction) && !rc->is_zerostep) {
-      LmnMembraneRef m = (LmnMembraneRef)rc->wt(memi);
-      dpor_LHS_flag_add(RC_POR_DATA(rc), m->mem_id(), LHS_MEM_NORULES);
-      this->push_stackframe([=](interpreter &itr, bool result) {
-        dpor_LHS_flag_remove(RC_POR_DATA(rc), m->mem_id(), LHS_MEM_NORULES);
-        return command_result::
-            Failure; /* 全ての候補取得のためにNDは常にFALSEを返す仕様
-                      */
-      });
+    if (rc->has_mode(REACT_ND)) {
+      auto mcrc = dynamic_cast<MCReactContext *>(rc);
+      if (mcrc->has_optmode(DynamicPartialOrderReduction) && !rc->is_zerostep) {
+        LmnMembraneRef m = (LmnMembraneRef)rc->wt(memi);
+        dpor_LHS_flag_add(RC_POR_DATA(rc), m->mem_id(), LHS_MEM_NORULES);
+        this->push_stackframe([=](interpreter &itr, bool result) {
+          dpor_LHS_flag_remove(RC_POR_DATA(rc), m->mem_id(), LHS_MEM_NORULES);
+          return command_result::
+              Failure; /* 全ての候補取得のためにNDは常にFALSEを返す仕様
+                        */
+        });
+      }
     }
 
     break;
@@ -1636,15 +1643,18 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       return FALSE;
     }
 
-    if (rc->has_mode(REACT_ND) && dynamic_cast<MCReactContext *>(rc)->has_optmode(DynamicPartialOrderReduction) && !rc->is_zerostep) {
-      LmnMembraneRef m = (LmnMembraneRef)rc->wt(memi);
-      dpor_LHS_flag_add(RC_POR_DATA(rc), m->mem_id(), LHS_MEM_NATOMS);
-      this->push_stackframe([=](interpreter &itr, bool result) {
-        dpor_LHS_flag_remove(RC_POR_DATA(rc), m->mem_id(), LHS_MEM_NATOMS);
-        return command_result::
-            Failure; /* 全ての候補取得のためにNDは常にFALSEを返す仕様
-                      */
-      });
+    if (rc->has_mode(REACT_ND)) {
+      auto mcrc = dynamic_cast<MCReactContext *>(rc);
+      if (mcrc->has_optmode(DynamicPartialOrderReduction) && !rc->is_zerostep) {
+        LmnMembraneRef m = (LmnMembraneRef)rc->wt(memi);
+        dpor_LHS_flag_add(RC_POR_DATA(rc), m->mem_id(), LHS_MEM_NATOMS);
+        this->push_stackframe([=](interpreter &itr, bool result) {
+          dpor_LHS_flag_remove(RC_POR_DATA(rc), m->mem_id(), LHS_MEM_NATOMS);
+          return command_result::
+              Failure; /* 全ての候補取得のためにNDは常にFALSEを返す仕様
+                        */
+        });
+      }
     }
 
     break;
@@ -1659,15 +1669,18 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       return FALSE;
     }
 
-    if (rc->has_mode(REACT_ND) && dynamic_cast<MCReactContext *>(rc)->has_optmode(DynamicPartialOrderReduction) && !rc->is_zerostep) {
-      LmnMembraneRef m = (LmnMembraneRef)rc->wt(memi);
-      dpor_LHS_flag_add(RC_POR_DATA(rc), m->mem_id(), LHS_MEM_NATOMS);
-      this->push_stackframe([=](interpreter &itr, bool result) {
-        dpor_LHS_flag_remove(RC_POR_DATA(rc), m->mem_id(), LHS_MEM_NATOMS);
-        return command_result::
-            Failure; /* 全ての候補取得のためにNDは常にFALSEを返す仕様
-                      */
-      });
+    if (rc->has_mode(REACT_ND)) {
+      auto mcrc = dynamic_cast<MCReactContext *>(rc);
+      if (mcrc->has_optmode(DynamicPartialOrderReduction) && !rc->is_zerostep) {
+        LmnMembraneRef m = (LmnMembraneRef)rc->wt(memi);
+        dpor_LHS_flag_add(RC_POR_DATA(rc), m->mem_id(), LHS_MEM_NATOMS);
+        this->push_stackframe([=](interpreter &itr, bool result) {
+          dpor_LHS_flag_remove(RC_POR_DATA(rc), m->mem_id(), LHS_MEM_NATOMS);
+          return command_result::
+              Failure; /* 全ての候補取得のためにNDは常にFALSEを返す仕様
+                        */
+        });
+      }
     }
 
     break;
@@ -2568,16 +2581,19 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
 
     rc->reg(funci) = {natoms, LMN_INT_ATTR, TT_OTHER};
 
-    if (rc->has_mode(REACT_ND) && dynamic_cast<MCReactContext *>(rc)->has_optmode(DynamicPartialOrderReduction) && !rc->is_zerostep) {
-      auto addr = atoms.get();
-      atoms.release();
-      dpor_LHS_add_ground_atoms(RC_POR_DATA(rc), addr);
+    if (rc->has_mode(REACT_ND)) {
+      auto mcrc = dynamic_cast<MCReactContext *>(rc);
+      if (mcrc->has_optmode(DynamicPartialOrderReduction) && !rc->is_zerostep) {
+        auto addr = atoms.get();
+        atoms.release();
+        dpor_LHS_add_ground_atoms(RC_POR_DATA(rc), addr);
 
-      this->push_stackframe([=](interpreter &itr, bool result) {
-        dpor_LHS_remove_ground_atoms(RC_POR_DATA(rc), addr);
-        delete addr;
-        return command_result::Failure;
-      });
+        this->push_stackframe([=](interpreter &itr, bool result) {
+          dpor_LHS_remove_ground_atoms(RC_POR_DATA(rc), addr);
+          delete addr;
+          return command_result::Failure;
+        });
+      }
     }
 
     break;
@@ -3229,15 +3245,18 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       return FALSE;
     }
 
-    if (rc->has_mode(REACT_ND) && dynamic_cast<MCReactContext *>(rc)->has_optmode(DynamicPartialOrderReduction) && !rc->is_zerostep) {
-      LmnMembraneRef m = (LmnMembraneRef)rc->wt(memi);
-      dpor_LHS_flag_add(RC_POR_DATA(rc), m->mem_id(), LHS_MEM_STABLE);
-      this->push_stackframe([=](interpreter &itr, bool result) {
-        dpor_LHS_flag_remove(RC_POR_DATA(rc), m->mem_id(), LHS_MEM_STABLE);
-        return command_result::
-            Failure; /* 全ての候補取得のためにNDは常にFALSEを返す仕様
-                      */
-      });
+    if (rc->has_mode(REACT_ND)) {
+      auto mcrc = dynamic_cast<MCReactContext *>(rc);
+      if (mcrc->has_optmode(DynamicPartialOrderReduction) && !rc->is_zerostep) {
+        LmnMembraneRef m = (LmnMembraneRef)rc->wt(memi);
+        dpor_LHS_flag_add(RC_POR_DATA(rc), m->mem_id(), LHS_MEM_STABLE);
+        this->push_stackframe([=](interpreter &itr, bool result) {
+          dpor_LHS_flag_remove(RC_POR_DATA(rc), m->mem_id(), LHS_MEM_STABLE);
+          return command_result::
+              Failure; /* 全ての候補取得のためにNDは常にFALSEを返す仕様
+                        */
+        });
+      }
     }
 
     break;
@@ -3910,16 +3929,19 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     if (!((LmnMembraneRef)rc->wt(memi))->nfreelinks(count))
       return FALSE;
 
-    if (rc->has_mode(REACT_ND) && dynamic_cast<MCReactContext *>(rc)->has_optmode(DynamicPartialOrderReduction) && !rc->is_zerostep) {
-      LmnMembraneRef m = (LmnMembraneRef)rc->wt(memi);
-      dpor_LHS_flag_add(RC_POR_DATA(rc), m->mem_id(), LHS_MEM_NFLINKS);
-      this->push_stackframe([=](interpreter &itr, bool result) {
-        LMN_ASSERT(!result);
-        dpor_LHS_flag_remove(RC_POR_DATA(rc), m->mem_id(), LHS_MEM_NFLINKS);
-        return command_result::
-            Failure; /* 全ての候補取得のためにNDは常にFALSEを返す仕様
-                      */
-      });
+    if (rc->has_mode(REACT_ND)) {
+      auto mcrc = dynamic_cast<MCReactContext *>(rc);
+      if (mcrc->has_optmode(DynamicPartialOrderReduction) && !rc->is_zerostep) {
+        LmnMembraneRef m = (LmnMembraneRef)rc->wt(memi);
+        dpor_LHS_flag_add(RC_POR_DATA(rc), m->mem_id(), LHS_MEM_NFLINKS);
+        this->push_stackframe([=](interpreter &itr, bool result) {
+          LMN_ASSERT(!result);
+          dpor_LHS_flag_remove(RC_POR_DATA(rc), m->mem_id(), LHS_MEM_NFLINKS);
+          return command_result::
+              Failure; /* 全ての候補取得のためにNDは常にFALSEを返す仕様
+                        */
+        });
+      }
     }
 
     break;

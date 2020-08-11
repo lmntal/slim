@@ -68,18 +68,18 @@ BOOL mc_vec_states_valid(Vector *v);
 
 void mc_print_vec_states(StateSpaceRef ss, Vector *v, State *seed);
 void mc_expand(const StateSpaceRef states, State *state,
-               AutomataStateRef property_automata_state, LmnReactCxtRef rc,
+               AutomataStateRef property_automata_state, MCReactContext *rc,
                Vector *new_s, Vector *psyms, BOOL flag);
 void mc_update_cost(State *s, Vector *new_ss, EWLock *ewlock);
 void mc_gen_successors_with_property(State *s, LmnMembraneRef mem,
                                      AutomataStateRef prop_atm_s,
-                                     LmnReactCxtRef rc, Vector *psyms,
+                                     MCReactContext *rc, Vector *psyms,
                                      BOOL flags);
 void mc_gen_successors(State *src, LmnMembraneRef mem, BYTE prop_labels,
-                       LmnReactCxtRef rc, BOOL flags);
-void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
+                       MCReactContext *rc, BOOL flags);
+void mc_store_successors(const StateSpaceRef ss, State *s, MCReactContext *rc,
                          Vector *new_ss, BOOL f);
-BOOL mc_expand_inner(LmnReactCxtRef rc, LmnMembraneRef cur_mem);
+BOOL mc_expand_inner(MCReactContext *rc, LmnMembraneRef cur_mem);
 
 void run_mc(Vector *start_rulesets, AutomataRef a, Vector *psyms);
 
