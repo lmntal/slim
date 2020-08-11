@@ -44,6 +44,7 @@
 #include <cstdint>
 #include <vector>
 #include <algorithm>
+#include <bitset>
 
 typedef struct LmnRegister *LmnRegisterRef;
 
@@ -246,83 +247,37 @@ void lmn_rc_execute_insertion_events(LmnReactCxtRef rc);
 /*----------------------------------------------------------------------
  * MC React Context
  */
-struct McReactCxtData {
-  st_table_t succ_tbl; /* 多重辺除去用 */
-  Vector *roots;       /* 1. 遷移先計算中
-                        *    通常: struct LmnMembrane
-                        *    差分: 空
-                        * 2. 遷移先計算後 (mc_gen_successor@mc.c以降)
-                        * 　　通常: struct LmnMembraneへの参照を設定したstruct State
-                        *    差分: 初期化設定のみを行ったstruct State　*/
-  Vector *rules;
-  Vector *props;
-  Vector *mem_deltas; /* BODY命令の適用を終えたMemDeltaRootオブジェクトを置く */
-  MemDeltaRoot
-      *mem_delta_tmp; /* commit命令でmallocした差分オブジェクトを一旦ここに置く.
-                       * BODY命令はこのMemDeltaRootオブジェクトへ適用する. */
-  BYTE opt_mode; /* 最適化のモードを記録 */
-  BYTE d_cur;
-  unsigned int org_succ_num;
-  McDporData *por;
-
-  McReactCxtData();
-
-  ~McReactCxtData() {
-    st_free_table(succ_tbl);
-    delete roots;
-    delete rules;
-    delete props;
-    if (mem_deltas) {
-      delete mem_deltas;
-    }
-  }
-};
-
-
-struct McReactCxtData *RC_ND_DATA(struct MCReactContext *cxt);
 
 #define RC_MC_DREC_MAX (3)
 
-#define RC_MC_DMEM_MASK (0x01U)
-#define RC_MC_DPOR_MASK (0x01U << 1)
-#define RC_MC_DPOR_NAIVE_MASK (0x01U << 2)
-#define RC_MC_D_MASK (0x01U << 3)
+enum ModelCheckerOptimazeMode {
+  DeltaMembrane,
+  DynamicPartialOrderReduction,
+  DynamicPartialOrderReduction_Naive,
+  BinaryStringDeltaCompress,
+};
+const unsigned int ModelCheckerOptimazeModeSize = 4;
 
-#define RC_MC_OPT_FLAG(RC) ((RC_ND_DATA((MCReactContext *)RC))->opt_mode)
-#define RC_MC_USE_DMEM(RC) (RC_MC_OPT_FLAG(RC) & RC_MC_DMEM_MASK)
-#define RC_MC_SET_DMEM(RC) (RC_MC_OPT_FLAG(RC) |= RC_MC_DMEM_MASK)
-#define RC_MC_UNSET_DMEM(RC) (RC_MC_OPT_FLAG(RC) &= (~RC_MC_DMEM_MASK))
-#define RC_MC_USE_DPOR(RC) (RC_MC_OPT_FLAG(RC) & RC_MC_DPOR_MASK)
-#define RC_MC_SET_DPOR(RC) (RC_MC_OPT_FLAG(RC) |= RC_MC_DPOR_MASK)
-#define RC_MC_UNSET_DPOR(RC) (RC_MC_OPT_FLAG(RC) &= (~RC_MC_DPOR_MASK))
-#define RC_MC_USE_DPOR_NAIVE(RC) (RC_MC_OPT_FLAG(RC) & RC_MC_DPOR_NAIVE_MASK)
-#define RC_MC_SET_DPOR_NAIVE(RC) (RC_MC_OPT_FLAG(RC) |= RC_MC_DPOR_NAIVE_MASK)
-#define RC_MC_UNSET_DPOR_NAIVE(RC)                                             \
-  (RC_MC_OPT_FLAG(RC) &= (~RC_MC_DPOR_NAIVE_MASK))
-#define RC_MC_USE_D(RC) (RC_MC_OPT_FLAG(RC) & RC_MC_D_MASK)
-#define RC_MC_SET_D(RC) (RC_MC_OPT_FLAG(RC) |= RC_MC_D_MASK)
-#define RC_MC_UNSET_D(RC) (RC_MC_OPT_FLAG(RC) &= (~RC_MC_D_MASK))
-
-//#define RC_ND_DATA(RC)                  ((struct McReactCxtData *)(RC)->v)
-#define RC_SUCC_TBL(RC) ((RC_ND_DATA((MCReactContext *)RC))->succ_tbl)
-#define RC_EXPANDED(RC) ((RC_ND_DATA((MCReactContext *)RC))->roots)
-#define RC_EXPANDED_RULES(RC) ((RC_ND_DATA((MCReactContext *)RC))->rules)
-#define RC_EXPANDED_PROPS(RC) ((RC_ND_DATA((MCReactContext *)RC))->props)
-#define RC_MEM_DELTAS(RC) ((RC_ND_DATA((MCReactContext *)RC))->mem_deltas)
+//#define (RC)                  ((struct McReactCxtData *)(RC)->v)
+#define RC_SUCC_TBL(RC) ((((MCReactContext *)RC))->succ_tbl)
+#define RC_EXPANDED(RC) ((((MCReactContext *)RC))->roots)
+#define RC_EXPANDED_RULES(RC) ((((MCReactContext *)RC))->rules)
+#define RC_EXPANDED_PROPS(RC) ((((MCReactContext *)RC))->props)
+#define RC_MEM_DELTAS(RC) ((((MCReactContext *)RC))->mem_deltas)
 #define RC_ND_SET_MEM_DELTA_ROOT(RC, D)                                        \
-  ((RC_ND_DATA((MCReactContext *)RC))->mem_delta_tmp = (D))
+  ((((MCReactContext *)RC))->mem_delta_tmp = (D))
 #define RC_ND_MEM_DELTA_ROOT(RC)                                               \
-  ((RC_ND_DATA((MCReactContext *)RC))->mem_delta_tmp)
+  ((((MCReactContext *)RC))->mem_delta_tmp)
 #define RC_ND_ORG_SUCC_NUM(RC)                                                 \
-  ((RC_ND_DATA((MCReactContext *)RC))->org_succ_num)
+  ((((MCReactContext *)RC))->org_succ_num)
 #define RC_ND_SET_ORG_SUCC_NUM(RC, N)                                          \
-  ((RC_ND_DATA((MCReactContext *)RC))->org_succ_num = (N))
-#define RC_POR_DATA(RC) ((RC_ND_DATA((MCReactContext *)RC))->por)
-#define RC_D_CUR(RC) ((RC_ND_DATA((MCReactContext *)RC))->d_cur)
+  ((((MCReactContext *)RC))->org_succ_num = (N))
+#define RC_POR_DATA(RC) ((((MCReactContext *)RC))->por)
+#define RC_D_CUR(RC) ((((MCReactContext *)RC))->d_cur)
 #define RC_D_COND(RC) (RC_D_CUR(RC) > 0)
 #define RC_D_PROGRESS(RC)                                                      \
   do {                                                                         \
-    if (RC_MC_USE_D(RC)) {                                                     \
+    if (dynamic_cast<MCReactContext *>(RC)->has_optmode(BinaryStringDeltaCompress)) {                                                     \
       (RC_D_CUR(RC) = (RC_D_CUR(RC) + 1) % RC_MC_DREC_MAX);                    \
     }                                                                          \
   } while (0)
@@ -333,7 +288,7 @@ struct McReactCxtData *RC_ND_DATA(struct MCReactContext *cxt);
     RC_EXPANDED_RULES(RC)->clear();                                          \
     RC_EXPANDED(RC)->clear();                                                \
     RC_EXPANDED_PROPS(RC)->clear();                                          \
-    if (RC_MC_USE_DMEM(RC)) {                                                  \
+    if (dynamic_cast<MCReactContext *>(RC)->has_optmode(DeltaMembrane)) {                                                  \
       unsigned int _fr_;                                                       \
       for (_fr_ = 0;                                                           \
            _fr_ < RC_ND_ORG_SUCC_NUM(RC) && _fr_ < RC_MEM_DELTAS(RC)->get_num(); \
@@ -348,19 +303,15 @@ struct McReactCxtData *RC_ND_DATA(struct MCReactContext *cxt);
   } while (0)
 
 struct MCReactContext : LmnReactCxt {
-  MCReactContext(LmnMembrane *mem) : LmnReactCxt(mem, REACT_ND) {
-    if (data.mem_deltas) {
-      RC_MC_SET_DMEM(this);
-    }
+  MCReactContext(LmnMembrane *mem);
 
-    if (lmn_env.enable_por_old) {
-      RC_MC_SET_DPOR_NAIVE(this);
-    } else if (lmn_env.enable_por) {
-      RC_MC_SET_DPOR(this);
-    }
-
-    if (lmn_env.d_compress) {
-      RC_MC_SET_D(this);
+  ~MCReactContext() {
+    st_free_table(succ_tbl);
+    delete roots;
+    delete rules;
+    delete props;
+    if (mem_deltas) {
+      delete mem_deltas;
     }
   }
 
@@ -368,7 +319,36 @@ struct MCReactContext : LmnReactCxt {
     global_root = mem;
   }
 
-  McReactCxtData data;
+  st_table_t succ_tbl; /* 多重辺除去用 */
+  Vector *roots;       /* 1. 遷移先計算中
+                        *    通常: struct LmnMembrane
+                        *    差分: 空
+                        * 2. 遷移先計算後 (mc_gen_successor@mc.c以降)
+                        * 　　通常: struct LmnMembraneへの参照を設定したstruct State
+                        *    差分: 初期化設定のみを行ったstruct State　*/
+  Vector *rules;
+  Vector *props;
+  Vector *mem_deltas; /* BODY命令の適用を終えたMemDeltaRootオブジェクトを置く */
+  MemDeltaRoot
+      *mem_delta_tmp; /* commit命令でmallocした差分オブジェクトを一旦ここに置く.
+                       * BODY命令はこのMemDeltaRootオブジェクトへ適用する. */
+  BYTE d_cur;
+  unsigned int org_succ_num;
+  McDporData *por;
+
+  bool has_optmode(ModelCheckerOptimazeMode mode) const {
+    return opt_mode.test(mode);
+  }
+  void turnon_optmode(ModelCheckerOptimazeMode mode) {
+    opt_mode.set(mode);
+  }
+  void turnoff_optmode(ModelCheckerOptimazeMode mode) {
+    opt_mode.reset(mode);
+  }
+
+private:
+  /* 最適化のモードを記録 */
+  std::bitset<ModelCheckerOptimazeModeSize> opt_mode;
 };
 
 void mc_react_cxt_add_expanded(LmnReactCxtRef cxt, LmnMembraneRef mem,

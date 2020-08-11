@@ -311,13 +311,13 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
       src_succ = transition_next_state(src_t);
     }
 
-    if (RC_MC_USE_D(rc) && RC_D_COND(rc)) {
+    if (dynamic_cast<MCReactContext *>(rc)->has_optmode(BinaryStringDeltaCompress) && RC_D_COND(rc)) {
       /* delta-stringフラグをこの時点で初めて立てる */
       src_succ->s_set_d();
     }
 
     /* 状態空間に状態src_succを記録 */
-    if (RC_MC_USE_DMEM(rc)) { /* --delta-mem */
+    if (dynamic_cast<MCReactContext *>(rc)->has_optmode(DeltaMembrane)) { /* --delta-mem */
       MemDeltaRoot *d = (struct MemDeltaRoot *)RC_MEM_DELTAS(rc)->get(i);
       succ = ss->insert_delta(src_succ, d);
       src_succ_m = NULL;
@@ -385,7 +385,7 @@ void mc_store_successors(const StateSpaceRef ss, State *s, LmnReactCxtRef rc,
   /*  上記につられて以下のコードを記述すると実行時エラーになる. (r436でdebug)
    *  RC_MEM_DELTASはmc_store_successors終了後に, struct
    * MemDeltaRootの開放処理を行うため要素数に手を加えてはならない. */
-  //  if (RC_MC_USE_DMEM(rc)) {
+  //  if (dynamic_cast<MCReactContext *>(rc)->has_optmode(DeltaMembrane)) {
   //    RC_MEM_DELTAS(rc)->set_num(succ_i);
   //  }
 
@@ -557,7 +557,7 @@ void mc_gen_successors_with_property(State *s, LmnMembraneRef mem,
       /* 差分オブジェクトは状態展開時のみの一時データなので,
        * 効率化のためにポインタcopyのみにしている(deep copyしない)
        * !! 開放処理は要注意 (r435でdebug) !! */
-      if (RC_MC_USE_DMEM(rc)) {
+      if (dynamic_cast<MCReactContext *>(rc)->has_optmode(DeltaMembrane)) {
         RC_MEM_DELTAS(rc)->push(RC_MEM_DELTAS(rc)->get(j));
       }
     }

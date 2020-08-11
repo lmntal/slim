@@ -406,7 +406,7 @@ inline void McPorData::por_store_successors_inner(State *s, LmnReactCxtRef rc) {
           src_succ, (lmn_interned_str)RC_EXPANDED_RULES(rc)->get(i));
     }
 
-    d = RC_MC_USE_DMEM(rc) ? (MemDeltaRoot *)RC_MEM_DELTAS(rc)->get(i)
+    d = dynamic_cast<MCReactContext *>(rc)->has_optmode(DeltaMembrane) ? (MemDeltaRoot *)RC_MEM_DELTAS(rc)->get(i)
                            : NULL;
     succ = this->por_state_insert(src_succ, d);
     if (succ != src_succ) {
@@ -418,7 +418,7 @@ inline void McPorData::por_store_successors_inner(State *s, LmnReactCxtRef rc) {
     if (!st_lookup(succ_tbl, (st_data_t)succ, (st_data_t *)&tmp)) {
       st_add_direct(succ_tbl, (st_data_t)succ, (st_data_t)src_t);
       RC_EXPANDED(rc)->set(succ_i, (vec_data_t)src_t);
-      if (RC_MC_USE_DMEM(rc)) {
+      if (dynamic_cast<MCReactContext *>(rc)->has_optmode(DeltaMembrane)) {
         RC_MEM_DELTAS(rc)->set(succ_i, RC_MEM_DELTAS(rc)->get(i));
       }
       succ_i++;
@@ -431,7 +431,7 @@ inline void McPorData::por_store_successors_inner(State *s, LmnReactCxtRef rc) {
 
   RC_EXPANDED(rc)->set_num(succ_i);
   RC_EXPANDED_RULES(rc)->set_num(succ_i);
-  if (RC_MC_USE_DMEM(rc)) {
+  if (dynamic_cast<MCReactContext *>(rc)->has_optmode(DeltaMembrane)) {
     RC_MEM_DELTAS(rc)->set_num(succ_i);
   }
 

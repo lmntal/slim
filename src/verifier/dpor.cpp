@@ -917,10 +917,10 @@ void dpor_start(StateSpaceRef ss, State *s, LmnReactCxtRef rc, Vector *new_s,
                 BOOL flag) {
   McDporData *d = RC_POR_DATA(rc);
 
-  if (RC_MC_USE_DPOR_NAIVE(rc)) {
+  if (dynamic_cast<MCReactContext *>(rc)->has_optmode(DynamicPartialOrderReduction_Naive)) {
     McPorData::mc_por.por_calc_ampleset(ss, s, rc, new_s, flag);
     return;
-  } else if (mc_react_cxt_succ_num_org(rc) <= 1 || !RC_MC_USE_DMEM(rc)) {
+  } else if (mc_react_cxt_succ_num_org(rc) <= 1 || !dynamic_cast<MCReactContext *>(rc)->has_optmode(DeltaMembrane)) {
     mc_store_successors(ss, s, rc, new_s, flag);
   } else {
     Vector v_key, v_val;

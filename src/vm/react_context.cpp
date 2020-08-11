@@ -101,35 +101,45 @@ BOOL rc_hlink_opt(LmnInstrVar atomi, LmnReactCxtRef rc) {
          hashtbl_contains(rc->get_hl_sameproccxt(), (HashKeyType)atomi);
 }
 
-struct McReactCxtData *RC_ND_DATA(MCReactContext *cxt) {
-  return &cxt->data;
-}
-
 void react_context_copy(LmnReactCxtRef to, LmnReactCxtRef from) { *to = *from; }
 
 /*----------------------------------------------------------------------
  * ND React Context
  */
 
-McReactCxtData::McReactCxtData() {
-  succ_tbl = st_init_ptrtable();
-  roots = new Vector(32);
-  rules = new Vector(32);
-  props = new Vector(8);
-  mem_deltas = NULL;
-  mem_delta_tmp = NULL;
-  opt_mode = 0x00U;
-  org_succ_num = 0;
-  d_cur = 0;
+MCReactContext::MCReactContext(LmnMembrane *mem) : LmnReactCxt(mem, REACT_ND) {
+    if (mem_deltas) {
+      this->turnon_optmode(DeltaMembrane);
+    }
 
-  if (lmn_env.delta_mem) {
-    mem_deltas = new Vector(32);
-  }
+    if (lmn_env.enable_por_old) {
+      this->turnon_optmode(DynamicPartialOrderReduction_Naive);
+    } else if (lmn_env.enable_por) {
+      this->turnon_optmode(DynamicPartialOrderReduction);
+    }
 
-  if (lmn_env.enable_por && !lmn_env.enable_por_old) {
-    por = DPOR_DATA();
+    if (lmn_env.d_compress) {
+      this->turnon_optmode(BinaryStringDeltaCompress);
+    }
+
+    succ_tbl = st_init_ptrtable();
+    roots = new Vector(32);
+    rules = new Vector(32);
+    props = new Vector(8);
+    mem_deltas = NULL;
+    mem_delta_tmp = NULL;
+    opt_mode = 0x00U;
+    org_succ_num = 0;
+    d_cur = 0;
+
+    if (lmn_env.delta_mem) {
+      mem_deltas = new Vector(32);
+    }
+
+    if (lmn_env.enable_por && !lmn_env.enable_por_old) {
+      por = DPOR_DATA();
+    }
   }
-}
 
 void mc_react_cxt_add_expanded(LmnReactCxtRef cxt, LmnMembraneRef mem,
                                LmnRuleRef rule) {
@@ -145,7 +155,7 @@ void mc_react_cxt_add_mem_delta(LmnReactCxtRef cxt, struct MemDeltaRoot *d,
 
 LmnWord mc_react_cxt_expanded_pop(LmnReactCxtRef cxt) {
   RC_EXPANDED_RULES(cxt)->pop();
-  if (RC_MC_USE_DMEM(cxt)) {
+  if (dynamic_cast<MCReactContext *>(cxt)->has_optmode(DeltaMembrane)) {
     return RC_MEM_DELTAS(cxt)->pop();
   } else {
     return RC_EXPANDED(cxt)->pop();
@@ -153,7 +163,7 @@ LmnWord mc_react_cxt_expanded_pop(LmnReactCxtRef cxt) {
 }
 
 LmnWord mc_react_cxt_expanded_get(LmnReactCxtRef cxt, unsigned int i) {
-  if (RC_MC_USE_DMEM(cxt)) {
+  if (dynamic_cast<MCReactContext *>(cxt)->has_optmode(DeltaMembrane)) {
     return RC_MEM_DELTAS(cxt)->get(i);
   } else {
     return RC_EXPANDED(cxt)->get(i);
@@ -165,7 +175,7 @@ unsigned int mc_react_cxt_succ_num_org(LmnReactCxtRef cxt) {
 }
 
 unsigned int mc_react_cxt_expanded_num(LmnReactCxtRef cxt) {
-  return RC_MC_USE_DMEM(cxt) ? RC_MEM_DELTAS(cxt)->get_num()
+  return dynamic_cast<MCReactContext *>(cxt)->has_optmode(DeltaMembrane) ? RC_MEM_DELTAS(cxt)->get_num()
                              : RC_EXPANDED(cxt)->get_num();
 }
 
