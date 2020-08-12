@@ -122,7 +122,6 @@ MCReactContext::MCReactContext(LmnMembrane *mem) : LmnReactCxt(mem, REACT_ND) {
       this->turnon_optmode(BinaryStringDeltaCompress);
     }
 
-    succ_tbl = st_init_ptrtable();
     roots = new Vector(32);
     rules = new Vector(32);
     props = new Vector(8);

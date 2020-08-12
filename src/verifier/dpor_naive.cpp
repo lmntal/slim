@@ -385,15 +385,13 @@ inline State *McPorData::por_state_insert_statespace(StateSpaceRef ss,
 }
 
 inline void McPorData::por_store_successors_inner(State *s, MCReactContext *rc) {
-  st_table_t succ_tbl;
   unsigned int i, succ_i;
 
   succ_i = 0;
-  succ_tbl = RC_SUCC_TBL(rc);
 
   for (i = 0; i < mc_react_cxt_expanded_num(rc); i++) {
     TransitionRef src_t;
-    st_data_t tmp;
+    TransitionRef tmp;
     State *src_succ, *succ;
     MemDeltaRoot *d;
 
@@ -414,16 +412,16 @@ inline void McPorData::por_store_successors_inner(State *s, MCReactContext *rc) 
       transition_set_state(src_t, succ);
     }
 
-    tmp = 0;
-    if (!st_lookup(succ_tbl, (st_data_t)succ, (st_data_t *)&tmp)) {
-      st_add_direct(succ_tbl, (st_data_t)succ, (st_data_t)src_t);
+    tmp = reinterpret_cast<TransitionRef>(rc->get_transition_to(succ));
+    if (tmp == nullptr) {
+      rc->set_transition_to(succ, src_t);
       RC_EXPANDED(rc)->set(succ_i, (vec_data_t)src_t);
       if (rc->has_optmode(DeltaMembrane)) {
         RC_MEM_DELTAS(rc)->set(succ_i, RC_MEM_DELTAS(rc)->get(i));
       }
       succ_i++;
     } else {
-      transition_add_rule((TransitionRef)tmp, transition_rule(src_t, 0),
+      transition_add_rule(tmp, transition_rule(src_t, 0),
                           transition_cost(src_t));
       transition_free(src_t);
     }
@@ -445,7 +443,7 @@ inline void McPorData::por_store_successors_inner(State *s, MCReactContext *rc) 
   }
 
   s->succ_set(RC_EXPANDED(rc));
-  st_clear(RC_SUCC_TBL(rc));
+  rc->clear_successor_table();
 }
 
 /* ReactCxtに生成してあるサクセッサをPOR状態空間と状態sに登録する.

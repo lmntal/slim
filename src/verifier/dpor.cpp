@@ -744,14 +744,12 @@ static BOOL dpor_check_cycle_proviso(StateSpaceRef ss, State *src,
 
 /* TODO: 時間なくて雑.. 直す */
 static void dpor_ample_set_to_succ_tbl(StateSpaceRef ss, Vector *ample_set,
-                                       Vector *contextC1_set, LmnReactCxtRef rc,
+                                       Vector *contextC1_set, MCReactContext *rc,
                                        State *s, Vector *new_ss, BOOL f) {
-  st_table_t succ_tbl; /* サクセッサのポインタの重複検査に使用 */
   unsigned int i, succ_i;
   BOOL satisfied_C3;
 
   succ_i = 0;
-  succ_tbl = RC_SUCC_TBL(rc);
 
   for (i = 0; i < RC_EXPANDED(rc)->get_num(); i++) { /* ごめんなさいort */
     State *succ_s;
@@ -768,7 +766,7 @@ static void dpor_ample_set_to_succ_tbl(StateSpaceRef ss, Vector *ample_set,
   satisfied_C3 = TRUE;
   for (i = 0; i < ample_set->get_num(); i++) {
     TransitionRef src_t;
-    st_data_t tmp;
+    void *tmp;
     State *src_succ, *succ;
     MemDeltaRoot *succ_d;
     ContextC1Ref succ_c;
@@ -805,11 +803,11 @@ static void dpor_ample_set_to_succ_tbl(StateSpaceRef ss, Vector *ample_set,
       satisfied_C3 = dpor_check_cycle_proviso(ss, s, src_succ, succ);
     }
 
-    tmp = 0;
-    if (!st_lookup(succ_tbl, (st_data_t)succ, (st_data_t *)&tmp)) {
-      st_data_t ins = s->has_trans_obj() ? (st_data_t)src_t : (st_data_t)succ;
-      st_add_direct(succ_tbl, (st_data_t)succ, ins);
-      RC_EXPANDED(rc)->set(succ_i++, ins);
+    tmp = rc->get_transition_to(succ);
+    if (tmp == nullptr) {
+      void *ins = s->has_trans_obj() ? (void *)src_t : (void *)succ;
+      rc->set_transition_to(succ, ins);
+      RC_EXPANDED(rc)->set(succ_i++, (LmnWord)ins);
     } else {
       if (s->has_trans_obj()) {
         transition_free(src_t);
@@ -821,7 +819,7 @@ static void dpor_ample_set_to_succ_tbl(StateSpaceRef ss, Vector *ample_set,
     /* ample set以外の遷移も展開する */
     for (i = 0; i < contextC1_set->get_num(); i++) {
       TransitionRef src_t;
-      st_data_t tmp;
+      void *tmp;
       State *src_succ, *succ;
       MemDeltaRoot *succ_d;
       ContextC1Ref succ_c;
@@ -858,11 +856,11 @@ static void dpor_ample_set_to_succ_tbl(StateSpaceRef ss, Vector *ample_set,
         }
       }
 
-      tmp = 0;
-      if (!st_lookup(succ_tbl, (st_data_t)succ, (st_data_t *)&tmp)) {
-        st_data_t ins = s->has_trans_obj() ? (st_data_t)src_t : (st_data_t)succ;
-        st_add_direct(succ_tbl, (st_data_t)succ, ins);
-        RC_EXPANDED(rc)->set(succ_i++, ins);
+      tmp = rc->get_transition_to(succ);
+      if (tmp == nullptr) {
+        void *ins = s->has_trans_obj() ? (void *)src_t : (void *)succ;
+        rc->set_transition_to(succ, ins);
+        RC_EXPANDED(rc)->set(succ_i++, (LmnWord)ins);
       } else {
         if (s->has_trans_obj()) {
           transition_free(src_t);
@@ -908,7 +906,7 @@ static void dpor_ample_set_to_succ_tbl(StateSpaceRef ss, Vector *ample_set,
 
   RC_EXPANDED(rc)->set_num(succ_i);
   s->succ_set(RC_EXPANDED(rc)); /* successorを登録 */
-  st_clear(RC_SUCC_TBL(rc));
+  rc->clear_successor_table();
 }
 
 //#define DEP_DEVEL

@@ -297,7 +297,7 @@ void mc_store_successors(const StateSpaceRef ss, State *s, MCReactContext *rc,
   succ_i = 0;
   for (i = 0; i < mc_react_cxt_expanded_num(rc); i++) {
     TransitionRef src_t;
-    st_data_t tmp;
+    void *tmp;
     State *src_succ, *succ;
     LmnMembraneRef src_succ_m;
 
@@ -352,20 +352,21 @@ void mc_store_successors(const StateSpaceRef ss, State *s, MCReactContext *rc,
     }
 
     /* 多重辺(1stepで合流する遷移関係)を除去 */
-    tmp = 0;
-    if (!st_lookup(RC_SUCC_TBL(rc), (st_data_t)succ, (st_data_t *)&tmp)) {
+    tmp = rc->get_transition_to(succ);
+    if (tmp == nullptr) {
       /* succへの遷移が多重辺ではない場合 */
-      st_data_t ins;
+      void *ins;
       if (s->has_trans_obj()) {
-        ins = (st_data_t)src_t;
+        ins = src_t;
       } else {
-        ins = (st_data_t)succ;
+        ins = succ;
       }
       /* 状態succをサクセッサテーブルへ記録(succをkeyにして,
        * succに対応する遷移insを登録) */
-      st_add_direct(RC_SUCC_TBL(rc), (st_data_t)succ, ins);
+      rc->set_transition_to(succ, ins);
+
       /* 遷移先情報を記録する一時領域(in ReactCxt)を更新 */
-      RC_EXPANDED(rc)->set(succ_i++, ins);
+      RC_EXPANDED(rc)->set(succ_i++, (LmnWord)ins);
     } else if (s->has_trans_obj()) {
       /* succへの遷移が多重辺かつTransitionオブジェクトを利用する場合 */
       /* src_tは状態生成時に張り付けたルール名なので, 0番にしか要素はないはず */
@@ -378,7 +379,7 @@ void mc_store_successors(const StateSpaceRef ss, State *s, MCReactContext *rc,
     */
   }
 
-  st_clear(RC_SUCC_TBL(rc));
+  rc->clear_successor_table();
 
   RC_EXPANDED(rc)->set_num(succ_i); /* 危険なコード. いつか直すかも. */
   RC_EXPANDED_RULES(rc)->set_num(succ_i);

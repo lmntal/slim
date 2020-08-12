@@ -45,6 +45,7 @@
 #include <vector>
 #include <algorithm>
 #include <bitset>
+#include <unordered_map>
 
 typedef struct LmnRegister *LmnRegisterRef;
 
@@ -258,8 +259,6 @@ enum ModelCheckerOptimazeMode {
 };
 const unsigned int ModelCheckerOptimazeModeSize = 4;
 
-//#define (RC)                  ((struct McReactCxtData *)(RC)->v)
-#define RC_SUCC_TBL(RC) ((((MCReactContext *)RC))->succ_tbl)
 #define RC_EXPANDED(RC) ((((MCReactContext *)RC))->roots)
 #define RC_EXPANDED_RULES(RC) ((((MCReactContext *)RC))->rules)
 #define RC_EXPANDED_PROPS(RC) ((((MCReactContext *)RC))->props)
@@ -284,7 +283,7 @@ const unsigned int ModelCheckerOptimazeModeSize = 4;
 #define RC_CLEAR_DATA(RC)                                                      \
   do {                                                                         \
     (RC)->set_global_root(nullptr);                                              \
-    st_clear(RC_SUCC_TBL(RC));                                                 \
+    (RC)->clear_successor_table();                                                 \
     RC_EXPANDED_RULES(RC)->clear();                                          \
     RC_EXPANDED(RC)->clear();                                                \
     RC_EXPANDED_PROPS(RC)->clear();                                          \
@@ -306,7 +305,6 @@ struct MCReactContext : LmnReactCxt {
   MCReactContext(LmnMembrane *mem);
 
   ~MCReactContext() {
-    st_free_table(succ_tbl);
     delete roots;
     delete rules;
     delete props;
@@ -319,7 +317,6 @@ struct MCReactContext : LmnReactCxt {
     global_root = mem;
   }
 
-  st_table_t succ_tbl; /* 多重辺除去用 */
   Vector *roots;       /* 1. 遷移先計算中
                         *    通常: struct LmnMembrane
                         *    差分: 空
@@ -346,9 +343,24 @@ struct MCReactContext : LmnReactCxt {
     opt_mode.reset(mode);
   }
 
+  void clear_successor_table() {
+    succ_tbl.clear();
+  }
+  void *get_transition_to(State *succ) {
+    auto it = succ_tbl.find(succ);
+    return it == succ_tbl.end() ? nullptr : it->second;
+  }
+  void set_transition_to(State *state, void *succ) {
+    succ_tbl[state] = succ;
+  }
+
 private:
   /* 最適化のモードを記録 */
   std::bitset<ModelCheckerOptimazeModeSize> opt_mode;
+  /* 多重辺除去用 */
+  /* key: 展開中のsuccessor */
+  /* value: successorに対応するTransition *か、keyと同じ値*/
+  std::unordered_map<State *, void *> succ_tbl;
 };
 
 void mc_react_cxt_add_expanded(LmnReactCxtRef cxt, LmnMembraneRef mem,
