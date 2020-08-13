@@ -119,7 +119,7 @@ void dpor_env_destroy(void);
 void dpor_transition_gen_LHS(McDporData *mc, MemDeltaRoot *d,
                              LmnReactCxtRef rc);
 BOOL dpor_transition_gen_RHS(McDporData *mc, MemDeltaRoot *d,
-                             LmnReactCxtRef rc);
+                             MCReactContext *rc);
 
 void dpor_LHS_flag_add(McDporData *d, LmnWord proc_id, BYTE set_f);
 

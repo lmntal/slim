@@ -142,13 +142,13 @@ MCReactContext::MCReactContext(LmnMembrane *mem) : LmnReactCxt(mem, REACT_ND) {
 void mc_react_cxt_add_expanded(MCReactContext *cxt, LmnMembraneRef mem,
                                LmnRuleRef rule) {
   cxt->push_expanded_state(mem);
-  RC_EXPANDED_RULES(cxt)->push((vec_data_t)rule);
+  cxt->push_expanded_rule(rule);
 }
 
-void mc_react_cxt_add_mem_delta(LmnReactCxtRef cxt, struct MemDeltaRoot *d,
+void mc_react_cxt_add_mem_delta(MCReactContext *cxt, struct MemDeltaRoot *d,
                                 LmnRuleRef rule) {
   RC_MEM_DELTAS(cxt)->push((vec_data_t)d);
-  RC_EXPANDED_RULES(cxt)->push((vec_data_t)rule);
+  cxt->push_expanded_rule(rule);
 }
 
 unsigned int mc_react_cxt_succ_num_org(LmnReactCxtRef cxt) {

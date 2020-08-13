@@ -673,7 +673,7 @@ void dpor_transition_gen_LHS(McDporData *mc, MemDeltaRoot *d,
 }
 
 BOOL dpor_transition_gen_RHS(McDporData *mc, MemDeltaRoot *d,
-                             LmnReactCxtRef rc) {
+                             MCReactContext *rc) {
   ContextC1Ref c, ret;
 
   c = mc->tmp;

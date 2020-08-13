@@ -1171,10 +1171,10 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
         dmem_root_finish(d);
 
         if (mcrc->has_optmode(DynamicPartialOrderReduction)) {
-          if (!dpor_transition_gen_RHS(RC_POR_DATA(rc), d, rc)) {
+          if (!dpor_transition_gen_RHS(RC_POR_DATA(rc), d, mcrc)) {
             delete d;
           } else {
-            mc_react_cxt_add_mem_delta(rc, d, rule);
+            mc_react_cxt_add_mem_delta(mcrc, d, rule);
           }
 
           /* サクセッサへの差分オブジェクトが複数できあがることになるが,
@@ -1184,7 +1184,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
           return FALSE;
         }
 
-        mc_react_cxt_add_mem_delta(rc, d, rule);
+        mc_react_cxt_add_mem_delta(mcrc, d, rule);
         RC_ND_SET_MEM_DELTA_ROOT(rc, NULL);
       } else {
         /** >>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<< **/

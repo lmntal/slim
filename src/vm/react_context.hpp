@@ -259,7 +259,6 @@ enum ModelCheckerOptimazeMode {
 };
 const unsigned int ModelCheckerOptimazeModeSize = 4;
 
-#define RC_EXPANDED_RULES(RC) ((((MCReactContext *)RC))->rules)
 #define RC_EXPANDED_PROPS(RC) ((((MCReactContext *)RC))->props)
 #define RC_MEM_DELTAS(RC) ((((MCReactContext *)RC))->mem_deltas)
 #define RC_ND_SET_MEM_DELTA_ROOT(RC, D)                                        \
@@ -283,7 +282,7 @@ const unsigned int ModelCheckerOptimazeModeSize = 4;
   do {                                                                         \
     (RC)->set_global_root(nullptr);                                              \
     (RC)->clear_successor_table();                                                 \
-    RC_EXPANDED_RULES(RC)->clear();                                          \
+    (RC)->clear_expanded_rules();                                          \
     (RC)->clear_expanded_states();                                                \
     RC_EXPANDED_PROPS(RC)->clear();                                          \
     if ((RC)->has_optmode(DeltaMembrane)) {                                                  \
@@ -323,7 +322,6 @@ struct MCReactContext : LmnReactCxt {
    *    差分: 初期化設定のみを行ったstruct State
    */
   std::vector<void *> roots;       
-  Vector *rules;
   Vector *props;
   Vector *mem_deltas; /* BODY命令の適用を終えたMemDeltaRootオブジェクトを置く */
   MemDeltaRoot
@@ -374,6 +372,19 @@ struct MCReactContext : LmnReactCxt {
     roots.push_back(s);
   }
 
+  LmnRule *get_expanded_rule(int i) {
+    return (LmnRule *)rules->get(i);
+  }
+  void resize_expanded_rules(int size) {
+    rules->set_num(size);
+  }
+  void push_expanded_rule(LmnRule *rule) {
+    rules->push((vec_data_t)rule);
+  }
+  void clear_expanded_rules() {
+    rules->clear();
+  }
+
 private:
   /* 最適化のモードを記録 */
   std::bitset<ModelCheckerOptimazeModeSize> opt_mode;
@@ -381,11 +392,13 @@ private:
   /* key: 展開中のsuccessor */
   /* value: successorに対応するTransition *か、keyと同じ値*/
   std::unordered_map<State *, void *> succ_tbl;
+  
+  Vector *rules;
 };
 
 void mc_react_cxt_add_expanded(MCReactContext *cxt, LmnMembraneRef mem,
                                LmnRuleRef rule);
-void mc_react_cxt_add_mem_delta(LmnReactCxtRef cxt, struct MemDeltaRoot *d,
+void mc_react_cxt_add_mem_delta(MCReactContext *cxt, struct MemDeltaRoot *d,
                                 LmnRuleRef rule);
 
 unsigned int mc_react_cxt_succ_num_org(LmnReactCxtRef cxt);

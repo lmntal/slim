@@ -404,7 +404,7 @@ inline void McPorData::por_store_successors_inner(State *s, MCReactContext *rc) 
     } else {
       src_succ = (State *)rc->expanded_states(i);
       src_t = transition_make(
-          src_succ, (lmn_interned_str)RC_EXPANDED_RULES(rc)->get(i));
+          src_succ, rc->get_expanded_rule(i)->name);
     }
 
     d = rc->has_optmode(DeltaMembrane) ? (MemDeltaRoot *)RC_MEM_DELTAS(rc)->get(i)
@@ -431,7 +431,7 @@ inline void McPorData::por_store_successors_inner(State *s, MCReactContext *rc) 
   }
 
   rc->resize_expanded_states(succ_i);
-  RC_EXPANDED_RULES(rc)->set_num(succ_i);
+  rc->resize_expanded_rules(succ_i);
   if (rc->has_optmode(DeltaMembrane)) {
     RC_MEM_DELTAS(rc)->set_num(succ_i);
   }

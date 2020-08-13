@@ -382,7 +382,7 @@ void mc_store_successors(const StateSpaceRef ss, State *s, MCReactContext *rc,
   rc->clear_successor_table();
 
   rc->resize_expanded_states(succ_i); /* 危険なコード. いつか直すかも. */
-  RC_EXPANDED_RULES(rc)->set_num(succ_i);
+  rc->resize_expanded_rules(succ_i);
   /*  上記につられて以下のコードを記述すると実行時エラーになる. (r436でdebug)
    *  RC_MEM_DELTASはmc_store_successors終了後に, struct
    * MemDeltaRootの開放処理を行うため要素数に手を加えてはならない. */
@@ -427,7 +427,6 @@ BOOL mc_expand_inner(MCReactContext *rc, LmnMembraneRef cur_mem) {
  *  生成された状態は重複（多重辺）を含む */
 void mc_gen_successors(State *src, LmnMembraneRef mem, BYTE state_name,
                        MCReactContext *rc, BOOL f) {
-  Vector *expanded_rules;
   unsigned int i, n, old;
 
   rc->set_global_root(mem);
@@ -440,7 +439,6 @@ void mc_gen_successors(State *src, LmnMembraneRef mem, BYTE state_name,
   mc_gen_successors_inner(rc, mem);
 
   /** Generate Successor States */
-  expanded_rules = RC_EXPANDED_RULES(rc);
   n = mc_react_cxt_expanded_num(rc);
 
   for (i = old; i < n; i++) {
@@ -459,7 +457,7 @@ void mc_gen_successors(State *src, LmnMembraneRef mem, BYTE state_name,
     state_set_parent(news, src);
     if (mc_has_trans(f)) {
       lmn_interned_str nid;
-      nid = ((LmnRuleRef)expanded_rules->get(i))->name;
+      nid = rc->get_expanded_rule(i)->name;
       data = transition_make(news, nid);
      src->set_trans_obj();
     } else {
