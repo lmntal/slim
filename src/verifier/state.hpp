@@ -39,6 +39,9 @@
 
 #ifndef LMN_STATE_HPP
 #define LMN_STATE_HPP
+
+#include <vector>
+
 #include "lmntal.h"
 #include "mhash.h"
 #include "runtime_status.h"
@@ -265,18 +268,18 @@ struct State {                /* Total:72(36)byte */
     return dst;
   }
 
-  void succ_set(Vector *v) {
-    if (!v->is_empty() && !successors) {
+  void succ_set(const std::vector<void *> &v) {
+    if (!v.empty() && !successors) {
       unsigned int i;
-      successor_num = v->get_num();
+      successor_num = v.size();
       successors = LMN_NALLOC(succ_data_t, successor_num);
       for (i = 0; i < successor_num; i++) {
-        successors[i] = (succ_data_t)v->get(i);
+        successors[i] = (succ_data_t)v.at(i);
       }
 #ifdef PROFILE
       if (lmn_env.profile_level >= 3) {
         profile_add_space(PROFILE_SPACE__TRANS_OBJECT,
-          sizeof(succ_data_t) * v->get_num());
+          sizeof(succ_data_t) * v.size());
         profile_remove_space(PROFILE_SPACE__TRANS_OBJECT, 0);
       }
 #endif

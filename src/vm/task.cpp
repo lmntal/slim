@@ -1268,7 +1268,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
         this->push_stackframe([=](interpreter &itr, bool result) {
           react_zerostep_recursive(
               rc, tmp_global_root); /**< 0stepルールを適用する */
-          mc_react_cxt_add_expanded(rc, tmp_global_root, rule);
+          mc_react_cxt_add_expanded(mcrc, tmp_global_root, rule);
 
           rule->undo_history();
 

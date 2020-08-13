@@ -39,6 +39,7 @@
 
 #include "vm/vm.h"
 
+#include <algorithm>
 
 void cb_react_rule(LmnReactCxtRef rc,
                    LmnMembraneRef mem,
@@ -87,11 +88,12 @@ static void apply_rules_in_rulesets(LmnMembraneRef mem,
       MCReactContext rc(src_graph);
       rc.keep_process_id_in_nd_mode = true;
       react_rule(&rc, src_graph, r);
-      int n_of_results = RC_EXPANDED(&rc)->get_num();
+      auto &states = rc.expanded_states();
+      int n_of_results = rc.expanded_states().size();
 
-      for (int k = n_of_results - 1; k >= 0; k--) {
+      std::for_each(states.rbegin(), states.rend(), [=](void *v) {
         LmnSymbolAtomRef cons = lmn_mem_newatom(mem, LMN_LIST_FUNCTOR);
-        LmnMembraneRef m = (LmnMembraneRef)RC_EXPANDED(&rc)->get(k);
+        LmnMembraneRef m = (LmnMembraneRef)v;
         LmnSymbolAtomRef in = lmn_mem_newatom(m, LMN_IN_PROXY_FUNCTOR); 
         LmnSymbolAtomRef out = lmn_mem_newatom(mem, LMN_OUT_PROXY_FUNCTOR);
         LmnSymbolAtomRef plus = lmn_mem_newatom(m, LMN_UNARY_PLUS_FUNCTOR);
@@ -102,7 +104,7 @@ static void apply_rules_in_rulesets(LmnMembraneRef mem,
         lmn_newlink_in_symbols(cons, 1, *head, *pos);
         *head = cons;
         *pos = 2;
-      }
+      });
     }
   }
 }

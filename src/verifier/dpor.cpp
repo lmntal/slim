@@ -751,14 +751,14 @@ static void dpor_ample_set_to_succ_tbl(StateSpaceRef ss, Vector *ample_set,
 
   succ_i = 0;
 
-  for (i = 0; i < RC_EXPANDED(rc)->get_num(); i++) { /* ごめんなさいort */
+  for (auto &v : rc->expanded_states()) { /* ごめんなさいort */
     State *succ_s;
     if (s->has_trans_obj()) {
-      TransitionRef succ_t = (TransitionRef)RC_EXPANDED(rc)->get(i);
+      TransitionRef succ_t = (TransitionRef)v;
       succ_s = transition_next_state(succ_t);
       transition_free(succ_t);
     } else {
-      succ_s = (State *)RC_EXPANDED(rc)->get(i);
+      succ_s = (State *)v;
     }
     delete (succ_s);
   }
@@ -795,7 +795,7 @@ static void dpor_ample_set_to_succ_tbl(StateSpaceRef ss, Vector *ample_set,
       if (s->has_trans_obj()) {
         transition_set_state(src_t, succ);
       } else {
-        RC_EXPANDED(rc)->set(i, (vec_data_t)succ);
+        rc->set_expanded_state(i, succ);
       }
     }
 
@@ -807,7 +807,7 @@ static void dpor_ample_set_to_succ_tbl(StateSpaceRef ss, Vector *ample_set,
     if (tmp == nullptr) {
       void *ins = s->has_trans_obj() ? (void *)src_t : (void *)succ;
       rc->set_transition_to(succ, ins);
-      RC_EXPANDED(rc)->set(succ_i++, (LmnWord)ins);
+      rc->set_expanded_state(succ_i++, ins);
     } else {
       if (s->has_trans_obj()) {
         transition_free(src_t);
@@ -852,7 +852,7 @@ static void dpor_ample_set_to_succ_tbl(StateSpaceRef ss, Vector *ample_set,
         if (s->has_trans_obj()) {
           transition_set_state(src_t, succ);
         } else {
-          RC_EXPANDED(rc)->set(i, (vec_data_t)succ);
+          rc->set_expanded_state(i, succ);
         }
       }
 
@@ -860,7 +860,7 @@ static void dpor_ample_set_to_succ_tbl(StateSpaceRef ss, Vector *ample_set,
       if (tmp == nullptr) {
         void *ins = s->has_trans_obj() ? (void *)src_t : (void *)succ;
         rc->set_transition_to(succ, ins);
-        RC_EXPANDED(rc)->set(succ_i++, (LmnWord)ins);
+        rc->set_expanded_state(succ_i++, ins);
       } else {
         if (s->has_trans_obj()) {
           transition_free(src_t);
@@ -904,8 +904,8 @@ static void dpor_ample_set_to_succ_tbl(StateSpaceRef ss, Vector *ample_set,
   }
 #endif
 
-  RC_EXPANDED(rc)->set_num(succ_i);
-  s->succ_set(RC_EXPANDED(rc)); /* successorを登録 */
+  rc->resize_expanded_states(succ_i);
+  s->succ_set(rc->expanded_states()); /* successorを登録 */
   rc->clear_successor_table();
 }
 

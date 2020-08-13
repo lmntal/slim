@@ -198,7 +198,7 @@ static void mc_dump(LmnWorkerGroup *wp) {
 static inline void mc_gen_successors_inner(MCReactContext *rc,
                                            LmnMembraneRef cur_mem);
 static inline void stutter_extension(State *s, LmnMembraneRef mem,
-                                     BYTE next_label, LmnReactCxtRef rc,
+                                     BYTE next_label, MCReactContext *rc,
                                      BOOL flags);
 
 /* 状態sから1stepで遷移する状態を計算し, 遷移元状態と状態空間に登録を行う
@@ -305,9 +305,9 @@ void mc_store_successors(const StateSpaceRef ss, State *s, MCReactContext *rc,
     if (!s->has_trans_obj()) {
       /* Transitionオブジェクトを利用しない場合 */
       src_t = NULL;
-      src_succ = (State *)RC_EXPANDED(rc)->get(i);
+      src_succ = (State *)rc->expanded_states(i);
     } else {
-      src_t = (TransitionRef)RC_EXPANDED(rc)->get(i);
+      src_t = (TransitionRef)rc->expanded_states(i);
       src_succ = transition_next_state(src_t);
     }
 
@@ -366,7 +366,7 @@ void mc_store_successors(const StateSpaceRef ss, State *s, MCReactContext *rc,
       rc->set_transition_to(succ, ins);
 
       /* 遷移先情報を記録する一時領域(in ReactCxt)を更新 */
-      RC_EXPANDED(rc)->set(succ_i++, (LmnWord)ins);
+      rc->set_expanded_state(succ_i++, ins);
     } else if (s->has_trans_obj()) {
       /* succへの遷移が多重辺かつTransitionオブジェクトを利用する場合 */
       /* src_tは状態生成時に張り付けたルール名なので, 0番にしか要素はないはず */
@@ -381,7 +381,7 @@ void mc_store_successors(const StateSpaceRef ss, State *s, MCReactContext *rc,
 
   rc->clear_successor_table();
 
-  RC_EXPANDED(rc)->set_num(succ_i); /* 危険なコード. いつか直すかも. */
+  rc->resize_expanded_states(succ_i); /* 危険なコード. いつか直すかも. */
   RC_EXPANDED_RULES(rc)->set_num(succ_i);
   /*  上記につられて以下のコードを記述すると実行時エラーになる. (r436でdebug)
    *  RC_MEM_DELTASはmc_store_successors終了後に, struct
@@ -391,7 +391,7 @@ void mc_store_successors(const StateSpaceRef ss, State *s, MCReactContext *rc,
   //  }
 
   state_D_progress(s, rc);
-  s->succ_set(RC_EXPANDED(rc)); /* successorを登録 */
+  s->succ_set(rc->expanded_states()); /* successorを登録 */
 }
 
 /*
@@ -427,7 +427,7 @@ BOOL mc_expand_inner(MCReactContext *rc, LmnMembraneRef cur_mem) {
  *  生成された状態は重複（多重辺）を含む */
 void mc_gen_successors(State *src, LmnMembraneRef mem, BYTE state_name,
                        MCReactContext *rc, BOOL f) {
-  Vector *expanded_roots, *expanded_rules;
+  Vector *expanded_rules;
   unsigned int i, n, old;
 
   rc->set_global_root(mem);
@@ -440,19 +440,18 @@ void mc_gen_successors(State *src, LmnMembraneRef mem, BYTE state_name,
   mc_gen_successors_inner(rc, mem);
 
   /** Generate Successor States */
-  expanded_roots = RC_EXPANDED(rc); /* DeltaMembrane時は空 */
   expanded_rules = RC_EXPANDED_RULES(rc);
   n = mc_react_cxt_expanded_num(rc);
 
   for (i = old; i < n; i++) {
     State *news;
-    vec_data_t data;
+    void *data;
 
     /* DeltaMembrane時はこの時点でSuccessor Membraneがない */
     if (mc_use_delta(f)) {
       news = new State();
     } else {
-      news = new State((LmnMembraneRef)expanded_roots->get(i), state_name,
+      news = new State((LmnMembraneRef)rc->expanded_states(i), state_name,
                         mc_use_canonical(f));
     }
 
@@ -461,19 +460,19 @@ void mc_gen_successors(State *src, LmnMembraneRef mem, BYTE state_name,
     if (mc_has_trans(f)) {
       lmn_interned_str nid;
       nid = ((LmnRuleRef)expanded_rules->get(i))->name;
-      data = (vec_data_t)transition_make(news, nid);
+      data = transition_make(news, nid);
      src->set_trans_obj();
     } else {
-      data = (vec_data_t)news;
+      data = news;
     }
 
     /* DeltaMembrane時は, expanded_rootsが空であるため, 生成した空の状態を積む
      * 通常時は, expanded_rootsのi番目のデータを
      *           Successor MembraneからSuccessor Stateへ設定し直す */
     if (mc_use_delta(f)) {
-      expanded_roots->push(data);
+      rc->push_expanded_state(data);
     } else {
-      expanded_roots->set(i, data);
+      rc->set_expanded_state(i, data);
     }
   }
 
@@ -529,14 +528,14 @@ void mc_gen_successors_with_property(State *s, LmnMembraneRef mem,
     for (j = 0; j < RC_ND_ORG_SUCC_NUM(rc); j++) {
       TransitionRef src_succ_t;
       State *src_succ_s, *new_s;
-      vec_data_t data;
+      void *data;
 
       if (mc_has_trans(f)) {
-        src_succ_t = (TransitionRef)RC_EXPANDED(rc)->get(j);
+        src_succ_t = (TransitionRef)rc->expanded_states(j);
         src_succ_s = transition_next_state(src_succ_t);
       } else {
         src_succ_t = NULL;
-        src_succ_s = (State *)RC_EXPANDED(rc)->get(j);
+        src_succ_s = (State *)rc->expanded_states(j);
       }
 
       new_s = src_succ_s->duplicate(NULL);
@@ -545,15 +544,15 @@ void mc_gen_successors_with_property(State *s, LmnMembraneRef mem,
 
       if (mc_has_trans(f)) {
         data =
-            (vec_data_t)transition_make(new_s, transition_rule(src_succ_t, 0));
+            transition_make(new_s, transition_rule(src_succ_t, 0));
 #ifdef KWBT_OPT
         transition_set_cost((Transition)data, transition_cost(src_succ_t));
 #endif
        s->set_trans_obj();
       } else {
-        data = (vec_data_t)new_s;
+        data = new_s;
       }
-      RC_EXPANDED(rc)->push(data);
+      rc->push_expanded_state(data);
 
       /* 差分オブジェクトは状態展開時のみの一時データなので,
        * 効率化のためにポインタcopyのみにしている(deep copyしない)
@@ -569,9 +568,9 @@ void mc_gen_successors_with_property(State *s, LmnMembraneRef mem,
  * 膜memとmemに対応する状態sをコピーし, 性質ラベルnext_labelを持った状態として,
  * サクセッサ展開の一時領域(in ReactCxt)に追加する */
 static inline void stutter_extension(State *s, LmnMembraneRef mem,
-                                     BYTE next_label, LmnReactCxtRef rc,
+                                     BYTE next_label, MCReactContext *rc,
                                      BOOL f) {
-  vec_data_t data;
+  void *data;
   State *new_s;
 
   /* Stutter Extension Rule:
@@ -604,12 +603,12 @@ static inline void stutter_extension(State *s, LmnMembraneRef mem,
   state_set_parent(new_s, s);
 
   if (mc_has_trans(f)) {
-    data = (vec_data_t)transition_make(new_s, lmn_intern("ε"));
+    data = transition_make(new_s, lmn_intern("ε"));
    s->set_trans_obj();
   } else {
-    data = (vec_data_t)new_s;
+    data = new_s;
   }
-  RC_EXPANDED(rc)->push(data);
+  rc->push_expanded_state(data);
 }
 
 static inline void mc_gen_successors_inner(MCReactContext *rc,

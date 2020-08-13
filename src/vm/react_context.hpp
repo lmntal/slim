@@ -259,7 +259,6 @@ enum ModelCheckerOptimazeMode {
 };
 const unsigned int ModelCheckerOptimazeModeSize = 4;
 
-#define RC_EXPANDED(RC) ((((MCReactContext *)RC))->roots)
 #define RC_EXPANDED_RULES(RC) ((((MCReactContext *)RC))->rules)
 #define RC_EXPANDED_PROPS(RC) ((((MCReactContext *)RC))->props)
 #define RC_MEM_DELTAS(RC) ((((MCReactContext *)RC))->mem_deltas)
@@ -285,7 +284,7 @@ const unsigned int ModelCheckerOptimazeModeSize = 4;
     (RC)->set_global_root(nullptr);                                              \
     (RC)->clear_successor_table();                                                 \
     RC_EXPANDED_RULES(RC)->clear();                                          \
-    RC_EXPANDED(RC)->clear();                                                \
+    (RC)->clear_expanded_states();                                                \
     RC_EXPANDED_PROPS(RC)->clear();                                          \
     if ((RC)->has_optmode(DeltaMembrane)) {                                                  \
       unsigned int _fr_;                                                       \
@@ -305,7 +304,6 @@ struct MCReactContext : LmnReactCxt {
   MCReactContext(LmnMembrane *mem);
 
   ~MCReactContext() {
-    delete roots;
     delete rules;
     delete props;
     if (mem_deltas) {
@@ -317,12 +315,14 @@ struct MCReactContext : LmnReactCxt {
     global_root = mem;
   }
 
-  Vector *roots;       /* 1. 遷移先計算中
-                        *    通常: struct LmnMembrane
-                        *    差分: 空
-                        * 2. 遷移先計算後 (mc_gen_successor@mc.c以降)
-                        * 　　通常: struct LmnMembraneへの参照を設定したstruct State
-                        *    差分: 初期化設定のみを行ったstruct State　*/
+  /* 1. 遷移先計算中
+   *    通常: struct LmnMembrane
+   *    差分: 空
+   * 2. 遷移先計算後 (mc_gen_successor@mc.c以降)
+   * 　　通常: struct LmnMembraneへの参照を設定したstruct State
+   *    差分: 初期化設定のみを行ったstruct State
+   */
+  std::vector<void *> roots;       
   Vector *rules;
   Vector *props;
   Vector *mem_deltas; /* BODY命令の適用を終えたMemDeltaRootオブジェクトを置く */
@@ -354,6 +354,26 @@ struct MCReactContext : LmnReactCxt {
     succ_tbl[state] = succ;
   }
 
+  std::vector<void *> const &expanded_states() const {
+    return roots;
+  }
+  void *expanded_states(int i) const {
+    return roots[i];
+  }
+
+  void set_expanded_state(int idx, void *s) {
+    roots[idx] = s;
+  }
+  void resize_expanded_states(int size) {
+    roots.resize(size);
+  }
+  void clear_expanded_states() {
+    roots.clear();
+  }
+  void push_expanded_state(void *s) {
+    roots.push_back(s);
+  }
+
 private:
   /* 最適化のモードを記録 */
   std::bitset<ModelCheckerOptimazeModeSize> opt_mode;
@@ -363,14 +383,10 @@ private:
   std::unordered_map<State *, void *> succ_tbl;
 };
 
-void mc_react_cxt_add_expanded(LmnReactCxtRef cxt, LmnMembraneRef mem,
+void mc_react_cxt_add_expanded(MCReactContext *cxt, LmnMembraneRef mem,
                                LmnRuleRef rule);
 void mc_react_cxt_add_mem_delta(LmnReactCxtRef cxt, struct MemDeltaRoot *d,
                                 LmnRuleRef rule);
-
-LmnWord mc_react_cxt_expanded_pop(MCReactContext *cxt);
-
-LmnWord mc_react_cxt_expanded_get(MCReactContext *cxt, unsigned int i);
 
 unsigned int mc_react_cxt_succ_num_org(LmnReactCxtRef cxt);
 

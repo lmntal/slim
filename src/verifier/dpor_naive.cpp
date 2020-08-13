@@ -36,6 +36,9 @@
  * $Id$
  */
 #include "dpor_naive.h"
+
+#include <vector>
+
 #include "delta_membrane.h"
 #include "dpor.h"
 #include "mc.h"
@@ -396,10 +399,10 @@ inline void McPorData::por_store_successors_inner(State *s, MCReactContext *rc) 
     MemDeltaRoot *d;
 
     if (s->has_trans_obj()) {
-      src_t = (TransitionRef)RC_EXPANDED(rc)->get(i);
+      src_t = (TransitionRef)rc->expanded_states(i);
       src_succ = transition_next_state(src_t);
     } else {
-      src_succ = (State *)RC_EXPANDED(rc)->get(i);
+      src_succ = (State *)rc->expanded_states(i);
       src_t = transition_make(
           src_succ, (lmn_interned_str)RC_EXPANDED_RULES(rc)->get(i));
     }
@@ -415,7 +418,7 @@ inline void McPorData::por_store_successors_inner(State *s, MCReactContext *rc) 
     tmp = reinterpret_cast<TransitionRef>(rc->get_transition_to(succ));
     if (tmp == nullptr) {
       rc->set_transition_to(succ, src_t);
-      RC_EXPANDED(rc)->set(succ_i, (vec_data_t)src_t);
+      rc->set_expanded_state(succ_i, src_t);
       if (rc->has_optmode(DeltaMembrane)) {
         RC_MEM_DELTAS(rc)->set(succ_i, RC_MEM_DELTAS(rc)->get(i));
       }
@@ -427,7 +430,7 @@ inline void McPorData::por_store_successors_inner(State *s, MCReactContext *rc) 
     }
   }
 
-  RC_EXPANDED(rc)->set_num(succ_i);
+  rc->resize_expanded_states(succ_i);
   RC_EXPANDED_RULES(rc)->set_num(succ_i);
   if (rc->has_optmode(DeltaMembrane)) {
     RC_MEM_DELTAS(rc)->set_num(succ_i);
@@ -442,7 +445,7 @@ inline void McPorData::por_store_successors_inner(State *s, MCReactContext *rc) 
     StateDumper::from_env(stdout)->dump((State *)(s->successors[0]));
   }
 
-  s->succ_set(RC_EXPANDED(rc));
+  s->succ_set(rc->expanded_states());
   rc->clear_successor_table();
 }
 
@@ -997,9 +1000,8 @@ int McPorData::build_ample_satisfying_lemma(st_data_t key, st_data_t val, st_dat
 
 void McPorData::push_ample_to_expanded(StateSpaceRef ss, State *s, LmnReactCxtRef rc, Vector *new_ss, BOOL f){
   if (s->successor_num > 0) {
-    struct Vector tmp;
+    std::vector<void *> tmp;
     unsigned int i;
-    tmp.init(32);
 
     for (i = 0; i < s->successor_num; i++) {
       TransitionRef succ_t;
@@ -1010,7 +1012,7 @@ void McPorData::push_ample_to_expanded(StateSpaceRef ss, State *s, LmnReactCxtRe
 
       if (is_inserted(succ_s) && is_outside_exist(succ_s)) {
         /* C3 check時, 探索空間への追加に成功してしまっていた場合 */
-        tmp.push((vec_data_t)succ_t);
+        tmp.push_back(succ_t);
       } else if (!ample_candidate->contains(
                                (vec_data_t)transition_id(succ_t))) {
         /* amplesetに含まれない遷移は除去 */
@@ -1021,15 +1023,14 @@ void McPorData::push_ample_to_expanded(StateSpaceRef ss, State *s, LmnReactCxtRe
         if (!is_inserted(succ_s)) {
           por_state_insert_statespace(ss, succ_t, succ_s, new_ss, f);
         }
-        tmp.push((vec_data_t)succ_t);
+        tmp.push_back(succ_t);
       }
     }
 
     LMN_FREE(s->successors);
     s->successors = NULL;
     s->successor_num = 0;
-    s->succ_set(&tmp);
-    tmp.destroy();
+    s->succ_set(tmp);
   }
 }
 

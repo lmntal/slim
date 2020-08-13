@@ -122,7 +122,6 @@ MCReactContext::MCReactContext(LmnMembrane *mem) : LmnReactCxt(mem, REACT_ND) {
       this->turnon_optmode(BinaryStringDeltaCompress);
     }
 
-    roots = new Vector(32);
     rules = new Vector(32);
     props = new Vector(8);
     mem_deltas = NULL;
@@ -140,9 +139,9 @@ MCReactContext::MCReactContext(LmnMembrane *mem) : LmnReactCxt(mem, REACT_ND) {
     }
   }
 
-void mc_react_cxt_add_expanded(LmnReactCxtRef cxt, LmnMembraneRef mem,
+void mc_react_cxt_add_expanded(MCReactContext *cxt, LmnMembraneRef mem,
                                LmnRuleRef rule) {
-  RC_EXPANDED(cxt)->push((vec_data_t)mem);
+  cxt->push_expanded_state(mem);
   RC_EXPANDED_RULES(cxt)->push((vec_data_t)rule);
 }
 
@@ -152,30 +151,13 @@ void mc_react_cxt_add_mem_delta(LmnReactCxtRef cxt, struct MemDeltaRoot *d,
   RC_EXPANDED_RULES(cxt)->push((vec_data_t)rule);
 }
 
-LmnWord mc_react_cxt_expanded_pop(MCReactContext *cxt) {
-  RC_EXPANDED_RULES(cxt)->pop();
-  if (cxt->has_optmode(DeltaMembrane)) {
-    return RC_MEM_DELTAS(cxt)->pop();
-  } else {
-    return RC_EXPANDED(cxt)->pop();
-  }
-}
-
-LmnWord mc_react_cxt_expanded_get(MCReactContext *cxt, unsigned int i) {
-  if (cxt->has_optmode(DeltaMembrane)) {
-    return RC_MEM_DELTAS(cxt)->get(i);
-  } else {
-    return RC_EXPANDED(cxt)->get(i);
-  }
-}
-
 unsigned int mc_react_cxt_succ_num_org(LmnReactCxtRef cxt) {
   return RC_ND_ORG_SUCC_NUM(cxt);
 }
 
 unsigned int mc_react_cxt_expanded_num(MCReactContext *cxt) {
   return cxt->has_optmode(DeltaMembrane) ? RC_MEM_DELTAS(cxt)->get_num()
-                             : RC_EXPANDED(cxt)->get_num();
+                             : cxt->expanded_states().size();
 }
 
 ///// first-class rulesets
