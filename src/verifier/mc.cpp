@@ -318,7 +318,7 @@ void mc_store_successors(const StateSpaceRef ss, State *s, MCReactContext *rc,
 
     /* 状態空間に状態src_succを記録 */
     if (rc->has_optmode(DeltaMembrane)) { /* --delta-mem */
-      MemDeltaRoot *d = (struct MemDeltaRoot *)RC_MEM_DELTAS(rc)->get(i);
+      MemDeltaRoot *d = rc->get_mem_delta_roots().at(i);
       succ = ss->insert_delta(src_succ, d);
       src_succ_m = NULL;
     } else if (src_succ->is_encoded()) { /* !--delta-mem && --mem-enc */
@@ -387,7 +387,7 @@ void mc_store_successors(const StateSpaceRef ss, State *s, MCReactContext *rc,
    *  RC_MEM_DELTASはmc_store_successors終了後に, struct
    * MemDeltaRootの開放処理を行うため要素数に手を加えてはならない. */
   //  if (rc->has_optmode(DeltaMembrane)) {
-  //    RC_MEM_DELTAS(rc)->set_num(succ_i);
+  //    rc->resize_mem_delta_roots(succ_i);
   //  }
 
   state_D_progress(s, rc);
@@ -556,7 +556,7 @@ void mc_gen_successors_with_property(State *s, LmnMembraneRef mem,
        * 効率化のためにポインタcopyのみにしている(deep copyしない)
        * !! 開放処理は要注意 (r435でdebug) !! */
       if (rc->has_optmode(DeltaMembrane)) {
-        RC_MEM_DELTAS(rc)->push(RC_MEM_DELTAS(rc)->get(j));
+        rc->push_mem_delta_root(rc->get_mem_delta_roots().at(j));
       }
     }
   }

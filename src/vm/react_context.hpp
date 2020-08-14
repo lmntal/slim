@@ -259,7 +259,6 @@ enum ModelCheckerOptimazeMode {
 };
 const unsigned int ModelCheckerOptimazeModeSize = 4;
 
-#define RC_MEM_DELTAS(RC) ((((MCReactContext *)RC))->mem_deltas)
 #define RC_ND_SET_MEM_DELTA_ROOT(RC, D)                                        \
   ((((MCReactContext *)RC))->mem_delta_tmp = (D))
 #define RC_ND_MEM_DELTA_ROOT(RC)                                               \
@@ -287,13 +286,13 @@ const unsigned int ModelCheckerOptimazeModeSize = 4;
     if ((RC)->has_optmode(DeltaMembrane)) {                                                  \
       unsigned int _fr_;                                                       \
       for (_fr_ = 0;                                                           \
-           _fr_ < RC_ND_ORG_SUCC_NUM(RC) && _fr_ < RC_MEM_DELTAS(RC)->get_num(); \
+           _fr_ < RC_ND_ORG_SUCC_NUM(RC) && _fr_ < (RC)->get_mem_delta_roots().size(); \
            _fr_++) {                                                           \
-        MemDeltaRoot *_d_ = (MemDeltaRoot *)RC_MEM_DELTAS(RC)->get(_fr_);  \
+        MemDeltaRoot *_d_ = (RC)->get_mem_delta_roots().at(_fr_);  \
         if (_d_)                                                               \
           delete (_d_);                                                 \
       }                                                                        \
-      RC_MEM_DELTAS(RC)->clear();                                            \
+      (RC)->clear_mem_delta_roots();                                            \
     }                                                                          \
     RC_ND_SET_ORG_SUCC_NUM(RC, 0);                                             \
   } while (0)
@@ -301,17 +300,10 @@ const unsigned int ModelCheckerOptimazeModeSize = 4;
 struct MCReactContext : LmnReactCxt {
   MCReactContext(LmnMembrane *mem);
 
-  ~MCReactContext() {
-    if (mem_deltas) {
-      delete mem_deltas;
-    }
-  }
-
   void set_global_root(LmnMembrane *mem) {
     global_root = mem;
   }
     
-  Vector *mem_deltas; /* BODY命令の適用を終えたMemDeltaRootオブジェクトを置く */
   MemDeltaRoot
       *mem_delta_tmp; /* commit命令でmallocした差分オブジェクトを一旦ここに置く.
                        * BODY命令はこのMemDeltaRootオブジェクトへ適用する. */
@@ -373,7 +365,7 @@ struct MCReactContext : LmnReactCxt {
     rules.clear();
   }
 
-  std::vector<BYTE> const & get_expanded_properties() const {
+  std::vector<BYTE> const &get_expanded_properties() const {
     return props;
   }
   void push_expanded_property(BYTE prop) {
@@ -381,6 +373,22 @@ struct MCReactContext : LmnReactCxt {
   }
   void clear_expanded_properties() {
     props.clear();
+  }
+
+  void clear_mem_delta_roots() {
+    mem_deltas.clear();
+  }
+  std::vector<MemDeltaRoot *> const &get_mem_delta_roots() const {
+    return mem_deltas;
+  }
+  void set_mem_delta_root(int idx, MemDeltaRoot *root) {
+    mem_deltas[idx] = root;
+  }
+  void resize_mem_delta_roots(int size) {
+    mem_deltas.resize(size);
+  }
+  void push_mem_delta_root(MemDeltaRoot *root) {
+    mem_deltas.push_back(root);
   }
 
 private:
@@ -403,6 +411,9 @@ private:
   std::vector<LmnRule *> rules;
 
   std::vector<BYTE> props;
+
+  /* BODY命令の適用を終えたMemDeltaRootオブジェクトを置く */
+  std::vector<MemDeltaRoot *> mem_deltas;
 };
 
 void mc_react_cxt_add_expanded(MCReactContext *cxt, LmnMembraneRef mem,

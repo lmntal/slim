@@ -108,10 +108,6 @@ void react_context_copy(LmnReactCxtRef to, LmnReactCxtRef from) { *to = *from; }
  */
 
 MCReactContext::MCReactContext(LmnMembrane *mem) : LmnReactCxt(mem, REACT_ND) {
-    if (mem_deltas) {
-      this->turnon_optmode(DeltaMembrane);
-    }
-
     if (lmn_env.enable_por_old) {
       this->turnon_optmode(DynamicPartialOrderReduction_Naive);
     } else if (lmn_env.enable_por) {
@@ -122,14 +118,13 @@ MCReactContext::MCReactContext(LmnMembrane *mem) : LmnReactCxt(mem, REACT_ND) {
       this->turnon_optmode(BinaryStringDeltaCompress);
     }
 
-    mem_deltas = NULL;
     mem_delta_tmp = NULL;
     opt_mode = 0x00U;
     org_succ_num = 0;
     d_cur = 0;
 
     if (lmn_env.delta_mem) {
-      mem_deltas = new Vector(32);
+      this->turnon_optmode(DeltaMembrane);
     }
 
     if (lmn_env.enable_por && !lmn_env.enable_por_old) {
@@ -145,7 +140,7 @@ void mc_react_cxt_add_expanded(MCReactContext *cxt, LmnMembraneRef mem,
 
 void mc_react_cxt_add_mem_delta(MCReactContext *cxt, struct MemDeltaRoot *d,
                                 LmnRuleRef rule) {
-  RC_MEM_DELTAS(cxt)->push((vec_data_t)d);
+  cxt->push_mem_delta_root(d);
   cxt->push_expanded_rule(rule);
 }
 
@@ -154,7 +149,7 @@ unsigned int mc_react_cxt_succ_num_org(LmnReactCxtRef cxt) {
 }
 
 unsigned int mc_react_cxt_expanded_num(MCReactContext *cxt) {
-  return cxt->has_optmode(DeltaMembrane) ? RC_MEM_DELTAS(cxt)->get_num()
+  return cxt->has_optmode(DeltaMembrane) ? cxt->get_mem_delta_roots().size()
                              : cxt->expanded_states().size();
 }
 

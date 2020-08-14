@@ -37,6 +37,9 @@
  */
 
 #include "dpor.h"
+
+#include <algorithm>
+
 #include "delta_membrane.h"
 #include "dpor_naive.h"
 #include "lmntal.h"
@@ -372,7 +375,7 @@ static void dpor_data_free(McDporData *d) {
   LMN_FREE(d);
 }
 
-static void dpor_data_clear(McDporData *d, LmnReactCxtRef rc) {
+static void dpor_data_clear(McDporData *d, MCReactContext *rc) {
   d->wt_gatoms->clear();
   (d->wt_flags)->tbl_clear();
   d->ample_cand->clear();
@@ -384,7 +387,7 @@ static void dpor_data_clear(McDporData *d, LmnReactCxtRef rc) {
     delete delt;
   }
 
-  RC_MEM_DELTAS(rc)->clear();
+  rc->clear_mem_delta_roots();
 
   d->free_deltas->clear();
   d->nxt_tr_id = 0;
@@ -470,7 +473,7 @@ static BOOL contextC1s_are_depend(ContextC1Ref src, ContextC1Ref dst) {
 /* srcに積まれたdeltamemから取得するContextC1の独立性を検査し依存遷移の集合をretに積む.
  * 依存遷移が存在する場合 or
  * ContextC1がample_candに含まれるContextC1に依存している場合, FALSEを返す */
-static BOOL dpor_dependency_check(McDporData *d, Vector *src, Vector *ret) {
+static BOOL dpor_dependency_check(McDporData *d, std::vector<MemDeltaRoot *> const &src, Vector *ret) {
   unsigned int i, j;
   BOOL need_ample_check, ok;
 
@@ -483,25 +486,25 @@ static BOOL dpor_dependency_check(McDporData *d, Vector *src, Vector *ret) {
   ok = TRUE;
 
   /* i番目のRHSとj番目のLHSの依存性をチェックし, 依存する組合せをretへpush */
-  for (i = 0; i < src->get_num(); i++) {
+  for (i = 0; i < src.size(); i++) {
     ContextC1Ref r;
     MemDeltaRoot *delta_r;
     st_data_t t;
 
-    delta_r = (MemDeltaRoot *)src->get(i);
+    delta_r = src.at(i);
     if (st_lookup(d->delta_tbl, (st_data_t)delta_r, &t)) {
       r = (ContextC1Ref)t;
     } else {
       lmn_fatal("implementation error");
     }
 
-    for (j = 0; j < src->get_num(); j++) {
+    for (j = 0; j < src.size(); j++) {
       ContextC1Ref l;
       MemDeltaRoot *delta_l;
 
       if (j == i)
         continue;
-      delta_l = (MemDeltaRoot *)src->get(j);
+      delta_l = src.at(j);
       if (st_lookup(d->delta_tbl, (st_data_t)delta_l, &t)) {
         l = (ContextC1Ref)t;
       } else {
@@ -535,13 +538,10 @@ static BOOL dpor_dependency_check(McDporData *d, Vector *src, Vector *ret) {
 }
 
 static inline BOOL dpor_explored_cycle(McDporData *mc, ContextC1Ref c,
-                                       LmnReactCxtRef rc) {
+                                       MCReactContext *rc) {
   st_data_t t;
-  MemDeltaRoot *d;
-  unsigned int i;
 
-  for (i = 0; i < RC_MEM_DELTAS(rc)->get_num(); i++) {
-    d = (MemDeltaRoot *)RC_MEM_DELTAS(rc)->get(i);
+  for (auto &d : rc->get_mem_delta_roots()) {
     if (st_lookup(mc->delta_tbl, (st_data_t)d, &t)) {
       ContextC1Ref succ = (ContextC1Ref)t;
       if (succ->is_on_path) {
@@ -580,18 +580,16 @@ static BOOL dpor_explore_subgraph(McDporData *mc, ContextC1Ref c,
     return ret;
   }
 
-  if (dpor_dependency_check(mc, RC_MEM_DELTAS(&rc), NULL) &&
+  if (dpor_dependency_check(mc, rc.get_mem_delta_roots(), NULL) &&
       mc->cur_depth < 200) {
 
-    for (i = 0; i < RC_MEM_DELTAS(&rc)->get_num(); i++) {
-      MemDeltaRoot *succ_d;
+    for (auto &succ_d : rc.get_mem_delta_roots()) {
       st_data_t t;
 
       if (ret == FALSE)
         break;
 
       /* succ_dを生成した際に, 等価な遷移と置換されている */
-      succ_d = (MemDeltaRoot *)RC_MEM_DELTAS(&rc)->get(i);
       if (st_lookup(mc->delta_tbl, (st_data_t)succ_d, &t)) {
         ContextC1Ref succ_c = (ContextC1Ref)t;
 
@@ -688,7 +686,8 @@ BOOL dpor_transition_gen_RHS(McDporData *mc, MemDeltaRoot *d,
     dpor_contextC1_dump_eachR(c);
   });
 
-  if (ret != c && !RC_MEM_DELTAS(rc)->contains((vec_data_t)ret->d)) {
+  auto &roots = rc->get_mem_delta_roots();
+  if (ret != c && std::find(roots.begin(), roots.end(), ret->d) == roots.end()) {
     POR_DEBUG({
       printf("detected same trans id=%u\n", ret->id);
       printf("aborted trans_id=%u\n", c->id);
@@ -697,7 +696,7 @@ BOOL dpor_transition_gen_RHS(McDporData *mc, MemDeltaRoot *d,
     });
 
     if (!ret->is_ample_cand) {
-      if (!RC_MEM_DELTAS(rc)->contains((vec_data_t)ret->d)) {
+      if (std::find(roots.begin(), roots.end(), ret->d) == roots.end()) {
         POR_DEBUG(printf("push succ\n\n"));
         mc_react_cxt_add_mem_delta(rc, ret->d, NULL);
       }
@@ -927,7 +926,10 @@ void dpor_start(StateSpaceRef ss, State *s, MCReactContext *rc, Vector *new_s,
     v_val.init(32);
     st_get_entries_key(d->delta_tbl, &v_key);
     st_get_entries_value(d->delta_tbl, &v_val);
-    dpor_dependency_check(d, &v_key, d->ample_cand);
+    auto vector_key = std::vector<MemDeltaRoot *>();
+    for (int i = 0; i < v_key.get_num(); i++)
+      vector_key.push_back((MemDeltaRoot *)v_key.get(i));
+    dpor_dependency_check(d, vector_key, d->ample_cand);
 
     POR_DEBUG({
       printf("\n** check ContextC1 table **\n");
@@ -941,7 +943,7 @@ void dpor_start(StateSpaceRef ss, State *s, MCReactContext *rc, Vector *new_s,
       if (d->ample_cand->is_empty()) {
         ContextC1Ref c;
         st_data_t t;
-        if (st_lookup(d->delta_tbl, (st_data_t)RC_MEM_DELTAS(rc)->get(0), &t)) {
+        if (st_lookup(d->delta_tbl, (st_data_t)rc->get_mem_delta_roots().at(0), &t)) {
           c = (ContextC1Ref)t;
           c->is_ample_cand = TRUE; /* だいじ */
         } else {

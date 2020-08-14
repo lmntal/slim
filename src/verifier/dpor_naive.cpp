@@ -407,7 +407,7 @@ inline void McPorData::por_store_successors_inner(State *s, MCReactContext *rc) 
           src_succ, rc->get_expanded_rule(i)->name);
     }
 
-    d = rc->has_optmode(DeltaMembrane) ? (MemDeltaRoot *)RC_MEM_DELTAS(rc)->get(i)
+    d = rc->has_optmode(DeltaMembrane) ? rc->get_mem_delta_roots().at(i)
                            : NULL;
     succ = this->por_state_insert(src_succ, d);
     if (succ != src_succ) {
@@ -420,7 +420,7 @@ inline void McPorData::por_store_successors_inner(State *s, MCReactContext *rc) 
       rc->set_transition_to(succ, src_t);
       rc->set_expanded_state(succ_i, src_t);
       if (rc->has_optmode(DeltaMembrane)) {
-        RC_MEM_DELTAS(rc)->set(succ_i, RC_MEM_DELTAS(rc)->get(i));
+        rc->set_mem_delta_root(succ_i, rc->get_mem_delta_roots().at(i));
       }
       succ_i++;
     } else {
@@ -433,7 +433,7 @@ inline void McPorData::por_store_successors_inner(State *s, MCReactContext *rc) 
   rc->resize_expanded_states(succ_i);
   rc->resize_expanded_rules(succ_i);
   if (rc->has_optmode(DeltaMembrane)) {
-    RC_MEM_DELTAS(rc)->set_num(succ_i);
+    rc->resize_mem_delta_roots(succ_i);
   }
 
   if (!s->has_trans_obj()) {
