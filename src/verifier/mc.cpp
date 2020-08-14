@@ -505,14 +505,14 @@ void mc_gen_successors_with_property(State *s, LmnMembraneRef mem,
     AutomataTransitionRef p_t = p_s->get_transition(i);
     if (eval_formula(mem, propsyms, p_t->get_formula())) {
       BYTE p_nxt_l = p_t->get_next();
-      RC_EXPANDED_PROPS(rc)->push((vec_data_t)p_nxt_l);
+      rc->push_expanded_property(p_nxt_l);
     }
   }
 
-  if (RC_EXPANDED_PROPS(rc)->is_empty()) {
+  if (rc->get_expanded_properties().empty()) {
     return;
   } else {
-    BYTE first_prop = (BYTE)RC_EXPANDED_PROPS(rc)->get(0);
+    BYTE first_prop = rc->get_expanded_properties().at(0);
     mc_gen_successors(s, mem, first_prop, rc, f);
     if (mc_react_cxt_expanded_num(rc) == 0) {
       stutter_extension(s, mem, first_prop, rc, f);
@@ -521,8 +521,8 @@ void mc_gen_successors_with_property(State *s, LmnMembraneRef mem,
 
   /* 階層グラフ構造は等価だが性質ラベルの異なる状態を生成する.　*/
   RC_ND_SET_ORG_SUCC_NUM(rc, mc_react_cxt_expanded_num(rc));
-  for (i = 1; i < RC_EXPANDED_PROPS(rc)->get_num(); i++) {
-    BYTE p_nxt_l = (BYTE)RC_EXPANDED_PROPS(rc)->get(i);
+  for (i = 1; i < rc->get_expanded_properties().size(); i++) {
+    BYTE p_nxt_l = rc->get_expanded_properties().at(i);
     for (j = 0; j < RC_ND_ORG_SUCC_NUM(rc); j++) {
       TransitionRef src_succ_t;
       State *src_succ_s, *new_s;

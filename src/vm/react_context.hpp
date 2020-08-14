@@ -259,7 +259,6 @@ enum ModelCheckerOptimazeMode {
 };
 const unsigned int ModelCheckerOptimazeModeSize = 4;
 
-#define RC_EXPANDED_PROPS(RC) ((((MCReactContext *)RC))->props)
 #define RC_MEM_DELTAS(RC) ((((MCReactContext *)RC))->mem_deltas)
 #define RC_ND_SET_MEM_DELTA_ROOT(RC, D)                                        \
   ((((MCReactContext *)RC))->mem_delta_tmp = (D))
@@ -284,7 +283,7 @@ const unsigned int ModelCheckerOptimazeModeSize = 4;
     (RC)->clear_successor_table();                                                 \
     (RC)->clear_expanded_rules();                                          \
     (RC)->clear_expanded_states();                                                \
-    RC_EXPANDED_PROPS(RC)->clear();                                          \
+    (RC)->clear_expanded_properties();                                          \
     if ((RC)->has_optmode(DeltaMembrane)) {                                                  \
       unsigned int _fr_;                                                       \
       for (_fr_ = 0;                                                           \
@@ -303,7 +302,6 @@ struct MCReactContext : LmnReactCxt {
   MCReactContext(LmnMembrane *mem);
 
   ~MCReactContext() {
-    delete props;
     if (mem_deltas) {
       delete mem_deltas;
     }
@@ -313,7 +311,6 @@ struct MCReactContext : LmnReactCxt {
     global_root = mem;
   }
     
-  Vector *props;
   Vector *mem_deltas; /* BODY命令の適用を終えたMemDeltaRootオブジェクトを置く */
   MemDeltaRoot
       *mem_delta_tmp; /* commit命令でmallocした差分オブジェクトを一旦ここに置く.
@@ -376,6 +373,16 @@ struct MCReactContext : LmnReactCxt {
     rules.clear();
   }
 
+  std::vector<BYTE> const & get_expanded_properties() const {
+    return props;
+  }
+  void push_expanded_property(BYTE prop) {
+    props.push_back(prop);
+  }
+  void clear_expanded_properties() {
+    props.clear();
+  }
+
 private:
   /* 1. 遷移先計算中
    *    通常: struct LmnMembrane
@@ -394,6 +401,8 @@ private:
   std::unordered_map<State *, void *> succ_tbl;
 
   std::vector<LmnRule *> rules;
+
+  std::vector<BYTE> props;
 };
 
 void mc_react_cxt_add_expanded(MCReactContext *cxt, LmnMembraneRef mem,
