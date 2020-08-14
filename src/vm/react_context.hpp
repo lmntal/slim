@@ -303,7 +303,6 @@ struct MCReactContext : LmnReactCxt {
   MCReactContext(LmnMembrane *mem);
 
   ~MCReactContext() {
-    delete rules;
     delete props;
     if (mem_deltas) {
       delete mem_deltas;
@@ -313,15 +312,7 @@ struct MCReactContext : LmnReactCxt {
   void set_global_root(LmnMembrane *mem) {
     global_root = mem;
   }
-
-  /* 1. 遷移先計算中
-   *    通常: struct LmnMembrane
-   *    差分: 空
-   * 2. 遷移先計算後 (mc_gen_successor@mc.c以降)
-   * 　　通常: struct LmnMembraneへの参照を設定したstruct State
-   *    差分: 初期化設定のみを行ったstruct State
-   */
-  std::vector<void *> roots;       
+    
   Vector *props;
   Vector *mem_deltas; /* BODY命令の適用を終えたMemDeltaRootオブジェクトを置く */
   MemDeltaRoot
@@ -373,27 +364,36 @@ struct MCReactContext : LmnReactCxt {
   }
 
   LmnRule *get_expanded_rule(int i) {
-    return (LmnRule *)rules->get(i);
+    return rules.at(i);
   }
   void resize_expanded_rules(int size) {
-    rules->set_num(size);
+    rules.resize(size);
   }
   void push_expanded_rule(LmnRule *rule) {
-    rules->push((vec_data_t)rule);
+    rules.push_back(rule);
   }
   void clear_expanded_rules() {
-    rules->clear();
+    rules.clear();
   }
 
 private:
+  /* 1. 遷移先計算中
+   *    通常: struct LmnMembrane
+   *    差分: 空
+   * 2. 遷移先計算後 (mc_gen_successor@mc.c以降)
+   * 　　通常: struct LmnMembraneへの参照を設定したstruct State
+   *    差分: 初期化設定のみを行ったstruct State
+   */
+  std::vector<void *> roots;   
+
   /* 最適化のモードを記録 */
   std::bitset<ModelCheckerOptimazeModeSize> opt_mode;
   /* 多重辺除去用 */
   /* key: 展開中のsuccessor */
   /* value: successorに対応するTransition *か、keyと同じ値*/
   std::unordered_map<State *, void *> succ_tbl;
-  
-  Vector *rules;
+
+  std::vector<LmnRule *> rules;
 };
 
 void mc_react_cxt_add_expanded(MCReactContext *cxt, LmnMembraneRef mem,
