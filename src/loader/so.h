@@ -67,9 +67,6 @@
  * (定義に出力ファイル名を含むため.c内で出力) */
 /* インタプリタ用の定義では変換は必要ないため TR_G*ID(x) = x となる */
 
-#define LINKED_ATOM(x) rc->wt(x)
-#define LINKED_ATTR(x) rc->at(x)
-
 #define TR_INSTR_ALLOCLINK(rc, link, atom, n)                                  \
   do {                                                                         \
     if (LMN_ATTR_IS_DATA(rc->at(atom))) {                                      \
@@ -87,53 +84,53 @@
 
 #define TR_INSTR_UNIFYLINKS(rc, link1, link2, mem)                             \
   do {                                                                         \
-    LmnLinkAttr attr1 = LINKED_ATTR(link1);                                    \
-    LmnLinkAttr attr2 = LINKED_ATTR(link2);                                    \
+    LmnLinkAttr attr1 = rc->at(link1);                                    \
+    LmnLinkAttr attr2 = rc->at(link2);                                    \
                                                                                \
     if (LMN_ATTR_IS_DATA_WITHOUT_EX(attr1)) {                                  \
       if (LMN_ATTR_IS_DATA_WITHOUT_EX(attr2)) { /* 1, 2 are data */            \
         lmn_mem_link_data_atoms((LmnMembraneRef)rc->wt(mem),                   \
                                 (LmnAtomRef)rc->wt(link1), rc->at(link1),      \
-                                (LmnAtomRef)LINKED_ATOM(link2), attr2);        \
+                                (LmnAtomRef)rc->wt(link2), attr2);        \
       } else { /* 1 is data */                                                 \
-        ((LmnSymbolAtomRef)LINKED_ATOM(link2))->set_link(               \
+        ((LmnSymbolAtomRef)rc->wt(link2))->set_link(               \
                            LMN_ATTR_GET_VALUE(attr2),                          \
-                           (LmnAtomRef)LINKED_ATOM(link1));                    \
-        ((LmnSymbolAtomRef)LINKED_ATOM(link2))->set_attr(LMN_ATTR_GET_VALUE(attr2), attr1);                  \
+                           (LmnAtomRef)rc->wt(link1));                    \
+        ((LmnSymbolAtomRef)rc->wt(link2))->set_attr(LMN_ATTR_GET_VALUE(attr2), attr1);                  \
       }                                                                        \
     } else if (LMN_ATTR_IS_DATA_WITHOUT_EX(attr2)) { /* 2 is data */           \
-      ((LmnSymbolAtomRef)LINKED_ATOM(link1))->set_link(                 \
+      ((LmnSymbolAtomRef)rc->wt(link1))->set_link(                 \
                          LMN_ATTR_GET_VALUE(attr1),                            \
-                         (LmnAtomRef)LINKED_ATOM(link2));                      \
-      ((LmnSymbolAtomRef)LINKED_ATOM(link1))->set_attr(LMN_ATTR_GET_VALUE(attr1), attr2);                    \
+                         (LmnAtomRef)rc->wt(link2));                      \
+      ((LmnSymbolAtomRef)rc->wt(link1))->set_attr(LMN_ATTR_GET_VALUE(attr1), attr2);                    \
     } else { /* 1, 2 are symbol atom */                                        \
                                                                                \
       if (LMN_ATTR_IS_EX(attr1)) {                                             \
         if (LMN_ATTR_IS_EX(attr2)) { /* 1, 2 are ex */                         \
           lmn_newlink_with_ex((LmnMembraneRef)rc->wt(mem),                     \
-                              (LmnSymbolAtomRef)(LINKED_ATOM(link1)), attr1,   \
-                              0, (LmnSymbolAtomRef)(LINKED_ATOM(link2)),       \
+                              (LmnSymbolAtomRef)(rc->wt(link1)), attr1,   \
+                              0, (LmnSymbolAtomRef)(rc->wt(link2)),       \
                               attr2, 0);                                       \
         } else { /* 1 is ex */                                                 \
           lmn_newlink_with_ex((LmnMembraneRef)rc->wt(mem),                     \
-                              (LmnSymbolAtomRef)(LINKED_ATOM(link1)), attr1,   \
-                              0, (LmnSymbolAtomRef)(LINKED_ATOM(link2)),       \
+                              (LmnSymbolAtomRef)(rc->wt(link1)), attr1,   \
+                              0, (LmnSymbolAtomRef)(rc->wt(link2)),       \
                               attr2, attr2);                                   \
         }                                                                      \
       } else if (LMN_ATTR_IS_EX(attr2)) { /* 2 is ex */                        \
         lmn_newlink_with_ex((LmnMembraneRef)rc->wt(mem),                       \
-                            (LmnSymbolAtomRef)(LINKED_ATOM(link1)), attr1,     \
-                            attr1, (LmnSymbolAtomRef)(LINKED_ATOM(link2)),     \
+                            (LmnSymbolAtomRef)(rc->wt(link1)), attr1,     \
+                            attr1, (LmnSymbolAtomRef)(rc->wt(link2)),     \
                             attr2, 0);                                         \
       } else {                                                                 \
-        ((LmnSymbolAtomRef)LINKED_ATOM(link1))->set_link(               \
+        ((LmnSymbolAtomRef)rc->wt(link1))->set_link(               \
                            LMN_ATTR_GET_VALUE(attr1),                          \
-                           (LmnAtomRef)LINKED_ATOM(link2));                    \
-        ((LmnSymbolAtomRef)LINKED_ATOM(link2))->set_link(             \
+                           (LmnAtomRef)rc->wt(link2));                    \
+        ((LmnSymbolAtomRef)rc->wt(link2))->set_link(             \
                            LMN_ATTR_GET_VALUE(attr2),                          \
-                           (LmnAtomRef)LINKED_ATOM(link1));                    \
-        ((LmnSymbolAtomRef)LINKED_ATOM(link1))->set_attr(LMN_ATTR_GET_VALUE(attr1), attr2);                  \
-        ((LmnSymbolAtomRef)LINKED_ATOM(link2))->set_attr(LMN_ATTR_GET_VALUE(attr2), attr1);                  \
+                           (LmnAtomRef)rc->wt(link1));                    \
+        ((LmnSymbolAtomRef)rc->wt(link1))->set_attr(LMN_ATTR_GET_VALUE(attr1), attr2);                  \
+        ((LmnSymbolAtomRef)rc->wt(link2))->set_attr(LMN_ATTR_GET_VALUE(attr2), attr1);                  \
       }                                                                        \
     }                                                                          \
   } while (0)
@@ -183,14 +180,14 @@
 
 #define TR_INSTR_LOOKUPLINK(rc, destlinki, tbli, srclinki)                     \
   do {                                                                         \
-    rc->at(destlinki) = LINKED_ATTR(srclinki);                                 \
+    rc->at(destlinki) = rc->at(srclinki);                                 \
     rc->tt(destlinki) = TT_ATOM;                                               \
-    if (LMN_ATTR_IS_DATA(LINKED_ATTR(srclinki))) {                             \
-      rc->wt(destlinki) = LINKED_ATOM(srclinki);                               \
+    if (LMN_ATTR_IS_DATA(rc->at(srclinki))) {                             \
+      rc->wt(destlinki) = rc->wt(srclinki);                               \
     } else { /* symbol atom */                                                 \
       ProcessTableRef ht = (ProcessTableRef)rc->wt(tbli);                      \
       LmnWord w = rc->wt(destlinki);                                           \
-      proc_tbl_get_by_atom(ht, (LmnSymbolAtomRef)(LINKED_ATOM(srclinki)), &w); \
+      proc_tbl_get_by_atom(ht, (LmnSymbolAtomRef)(rc->wt(srclinki)), &w); \
       rc->wt(destlinki) = w;                                                   \
     }                                                                          \
   } while (0)

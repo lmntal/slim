@@ -124,7 +124,6 @@ State *state_D_ref(State *s);
 void state_D_cache(State *s, LmnBinStrRef dec);
 LmnBinStrRef state_D_fetch(State *s);
 void state_D_flush(State *s);
-void state_D_progress(State *s, LmnReactCxtRef rc);
 void state_update_cost(State *s, TransitionRef t, State *pre, Vector *new_ss,
                        BOOL f, EWLock *ewlock);
 void state_set_cost(State *s, LmnCost cost, State *pre);
@@ -281,7 +280,7 @@ LmnBinStrRef state_D_fetch(State *s);
 void state_D_flush(State *s);
 
 /* 差分圧縮バイト列に基づく状態生成処理のfinalizeを行う. */
-void state_D_progress(State *s, LmnReactCxtRef rc);
+void state_D_progress(State *s, MCReactContext *rc);
 
 /* MT-unsafe */
 void state_set_cost(State *s, LmnCost cost, State *pre);
