@@ -81,8 +81,7 @@
 void slim::vm::RuleContext::clear_hl_spc() {
   HashIterator it;
 
-  if (!hl_sameproccxt)
-    return;
+  if (!hl_sameproccxt) return;
 
   for (it = hashtbl_iterator(hl_sameproccxt); !hashtbliter_isend(&it);
        hashtbliter_next(&it)) {
@@ -108,49 +107,28 @@ void react_context_copy(LmnReactCxtRef to, LmnReactCxtRef from) { *to = *from; }
  */
 
 MCReactContext::MCReactContext(LmnMembrane *mem) : LmnReactCxt(mem, REACT_ND) {
-    if (lmn_env.enable_por_old) {
-      this->turnon_optmode(DynamicPartialOrderReduction_Naive);
-    } else if (lmn_env.enable_por) {
-      this->turnon_optmode(DynamicPartialOrderReduction);
-    }
-
-    if (lmn_env.d_compress) {
-      this->turnon_optmode(BinaryStringDeltaCompress);
-    }
-
-    mem_delta_tmp = NULL;
-    opt_mode = 0x00U;
-    org_succ_num = 0;
-    d_cur = 0;
-
-    if (lmn_env.delta_mem) {
-      this->turnon_optmode(DeltaMembrane);
-    }
-
-    if (lmn_env.enable_por && !lmn_env.enable_por_old) {
-      por = DPOR_DATA();
-    }
+  if (lmn_env.enable_por_old) {
+    this->turnon_optmode(DynamicPartialOrderReduction_Naive);
+  } else if (lmn_env.enable_por) {
+    this->turnon_optmode(DynamicPartialOrderReduction);
   }
 
-void mc_react_cxt_add_expanded(MCReactContext *cxt, LmnMembraneRef mem,
-                               LmnRuleRef rule) {
-  cxt->push_expanded_state(mem);
-  cxt->push_expanded_rule(rule);
-}
+  if (lmn_env.d_compress) {
+    this->turnon_optmode(BinaryStringDeltaCompress);
+  }
 
-void mc_react_cxt_add_mem_delta(MCReactContext *cxt, struct MemDeltaRoot *d,
-                                LmnRuleRef rule) {
-  cxt->push_mem_delta_root(d);
-  cxt->push_expanded_rule(rule);
-}
+  mem_delta_tmp = NULL;
+  opt_mode = 0x00U;
+  org_succ_num = 0;
+  d_cur = 0;
 
-unsigned int mc_react_cxt_succ_num_org(LmnReactCxtRef cxt) {
-  return RC_ND_ORG_SUCC_NUM(cxt);
-}
+  if (lmn_env.delta_mem) {
+    this->turnon_optmode(DeltaMembrane);
+  }
 
-unsigned int mc_react_cxt_expanded_num(MCReactContext *cxt) {
-  return cxt->has_optmode(DeltaMembrane) ? cxt->get_mem_delta_roots().size()
-                             : cxt->expanded_states().size();
+  if (lmn_env.enable_por && !lmn_env.enable_por_old) {
+    por = DPOR_DATA();
+  }
 }
 
 ///// first-class rulesets

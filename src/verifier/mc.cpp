@@ -217,7 +217,7 @@ void mc_expand(const StateSpaceRef ss, State *s, AutomataStateRef p_s,
     mc_gen_successors(s, mem, DEFAULT_STATE_ID, rc, f);
   }
 
-  if (mc_react_cxt_expanded_num(rc) == 0) {
+  if (rc->get_expanded_num() == 0) {
     /* sを最終状態集合として記録 */
     ss->mark_as_end(s);
   } else if (mc_enable_por(f) && !s->s_is_reduced()) {
@@ -295,7 +295,7 @@ void mc_store_successors(const StateSpaceRef ss, State *s, MCReactContext *rc,
 
   /** 状態登録 */
   succ_i = 0;
-  for (i = 0; i < mc_react_cxt_expanded_num(rc); i++) {
+  for (i = 0; i < rc->get_expanded_num(); i++) {
     TransitionRef src_t;
     void *tmp;
     State *src_succ, *succ;
@@ -404,7 +404,7 @@ BOOL mc_expand_inner(MCReactContext *rc, LmnMembraneRef cur_mem) {
   BOOL ret_flag = FALSE;
 
   for (; cur_mem; cur_mem = cur_mem->mem_next()) {
-    unsigned long org_num = mc_react_cxt_expanded_num(rc);
+    unsigned long org_num = rc->get_expanded_num();
 
     /* 代表子膜に対して再帰する */
     if (mc_expand_inner(rc, cur_mem->mem_child_head())) {
@@ -414,7 +414,7 @@ BOOL mc_expand_inner(MCReactContext *rc, LmnMembraneRef cur_mem) {
       react_all_rulesets(rc, cur_mem);
     }
     /* 子膜からルール適用を試みることで, 本膜の子膜がstableか否かを判定できる */
-    if (org_num == mc_react_cxt_expanded_num(rc)) {
+    if (org_num == rc->get_expanded_num()) {
       cur_mem->set_active(FALSE);
     }
   }
@@ -433,13 +433,13 @@ void mc_gen_successors(State *src, LmnMembraneRef mem, BYTE state_name,
 
   /* 性質遷移数だけ本関数を呼び出している.
    * 一つ前までの展開遷移数をメモしておくことで, 今回の展開遷移数を計算する */
-  old = mc_react_cxt_expanded_num(rc);
+  old = rc->get_expanded_num();
 
   /** Generate Successor Membrane (or DeltaMemrane) */
   mc_gen_successors_inner(rc, mem);
 
   /** Generate Successor States */
-  n = mc_react_cxt_expanded_num(rc);
+  n = rc->get_expanded_num();
 
   for (i = old; i < n; i++) {
     State *news;
@@ -514,13 +514,13 @@ void mc_gen_successors_with_property(State *s, LmnMembraneRef mem,
   } else {
     BYTE first_prop = rc->get_expanded_properties().at(0);
     mc_gen_successors(s, mem, first_prop, rc, f);
-    if (mc_react_cxt_expanded_num(rc) == 0) {
+    if (rc->get_expanded_num() == 0) {
       stutter_extension(s, mem, first_prop, rc, f);
     }
   }
 
   /* 階層グラフ構造は等価だが性質ラベルの異なる状態を生成する.　*/
-  RC_ND_SET_ORG_SUCC_NUM(rc, mc_react_cxt_expanded_num(rc));
+  RC_ND_SET_ORG_SUCC_NUM(rc, rc->get_expanded_num());
   for (i = 1; i < rc->get_expanded_properties().size(); i++) {
     BYTE p_nxt_l = rc->get_expanded_properties().at(i);
     for (j = 0; j < RC_ND_ORG_SUCC_NUM(rc); j++) {
@@ -589,7 +589,7 @@ static inline void stutter_extension(State *s, LmnMembraneRef mem,
 
   if (mc_use_delta(f)) {
     /* 差分構造が存在しないstruct MemDeltaRootを登録する. */
-    mc_react_cxt_add_mem_delta(rc, new MemDeltaRoot(mem, NULL, 0), NULL);
+    rc->add_mem_delta(new MemDeltaRoot(mem, NULL, 0), NULL);
     new_s = new State();
   } else {
     /* 遷移元状態sをdeep copyする.

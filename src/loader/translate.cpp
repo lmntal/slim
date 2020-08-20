@@ -206,8 +206,7 @@ BOOL tr_instr_commit_finish(LmnReactCxtRef rc, LmnRuleRef rule,
   tmp_global_root = *ptmp_global_root;
   v = std::move(*p_v_tmp);
 
-  mc_react_cxt_add_expanded(dynamic_cast<MCReactContext *>(rc), tmp_global_root,
-                            rule); /* このruleはNULLではまずい気がする */
+  dynamic_cast<MCReactContext *>(rc)->add_expanded(tmp_global_root, rule); /* このruleはNULLではまずい気がする */
 
   rule->undo_history();
 

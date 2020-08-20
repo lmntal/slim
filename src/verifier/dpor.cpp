@@ -698,7 +698,7 @@ BOOL dpor_transition_gen_RHS(McDporData *mc, MemDeltaRoot *d,
     if (!ret->is_ample_cand) {
       if (std::find(roots.begin(), roots.end(), ret->d) == roots.end()) {
         POR_DEBUG(printf("push succ\n\n"));
-        mc_react_cxt_add_mem_delta(rc, ret->d, NULL);
+        rc->add_mem_delta(ret->d, NULL);
       }
     }
 
@@ -917,7 +917,7 @@ void dpor_start(StateSpaceRef ss, State *s, MCReactContext *rc, Vector *new_s,
   if (rc->has_optmode(DynamicPartialOrderReduction_Naive)) {
     McPorData::mc_por.por_calc_ampleset(ss, s, rc, new_s, flag);
     return;
-  } else if (mc_react_cxt_succ_num_org(rc) <= 1 || !rc->has_optmode(DeltaMembrane)) {
+  } else if (rc->get_succ_num_org() <= 1 || !rc->has_optmode(DeltaMembrane)) {
     mc_store_successors(ss, s, rc, new_s, flag);
   } else {
     Vector v_key, v_val;
@@ -952,7 +952,7 @@ void dpor_start(StateSpaceRef ss, State *s, MCReactContext *rc, Vector *new_s,
         d->ample_cand->push((vec_data_t)c);
       }
 
-      if (d->ample_cand->get_num() == mc_react_cxt_succ_num_org(rc)) {
+      if (d->ample_cand->get_num() == rc->get_succ_num_org()) {
         POR_DEBUG(printf("@@ ample cand == succ num\n"));
         mc_store_successors(ss, s, rc, new_s, flag);
       } else {

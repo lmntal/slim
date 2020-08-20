@@ -1174,7 +1174,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
           if (!dpor_transition_gen_RHS(RC_POR_DATA(rc), d, mcrc)) {
             delete d;
           } else {
-            mc_react_cxt_add_mem_delta(mcrc, d, rule);
+            mcrc->add_mem_delta(d, rule);
           }
 
           /* サクセッサへの差分オブジェクトが複数できあがることになるが,
@@ -1184,7 +1184,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
           return FALSE;
         }
 
-        mc_react_cxt_add_mem_delta(mcrc, d, rule);
+        mcrc->add_mem_delta(d, rule);
         RC_ND_SET_MEM_DELTA_ROOT(rc, NULL);
       } else {
         /** >>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<< **/
@@ -1268,7 +1268,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
         this->push_stackframe([=](interpreter &itr, bool result) {
           react_zerostep_recursive(
               rc, tmp_global_root); /**< 0stepルールを適用する */
-          mc_react_cxt_add_expanded(mcrc, tmp_global_root, rule);
+          mcrc->add_expanded(tmp_global_root, rule);
 
           rule->undo_history();
 

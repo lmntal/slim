@@ -144,7 +144,7 @@ void McPorData::por_calc_ampleset(StateSpaceRef ss, State *s, MCReactContext *rc
     POR_DEBUG(mc_set_dump(this->flags));
   }
 
-  if (mc_react_cxt_expanded_num(rc) <= 1) {
+  if (rc->get_expanded_num() <= 1) {
     /* C0: |en(s)|<=1 --> C0によりample(s)=en(s) と決定 */
     mc_store_successors(ss, s, rc, new_s, f);
     return;
@@ -392,7 +392,7 @@ inline void McPorData::por_store_successors_inner(State *s, MCReactContext *rc) 
 
   succ_i = 0;
 
-  for (i = 0; i < mc_react_cxt_expanded_num(rc); i++) {
+  for (i = 0; i < rc->get_expanded_num(); i++) {
     TransitionRef src_t;
     TransitionRef tmp;
     State *src_succ, *succ;

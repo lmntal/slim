@@ -41,11 +41,11 @@
 #ifndef LMN_REACT_CONTEXT_HPP
 #define LMN_REACT_CONTEXT_HPP
 
-#include <cstdint>
-#include <vector>
 #include <algorithm>
 #include <bitset>
+#include <cstdint>
 #include <unordered_map>
+#include <vector>
 
 typedef struct LmnRegister *LmnRegisterRef;
 
@@ -126,9 +126,7 @@ struct RuleContext {
   LmnByte &at(unsigned int i) { return reg(i).at; }
   LmnByte &tt(unsigned int i) { return reg(i).tt; }
 
-  void prepare_hl_spc() {
-    hl_sameproccxt = hashtbl_make(2);
-  }
+  void prepare_hl_spc() { hl_sameproccxt = hashtbl_make(2); }
   void clear_hl_spc();
 };
 } // namespace vm
@@ -154,11 +152,11 @@ public:
 
   constexpr static size_t warray_DEF_SIZE = 1024U;
 
-  LmnReactCxt() : is_zerostep(false), keep_process_id_in_nd_mode(false), trace_num(0) {}
+  LmnReactCxt()
+      : is_zerostep(false), keep_process_id_in_nd_mode(false), trace_num(0) {}
   LmnReactCxt(LmnMembrane *groot, BYTE mode)
       : is_zerostep(false), keep_process_id_in_nd_mode(false), trace_num(0),
-        mode(mode), global_root(groot) {
-  }
+        mode(mode), global_root(groot) {}
 
   LmnReactCxt &operator=(const LmnReactCxt &from) {
     this->RuleContext::operator=(from);
@@ -170,9 +168,7 @@ public:
   unsigned int get_reaction_count() const { return trace_num; }
   void increment_reaction_count() { trace_num++; }
 
-  bool has_mode(BYTE mode) const {
-    return (this->mode & mode) != 0;
-  }
+  bool has_mode(BYTE mode) const { return (this->mode & mode) != 0; }
 
   LmnMembrane *get_global_root() { return global_root; }
   SimpleHashtbl *get_hl_sameproccxt() { return hl_sameproccxt; }
@@ -187,12 +183,9 @@ class MemReactContext : public LmnReactCxt {
   std::vector<LmnMembrane *> memstack;
 
 public:
-  MemReactContext(LmnMembrane *mem) :
-      LmnReactCxt(mem, REACT_MEM_ORIENTED) {}
+  MemReactContext(LmnMembrane *mem) : LmnReactCxt(mem, REACT_MEM_ORIENTED) {}
 
-  bool memstack_isempty() const {
-    return memstack.empty();
-  }
+  bool memstack_isempty() const { return memstack.empty(); }
   void memstack_push(LmnMembrane *mem) {
     memstack.push_back(mem);
     mem->set_active(true);
@@ -203,16 +196,15 @@ public:
     result->set_active(false);
     return result;
   }
-  LmnMembrane *memstack_peek() {
-    return memstack.back();
-  }
+  LmnMembrane *memstack_peek() { return memstack.back(); }
 
   /* 実行膜スタックからmemを削除する。外部関数が膜の削除しようとするとき
    に、その膜がスタックに積まれている事がある。そのため、安全な削除を行
    うために、この手続きが必要になる。外部の機能を使わない通常の実行時に
    はこの手続きは必要ない*/
   void memstack_remove(LmnMembrane *mem) {
-    memstack.erase(std::remove(memstack.begin(), memstack.end(), mem), memstack.end());
+    memstack.erase(std::remove(memstack.begin(), memstack.end(), mem),
+                   memstack.end());
   }
   void memstack_reconstruct(LmnMembrane *mem) {
     memstack.clear();
@@ -261,10 +253,8 @@ const unsigned int ModelCheckerOptimazeModeSize = 4;
 
 #define RC_ND_SET_MEM_DELTA_ROOT(RC, D)                                        \
   ((((MCReactContext *)RC))->mem_delta_tmp = (D))
-#define RC_ND_MEM_DELTA_ROOT(RC)                                               \
-  ((((MCReactContext *)RC))->mem_delta_tmp)
-#define RC_ND_ORG_SUCC_NUM(RC)                                                 \
-  ((((MCReactContext *)RC))->org_succ_num)
+#define RC_ND_MEM_DELTA_ROOT(RC) ((((MCReactContext *)RC))->mem_delta_tmp)
+#define RC_ND_ORG_SUCC_NUM(RC) ((((MCReactContext *)RC))->org_succ_num)
 #define RC_ND_SET_ORG_SUCC_NUM(RC, N)                                          \
   ((((MCReactContext *)RC))->org_succ_num = (N))
 #define RC_POR_DATA(RC) ((((MCReactContext *)RC))->por)
@@ -272,27 +262,27 @@ const unsigned int ModelCheckerOptimazeModeSize = 4;
 #define RC_D_COND(RC) (RC_D_CUR(RC) > 0)
 #define RC_D_PROGRESS(RC)                                                      \
   do {                                                                         \
-    if ((RC)->has_optmode(BinaryStringDeltaCompress)) {                                                     \
+    if ((RC)->has_optmode(BinaryStringDeltaCompress)) {                        \
       (RC_D_CUR(RC) = (RC_D_CUR(RC) + 1) % RC_MC_DREC_MAX);                    \
     }                                                                          \
   } while (0)
 #define RC_CLEAR_DATA(RC)                                                      \
   do {                                                                         \
-    (RC)->set_global_root(nullptr);                                              \
-    (RC)->clear_successor_table();                                                 \
-    (RC)->clear_expanded_rules();                                          \
-    (RC)->clear_expanded_states();                                                \
-    (RC)->clear_expanded_properties();                                          \
-    if ((RC)->has_optmode(DeltaMembrane)) {                                                  \
+    (RC)->set_global_root(nullptr);                                            \
+    (RC)->clear_successor_table();                                             \
+    (RC)->clear_expanded_rules();                                              \
+    (RC)->clear_expanded_states();                                             \
+    (RC)->clear_expanded_properties();                                         \
+    if ((RC)->has_optmode(DeltaMembrane)) {                                    \
       unsigned int _fr_;                                                       \
-      for (_fr_ = 0;                                                           \
-           _fr_ < RC_ND_ORG_SUCC_NUM(RC) && _fr_ < (RC)->get_mem_delta_roots().size(); \
+      for (_fr_ = 0; _fr_ < RC_ND_ORG_SUCC_NUM(RC) &&                          \
+                     _fr_ < (RC)->get_mem_delta_roots().size();                \
            _fr_++) {                                                           \
-        MemDeltaRoot *_d_ = (RC)->get_mem_delta_roots().at(_fr_);  \
+        MemDeltaRoot *_d_ = (RC)->get_mem_delta_roots().at(_fr_);              \
         if (_d_)                                                               \
-          delete (_d_);                                                 \
+          delete (_d_);                                                        \
       }                                                                        \
-      (RC)->clear_mem_delta_roots();                                            \
+      (RC)->clear_mem_delta_roots();                                           \
     }                                                                          \
     RC_ND_SET_ORG_SUCC_NUM(RC, 0);                                             \
   } while (0)
@@ -300,10 +290,8 @@ const unsigned int ModelCheckerOptimazeModeSize = 4;
 struct MCReactContext : LmnReactCxt {
   MCReactContext(LmnMembrane *mem);
 
-  void set_global_root(LmnMembrane *mem) {
-    global_root = mem;
-  }
-    
+  void set_global_root(LmnMembrane *mem) { global_root = mem; }
+
   MemDeltaRoot
       *mem_delta_tmp; /* commit命令でmallocした差分オブジェクトを一旦ここに置く.
                        * BODY命令はこのMemDeltaRootオブジェクトへ適用する. */
@@ -314,84 +302,59 @@ struct MCReactContext : LmnReactCxt {
   bool has_optmode(ModelCheckerOptimazeMode mode) const {
     return opt_mode.test(mode);
   }
-  void turnon_optmode(ModelCheckerOptimazeMode mode) {
-    opt_mode.set(mode);
-  }
-  void turnoff_optmode(ModelCheckerOptimazeMode mode) {
-    opt_mode.reset(mode);
-  }
+  void turnon_optmode(ModelCheckerOptimazeMode mode) { opt_mode.set(mode); }
+  void turnoff_optmode(ModelCheckerOptimazeMode mode) { opt_mode.reset(mode); }
 
-  void clear_successor_table() {
-    succ_tbl.clear();
-  }
+  void clear_successor_table() { succ_tbl.clear(); }
   void *get_transition_to(State *succ) {
     auto it = succ_tbl.find(succ);
     return it == succ_tbl.end() ? nullptr : it->second;
   }
-  void set_transition_to(State *state, void *succ) {
-    succ_tbl[state] = succ;
-  }
+  void set_transition_to(State *state, void *succ) { succ_tbl[state] = succ; }
 
-  std::vector<void *> const &expanded_states() const {
-    return roots;
-  }
-  void *expanded_states(int i) const {
-    return roots[i];
-  }
+  std::vector<void *> const &expanded_states() const { return roots; }
+  void *expanded_states(int i) const { return roots[i]; }
 
-  void set_expanded_state(int idx, void *s) {
-    roots[idx] = s;
-  }
-  void resize_expanded_states(int size) {
-    roots.resize(size);
-  }
-  void clear_expanded_states() {
-    roots.clear();
-  }
-  void push_expanded_state(void *s) {
-    roots.push_back(s);
-  }
+  void set_expanded_state(int idx, void *s) { roots[idx] = s; }
+  void resize_expanded_states(int size) { roots.resize(size); }
+  void clear_expanded_states() { roots.clear(); }
+  void push_expanded_state(void *s) { roots.push_back(s); }
 
-  LmnRule *get_expanded_rule(int i) {
-    return rules.at(i);
-  }
-  void resize_expanded_rules(int size) {
-    rules.resize(size);
-  }
-  void push_expanded_rule(LmnRule *rule) {
-    rules.push_back(rule);
-  }
-  void clear_expanded_rules() {
-    rules.clear();
-  }
+  LmnRule *get_expanded_rule(int i) { return rules.at(i); }
+  void resize_expanded_rules(int size) { rules.resize(size); }
+  void clear_expanded_rules() { rules.clear(); }
 
-  std::vector<BYTE> const &get_expanded_properties() const {
-    return props;
-  }
-  void push_expanded_property(BYTE prop) {
-    props.push_back(prop);
-  }
-  void clear_expanded_properties() {
-    props.clear();
-  }
+  std::vector<BYTE> const &get_expanded_properties() const { return props; }
+  void push_expanded_property(BYTE prop) { props.push_back(prop); }
+  void clear_expanded_properties() { props.clear(); }
 
-  void clear_mem_delta_roots() {
-    mem_deltas.clear();
-  }
+  void clear_mem_delta_roots() { mem_deltas.clear(); }
   std::vector<MemDeltaRoot *> const &get_mem_delta_roots() const {
     return mem_deltas;
   }
   void set_mem_delta_root(int idx, MemDeltaRoot *root) {
     mem_deltas[idx] = root;
   }
-  void resize_mem_delta_roots(int size) {
-    mem_deltas.resize(size);
-  }
-  void push_mem_delta_root(MemDeltaRoot *root) {
-    mem_deltas.push_back(root);
+  void resize_mem_delta_roots(int size) { mem_deltas.resize(size); }
+  void push_mem_delta_root(MemDeltaRoot *root) { mem_deltas.push_back(root); }
+
+  unsigned int get_succ_num_org() const { return org_succ_num; }
+  unsigned int get_expanded_num() const {
+    return has_optmode(DeltaMembrane) ? get_mem_delta_roots().size()
+                                      : expanded_states().size();
   }
 
-private:
+  void add_mem_delta(MemDeltaRoot *d, LmnRule *rule) {
+    mem_deltas.push_back(d);
+    rules.push_back(rule);
+  }
+
+  void add_expanded(LmnMembraneRef mem, LmnRuleRef rule) {
+    roots.push_back(mem);
+    rules.push_back(rule);
+  }
+
+ private:
   /* 1. 遷移先計算中
    *    通常: struct LmnMembrane
    *    差分: 空
@@ -415,14 +378,5 @@ private:
   /* BODY命令の適用を終えたMemDeltaRootオブジェクトを置く */
   std::vector<MemDeltaRoot *> mem_deltas;
 };
-
-void mc_react_cxt_add_expanded(MCReactContext *cxt, LmnMembraneRef mem,
-                               LmnRuleRef rule);
-void mc_react_cxt_add_mem_delta(MCReactContext *cxt, struct MemDeltaRoot *d,
-                                LmnRuleRef rule);
-
-unsigned int mc_react_cxt_succ_num_org(LmnReactCxtRef cxt);
-
-unsigned int mc_react_cxt_expanded_num(MCReactContext *cxt);
 
 #endif
