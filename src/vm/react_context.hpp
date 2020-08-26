@@ -251,9 +251,7 @@ enum ModelCheckerOptimazeMode {
 };
 const unsigned int ModelCheckerOptimazeModeSize = 4;
 
-#define RC_ND_SET_MEM_DELTA_ROOT(RC, D)                                        \
-  ((((MCReactContext *)RC))->mem_delta_tmp = (D))
-#define RC_ND_MEM_DELTA_ROOT(RC) ((((MCReactContext *)RC))->mem_delta_tmp)
+#define RC_ND_MEM_DELTA_ROOT(RC) ((((MCReactContext *)RC))->get_mem_delta_root())
 #define RC_ND_ORG_SUCC_NUM(RC) ((((MCReactContext *)RC))->org_succ_num)
 #define RC_ND_SET_ORG_SUCC_NUM(RC, N)                                          \
   ((((MCReactContext *)RC))->org_succ_num = (N))
@@ -292,9 +290,6 @@ struct MCReactContext : LmnReactCxt {
 
   void set_global_root(LmnMembrane *mem) { global_root = mem; }
 
-  MemDeltaRoot
-      *mem_delta_tmp; /* commit命令でmallocした差分オブジェクトを一旦ここに置く.
-                       * BODY命令はこのMemDeltaRootオブジェクトへ適用する. */
   BYTE d_cur;
   unsigned int org_succ_num;
   McDporData *por;
@@ -354,7 +349,11 @@ struct MCReactContext : LmnReactCxt {
     rules.push_back(rule);
   }
 
- private:
+  void init_mem_delta_root(LmnRule *rule, unsigned int id);
+  void clear_mem_delta_root();
+  MemDeltaRoot *get_mem_delta_root() { return mem_delta_tmp; }
+
+private:
   /* 1. 遷移先計算中
    *    通常: struct LmnMembrane
    *    差分: 空
@@ -377,6 +376,10 @@ struct MCReactContext : LmnReactCxt {
 
   /* BODY命令の適用を終えたMemDeltaRootオブジェクトを置く */
   std::vector<MemDeltaRoot *> mem_deltas;
+
+  /* commit命令でmallocした差分オブジェクトを一旦ここに置く.
+   * BODY命令はこのMemDeltaRootオブジェクトへ適用する. */
+  MemDeltaRoot *mem_delta_tmp;
 };
 
 #endif

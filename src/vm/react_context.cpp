@@ -81,7 +81,8 @@
 void slim::vm::RuleContext::clear_hl_spc() {
   HashIterator it;
 
-  if (!hl_sameproccxt) return;
+  if (!hl_sameproccxt)
+    return;
 
   for (it = hashtbl_iterator(hl_sameproccxt); !hashtbliter_isend(&it);
        hashtbliter_next(&it)) {
@@ -129,6 +130,14 @@ MCReactContext::MCReactContext(LmnMembrane *mem) : LmnReactCxt(mem, REACT_ND) {
   if (lmn_env.enable_por && !lmn_env.enable_por_old) {
     por = DPOR_DATA();
   }
+}
+
+void MCReactContext::init_mem_delta_root(LmnRule *rule, unsigned int id) {
+  mem_delta_tmp = new MemDeltaRoot(this->get_global_root(), rule, id);
+}
+
+void MCReactContext::clear_mem_delta_root() {
+  mem_delta_tmp = nullptr;
 }
 
 ///// first-class rulesets

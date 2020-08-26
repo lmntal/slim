@@ -1155,9 +1155,8 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
         /** >>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<< **/
         /** >>>>>>>> enable delta-membrane <<<<<<< **/
         /** >>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<< **/
-        struct MemDeltaRoot *d =
-            new MemDeltaRoot(rc->get_global_root(), rule, env_next_id());
-        RC_ND_SET_MEM_DELTA_ROOT(rc, d);
+        mcrc->init_mem_delta_root(rule, env_next_id());
+        struct MemDeltaRoot *d = RC_ND_MEM_DELTA_ROOT(mcrc);
 
         /* dmem_commit/revertとの整合性を保つため,
          * uniq処理の特殊性を吸収しておく */
@@ -1180,12 +1179,12 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
           /* サクセッサへの差分オブジェクトが複数できあがることになるが,
            * 差分オブジェクト間では生成したプロセスのIDに重複があってはならない.
            */
-          RC_ND_SET_MEM_DELTA_ROOT(rc, NULL);
+          mcrc->clear_mem_delta_root();
           return FALSE;
         }
 
         mcrc->add_mem_delta(d, rule);
-        RC_ND_SET_MEM_DELTA_ROOT(rc, NULL);
+        mcrc->clear_mem_delta_root();
       } else {
         /** >>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<< **/
         /** >>>>>>> disable delta-membrane <<<<<<< **/
