@@ -47,8 +47,8 @@
  */
 
 #include "../lmntal.h"
-#include "element/element.h"
 #include "automata.h"
+#include "element/element.h"
 
 struct StateSpace;
 
@@ -85,12 +85,11 @@ class LmnWorkerGroup {
                          * wlock: 各状態のコストアップデート用 */
 
   FILE *out; /* 出力先 */
- 
+
   LmnWorkerGroup(const LmnWorkerGroup &lwg);
-  LmnWorker *workers_get_entry(unsigned int i);
-  void workers_set_entry(unsigned int i, LmnWorker *w);
   void workers_free(unsigned int w_num);
-  void workers_gen(unsigned int w_num, AutomataRef a, Vector *psyms, BOOL flags);//private?
+  void workers_gen(unsigned int w_num, AutomataRef a, Vector *psyms,
+                   BOOL flags); // private?
   BOOL flags_init(AutomataRef property_a);
   void ring_alignment();
 
@@ -101,7 +100,8 @@ public:
   void workers_set_synchronizer(unsigned int i);
 #else
   lmn_barrier_t synchronizer; /* 待ち合わせ用オブジェクト */
-  lmn_barrier_t *workers_synchronizer(); //koredato private ni dekinai by sumiya
+  lmn_barrier_t *workers_synchronizer(); // koredato private ni dekinai by
+                                         // sumiya
   void workers_set_synchronizer(lmn_barrier_t);
 #endif
 
@@ -148,13 +148,15 @@ public:
   void workers_set_entried_num(unsigned int i);
 
   LmnWorker *get_worker(unsigned long id);
-  LmnWorker *workers_get_my_worker(); 
+  LmnWorker *workers_get_my_worker();
   void launch_lmn_workers();
   LmnCost opt_cost();
   void update_opt_cost(State *new_s, BOOL f);
   BOOL termination_detection(int id);
-  void lmn_workers_synchronization(unsigned long id, void (*func)(LmnWorker *w));
+  void lmn_workers_synchronization(unsigned long id,
+                                   void (*func)(LmnWorker *w));
 
+  void start(LmnWorker *arg);
 };
 /**
  *  Objects for Model Checking
@@ -187,6 +189,49 @@ struct LmnMCObj {
  *  Worker
  */
 
+namespace strategy {
+enum class Construction {
+  DepthFirst,
+  BreadthFirst,
+};
+
+enum class LTLModelCheck {
+  None,
+  NestedDepthFirstSearch,
+  OneWayCatchThemYoung,
+  MaximalAcceptingPredecessors,
+  MaximalAcceptingPredecessors_NestedDFS,
+#ifndef MINIMAL_STATE
+  MulticoreNestedDFS,
+#endif
+  BackLevelEdges,
+};
+} // namespace strategy
+
+struct LmnWorkerStrategyOption {
+  strategy::Construction construction = strategy::Construction::DepthFirst;
+  strategy::LTLModelCheck modelcheck = strategy::LTLModelCheck::None;
+  bool is_parallel = false;
+  bool does_loadbalancing = false;
+  bool does_sync_layers_in_bfs = false;
+  bool prop_scc_driven = false;
+  bool enable_map_heuristic = false;
+
+  static LmnWorkerStrategyOption from_env();
+};
+
+struct LmnWorkerStrategy {
+  LmnMCObj generator;
+  LmnMCObj explorer;
+  BOOL is_explorer;
+
+  void (*start)(struct LmnWorker *); /* 実行関数 */
+  BOOL (*check)(struct LmnWorker *); /* 終了検知関数 */
+
+  LmnWorkerStrategy(LmnWorker *w);
+  LmnWorkerStrategy(LmnWorker *w, LmnWorkerStrategyOption const &option);
+};
+
 struct LmnWorker {
   lmn_thread_t pth;         /* スレッド識別子(pthread_t) */
   volatile unsigned int id; /* Natural integer id (lmn_thread_id) */
@@ -199,16 +244,11 @@ struct LmnWorker {
   BOOL wait;
   /* 隙間が3BYTE */
 
-  LmnMCObj generator;
-  LmnMCObj explorer;
-  BOOL is_explorer;
+  LmnWorkerStrategy strategy;
 
-  void (*start)(struct LmnWorker *); /* 実行関数 */
-  BOOL (*check)(struct LmnWorker *); /* 終了検知関数 */
-
-  StateSpaceRef states; /* Pointer to StateSpace */
-  std::unique_ptr<MCReactContext> cxt;   /* ReactContext Object */
-  LmnWorker *next;      /* Pointer to Neighbor Worker */
+  StateSpaceRef states;                /* Pointer to StateSpace */
+  std::unique_ptr<MCReactContext> cxt; /* ReactContext Object */
+  LmnWorker *next;                     /* Pointer to Neighbor Worker */
   LmnWorkerGroup *group;
 
   Vector *invalid_seeds;
@@ -216,6 +256,9 @@ struct LmnWorker {
 
   int expand; // for debug
   int red;
+
+  LmnWorker() : strategy(this) {}
+  virtual void set_env();
 };
 
 /**
@@ -228,12 +271,12 @@ struct LmnWorker {
 #define worker_states(W) ((W)->states)
 #define worker_next(W) ((W)->next)
 #define worker_rc(W) ((W)->cxt)
-#define worker_generator(W) ((W)->generator)
+#define worker_generator(W) ((W)->strategy.generator)
 #define worker_generator_obj_set(W, O) mc_obj_set(&worker_generator(W), (O))
 #define worker_generator_obj(W) mc_obj(&worker_generator(W))
 #define worker_generator_type(W) mc_type(&worker_generator(W))
 #define worker_generator_type_set(W, T) mc_type_set(&worker_generator(W), (T))
-#define worker_explorer(W) ((W)->explorer)
+#define worker_explorer(W) ((W)->strategy.explorer)
 #define worker_explorer_obj_set(W, O) mc_obj_set(&worker_explorer(W), (O))
 #define worker_explorer_obj(W) mc_obj(&worker_explorer(W))
 #define worker_explorer_type(W) mc_type(&worker_explorer(W))
@@ -244,10 +287,10 @@ struct LmnWorker {
 #define worker_is_WAIT(W) ((W)->wait)
 #define worker_invalid_seeds(W) ((W)->invalid_seeds)
 #define worker_cycles(W) ((W)->cycles)
-#define worker_is_explorer(W) ((W)->is_explorer)
-#define worker_explorer_set(W) ((W)->is_explorer = TRUE)
+#define worker_is_explorer(W) ((W)->strategy.is_explorer)
+#define worker_explorer_set(W) ((W)->strategy.is_explorer = TRUE)
 #define worker_is_generator(W) (!worker_is_explorer(W))
-#define worker_generator_set(W) ((W)->is_explorer = FALSE)
+#define worker_generator_set(W) ((W)->strategy.is_explorer = FALSE)
 
 #define worker_init(W)                                                         \
   do {                                                                         \
@@ -262,13 +305,13 @@ struct LmnWorker {
   } while (0)
 
 #define worker_start(W)                                                        \
-  if ((W)->start) {                                                            \
-    (*(W)->start)(W);                                                          \
+  if ((W)->strategy.start) {                                                   \
+    (*(W)->strategy.start)(W);                                                 \
   }
 
 static inline BOOL worker_check(LmnWorker *w) {
-  if (w->check) {
-    return (*(w)->check)(w);
+  if (w->strategy.check) {
+    return (*(w)->strategy.check)(w);
   } else {
     return TRUE;
   }
@@ -436,8 +479,6 @@ static inline BOOL worker_check(LmnWorker *w) {
  */
 BOOL lmn_workers_termination_detection_for_rings(LmnWorker *root);
 void lmn_workers_synchronization(LmnWorker *root, void (*func)(LmnWorker *w));
-LmnWorker *lmn_worker_make_minimal(void);
-LmnWorker *lmn_worker_make(StateSpaceRef ss, unsigned long id, BOOL flags);
 void lmn_worker_free(LmnWorker *w);
 
 LmnWorker *worker_next_generator(LmnWorker *w);

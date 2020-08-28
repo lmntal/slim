@@ -363,7 +363,8 @@ static void _run(file_ptr fp)
   }
 
   if (lmn_env.nd) {
-    run_mc(start_rulesets, NULL, NULL);
+    slim::verifier::ModelChecker mc(start_rulesets, NULL, NULL);
+    mc.run();
   } else {
     lmn_run(start_rulesets);
   }

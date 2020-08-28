@@ -736,7 +736,8 @@ static inline void slim_exec(const std::vector<LmnRuleSetRef> &start_rulesets) {
       }
     }
 
-    run_mc(new Vector(start_rulesets), automata, prop_defs);
+    slim::verifier::ModelChecker mc(new Vector(start_rulesets), automata, prop_defs);
+    mc.run();
 
     if (!ret) {
       delete automata;

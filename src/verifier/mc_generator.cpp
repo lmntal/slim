@@ -94,8 +94,7 @@
 /* DFS Stackを静的に分割する条件 */
 #define DFS_HANDOFF_COND_STATIC(W, Stack)                                      \
   (Stack->get_num() >= DFS_CUTOFF_DEPTH(W))
-#define DFS_HANDOFF_COND_STATIC_DEQ(W, Deq)                                    \
-  (Deq->num() >= DFS_CUTOFF_DEPTH(W))
+#define DFS_HANDOFF_COND_STATIC_DEQ(W, Deq) (Deq->num() >= DFS_CUTOFF_DEPTH(W))
 
 /* DFS Stackを動的に分割するためのWork Sharingの条件 */
 #define DFS_HANDOFF_COND_DYNAMIC(I, N, W)                                      \
@@ -109,7 +108,7 @@
 
 /* 既に到達した状態であるかを判定するための条件 */
 #define MAPNDFS_ALREADY_VISITED(w, s)                                          \
-  ((s->s_is_visited_by_explorer() && worker_is_explorer(w)) ||                   \
+  ((s->s_is_visited_by_explorer() && worker_is_explorer(w)) ||                 \
    (s->s_is_visited_by_generator() && worker_is_generator(w)))
 
 /* 初期状態を割り当てるワーカーの条件 */
@@ -191,13 +190,24 @@ BOOL dfs_worker_check(LmnWorker *w) {
   return DFS_WORKER_QUEUE(w) ? DFS_WORKER_QUEUE(w)->is_empty() : TRUE;
 }
 
+struct LmnWorkerStrategy_DFS : public LmnWorkerStrategy {
+  LmnWorkerStrategy_DFS(LmnWorker *w) : LmnWorkerStrategy(w) {
+    this->start = dfs_start;
+    this->check = dfs_worker_check;
+    this->generator.init = dfs_worker_init;
+    this->generator.finalize = dfs_worker_finalize;
+    this->generator.type |= WORKER_F1_MC_DFS_MASK;
+  }
+};
+
 /* WorkerにDFSを割り当てる */
 void dfs_env_set(LmnWorker *w) {
-  worker_set_mc_dfs(w);
-  w->start = dfs_start;
-  w->check = dfs_worker_check;
-  worker_generator_init_f_set(w, dfs_worker_init);
-  worker_generator_finalize_f_set(w, dfs_worker_finalize);
+  w->strategy = LmnWorkerStrategy_DFS(w);
+  // worker_set_mc_dfs(w);
+  // w->start = dfs_start;
+  // w->check = dfs_worker_check;
+  // worker_generator_init_f_set(w, dfs_worker_init);
+  // worker_generator_finalize_f_set(w, dfs_worker_finalize);
 }
 
 /* ワーカーwが輪の方向に沿って, 他のワーカーから未展開状態を奪いに巡回する.
@@ -342,8 +352,8 @@ void mcdfs_start(LmnWorker *w) {
           EXECUTE_PROFILE_START();
           {
             put_stack(&DFS_WORKER_STACK(w), s);
-            mcdfs_loop(w, &DFS_WORKER_STACK(w), &new_ss,
-                       ss->automata(), ss->prop_symbols());
+            mcdfs_loop(w, &DFS_WORKER_STACK(w), &new_ss, ss->automata(),
+                       ss->prop_symbols());
             s = NULL;
             DFS_WORKER_STACK(w).clear();
           }
@@ -437,8 +447,8 @@ void dfs_start(LmnWorker *w) {
 #ifdef KWBT_OPT
           if (lmn_env.opt_mode != OPT_NONE) {
             push_deq(&DFS_WORKER_DEQUE(w), s, TRUE);
-            costed_dfs_loop(w, &DFS_WORKER_DEQUE(w), &new_ss,
-                            ss->automata(), ss->prop_symbols());
+            costed_dfs_loop(w, &DFS_WORKER_DEQUE(w), &new_ss, ss->automata(),
+                            ss->prop_symbols());
             s = NULL;
             &DFS_WORKER_DEQUE(w)->clear();
           } else
@@ -446,11 +456,11 @@ void dfs_start(LmnWorker *w) {
           {
             put_stack(&DFS_WORKER_STACK(w), s);
             if (worker_use_mapndfs(w))
-              mapdfs_loop(w, &DFS_WORKER_STACK(w), &new_ss,
-                          ss->automata(), ss->prop_symbols());
+              mapdfs_loop(w, &DFS_WORKER_STACK(w), &new_ss, ss->automata(),
+                          ss->prop_symbols());
             else
-              dfs_loop(w, &DFS_WORKER_STACK(w), &new_ss,
-                       ss->automata(), ss->prop_symbols());
+              dfs_loop(w, &DFS_WORKER_STACK(w), &new_ss, ss->automata(),
+                       ss->prop_symbols());
             s = NULL;
             DFS_WORKER_STACK(w).clear();
           }
@@ -517,10 +527,11 @@ static inline void dfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
     if (MAP_COND(w))
       map_start(w, s);
 
-    if (!worker_on_parallel(w)) { /* Nested-DFS:
-                                     postorder順を求めるDFS(再度到達した未展開状態がStackに積み直される)
-                                   */
-     s->set_on_stack();
+    if (!worker_on_parallel(
+            w)) { /* Nested-DFS:
+                     postorder順を求めるDFS(再度到達した未展開状態がStackに積み直される)
+                   */
+      s->set_on_stack();
       n = s->successor_num;
       for (i = 0; i < n; i++) {
         State *succ = state_succ_state(s, i);
@@ -603,7 +614,7 @@ static inline void mapdfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
     /* Nested-DFS:
      * postorder順を求めるDFS(explorerから未到達の状態がStackに積み直される) */
     if (worker_is_explorer(w)) {
-     s->set_on_stack();
+      s->set_on_stack();
       n = s->successor_num;
       for (i = 0; i < n; i++) {
         State *succ = state_succ_state(s, i);
@@ -799,8 +810,7 @@ void costed_dfs_loop(LmnWorker *w, Deque *deq, Vector *new_ss, AutomataRef a,
     }
 
     if (state_is_accept(a, s)) {
-      worker_group(w)->update_opt_cost(s,
-                          (lmn_env.opt_mode == OPT_MINIMIZE));
+      worker_group(w)->update_opt_cost(s, (lmn_env.opt_mode == OPT_MINIMIZE));
     }
 
     if (!worker_on_parallel(w)) {
@@ -852,13 +862,14 @@ typedef struct McExpandBFS {
 #define BFS_WORKER_OBJ_SET(W, O) (worker_generator_obj_set(W, O))
 #define BFS_WORKER_Q_CUR(W) (BFS_WORKER_OBJ(W)->cur)
 #define BFS_WORKER_Q_NXT(W) (BFS_WORKER_OBJ(W)->nxt)
-#define BFS_WORKER_Q_SWAP(W)                                                                                   \
-  do {                                                                                                         \
-    Queue *_swap = BFS_WORKER_Q_NXT(W);                                                                        \
-    BFS_WORKER_Q_NXT(W) = BFS_WORKER_Q_CUR(W);                                                                 \
-    BFS_WORKER_Q_CUR(W) = _swap;                                                                               \
-  } while (0) /* ポインタの付け替えはatomicに処理されないので並列処理の際には注意 \
-               */
+#define BFS_WORKER_Q_SWAP(W)                                                                              \
+  do {                                                                                                    \
+    Queue *_swap = BFS_WORKER_Q_NXT(W);                                                                   \
+    BFS_WORKER_Q_NXT(W) = BFS_WORKER_Q_CUR(W);                                                            \
+    BFS_WORKER_Q_CUR(W) = _swap;                                                                          \
+  } while (                                                                                               \
+      0) /* ポインタの付け替えはatomicに処理されないので並列処理の際には注意 \
+          */
 
 static inline void bfs_loop(LmnWorker *w, Vector *new_states, AutomataRef a,
                             Vector *psyms);
@@ -900,21 +911,16 @@ void bfs_worker_finalize(LmnWorker *w) {
 
 /* BFS Queueが空の場合に真を返す */
 BOOL bfs_worker_check(LmnWorker *w) {
-  return BFS_WORKER_Q_CUR(w)->is_empty() &&
-         BFS_WORKER_Q_NXT(w)->is_empty();
+  return BFS_WORKER_Q_CUR(w)->is_empty() && BFS_WORKER_Q_NXT(w)->is_empty();
 }
 
 /* WorkerにBFSを割り当てる */
 void bfs_env_set(LmnWorker *w) {
-  worker_set_mc_bfs(w);
-  w->start = bfs_start;
-  w->check = bfs_worker_check;
-  worker_generator_init_f_set(w, bfs_worker_init);
-  worker_generator_finalize_f_set(w, bfs_worker_finalize);
-
-  if (lmn_env.bfs_layer_sync) {
-    worker_set_lsync(w);
-  }
+  w->strategy.generator.type |= WORKER_F1_MC_BFS_MASK;
+  w->strategy.start = bfs_start;
+  w->strategy.check = bfs_worker_check;
+  w->strategy.generator.init = bfs_worker_init;
+  w->strategy.generator.finalize = bfs_worker_finalize;
 }
 
 /* 幅優先探索で状態空間を構築する */

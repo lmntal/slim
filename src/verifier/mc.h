@@ -64,9 +64,25 @@
 #define MC_GET_PROPERTY(S, A)                                                  \
   ((A) ? A->get_state(state_property_state(S)) : DEFAULT_PROP_AUTOMATA)
 
-BOOL mc_vec_states_valid(Vector *v);
+namespace slim {
+namespace verifier {
+class ModelChecker {
+  Vector *start_rulesets;
+  Automata *a;
+  Vector *psyms;
 
-void mc_print_vec_states(StateSpaceRef ss, Vector *v, State *seed);
+  void do_mc(LmnMembraneRef world_mem_org, int thread_num);
+
+public:
+  ModelChecker(Vector *start_rulesets, Automata *a, Vector *psyms) 
+    : start_rulesets(start_rulesets), a(a), psyms(psyms) {}
+
+  void run();
+};
+} // namespace verifier
+} // namespace slim
+
+
 void mc_expand(const StateSpaceRef states, State *state,
                AutomataStateRef property_automata_state, MCReactContext *rc,
                Vector *new_s, Vector *psyms, BOOL flag);
@@ -81,16 +97,11 @@ void mc_store_successors(const StateSpaceRef ss, State *s, MCReactContext *rc,
                          Vector *new_ss, BOOL f);
 BOOL mc_expand_inner(MCReactContext *rc, LmnMembraneRef cur_mem);
 
-void run_mc(Vector *start_rulesets, AutomataRef a, Vector *psyms);
-
 int mc_load_property(AutomataRef *a, PVector *prop_defs);
 void mc_explain_error(int error_id);
-const char *mc_error_msg(int error_id);
 
 void mc_found_invalid_state(LmnWorkerGroup *wp, State *seed);
 void mc_found_invalid_path(LmnWorkerGroup *wp, Vector *path);
-unsigned long mc_invalids_get_num(LmnWorkerGroup *wp);
-void mc_dump_all_errors(LmnWorkerGroup *wp, FILE *f);
 
 /* @} */
 
