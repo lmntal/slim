@@ -3012,7 +3012,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     retvec = new Vector(2);
     retvec->push((LmnWord)dstlovec);
     retvec->push((LmnWord)atommap);
-    rc->reg(dstlist) = {(LmnWord)retvec, LIST_AND_MAP, TT_OTHER};
+    rc->reg(dstlist) = {(LmnWord)retvec, (int)DataType::LIST_AND_MAP, TT_OTHER};
 
     this->push_stackframe([=](interpreter &itr, bool result) {
       free_links(dstlovec);
@@ -3288,19 +3288,19 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     READ_VAL(LmnInstrVar, instr, listi);
     READ_VAL(LmnInstrVar, instr, posi);
 
-    switch (rc->at(listi)) {
-    case LIST_AND_MAP:
+    switch (DataType(rc->at(listi))) {
+    case DataType::LIST_AND_MAP:
       if (posi == 0) {
         rc->reg(dsti) = {((Vector *)rc->wt(listi))->get((unsigned int)posi),
-                         LINK_LIST, TT_OTHER};
+                         (int)DataType::LINK_LIST, TT_OTHER};
       } else if (posi == 1) {
         rc->reg(dsti) = {((Vector *)rc->wt(listi))->get((unsigned int)posi),
-                         MAP, TT_OTHER};
+                         (int)DataType::MAP, TT_OTHER};
       } else {
         lmn_fatal("unexpected attribute @instr_getfromlist");
       }
       break;
-    case LINK_LIST: /* LinkObjをfreeするのはここ？ */
+    case DataType::LINK_LIST: /* LinkObjをfreeするのはここ？ */
     {
       LinkObjRef lo =
           (LinkObjRef)((Vector *)rc->wt(listi))->get((unsigned int)posi);
@@ -4668,7 +4668,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
       retvec = new Vector(2);
       retvec->push((LmnWord)dstlovec);
       retvec->push((LmnWord)atommap);
-      rc->reg(dstlist) = {(LmnWord)retvec, LIST_AND_MAP, TT_OTHER};
+      rc->reg(dstlist) = {(LmnWord)retvec, (int)DataType::LIST_AND_MAP, TT_OTHER};
 
       /* 解放のための再帰。ベクタを解放するための中間語命令がない */
       dmem_interpret(rc, rule, instr);
@@ -4734,20 +4734,20 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
       READ_VAL(LmnInstrVar, instr, listi);
       READ_VAL(LmnInstrVar, instr, posi);
 
-      switch (rc->at(listi)) {
-      case LIST_AND_MAP:
+      switch (DataType(rc->at(listi))) {
+      case DataType::LIST_AND_MAP:
 
         if (posi == 0) {
           rc->reg(dsti) = {((Vector *)rc->wt(listi))->get((unsigned int)posi),
-                           LINK_LIST, TT_OTHER};
+                           (int)DataType::LINK_LIST, TT_OTHER};
         } else if (posi == 1) {
           rc->reg(dsti) = {((Vector *)rc->wt(listi))->get((unsigned int)posi),
-                           MAP, TT_OTHER};
+                           (int)DataType::MAP, TT_OTHER};
         } else {
           LMN_ASSERT(0);
         }
         break;
-      case LINK_LIST: /* LinkObjをfreeするのはここ？ */
+      case DataType::LINK_LIST: /* LinkObjをfreeするのはここ？ */
       {
         LinkObjRef lo =
             (LinkObjRef)((Vector *)rc->wt(listi))->get((unsigned int)posi);

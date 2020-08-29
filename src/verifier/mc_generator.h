@@ -52,7 +52,6 @@
 
 /** prototypes
  */
-void dfs_env_set(LmnWorker *w);
 void dfs_start(LmnWorker *w);
 void dfs_worker_init(LmnWorker *w);
 void dfs_worker_finalize(LmnWorker *w);
@@ -60,11 +59,38 @@ BOOL dfs_worker_check(LmnWorker *w);
 
 void mcdfs_start(LmnWorker *w);
 
-void bfs_env_set(LmnWorker *w);
 void bfs_start(LmnWorker *w);
 void bfs_worker_init(LmnWorker *w);
 void bfs_worker_finalize(LmnWorker *w);
 BOOL bfs_worker_check(LmnWorker *w);
+
+namespace slim {
+namespace verifier {
+namespace tactics {
+
+struct DFS : public slim::verifier::StateGenerator {
+  DFS(LmnWorker *owner) : StateGenerator(owner) {
+    type |= WORKER_F1_MC_DFS_MASK;
+  }
+
+  void initialize(LmnWorker *w) { dfs_worker_init(w); }
+
+  void finalize(LmnWorker *w) { dfs_worker_finalize(w); }
+};
+
+struct BFS : public slim::verifier::StateGenerator {
+  BFS(LmnWorker *owner) : StateGenerator(owner) {
+    type |= WORKER_F1_MC_BFS_MASK;
+  }
+
+  void initialize(LmnWorker *w) { bfs_worker_init(w); }
+
+  void finalize(LmnWorker *w) { bfs_worker_finalize(w); }
+};
+
+} // namespace tactics
+} // namespace verifier
+} // namespace slim
 
 /* @} */
 

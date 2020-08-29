@@ -190,19 +190,8 @@ BOOL dfs_worker_check(LmnWorker *w) {
   return DFS_WORKER_QUEUE(w) ? DFS_WORKER_QUEUE(w)->is_empty() : TRUE;
 }
 
-struct LmnWorkerStrategy_DFS : public LmnWorkerStrategy {
-  LmnWorkerStrategy_DFS(LmnWorker *w) : LmnWorkerStrategy(w) {
-    this->start = dfs_start;
-    this->check = dfs_worker_check;
-    this->generator.init = dfs_worker_init;
-    this->generator.finalize = dfs_worker_finalize;
-    this->generator.type |= WORKER_F1_MC_DFS_MASK;
-  }
-};
-
 /* WorkerにDFSを割り当てる */
 void dfs_env_set(LmnWorker *w) {
-  w->strategy = LmnWorkerStrategy_DFS(w);
   // worker_set_mc_dfs(w);
   // w->start = dfs_start;
   // w->check = dfs_worker_check;
@@ -912,15 +901,6 @@ void bfs_worker_finalize(LmnWorker *w) {
 /* BFS Queueが空の場合に真を返す */
 BOOL bfs_worker_check(LmnWorker *w) {
   return BFS_WORKER_Q_CUR(w)->is_empty() && BFS_WORKER_Q_NXT(w)->is_empty();
-}
-
-/* WorkerにBFSを割り当てる */
-void bfs_env_set(LmnWorker *w) {
-  w->strategy.generator.type |= WORKER_F1_MC_BFS_MASK;
-  w->strategy.start = bfs_start;
-  w->strategy.check = bfs_worker_check;
-  w->strategy.generator.init = bfs_worker_init;
-  w->strategy.generator.finalize = bfs_worker_finalize;
 }
 
 /* 幅優先探索で状態空間を構築する */

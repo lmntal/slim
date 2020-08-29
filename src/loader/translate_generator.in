@@ -556,19 +556,19 @@ BOOL interpret_generated(LmnReactCxtRef rc,
   ((Vector *)rc->wt($0))->push($1);
 
 #getfromlist LmnInstrVar LmnInstrVar LmnInstrVar
-  switch (rc->at($1)) {
-    case LIST_AND_MAP:
+  switch (DataType(rc->at($1))) {
+    case DataType::LIST_AND_MAP:
       rc->wt($0) = ((Vector *)rc->wt($1))->get((unsigned int)$2);
       rc->tt($0) = TT_OTHER;
       if ($2 == 0){
-        rc->at($0) = LINK_LIST;
+        rc->at($0) = (int)DataType::LINK_LIST;
       }else if ($2 == 1){
-        rc->at($0) = MAP;
+        rc->at($0) = (int)DataType::MAP;
       }else{
         lmn_fatal("unexpected attribute @instr_getfromlist");
       }
       break;
-    case LINK_LIST: /* LinkObjをfreeするのはここ？ */
+    case DataType::LINK_LIST: /* LinkObjをfreeするのはここ？ */
     {
       LinkObjRef lo = (LinkObjRef)((Vector *)rc->wt($1))->get((unsigned int)$2);
       rc->reg($0) = {(LmnWord)LinkObjGetAtom(lo), LinkObjGetPos(lo), TT_ATOM};
@@ -609,7 +609,7 @@ BOOL interpret_generated(LmnReactCxtRef rc,
     retvec = new Vector(2);
     retvec->push((LmnWord)dstlovec);
     retvec->push((LmnWord)atommap);
-    rc->reg($0) = {(LmnWord)retvec, LIST_AND_MAP, TT_OTHER};
+    rc->reg($0) = {(LmnWord)retvec, (int)DataType::LIST_AND_MAP, TT_OTHER};
 #__echo_t
     {
       char *buf_always = automalloc_sprintf("goto label_always_%p", op_address);

@@ -58,9 +58,11 @@
  * LIST_AND_MAP 第１要素がリンクオブジェクトのリストで第２要素がマップ
  * MAP          マップ
  */
-#define LINK_LIST 1
-#define LIST_AND_MAP 2
-#define MAP 3
+enum class DataType {
+  LINK_LIST = 1,
+  LIST_AND_MAP = 2,
+  MAP = 3,
+};
 
 #define SWAP(T, X, Y)                                                          \
   do {                                                                         \

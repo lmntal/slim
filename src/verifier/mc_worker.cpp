@@ -56,18 +56,10 @@ namespace c14 = slim::element;
  *  MC object
  */
 
-static inline void lmn_mc_obj_init(LmnMCObj *mc, LmnWorker *w) {
-  mc->type = 0x00U;
-  mc->obj = NULL;
-  mc->init = NULL;
-  mc->finalize = NULL;
-  mc->owner = w;
-}
-
 LmnWorkerStrategy::LmnWorkerStrategy(LmnWorker *w)
     : start(nullptr), check(nullptr) {
-  lmn_mc_obj_init(&generator, w);
-  lmn_mc_obj_init(&explorer, w);
+  generator = c14::make_unique<LmnMCObj>(w);
+  explorer = c14::make_unique<LmnMCObj>(w);
 }
 
 /** -------------------------------------
@@ -710,16 +702,12 @@ LmnWorkerStrategy::LmnWorkerStrategy(LmnWorker *w,
   case strategy::Construction::DepthFirst:
     this->start = dfs_start;
     this->check = dfs_worker_check;
-    this->generator.init = dfs_worker_init;
-    this->generator.finalize = dfs_worker_finalize;
-    this->generator.type |= WORKER_F1_MC_DFS_MASK;
+    this->generator = c14::make_unique<slim::verifier::tactics::DFS>(w);
     break;
   case strategy::Construction::BreadthFirst:
     this->start = bfs_start;
     this->check = bfs_worker_check;
-    this->generator.init = bfs_worker_init;
-    this->generator.finalize = bfs_worker_finalize;
-    this->generator.type |= WORKER_F1_MC_BFS_MASK;
+    this->generator = c14::make_unique<slim::verifier::tactics::BFS>(w);
     break;
   }
 
@@ -728,80 +716,69 @@ LmnWorkerStrategy::LmnWorkerStrategy(LmnWorker *w,
     // does nothing
     break;
   case strategy::LTLModelCheck::NestedDepthFirstSearch:
-    this->explorer.type |= WORKER_F2_MC_NDFS_MASK;
-    this->explorer.init = ndfs_worker_init;
-    this->explorer.finalize = ndfs_worker_finalize;
+    this->explorer = c14::make_unique<slim::verifier::tactics::NDFS>(w);
     break;
   case strategy::LTLModelCheck::OneWayCatchThemYoung:
-    this->explorer.type |= WORKER_F2_MC_OWCTY_MASK;
-    this->explorer.init = owcty_worker_init;
-    this->explorer.finalize = owcty_worker_finalize;
+    this->explorer = c14::make_unique<slim::verifier::tactics::OWCTY>(w);
+
     if (option.prop_scc_driven) {
-      this->generator.type |= WORKER_F1_MC_OPT_SCC_MASK;
+      this->generator->type |= WORKER_F1_MC_OPT_SCC_MASK;
     }
 
     if (option.enable_map_heuristic) {
-      this->explorer.type |= WORKER_F2_MC_MAP_WEAK_MASK;
-      this->explorer.type |= WORKER_F2_MC_MAP_MASK;
+      this->explorer->type |= WORKER_F2_MC_MAP_WEAK_MASK;
+      this->explorer->type |= WORKER_F2_MC_MAP_MASK;
     }
     break;
   case strategy::LTLModelCheck::MaximalAcceptingPredecessors:
-    this->explorer.type |= WORKER_F2_MC_MAP_MASK;
-    this->explorer.init = map_worker_init;
-    this->explorer.finalize = map_worker_finalize;
+    this->explorer = c14::make_unique<slim::verifier::tactics::MAP>(w);
     if (option.prop_scc_driven) {
-      this->generator.type |= WORKER_F1_MC_OPT_SCC_MASK;
+      this->generator->type |= WORKER_F1_MC_OPT_SCC_MASK;
     }
     break;
   case strategy::LTLModelCheck::MaximalAcceptingPredecessors_NestedDFS:
-    this->explorer.type |= WORKER_F2_MC_MAPNDFS_MASK;
-    this->explorer.init = mapndfs_worker_init;
-    this->explorer.finalize = mapndfs_worker_finalize;
+    this->explorer = c14::make_unique<slim::verifier::tactics::MAP_NDFS>(w);
 
     if (option.prop_scc_driven) {
-      this->generator.type |= WORKER_F1_MC_OPT_SCC_MASK;
+      this->generator->type |= WORKER_F1_MC_OPT_SCC_MASK;
     }
 #ifdef MAPNDFS_USE_MAP
     if (option.enable_map_heuristic) {
-      this->explorer.type |= WORKER_F2_MC_MAP_MASK;
+      this->explorer->type |= WORKER_F2_MC_MAP_MASK;
     }
 #endif
     break;
 #ifndef MINIMAL_STATE
   case strategy::LTLModelCheck::MulticoreNestedDFS:
-    this->explorer.type |= WORKER_F2_MC_MCNDFS_MASK;
-    this->explorer.init = mapndfs_worker_init;
-    this->explorer.finalize = mapndfs_worker_finalize;
+    this->explorer = c14::make_unique<slim::verifier::tactics::MultiNDFS>(w);
     this->is_explorer = false;
 
     if (option.prop_scc_driven) {
-      this->generator.type |= WORKER_F1_MC_OPT_SCC_MASK;
+      this->generator->type |= WORKER_F1_MC_OPT_SCC_MASK;
     }
 
     if (option.enable_map_heuristic) {
-      this->explorer.type |= WORKER_F2_MC_MAP_MASK;
+      this->explorer->type |= WORKER_F2_MC_MAP_MASK;
     }
     break;
 #endif
   case strategy::LTLModelCheck::BackLevelEdges:
-    this->explorer.type |= WORKER_F2_MC_BLE_MASK;
-    this->explorer.init = bledge_worker_init;
-    this->explorer.finalize = bledge_worker_finalize;
+    this->explorer = c14::make_unique<slim::verifier::tactics::BLE>(w);
 
     if (option.prop_scc_driven) {
-      this->generator.type |= WORKER_F1_MC_OPT_SCC_MASK;
+      this->generator->type |= WORKER_F1_MC_OPT_SCC_MASK;
     }
     break;
   }
 
   if (option.is_parallel)
-    this->generator.type |= WORKER_F1_PARALLEL_MASK;
+    this->generator->type |= WORKER_F1_PARALLEL_MASK;
 
   if (option.does_loadbalancing)
-    this->generator.type |= WORKER_F1_DYNAMIC_LB_MASK;
+    this->generator->type |= WORKER_F1_DYNAMIC_LB_MASK;
 
   if (option.does_sync_layers_in_bfs)
-    this->generator.type |= WORKER_F1_MC_BFS_LSYNC_MASK;
+    this->generator->type |= WORKER_F1_MC_BFS_LSYNC_MASK;
 }
 
 /* workerの実行アルゴリズムの割当を行う */

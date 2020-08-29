@@ -141,9 +141,9 @@ void ndfs_worker_finalize(LmnWorker *w) {
 }
 
 void ndfs_env_set(LmnWorker *w) {
-  w->strategy.explorer.type |= WORKER_F2_MC_NDFS_MASK;
-  w->strategy.explorer.init = ndfs_worker_init;
-  w->strategy.explorer.finalize = ndfs_worker_finalize;
+  w->strategy.explorer->type |= WORKER_F2_MC_NDFS_MASK;
+  w->strategy.explorer->init = ndfs_worker_init;
+  w->strategy.explorer->finalize_ = ndfs_worker_finalize;
 }
 
 /* Nested-DFS, Double-DFS, Red-DFS:
@@ -296,9 +296,9 @@ void owcty_worker_finalize(LmnWorker *w) {
 }
 
 void owcty_env_set(LmnWorker *w) {
-  w->strategy.explorer.type |= WORKER_F2_MC_OWCTY_MASK;
-  w->strategy.explorer.init = owcty_worker_init;
-  w->strategy.explorer.finalize = owcty_worker_finalize;
+  w->strategy.explorer->type |= WORKER_F2_MC_OWCTY_MASK;
+  w->strategy.explorer->init = owcty_worker_init;
+  w->strategy.explorer->finalize_ = owcty_worker_finalize;
 }
 
 void statetable_to_state_queue(StateTable &st, Queue *q) {
@@ -570,9 +570,9 @@ void map_worker_finalize(LmnWorker *w) {
 }
 
 void map_env_set(LmnWorker *w) {
-  w->strategy.explorer.type |= WORKER_F2_MC_MAP_MASK;
-  w->strategy.explorer.init = map_worker_init;
-  w->strategy.explorer.finalize = map_worker_finalize;
+  w->strategy.explorer->type |= WORKER_F2_MC_MAP_MASK;
+  w->strategy.explorer->init = map_worker_init;
+  w->strategy.explorer->finalize_ = map_worker_finalize;
 }
 
 /* 頂点uからuのサクセッサにMAPを伝搬する.

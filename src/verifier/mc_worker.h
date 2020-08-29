@@ -162,28 +162,54 @@ public:
  *  Objects for Model Checking
  */
 
-struct LmnMCObj {
+struct LmnWorkerTactic {
   LmnWorker *owner;
   BYTE type;
-  void *obj;                     /* 任意のデータ */
-  void (*init)(LmnWorker *);     /* objの初期化関数 */
-  void (*finalize)(LmnWorker *); /* objの後始末関数 */
+
+  LmnWorkerTactic(LmnWorker *owner) : owner(owner), type(0x00U) {}
+
+  virtual void initialize(LmnWorker *w) = 0;
+  virtual void finalize(LmnWorker *w) = 0;
 };
+
+struct LmnMCObj : public LmnWorkerTactic {
+  void *obj;                      /* 任意のデータ */
+  void (*init)(LmnWorker *);      /* objの初期化関数 */
+  void (*finalize_)(LmnWorker *); /* objの後始末関数 */
+
+  LmnMCObj(LmnWorker *owner)
+      : LmnWorkerTactic(owner), init(nullptr), finalize_(nullptr) {}
+
+  void initialize(LmnWorker *w) {
+    if (init)
+      init(w);
+  }
+  void finalize(LmnWorker *w) {
+    if (finalize_)
+      finalize_(w);
+  }
+};
+
+namespace slim {
+namespace verifier {
+struct StateGenerator : public LmnMCObj {
+  using LmnMCObj::LmnMCObj;
+};
+
+struct StateExplorer : public LmnMCObj {
+  using LmnMCObj::LmnMCObj;
+};
+} // namespace verifier
+} // namespace slim
 
 #define mc_obj(MC) ((MC)->obj)
 #define mc_obj_set(MC, O) ((MC)->obj = (O))
 #define mc_type(MC) ((MC)->type)
 #define mc_type_set(MC, T) ((MC)->type = (T))
-#define mc_init_f(MC)                                                          \
-  if ((MC)->init) {                                                            \
-    (*(MC)->init)((MC)->owner);                                                \
-  }
+#define mc_init_f(MC) (MC)->initialize((MC)->owner)
 #define mc_init_f_set(MC, FP) ((MC)->init = (FP))
-#define mc_finalize_f_set(MC, FP) ((MC)->finalize = (FP))
-#define mc_finalize_f(MC)                                                      \
-  if ((MC)->finalize) {                                                        \
-    (*(MC)->finalize)((MC)->owner);                                            \
-  }
+#define mc_finalize_f_set(MC, FP) ((MC)->finalize_ = (FP))
+#define mc_finalize_f(MC) (MC)->finalize((MC)->owner)
 
 /**
  *  Worker
@@ -221,8 +247,8 @@ struct LmnWorkerStrategyOption {
 };
 
 struct LmnWorkerStrategy {
-  LmnMCObj generator;
-  LmnMCObj explorer;
+  std::unique_ptr<LmnMCObj> generator;
+  std::unique_ptr<LmnMCObj> explorer;
   BOOL is_explorer;
 
   void (*start)(struct LmnWorker *); /* 実行関数 */
@@ -271,12 +297,12 @@ struct LmnWorker {
 #define worker_states(W) ((W)->states)
 #define worker_next(W) ((W)->next)
 #define worker_rc(W) ((W)->cxt)
-#define worker_generator(W) ((W)->strategy.generator)
+#define worker_generator(W) (*(W)->strategy.generator)
 #define worker_generator_obj_set(W, O) mc_obj_set(&worker_generator(W), (O))
 #define worker_generator_obj(W) mc_obj(&worker_generator(W))
 #define worker_generator_type(W) mc_type(&worker_generator(W))
 #define worker_generator_type_set(W, T) mc_type_set(&worker_generator(W), (T))
-#define worker_explorer(W) ((W)->strategy.explorer)
+#define worker_explorer(W) (*(W)->strategy.explorer)
 #define worker_explorer_obj_set(W, O) mc_obj_set(&worker_explorer(W), (O))
 #define worker_explorer_obj(W) mc_obj(&worker_explorer(W))
 #define worker_explorer_type(W) mc_type(&worker_explorer(W))

@@ -122,6 +122,75 @@ void mcndfs_worker_init(LmnWorker *w);
 void mcndfs_worker_finalize(LmnWorker *w);
 void mcndfs_worker_start(LmnWorker *w);
 
+namespace slim {
+namespace verifier {
+namespace tactics {
+
+struct NDFS : public slim::verifier::StateExplorer {
+  NDFS(LmnWorker *owner) : StateExplorer(owner) {
+    type |= WORKER_F2_MC_NDFS_MASK;
+  }
+
+  void initialize(LmnWorker *w) { ndfs_worker_init(w); }
+
+  void finalize(LmnWorker *w) { ndfs_worker_finalize(w); }
+};
+
+struct OWCTY : public slim::verifier::StateExplorer {
+  OWCTY(LmnWorker *owner) : StateExplorer(owner) {
+    type |= WORKER_F2_MC_OWCTY_MASK;
+  }
+
+  void initialize(LmnWorker *w) { owcty_worker_init(w); }
+
+  void finalize(LmnWorker *w) { owcty_worker_finalize(w); }
+};
+
+struct MAP : public slim::verifier::StateExplorer {
+  MAP(LmnWorker *owner) : StateExplorer(owner) {
+    type |= WORKER_F2_MC_MAP_MASK;
+  }
+
+  void initialize(LmnWorker *w) { map_worker_init(w); }
+
+  void finalize(LmnWorker *w) { map_worker_finalize(w); }
+};
+
+struct MAP_NDFS : public slim::verifier::StateExplorer {
+  MAP_NDFS(LmnWorker *owner) : StateExplorer(owner) {
+    type |= WORKER_F2_MC_MAPNDFS_MASK;
+  }
+
+  void initialize(LmnWorker *w) { mapndfs_worker_init(w); }
+
+  void finalize(LmnWorker *w) { mapndfs_worker_finalize(w); }
+};
+
+#ifndef MINIMAL_STATE
+struct MultiNDFS : public slim::verifier::StateExplorer {
+  MultiNDFS(LmnWorker *owner) : StateExplorer(owner) {
+    type |= WORKER_F2_MC_MCNDFS_MASK;
+  }
+
+  void initialize(LmnWorker *w) { mapndfs_worker_init(w); }
+
+  void finalize(LmnWorker *w) { mapndfs_worker_finalize(w); }
+};
+#endif
+
+struct BLE : public slim::verifier::StateExplorer {
+  BLE(LmnWorker *owner) : StateExplorer(owner) {
+    type |= WORKER_F2_MC_BLE_MASK;
+  }
+
+  void initialize(LmnWorker *w) { bledge_worker_init(w); }
+
+  void finalize(LmnWorker *w) { bledge_worker_finalize(w); }
+};
+} // namespace tactics
+} // namespace verifier
+} // namespace slim
+
 /* @} */
 
 #endif
