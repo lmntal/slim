@@ -179,8 +179,8 @@ void lmn_run(Vector *start_rulesets) {
 
   /* interactive : (normal_remain時でnormal_remaining=ON)以外の場合は初期化 */
   if (!lmn_env.normal_remain && !lmn_env.normal_remaining) {
-    mrc = c14::make_unique<MemReactContext>(mem);
     mem = new LmnMembrane();
+    mrc = c14::make_unique<MemReactContext>(mem);
   }
   mrc->memstack_push(mem);
 
