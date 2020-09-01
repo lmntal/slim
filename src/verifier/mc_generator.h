@@ -53,8 +53,6 @@
 /** prototypes
  */
 void dfs_start(LmnWorker *w);
-void dfs_worker_init(LmnWorker *w);
-void dfs_worker_finalize(LmnWorker *w);
 BOOL dfs_worker_check(LmnWorker *w);
 
 void mcdfs_start(LmnWorker *w);
@@ -69,23 +67,55 @@ namespace verifier {
 namespace tactics {
 
 struct DFS : public slim::verifier::StateGenerator {
-  DFS(LmnWorker *owner) : StateGenerator(owner) {
+  struct Vector stack;
+  Deque deq;
+  unsigned int cutoff_depth;
+  Queue *q;
+
+  DFS(LmnWorker *owner) : StateGenerator(owner), deq(8192) {
     type |= WORKER_F1_MC_DFS_MASK;
   }
 
-  void initialize(LmnWorker *w) { dfs_worker_init(w); }
+  void initialize(LmnWorker *w);
+  void finalize(LmnWorker *w);
+  void start();
+  bool check();
 
-  void finalize(LmnWorker *w) { dfs_worker_finalize(w); }
+private:
+  LmnWord dfs_work_stealing(LmnWorker *w);
+  void dfs_handoff_all_task(LmnWorker *me, Vector *expands);
+  void dfs_handoff_task(LmnWorker *me, LmnWord task);
+  LmnWord mapdfs_work_stealing(LmnWorker *w);
+  void mapdfs_handoff_all_task(LmnWorker *me, Vector *expands);
+  void mcdfs_handoff_task(LmnWorker *me, LmnWord task);
+#ifndef MINIMAL_STATE
+  void mcdfs_start(LmnWorker *w);
+#endif
+  void dfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss, AutomataRef a,
+                Vector *psyms);
+  void mapdfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss, AutomataRef a,
+                   Vector *psyms);
+  void mcdfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss, AutomataRef a,
+                  Vector *psyms);
+  void costed_dfs_loop(LmnWorker *w, Deque *deq, Vector *new_ss, AutomataRef a,
+                       Vector *psyms);
 };
 
 struct BFS : public slim::verifier::StateGenerator {
+  Queue *cur; /* 現在のFront Layer */
+  Queue *nxt; /* 次のLayer */
+
   BFS(LmnWorker *owner) : StateGenerator(owner) {
     type |= WORKER_F1_MC_BFS_MASK;
   }
 
-  void initialize(LmnWorker *w) { bfs_worker_init(w); }
+  void initialize(LmnWorker *w);
+  void finalize(LmnWorker *w);
+  void start();
+  bool check();
 
-  void finalize(LmnWorker *w) { bfs_worker_finalize(w); }
+private:
+  void bfs_loop(LmnWorker *w, Vector *new_ss, AutomataRef a, Vector *psyms);
 };
 
 } // namespace tactics
