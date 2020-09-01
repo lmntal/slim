@@ -58,7 +58,6 @@ namespace c14 = slim::element;
 
 LmnWorkerStrategy::LmnWorkerStrategy(LmnWorker *w)
     : start(nullptr), check(nullptr) {
-  generator = c14::make_unique<LmnMCObj>(w);
   explorer = c14::make_unique<LmnMCObj>(w);
 }
 
@@ -700,13 +699,9 @@ LmnWorkerStrategy::LmnWorkerStrategy(LmnWorker *w,
     : LmnWorkerStrategy(w) {
   switch (option.construction) {
   case strategy::Construction::DepthFirst:
-    this->start = dfs_start;
-    this->check = dfs_worker_check;
     this->generator = c14::make_unique<slim::verifier::tactics::DFS>(w);
     break;
   case strategy::Construction::BreadthFirst:
-    this->start = bfs_start;
-    this->check = bfs_worker_check;
     this->generator = c14::make_unique<slim::verifier::tactics::BFS>(w);
     break;
   }

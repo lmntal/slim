@@ -52,15 +52,6 @@
 
 /** prototypes
  */
-void dfs_start(LmnWorker *w);
-BOOL dfs_worker_check(LmnWorker *w);
-
-void mcdfs_start(LmnWorker *w);
-
-void bfs_start(LmnWorker *w);
-void bfs_worker_init(LmnWorker *w);
-void bfs_worker_finalize(LmnWorker *w);
-BOOL bfs_worker_check(LmnWorker *w);
 
 namespace slim {
 namespace verifier {

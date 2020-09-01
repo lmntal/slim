@@ -987,25 +987,3 @@ bool BFS::check() {
 } // namespace verifier
 } // namespace slim
 
-/* DFS Worker Queueが空の場合に真を返す */
-BOOL dfs_worker_check(LmnWorker *w) {
-  auto t = (slim::verifier::tactics::DFS *)w->strategy.generator.get();
-  return t->check();
-}
-
-void dfs_start(LmnWorker *w) {
-  auto t = (slim::verifier::tactics::DFS *)w->strategy.generator.get();
-  t->start();
-}
-
-/* BFS Queueが空の場合に真を返す */
-BOOL bfs_worker_check(LmnWorker *w) {
-  auto t = (slim::verifier::tactics::BFS *)w->strategy.generator.get();
-  return t->check();
-}
-
-/* 幅優先探索で状態空間を構築する */
-void bfs_start(LmnWorker *w) {
-  auto t = (slim::verifier::tactics::BFS *)w->strategy.generator.get();
-  t->start();
-}

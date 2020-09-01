@@ -192,8 +192,13 @@ struct LmnMCObj : public LmnWorkerTactic {
 
 namespace slim {
 namespace verifier {
-struct StateGenerator : public LmnMCObj {
-  using LmnMCObj::LmnMCObj;
+struct StateGenerator : public LmnWorkerTactic {
+  using LmnWorkerTactic::LmnWorkerTactic;
+
+  virtual ~StateGenerator() = default;
+
+  virtual void start() = 0;
+  virtual bool check() = 0;
 };
 
 struct StateExplorer : public LmnMCObj {
@@ -247,7 +252,7 @@ struct LmnWorkerStrategyOption {
 };
 
 struct LmnWorkerStrategy {
-  std::unique_ptr<LmnMCObj> generator;
+  std::unique_ptr<slim::verifier::StateGenerator> generator;
   std::unique_ptr<LmnMCObj> explorer;
   BOOL is_explorer;
 
@@ -330,17 +335,10 @@ struct LmnWorker {
     mc_finalize_f(&worker_explorer(W));                                        \
   } while (0)
 
-#define worker_start(W)                                                        \
-  if ((W)->strategy.start) {                                                   \
-    (*(W)->strategy.start)(W);                                                 \
-  }
+#define worker_start(W) (W)->strategy.generator->start();
 
 static inline BOOL worker_check(LmnWorker *w) {
-  if (w->strategy.check) {
-    return (*(w)->strategy.check)(w);
-  } else {
-    return TRUE;
-  }
+  return w->strategy.generator->check();
 }
 
 #define worker_generator_init_f_set(W, F) mc_init_f_set(&worker_generator(W), F)
