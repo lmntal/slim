@@ -51,12 +51,12 @@
 
 /* Nested-DFSが起動するための条件 */
 #define NDFS_COND(W, SYST_S, PROP_S)                                           \
-  (!worker_on_parallel(W) && worker_use_ndfs(W) &&                             \
-   PROP_S->get_is_accept() && !SYST_S->is_snd() && !SYST_S ->is_on_cycle())
+  (!worker_on_parallel(W) && worker_use_ndfs(W) && PROP_S->get_is_accept() &&  \
+   !SYST_S->is_snd() && !SYST_S->is_on_cycle())
 
 #define MAPNDFS_COND(W, SYST_S, PROP_S)                                        \
   (worker_on_parallel(W) && worker_use_mapndfs(W) &&                           \
-   PROP_S->get_is_accept() && !SYST_S->is_snd() && !SYST_S ->is_on_cycle() &&    \
+   PROP_S->get_is_accept() && !SYST_S->is_snd() && !SYST_S->is_on_cycle() &&   \
    SYST_S->s_is_visited_by_explorer() && worker_is_explorer(W))
 
 #define MCNDFS_COND(W, SYST_S, PROP_S) (PROP_S->get_is_accept())
@@ -87,105 +87,161 @@
 
 void backward_elimination(LmnWorker *w, State *s);
 
-void ndfs_env_set(LmnWorker *w);
 void ndfs_start(LmnWorker *w, State *seed);
-void ndfs_worker_init(LmnWorker *w);
-void ndfs_worker_finalize(LmnWorker *w);
-void ndfs_worker_start(LmnWorker *w);
 
-void owcty_env_set(LmnWorker *w);
 void owcty_start(LmnWorker *w);
-void owcty_worker_finalize(LmnWorker *w);
-void owcty_worker_init(LmnWorker *w);
 
-void map_env_set(LmnWorker *w);
 void map_start(LmnWorker *w, State *u);
 void map_iteration_start(LmnWorker *w);
-void map_worker_finalize(LmnWorker *w);
-void map_worker_init(LmnWorker *w);
 
-void bledge_env_set(LmnWorker *w);
 void bledge_start(LmnWorker *w);
 void bledge_store_layer(LmnWorker *w, State *s);
-void bledge_worker_finalize(LmnWorker *w);
-void bledge_worker_init(LmnWorker *w);
 
-void mapndfs_env_set(LmnWorker *w);
 void mapndfs_start(LmnWorker *w, State *seed);
-void mapndfs_worker_init(LmnWorker *w);
-void mapndfs_worker_finalize(LmnWorker *w);
-void mapndfs_worker_start(LmnWorker *w);
 
-void mcndfs_env_set(LmnWorker *w);
 void mcndfs_start(LmnWorker *w, State *seed, Vector *red_states);
-void mcndfs_worker_init(LmnWorker *w);
-void mcndfs_worker_finalize(LmnWorker *w);
-void mcndfs_worker_start(LmnWorker *w);
 
 namespace slim {
 namespace verifier {
 namespace tactics {
 
 struct NDFS : public slim::verifier::StateExplorer {
+  Vector *open;
+  Vector *path;
+
   NDFS(LmnWorker *owner) : StateExplorer(owner) {
     type |= WORKER_F2_MC_NDFS_MASK;
   }
 
-  void initialize(LmnWorker *w) { ndfs_worker_init(w); }
+  void initialize(LmnWorker *w);
+  void finalize(LmnWorker *w);
+  void start(State *seed);
 
-  void finalize(LmnWorker *w) { ndfs_worker_finalize(w); }
+private:
+  void ndfs_found_accepting_cycle(LmnWorker *w, State *seed,
+                                  Vector *cycle_path);
+  BOOL ndfs_loop(State *seed, Vector *search, Vector *path);
 };
 
 struct OWCTY : public slim::verifier::StateExplorer {
+  Queue *accepts1;
+  Queue *accepts2;
+  unsigned long old;
+  unsigned long iteration;
+  st_table_t traversed; /* 反例生成用 */
+
   OWCTY(LmnWorker *owner) : StateExplorer(owner) {
     type |= WORKER_F2_MC_OWCTY_MASK;
   }
 
-  void initialize(LmnWorker *w) { owcty_worker_init(w); }
+  void initialize(LmnWorker *w);
+  void finalize(LmnWorker *w);
+  void start(LmnWorker *u);
 
-  void finalize(LmnWorker *w) { owcty_worker_finalize(w); }
+private:
+  static void owcty_report_midterm(LmnWorker *w);
+  static void owcty_termination_detection(LmnWorker *w);
+  static void owcty_env_init(LmnWorker *w);
+  void owcty_reachability(LmnWorker *w, Queue *primary, Queue *secondary,
+                          BOOL set_flag, BOOL is_up);
+  BOOL owcty_traversed_owner_is_me(State *succ, BOOL set_flag, BOOL is_up);
+  void owcty_found_accepting_cycle(LmnWorker *w, AutomataRef a);
 };
 
 struct MAP : public slim::verifier::StateExplorer {
+  Queue *propagate;
+  Queue *waitingSeed;
+  st_table_t traversed;
+
   MAP(LmnWorker *owner) : StateExplorer(owner) {
     type |= WORKER_F2_MC_MAP_MASK;
   }
 
-  void initialize(LmnWorker *w) { map_worker_init(w); }
+  void initialize(LmnWorker *w);
+  void finalize(LmnWorker *w);
+  void start(State *u);
 
-  void finalize(LmnWorker *w) { map_worker_finalize(w); }
+private:
+  State *map_ordering_propagate_state(LmnWorker *w, State *u, AutomataRef a);
+  void map_propagate(LmnWorker *w, State *s, State *t, State *propag,
+                     AutomataRef a);
+  BOOL map_entry_state(State *t, State *propag, AutomataRef a);
+  State *map_ordering(State *s1, State *s2, AutomataRef a);
+  State *map_ordering_states(AutomataRef a, unsigned int num, ...);
+  void map_found_accepting_cycle(LmnWorker *w, State *s);
 };
 
+#define MAPNDFS_USE_MAP
+
 struct MAP_NDFS : public slim::verifier::StateExplorer {
+#ifdef MAPNDFS_USE_MAP
+  Queue *propagate;
+  Queue *waitingSeed;
+  st_table_t traversed;
+#endif
+  Vector *open;
+  Vector *path;
+
   MAP_NDFS(LmnWorker *owner) : StateExplorer(owner) {
     type |= WORKER_F2_MC_MAPNDFS_MASK;
   }
 
-  void initialize(LmnWorker *w) { mapndfs_worker_init(w); }
+  void initialize(LmnWorker *w);
+  void finalize(LmnWorker *w);
+  void start(State *u);
 
-  void finalize(LmnWorker *w) { mapndfs_worker_finalize(w); }
+  void mapndfs_found_accepting_cycle(LmnWorker *w, State *seed,
+                                     Vector *cycle_path);
+
+private:
+  BOOL mapndfs_loop(State *seed, Vector *search, Vector *path);
 };
 
 #ifndef MINIMAL_STATE
 struct MultiNDFS : public slim::verifier::StateExplorer {
+#ifdef MAPNDFS_USE_MAP
+  Queue *propagate;
+  Queue *waitingSeed;
+  st_table_t traversed;
+#endif
+  Vector *open;
+  Vector *path;
+
   MultiNDFS(LmnWorker *owner) : StateExplorer(owner) {
     type |= WORKER_F2_MC_MCNDFS_MASK;
   }
 
-  void initialize(LmnWorker *w) { mapndfs_worker_init(w); }
+  void initialize(LmnWorker *w);
+  void finalize(LmnWorker *w);
+  void start(LmnWorker *w, State *seed, Vector *red_states);
 
-  void finalize(LmnWorker *w) { mapndfs_worker_finalize(w); }
+private:
+  void mcndfs_found_accepting_cycle(LmnWorker *w, State *seed,
+                                    Vector *cycle_path);
+  BOOL mcndfs_loop(LmnWorker *w, State *seed, Vector *search, Vector *path,
+                   Vector *red_states);
 };
 #endif
 
 struct BLE : public slim::verifier::StateExplorer {
+  Queue *layer;
+  Vector *path;
+  Vector *search;
+  st_table_t traversed;
+
   BLE(LmnWorker *owner) : StateExplorer(owner) {
     type |= WORKER_F2_MC_BLE_MASK;
   }
 
-  void initialize(LmnWorker *w) { bledge_worker_init(w); }
+  void initialize(LmnWorker *w);
+  void finalize(LmnWorker *w);
+  void start();
+  void store_layer(LmnWorker *w, State *s);
 
-  void finalize(LmnWorker *w) { bledge_worker_finalize(w); }
+private:
+  void bledge_found_accepting_cycle(LmnWorker *w, Vector *cycle_path);
+  BOOL bledge_explorer_accepting_cycle(LmnWorker *w, State *u, State *v);
+  BOOL bledge_path_accepting(Vector *v, AutomataRef a);
 };
 } // namespace tactics
 } // namespace verifier

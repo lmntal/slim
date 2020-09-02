@@ -107,49 +107,37 @@ static BOOL state_to_state_path(State *seed, State *goal, Vector *search,
  *  ==================================
  */
 
-static BOOL ndfs_loop(State *seed, Vector *search, Vector *postordered);
-static void ndfs_found_accepting_cycle(LmnWorker *w, State *seed,
-                                       Vector *cycle_path);
-
-typedef struct McSearchNDFS McSearchNDFS;
-struct McSearchNDFS {
-  Vector *open;
-  Vector *path;
-};
-
-#define NDFS_WORKER_OBJ(W) ((McSearchNDFS *)worker_explorer_obj(W))
-#define NDFS_WORKER_OBJ_SET(W, O) worker_explorer_obj_set(W, O)
+#define NDFS_WORKER_OBJ(W)                                                     \
+  ((slim::verifier::tactics::NDFS *)&worker_explorer(W))
 #define NDFS_WORKER_OPEN_VEC(W) (NDFS_WORKER_OBJ(W)->open)
 #define NDFS_WORKER_PATH_VEC(W) (NDFS_WORKER_OBJ(W)->path)
 #define NDFS_WORKER_OBJ_CLEAR(W)                                               \
   do {                                                                         \
-    NDFS_WORKER_OPEN_VEC(W)->clear();                                        \
-    NDFS_WORKER_PATH_VEC(W)->clear();                                        \
+    NDFS_WORKER_OPEN_VEC(W)->clear();                                          \
+    NDFS_WORKER_PATH_VEC(W)->clear();                                          \
   } while (0)
-
-void ndfs_worker_init(LmnWorker *w) {
-  McSearchNDFS *mc = LMN_MALLOC(McSearchNDFS);
-  mc->open = new Vector(1024);
-  mc->path = new Vector(512);
-  NDFS_WORKER_OBJ_SET(w, mc);
-}
-
-void ndfs_worker_finalize(LmnWorker *w) {
-  delete NDFS_WORKER_OPEN_VEC(w);
-  delete NDFS_WORKER_PATH_VEC(w);
-  LMN_FREE(NDFS_WORKER_OBJ(w));
-}
-
-void ndfs_env_set(LmnWorker *w) {
-  w->strategy.explorer->type |= WORKER_F2_MC_NDFS_MASK;
-  w->strategy.explorer->init = ndfs_worker_init;
-  w->strategy.explorer->finalize_ = ndfs_worker_finalize;
-}
 
 /* Nested-DFS, Double-DFS, Red-DFS:
  * 1段階目のDFSで求めたpostorder順に,
  * 受理頂点seedから自身に戻る閉路(受理サイクル)を探索する. */
 void ndfs_start(LmnWorker *w, State *seed) {
+  auto t = (slim::verifier::tactics::NDFS *)w->strategy.explorer.get();
+  t->start(seed);
+}
+
+namespace slim {
+namespace verifier {
+namespace tactics {
+void NDFS::initialize(LmnWorker *w) {
+  this->open = new Vector(1024);
+  this->path = new Vector(512);
+}
+void NDFS::finalize(LmnWorker *w) {
+  delete NDFS_WORKER_OPEN_VEC(w);
+  delete NDFS_WORKER_PATH_VEC(w);
+}
+void NDFS::start(State *seed) {
+  auto w = this->owner;
   BOOL has_error;
   START_CYCLE_SEARCH();
 
@@ -166,7 +154,8 @@ void ndfs_start(LmnWorker *w, State *seed) {
   NDFS_WORKER_OBJ_CLEAR(w);
 }
 
-void ndfs_found_accepting_cycle(LmnWorker *w, State *seed, Vector *cycle_path) {
+void NDFS::ndfs_found_accepting_cycle(LmnWorker *w, State *seed,
+                                      Vector *cycle_path) {
   LmnWorkerGroup *wp;
   Vector *v;
   unsigned long i;
@@ -176,14 +165,14 @@ void ndfs_found_accepting_cycle(LmnWorker *w, State *seed, Vector *cycle_path) {
   wp->workers_found_error();
 
   gen_counter_example = lmn_env.dump;
- seed->set_on_cycle(); /* 受理サイクルに含まれるフラグを立てる */
+  seed->set_on_cycle(); /* 受理サイクルに含まれるフラグを立てる */
 
   v = gen_counter_example ? new Vector(cycle_path->get_num()) : NULL;
 
   /* 受理サイクル上の状態にフラグを立てていく */
   for (i = 0; i < cycle_path->get_num(); i++) {
     State *s = (State *)cycle_path->get(i);
-   s->set_on_cycle();
+    s->set_on_cycle();
 
     if (gen_counter_example)
       v->push((vec_data_t)s);
@@ -197,7 +186,7 @@ void ndfs_found_accepting_cycle(LmnWorker *w, State *seed, Vector *cycle_path) {
   }
 }
 
-static BOOL ndfs_loop(State *seed, Vector *search, Vector *path) {
+BOOL NDFS::ndfs_loop(State *seed, Vector *search, Vector *path) {
   while (search->get_num() > 0) {
     State *s = (State *)search->peek();
 
@@ -210,7 +199,7 @@ static BOOL ndfs_loop(State *seed, Vector *search, Vector *path) {
     } else {
       unsigned int i;
       path->push((vec_data_t)s);
-     s->set_snd();
+      s->set_snd();
       for (i = 0; i < s->successor_num; i++) {
         State *succ = state_succ_state(s, i);
 
@@ -231,89 +220,29 @@ static BOOL ndfs_loop(State *seed, Vector *search, Vector *path) {
   return FALSE;
 }
 
+} // namespace tactics
+} // namespace verifier
+} // namespace slim
+
 /** ==================================
  *  === One Way Catch Them Young =====
  *  ==================================
  */
 
-typedef struct McSearchOWCTY McSearchOWCTY;
-struct McSearchOWCTY {
-  Queue *accepts1;
-  Queue *accepts2;
-  unsigned long old;
-  unsigned long iteration;
-  st_table_t traversed; /* 反例生成用 */
-};
-
-#define OWCTY_WORKER_OBJ(W) ((McSearchOWCTY *)worker_explorer_obj(W))
-#define OWCTY_WORKER_OBJ_SET(W, O) worker_explorer_obj_set(W, O)
+#define OWCTY_WORKER_OBJ(W)                                                    \
+  ((slim::verifier::tactics::OWCTY *)&worker_explorer(W))
 #define OWCTY_WORKER_AQ1(W) (OWCTY_WORKER_OBJ(W)->accepts1)
 #define OWCTY_WORKER_AQ2(W) (OWCTY_WORKER_OBJ(W)->accepts2)
 #define OWCTY_WORKER_HASHSET(W) (OWCTY_WORKER_OBJ(W)->traversed)
 
-static inline void owcty_reachability(LmnWorker *w, Queue *primary,
-                                      Queue *secondary, BOOL set_flag,
-                                      BOOL is_up);
-static inline BOOL owcty_traversed_owner_is_me(State *succ, BOOL set_flag,
-                                               BOOL is_up);
-static inline void owcty_report_midterm(LmnWorker *w);
-static inline void owcty_termination_detection(LmnWorker *w);
-static void owcty_found_accepting_cycle(LmnWorker *w, AutomataRef a);
-
 void owcty_worker_init(LmnWorker *w) {
-  McSearchOWCTY *mc = LMN_MALLOC(McSearchOWCTY);
-
-  /* 全ワーカでオブジェクトを共有 */
-
-  if (worker_id(w) == LMN_PRIMARY_ID) {
-    if (worker_group(w)->workers_get_entried_num() > 1) {
-      mc->accepts1 = new Queue(LMN_Q_MRMW);
-      mc->accepts2 = new Queue(LMN_Q_MRMW);
-    } else {
-      mc->accepts1 = new Queue();
-      mc->accepts2 = new Queue();
-    }
-  } else {
-    LmnWorker *primary = worker_group(w)->get_worker(LMN_PRIMARY_ID);
-    mc->accepts1 = OWCTY_WORKER_AQ1(primary);
-    mc->accepts2 = OWCTY_WORKER_AQ2(primary);
-  }
-
-  mc->traversed = st_init_ptrtable();
-  mc->old = 0;
-  mc->iteration = 0;
-
-  OWCTY_WORKER_OBJ_SET(w, mc);
+  auto t = (slim::verifier::tactics::OWCTY *)w->strategy.explorer.get();
+  t->initialize(w);
 }
 
 void owcty_worker_finalize(LmnWorker *w) {
-  if (worker_id(w) == LMN_PRIMARY_ID) {
-    delete OWCTY_WORKER_AQ1(w);
-    delete OWCTY_WORKER_AQ2(w);
-  }
-  st_free_table(OWCTY_WORKER_HASHSET(w));
-  LMN_FREE(OWCTY_WORKER_OBJ(w));
-}
-
-void owcty_env_set(LmnWorker *w) {
-  w->strategy.explorer->type |= WORKER_F2_MC_OWCTY_MASK;
-  w->strategy.explorer->init = owcty_worker_init;
-  w->strategy.explorer->finalize_ = owcty_worker_finalize;
-}
-
-void statetable_to_state_queue(StateTable &st, Queue *q) {
-  for (auto &ptr : st)
-    q->enqueue((LmnWord)ptr);
-}
-
-static void owcty_env_init(LmnWorker *w) {
-  statetable_to_state_queue(worker_states(w)->accept_tbl(),
-                            OWCTY_WORKER_AQ1(w));
-  statetable_to_state_queue(worker_states(w)->accept_memid_tbl(),
-                            OWCTY_WORKER_AQ2(w));
-
-  MC_DEBUG(printf("acceptance queue init, num=%lu\n",
-                  OWCTY_WORKER_AQ1(w)->entry_num()));
+  auto t = (slim::verifier::tactics::OWCTY *)w->strategy.explorer.get();
+  t->finalize(w);
 }
 
 // struct DegreeCnt {
@@ -322,6 +251,45 @@ static void owcty_env_init(LmnWorker *w) {
 // };
 
 void owcty_start(LmnWorker *w) {
+  auto t = (slim::verifier::tactics::OWCTY *)w->strategy.explorer.get();
+  t->start(w);
+}
+
+namespace slim {
+namespace verifier {
+namespace tactics {
+
+void OWCTY::initialize(LmnWorker *w) {
+  /* 全ワーカでオブジェクトを共有 */
+
+  if (worker_id(w) == LMN_PRIMARY_ID) {
+    if (worker_group(w)->workers_get_entried_num() > 1) {
+      this->accepts1 = new Queue(LMN_Q_MRMW);
+      this->accepts2 = new Queue(LMN_Q_MRMW);
+    } else {
+      this->accepts1 = new Queue();
+      this->accepts2 = new Queue();
+    }
+  } else {
+    LmnWorker *primary = worker_group(w)->get_worker(LMN_PRIMARY_ID);
+    this->accepts1 = OWCTY_WORKER_AQ1(primary);
+    this->accepts2 = OWCTY_WORKER_AQ2(primary);
+  }
+
+  this->traversed = st_init_ptrtable();
+  this->old = 0;
+  this->iteration = 0;
+}
+
+void OWCTY::finalize(LmnWorker *w) {
+  if (worker_id(w) == LMN_PRIMARY_ID) {
+    delete OWCTY_WORKER_AQ1(w);
+    delete OWCTY_WORKER_AQ2(w);
+  }
+  st_free_table(OWCTY_WORKER_HASHSET(w));
+}
+
+void OWCTY::start(LmnWorker *w) {
   /* st_tableにも, elock, wlockを組込む. */
   if (worker_id(w) == LMN_PRIMARY_ID) {
   }
@@ -362,19 +330,18 @@ void owcty_start(LmnWorker *w) {
   }
 }
 
-static inline void owcty_report_midterm(LmnWorker *w) {
-  McSearchOWCTY *mc = OWCTY_WORKER_OBJ(w);
+void OWCTY::owcty_report_midterm(LmnWorker *w) {
+  auto mc = OWCTY_WORKER_OBJ(w);
   mc->old = mc->accepts2->entry_num();
 }
 
 /* owctyアルゴリズムの停止を判定した場合, mc_exitフラグを真にする.
  * (owctyはon-the-flyアルゴリズムではないため,
  *  generator側の終了検知ではなく, 専用の終了検知を用意した.) */
-static inline void owcty_termination_detection(LmnWorker *w) {
-  McSearchOWCTY *mc;
+void OWCTY::owcty_termination_detection(LmnWorker *w) {
   unsigned long q_num;
 
-  mc = OWCTY_WORKER_OBJ(w);
+  auto mc = OWCTY_WORKER_OBJ(w);
   mc->iteration++;
   MC_DEBUG(fprintf(stderr, "iter%3lu[S=%10lu, old=%10lu]  %s", mc->iteration,
                    mc->accepts1->entry_num(), mc->old,
@@ -387,15 +354,24 @@ static inline void owcty_termination_detection(LmnWorker *w) {
   }
 }
 
+void OWCTY::owcty_env_init(LmnWorker *w) {
+  for (auto &ptr : worker_states(w)->accept_tbl())
+    OWCTY_WORKER_AQ1(w)->enqueue((LmnWord)ptr);
+  for (auto &ptr : worker_states(w)->accept_memid_tbl())
+    OWCTY_WORKER_AQ2(w)->enqueue((LmnWord)ptr);
+
+  MC_DEBUG(printf("acceptance queue init, num=%lu\n",
+                  OWCTY_WORKER_AQ1(w)->entry_num()));
+}
+
 /* primary Queueに積まれた頂点を起点に到達可能な受理頂点の集合を
  * secondary QueueがNULLでなければsecondary Queueに積む.
  * 訪問した頂点は,
  *   is_upが真ならset_flagを真に
  *   is_upが偽ならset_flagを偽に
  * 設定する */
-static inline void owcty_reachability(LmnWorker *w, Queue *primary,
-                                      Queue *secondary, BOOL set_flag,
-                                      BOOL is_up) {
+void OWCTY::owcty_reachability(LmnWorker *w, Queue *primary, Queue *secondary,
+                               BOOL set_flag, BOOL is_up) {
   StateSpaceRef ss = worker_states(w);
   while (!primary->is_empty()) {
     State *s;
@@ -404,8 +380,8 @@ static inline void owcty_reachability(LmnWorker *w, Queue *primary,
     s = (State *)primary->dequeue();
     if (!s) {
       continue;
-    } else if (STATE_PROP_SCC_N(w, s, ss->automata()) ||
-               smap_is_deleted(s) || (MAP_COND(w) && !s->map)) {
+    } else if (STATE_PROP_SCC_N(w, s, ss->automata()) || smap_is_deleted(s) ||
+               (MAP_COND(w) && !s->map)) {
       /* A. 性質オートマトン上でSCCを跨ぐ遷移ならば受理サイクルを形成しない
        * B. 既に削除マーキング済
        * C. map
@@ -422,8 +398,7 @@ static inline void owcty_reachability(LmnWorker *w, Queue *primary,
         continue;
 
       if (!owcty_traversed_owner_is_me(succ, set_flag, is_up)) {
-        if (state_is_accept(ss->automata(), succ) &&
-            !smap_is_deleted(succ)) {
+        if (state_is_accept(ss->automata(), succ) && !smap_is_deleted(succ)) {
           secondary->enqueue((LmnWord)succ);
           cnt++;
         }
@@ -443,8 +418,8 @@ static inline void owcty_reachability(LmnWorker *w, Queue *primary,
  *   is_upが真-->真
  *   is_upが偽-->偽
  * に設定する. */
-static inline BOOL owcty_traversed_owner_is_me(State *succ, BOOL set_flag,
-                                               BOOL is_up) {
+BOOL OWCTY::owcty_traversed_owner_is_me(State *succ, BOOL set_flag,
+                                        BOOL is_up) {
   BOOL flags_fetch, flags_update;
 
   flags_fetch = succ->flags;
@@ -468,7 +443,7 @@ static inline BOOL owcty_traversed_owner_is_me(State *succ, BOOL set_flag,
 
 /* 受理サイクルを発見した場合に呼び出す.
  * 反例出力が必要な場合は, 不動点の状態集合からサイクルパスを求めて登録する. */
-static void owcty_found_accepting_cycle(LmnWorker *w, AutomataRef a) {
+void OWCTY::owcty_found_accepting_cycle(LmnWorker *w, AutomataRef a) {
   if (worker_id(w) == LMN_PRIMARY_ID) {
     LmnWorkerGroup *wp = worker_group(w);
     wp->workers_found_error();
@@ -492,7 +467,7 @@ static void owcty_found_accepting_cycle(LmnWorker *w, AutomataRef a) {
             v = new Vector(path.get_num());
             for (i = 0; i < path.get_num(); i++) {
               State *tmp = (State *)path.get(i);
-             tmp->set_on_cycle();
+              tmp->set_on_cycle();
               v->push((vec_data_t)tmp);
             }
 
@@ -510,102 +485,27 @@ static void owcty_found_accepting_cycle(LmnWorker *w, AutomataRef a) {
   }
 }
 
+} // namespace tactics
+} // namespace verifier
+} // namespace slim
+
 /** =======================================
  *  === Maximal Accepting Predecessors ====
  *  =======================================
  */
 #include <stdarg.h>
 
-typedef struct McSearchMAP McSearchMAP;
-struct McSearchMAP {
-  Queue *propagate;
-  Queue *waitingSeed;
-  st_table_t traversed;
-};
-
-#define MAP_WORKER_OBJ(W) ((McSearchMAP *)worker_explorer_obj(W))
+#define MAP_WORKER_OBJ(W) ((slim::verifier::tactics::MAP *)&worker_explorer(W))
 #define MAP_WORKER_OBJ_SET(W, O) worker_explorer_obj_set(W, O)
 #define MAP_WORKER_PROPAG_G(W) (MAP_WORKER_OBJ(W)->propagate)
 #define MAP_WORKER_DEL_G(W) (MAP_WORKER_OBJ(W)->waitingSeed)
 #define MAP_WORKER_HASHSET(W) (MAP_WORKER_OBJ(W)->traversed)
 
-State *map_ordering_states(AutomataRef a, unsigned int num, ...);
-static inline State *map_ordering(State *s1, State *s2, AutomataRef a);
-static inline BOOL map_entry_state(State *t, State *propag, AutomataRef a);
-static void map_found_accepting_cycle(LmnWorker *w, State *s);
-static void map_propagate(LmnWorker *w, State *s, State *t, State *propag,
-                          AutomataRef a);
-static State *map_ordering_propagate_state(LmnWorker *w, State *u,
-                                           AutomataRef a);
-
-void map_worker_init(LmnWorker *w) {
-  McSearchMAP *mc = LMN_MALLOC(McSearchMAP);
-
-  if (worker_id(w) == LMN_PRIMARY_ID) {
-    if (worker_group(w)->workers_get_entried_num() > 1) {
-      mc->propagate = new Queue(LMN_Q_MRMW);
-      mc->waitingSeed = new Queue(LMN_Q_MRMW);
-    } else {
-      mc->propagate = new Queue();
-      mc->waitingSeed = new Queue();
-    }
-  } else {
-    LmnWorker *prim = worker_group(w)->get_worker(LMN_PRIMARY_ID);
-    mc->propagate = MAP_WORKER_PROPAG_G(prim);
-    mc->waitingSeed = MAP_WORKER_DEL_G(prim);
-  }
-
-  mc->traversed = st_init_ptrtable();
-
-  MAP_WORKER_OBJ_SET(w, mc);
-}
-
-void map_worker_finalize(LmnWorker *w) {
-  if (worker_id(w) == LMN_PRIMARY_ID) {
-    delete MAP_WORKER_PROPAG_G(w);
-    delete MAP_WORKER_DEL_G(w);
-  }
-  st_free_table(MAP_WORKER_HASHSET(w));
-  LMN_FREE(MAP_WORKER_OBJ(w));
-}
-
-void map_env_set(LmnWorker *w) {
-  w->strategy.explorer->type |= WORKER_F2_MC_MAP_MASK;
-  w->strategy.explorer->init = map_worker_init;
-  w->strategy.explorer->finalize_ = map_worker_finalize;
-}
-
 /* 頂点uからuのサクセッサにMAPを伝搬する.
  * MAPを更新できる限り, MAPの再伝搬を行う */
 void map_start(LmnWorker *w, State *u) {
-  AutomataRef a;
-
-  START_CYCLE_SEARCH();
-
-  if (u->successor_num == 0) {
-    backward_elimination(w, u);
-  }
-
-  a = worker_states(w)->automata();
-
-  do {
-    State *propag;
-    unsigned int i;
-
-    propag = map_ordering_propagate_state(w, u, a);
-    for (i = 0; i < u->successor_num; i++) {
-      State *t = state_succ_state(u, i);
-      map_propagate(w, u, t, propag, a);
-    }
-
-    if (worker_use_weak_map(w)) {
-      u = NULL;
-    } else {
-      u = (State *)MAP_WORKER_PROPAG_G(w)->dequeue();
-    }
-  } while (u);
-
-  FINISH_CYCLE_SEARCH();
+  auto t = (slim::verifier::tactics::MAP *)w->strategy.explorer.get();
+  t->start(u);
 }
 
 /* MAPアルゴリズムの2週目以降.
@@ -621,107 +521,6 @@ void map_iteration_start(LmnWorker *w) {
       map_start(w, seed);
     }
   }
-}
-
-/* 状態uからサクセサへ伝搬するMAP値を決定し, 返す.
- * MAP値は, 伝搬元となる状態uと,
- * uに伝搬されて設定されているMAP値が指す状態とで決定する */
-static State *map_ordering_propagate_state(LmnWorker *w, State *u,
-                                           AutomataRef a) {
-  State *propag;
-
-  if (!state_is_accept(a, u) || smap_is_deleted(u)) {
-    propag = u->map;
-  } else { /* u ∈ A */
-    propag = map_ordering(u, u->map, a);
-
-    if (!worker_use_weak_map(w)) {
-      if (propag == u) {
-        smap_unset_not_delete(u);
-        MAP_WORKER_DEL_G(w)->enqueue((LmnWord)u);
-      } else {
-        smap_set_not_delete(u);
-        smap_unset_deleted(u);
-      }
-    }
-  }
-
-  return propag;
-}
-
-static void map_propagate(LmnWorker *w, State *s, State *t, State *propag,
-                          AutomataRef a) {
-  if (TRANS_BETWEEN_DIFF_SCCs(w, s, t, a))
-    return;
-
-  if (propag == t || (state_is_accept(a, t) && t == s)) {
-    map_found_accepting_cycle(w, t);
-  } else if (propag == map_ordering(propag, t->map, a)) {
-    if (map_entry_state(t, propag, a) && !worker_use_weak_map(w) &&
-        t->is_expanded()) {
-      MAP_WORKER_PROPAG_G(w)->enqueue((LmnWord)t);
-    }
-  }
-}
-
-/* 状態tのMAP値に, propagが優先するMAP値なら伝搬する.
- * 伝搬に成功した場合, 真を返す. */
-static inline BOOL map_entry_state(State *t, State *propag, AutomataRef a) {
-  BOOL ret = FALSE;
-
-  do {
-    State *fetch = t->map;
-
-    if (fetch == propag) {
-      break;
-    } else if (CAS(t->map, fetch, propag)) {
-      ret = TRUE;
-      break;
-    } else if (propag != map_ordering(t->map, propag, a)) {
-      ret = FALSE;
-      break;
-    }
-  } while (1);
-
-  return ret;
-}
-
-static inline State *map_ordering(State *s1, State *s2, AutomataRef a) {
-  BOOL s1_valid, s2_valid;
-
-  /* MAP値を比較するべき頂点として有効なものは, 未削除の受理頂点のみ */
-  s1_valid =
-      s1 && state_is_accept(a, s1) && !smap_is_deleted(s1) && state_id(s1) != 0;
-  s2_valid =
-      s2 && state_is_accept(a, s2) && !smap_is_deleted(s2) && state_id(s2) != 0;
-
-  if (s1_valid && s2_valid) {
-    return state_id(s1) < state_id(s2) ? s1 : s2;
-  } else if (!s1_valid) {
-    return s2_valid ? s2 : NULL;
-  } else {
-    return s1_valid ? s1 : NULL;
-  }
-}
-
-/* N個の状態を入力として受け, MAP順序が最も高い状態を返す.
- * なんとなく書いてみたけど, 使わなかった */
-State *map_ordering_states(AutomataRef a, unsigned int num, ...) {
-  State *ptr, *ret;
-  va_list states;
-  unsigned int i;
-
-  va_start(states, num);
-
-  ret = NULL;
-  for (i = 0; i < num; i++) {
-    ptr = va_arg(states, State *);
-    ret = map_ordering(ptr, ret, a);
-  }
-
-  va_end(states);
-
-  return ret;
 }
 
 /* 受理状態でサクセッサがない状態sを探索対象外とすることをparent側に伝搬させていく.
@@ -749,10 +548,171 @@ void backward_elimination(LmnWorker *w, State *s) {
   }
 }
 
+namespace slim {
+namespace verifier {
+namespace tactics {
+
+void MAP::initialize(LmnWorker *w) {
+  if (worker_id(w) == LMN_PRIMARY_ID) {
+    if (worker_group(w)->workers_get_entried_num() > 1) {
+      this->propagate = new Queue(LMN_Q_MRMW);
+      this->waitingSeed = new Queue(LMN_Q_MRMW);
+    } else {
+      this->propagate = new Queue();
+      this->waitingSeed = new Queue();
+    }
+  } else {
+    LmnWorker *prim = worker_group(w)->get_worker(LMN_PRIMARY_ID);
+    this->propagate = MAP_WORKER_PROPAG_G(prim);
+    this->waitingSeed = MAP_WORKER_DEL_G(prim);
+  }
+
+  this->traversed = st_init_ptrtable();
+}
+void MAP::finalize(LmnWorker *w) {
+  if (worker_id(w) == LMN_PRIMARY_ID) {
+    delete MAP_WORKER_PROPAG_G(w);
+    delete MAP_WORKER_DEL_G(w);
+  }
+  st_free_table(MAP_WORKER_HASHSET(w));
+}
+
+void MAP::start(State *u) {
+  AutomataRef a;
+
+  START_CYCLE_SEARCH();
+
+  if (u->successor_num == 0) {
+    backward_elimination(this->owner, u);
+  }
+
+  a = worker_states(this->owner)->automata();
+
+  do {
+    State *propag;
+    unsigned int i;
+
+    propag = map_ordering_propagate_state(this->owner, u, a);
+    for (i = 0; i < u->successor_num; i++) {
+      State *t = state_succ_state(u, i);
+      map_propagate(this->owner, u, t, propag, a);
+    }
+
+    if (worker_use_weak_map(this->owner)) {
+      u = NULL;
+    } else {
+      u = (State *)MAP_WORKER_PROPAG_G(this->owner)->dequeue();
+    }
+  } while (u);
+
+  FINISH_CYCLE_SEARCH();
+}
+
+/* 状態uからサクセサへ伝搬するMAP値を決定し, 返す.
+ * MAP値は, 伝搬元となる状態uと,
+ * uに伝搬されて設定されているMAP値が指す状態とで決定する */
+State *MAP::map_ordering_propagate_state(LmnWorker *w, State *u,
+                                         AutomataRef a) {
+  State *propag;
+
+  if (!state_is_accept(a, u) || smap_is_deleted(u)) {
+    propag = u->map;
+  } else { /* u ∈ A */
+    propag = map_ordering(u, u->map, a);
+
+    if (!worker_use_weak_map(w)) {
+      if (propag == u) {
+        smap_unset_not_delete(u);
+        MAP_WORKER_DEL_G(w)->enqueue((LmnWord)u);
+      } else {
+        smap_set_not_delete(u);
+        smap_unset_deleted(u);
+      }
+    }
+  }
+
+  return propag;
+}
+
+void MAP::map_propagate(LmnWorker *w, State *s, State *t, State *propag,
+                        AutomataRef a) {
+  if (TRANS_BETWEEN_DIFF_SCCs(w, s, t, a))
+    return;
+
+  if (propag == t || (state_is_accept(a, t) && t == s)) {
+    map_found_accepting_cycle(w, t);
+  } else if (propag == map_ordering(propag, t->map, a)) {
+    if (map_entry_state(t, propag, a) && !worker_use_weak_map(w) &&
+        t->is_expanded()) {
+      MAP_WORKER_PROPAG_G(w)->enqueue((LmnWord)t);
+    }
+  }
+}
+
+/* 状態tのMAP値に, propagが優先するMAP値なら伝搬する.
+ * 伝搬に成功した場合, 真を返す. */
+BOOL MAP::map_entry_state(State *t, State *propag, AutomataRef a) {
+  BOOL ret = FALSE;
+
+  do {
+    State *fetch = t->map;
+
+    if (fetch == propag) {
+      break;
+    } else if (CAS(t->map, fetch, propag)) {
+      ret = TRUE;
+      break;
+    } else if (propag != map_ordering(t->map, propag, a)) {
+      ret = FALSE;
+      break;
+    }
+  } while (1);
+
+  return ret;
+}
+
+State *MAP::map_ordering(State *s1, State *s2, AutomataRef a) {
+  BOOL s1_valid, s2_valid;
+
+  /* MAP値を比較するべき頂点として有効なものは, 未削除の受理頂点のみ */
+  s1_valid =
+      s1 && state_is_accept(a, s1) && !smap_is_deleted(s1) && state_id(s1) != 0;
+  s2_valid =
+      s2 && state_is_accept(a, s2) && !smap_is_deleted(s2) && state_id(s2) != 0;
+
+  if (s1_valid && s2_valid) {
+    return state_id(s1) < state_id(s2) ? s1 : s2;
+  } else if (!s1_valid) {
+    return s2_valid ? s2 : NULL;
+  } else {
+    return s1_valid ? s1 : NULL;
+  }
+}
+
+/* N個の状態を入力として受け, MAP順序が最も高い状態を返す.
+ * なんとなく書いてみたけど, 使わなかった */
+State *MAP::map_ordering_states(AutomataRef a, unsigned int num, ...) {
+  State *ptr, *ret;
+  va_list states;
+  unsigned int i;
+
+  va_start(states, num);
+
+  ret = NULL;
+  for (i = 0; i < num; i++) {
+    ptr = va_arg(states, State *);
+    ret = map_ordering(ptr, ret, a);
+  }
+
+  va_end(states);
+
+  return ret;
+}
+
 /* 受理サイクルを発見した場合に呼び出す.
  * 反例出力が必要な場合は, 起点となる頂点と同じMAP値の状態を辿るように
  * self-reachability testを行う. */
-static void map_found_accepting_cycle(LmnWorker *w, State *s) {
+void MAP::map_found_accepting_cycle(LmnWorker *w, State *s) {
   LmnWorkerGroup *wp = worker_group(w);
 
   wp->workers_found_error();
@@ -781,7 +741,7 @@ static void map_found_accepting_cycle(LmnWorker *w, State *s) {
       v = new Vector(path.get_num());
       for (i = 0; i < path.get_num(); i++) {
         State *tmp = (State *)path.get(i);
-       tmp->set_on_cycle();
+        tmp->set_on_cycle();
         v->push((vec_data_t)tmp);
       }
       mc_found_invalid_path(wp, v);
@@ -797,21 +757,16 @@ static void map_found_accepting_cycle(LmnWorker *w, State *s) {
   }
 }
 
+} // namespace tactics
+} // namespace verifier
+} // namespace slim
+
 /** ==================================
  *  === Back Level Edges =============
  *  ==================================
  */
 
-typedef struct McSearchBLE McSearchBLE;
-struct McSearchBLE {
-  Queue *layer;
-  Vector *path;
-  Vector *search;
-  st_table_t traversed;
-};
-
-#define BLE_WORKER_OBJ(W) ((McSearchBLE *)worker_explorer_obj(W))
-#define BLE_WORKER_OBJ_SET(W, O) (worker_explorer_obj_set(W, O))
+#define BLE_WORKER_OBJ(W) ((slim::verifier::tactics::BLE *)&worker_explorer(W))
 #define BLE_WORKER_LAYER_Q(W) (BLE_WORKER_OBJ(W)->layer)
 #define BLE_WORKER_PATH_VEC(W) (BLE_WORKER_OBJ(W)->path)
 #define BLE_WORKER_SEARCH_VEC(W) (BLE_WORKER_OBJ(W)->search)
@@ -819,37 +774,36 @@ struct McSearchBLE {
 
 static void bledge_found_accepting_cycle(LmnWorker *w, Vector *cycle_path);
 
-void bledge_env_set(LmnWorker *w) {
-  worker_set_ble(w);
-  worker_explorer_init_f_set(w, bledge_worker_init);
-  worker_explorer_finalize_f_set(w, bledge_worker_finalize);
-
-  if (lmn_env.prop_scc_driven) {
-    worker_set_opt_scc(w);
-  }
+void bledge_start(LmnWorker *w) {
+  auto t = (slim::verifier::tactics::BLE *)w->strategy.explorer.get();
+  t->start();
 }
 
-void bledge_worker_init(LmnWorker *w) {
-  McSearchBLE *mc = LMN_MALLOC(McSearchBLE);
+void bledge_store_layer(LmnWorker *w, State *s) {
+  auto t = (slim::verifier::tactics::BLE *)w->strategy.explorer.get();
+  t->store_layer(w, s);
+}
+
+namespace slim {
+namespace verifier {
+namespace tactics {
+void BLE::initialize(LmnWorker *w) {
   if (worker_id(w) == LMN_PRIMARY_ID) {
     if (worker_group(w)->workers_get_entried_num() > 1) {
-      mc->layer = new Queue(LMN_Q_MRMW);
+      this->layer = new Queue(LMN_Q_MRMW);
     } else {
-      mc->layer = new Queue();
+      this->layer = new Queue();
     }
   } else {
-    mc->layer =
+    this->layer =
         BLE_WORKER_LAYER_Q(worker_group(w)->get_worker(LMN_PRIMARY_ID));
   }
 
-  mc->path = new Vector(32);
-  mc->search = new Vector(64);
-  mc->traversed = st_init_ptrtable();
-
-  BLE_WORKER_OBJ_SET(w, mc);
+  this->path = new Vector(32);
+  this->search = new Vector(64);
+  this->traversed = st_init_ptrtable();
 }
-
-void bledge_worker_finalize(LmnWorker *w) {
+void BLE::finalize(LmnWorker *w) {
   if (worker_id(w) == LMN_PRIMARY_ID) {
     delete BLE_WORKER_LAYER_Q(w);
   }
@@ -858,8 +812,82 @@ void bledge_worker_finalize(LmnWorker *w) {
   st_free_table(BLE_WORKER_HASHSET(w));
 }
 
+void BLE::start() {
+  lmn_workers_synchronization(this->owner, NULL);
+
+  START_CYCLE_SEARCH();
+
+  while (!BLE_WORKER_LAYER_Q(this->owner)->is_empty()) {
+    State *u;
+    unsigned int i;
+
+    if (!(u = (State *)BLE_WORKER_LAYER_Q(this->owner)->dequeue()))
+      continue;
+    for (i = 0; i < u->successor_num; i++) {
+      State *v = state_succ_state(u, i);
+
+      if (v->is_expanded()) { /* detected back level edge:t where [u]--t-->[v]
+                               */
+        if (!u->is_on_cycle() && !v->is_on_cycle() &&
+            bledge_explorer_accepting_cycle(this->owner, u, v)) {
+          BLE_WORKER_PATH_VEC(this->owner)->push((vec_data_t)u);
+          bledge_found_accepting_cycle(this->owner,
+                                       BLE_WORKER_PATH_VEC(this->owner));
+        }
+
+        st_clear(BLE_WORKER_HASHSET(this->owner));
+        BLE_WORKER_PATH_VEC(this->owner)->clear();
+        BLE_WORKER_SEARCH_VEC(this->owner)->clear();
+      }
+    }
+  }
+
+  FINISH_CYCLE_SEARCH();
+}
+
+void BLE::store_layer(LmnWorker *w, State *s) {
+  if (s->successor_num > 0) {
+    BLE_WORKER_LAYER_Q(w)->enqueue((LmnWord)s);
+  }
+}
+
+void BLE::bledge_found_accepting_cycle(LmnWorker *w, Vector *cycle_path) {
+  LmnWorkerGroup *wp;
+  Vector *v;
+  unsigned long i;
+  BOOL gen_counter_example;
+
+  wp = worker_group(w);
+  wp->workers_found_error();
+
+  gen_counter_example = lmn_env.dump;
+  v = gen_counter_example ? new Vector(cycle_path->get_num()) : NULL;
+
+  /* 受理サイクル上の状態にフラグを立てていく */
+  for (i = 0; i < cycle_path->get_num(); i++) {
+    State *s = (State *)cycle_path->get(i);
+    s->set_on_cycle();
+    if (gen_counter_example)
+      v->push((vec_data_t)s);
+  }
+
+  /* サイクルを登録 */
+  if (gen_counter_example) {
+    mc_found_invalid_path(wp, v);
+  } else if (!wp->workers_are_do_exhaustive()) {
+    wp->workers_set_exit();
+  }
+}
+
+BOOL BLE::bledge_explorer_accepting_cycle(LmnWorker *w, State *u, State *v) {
+  AutomataRef a = worker_states(w)->automata();
+  return state_to_state_path(v, u, BLE_WORKER_SEARCH_VEC(w),
+                             BLE_WORKER_PATH_VEC(w), BLE_WORKER_HASHSET(w)) &&
+         bledge_path_accepting(BLE_WORKER_PATH_VEC(w), a);
+}
+
 /* State Vectorの各状態に受理頂点が含まれていたら真を返す */
-static BOOL bledge_path_accepting(Vector *v, AutomataRef a) {
+BOOL BLE::bledge_path_accepting(Vector *v, AutomataRef a) {
   unsigned int i;
 
   for (i = 0; i < v->get_num(); i++) {
@@ -871,141 +899,71 @@ static BOOL bledge_path_accepting(Vector *v, AutomataRef a) {
   return FALSE;
 }
 
-static BOOL bledge_explorer_accepting_cycle(LmnWorker *w, State *u, State *v) {
-  AutomataRef a = worker_states(w)->automata();
-  return state_to_state_path(v, u, BLE_WORKER_SEARCH_VEC(w),
-                             BLE_WORKER_PATH_VEC(w), BLE_WORKER_HASHSET(w)) &&
-         bledge_path_accepting(BLE_WORKER_PATH_VEC(w), a);
-}
-
-void bledge_start(LmnWorker *w) {
-  lmn_workers_synchronization(w, NULL);
-
-  START_CYCLE_SEARCH();
-
-  while (!BLE_WORKER_LAYER_Q(w)->is_empty()) {
-    State *u;
-    unsigned int i;
-
-    if (!(u = (State *)BLE_WORKER_LAYER_Q(w)->dequeue()))
-      continue;
-    for (i = 0; i < u->successor_num; i++) {
-      State *v = state_succ_state(u, i);
-
-      if (v->is_expanded()) { /* detected back level edge:t where [u]--t-->[v] */
-        if (!u->is_on_cycle() && !v->is_on_cycle() &&
-            bledge_explorer_accepting_cycle(w, u, v)) {
-          BLE_WORKER_PATH_VEC(w)->push((vec_data_t)u);
-          bledge_found_accepting_cycle(w, BLE_WORKER_PATH_VEC(w));
-        }
-
-        st_clear(BLE_WORKER_HASHSET(w));
-        BLE_WORKER_PATH_VEC(w)->clear();
-        BLE_WORKER_SEARCH_VEC(w)->clear();
-      }
-    }
-  }
-
-  FINISH_CYCLE_SEARCH();
-}
-
-void bledge_store_layer(LmnWorker *w, State *s) {
-  if (s->successor_num > 0) {
-    BLE_WORKER_LAYER_Q(w)->enqueue((LmnWord)s);
-  }
-}
-
-static void bledge_found_accepting_cycle(LmnWorker *w, Vector *cycle_path) {
-  LmnWorkerGroup *wp;
-  Vector *v;
-  unsigned long i;
-  BOOL gen_counter_example;
-
-  wp = worker_group(w);
-  wp->workers_found_error();
-
-  gen_counter_example = lmn_env.dump;
-  v = gen_counter_example ? new Vector(cycle_path->get_num()) : NULL;
-
-  /* 受理サイクル上の状態にフラグを立てていく */
-  for (i = 0; i < cycle_path->get_num(); i++) {
-    State *s = (State *)cycle_path->get(i);
-   s->set_on_cycle();
-    if (gen_counter_example)
-      v->push((vec_data_t)s);
-  }
-
-  /* サイクルを登録 */
-  if (gen_counter_example) {
-    mc_found_invalid_path(wp, v);
-  } else if (!wp->workers_are_do_exhaustive()) {
-    wp->workers_set_exit();
-  }
-}
+} // namespace tactics
+} // namespace verifier
+} // namespace slim
 
 /** ==================================
  *  === MAP + Nested-DFS ========
  *  ==================================
  */
 
-/* NDFSとMAPのハイブリッドなアルゴリズム */
-static BOOL mapndfs_loop(State *seed, Vector *search, Vector *postordered);
-static void mapndfs_found_accepting_cycle(LmnWorker *w, State *seed,
-                                          Vector *cycle_path);
-
-#define MAPNDFS_USE_MAP
 /* MAP_WORKER_~
  * 系のマクロでアクセスするため、最初にMcSearchMapを持ってくる必要がある */
 /* McSearchMapを変更したらこっちも変更する必要あり */
 /* MAP系関数・マクロを使い回したかったので、こんな構造にしたが、色々と問題がありそうな構造なので要修正
  */
-typedef struct McSearchMAPNDFS McSearchMAPNDFS;
-struct McSearchMAPNDFS {
-#ifdef MAPNDFS_USE_MAP
-  Queue *propagate;
-  Queue *waitingSeed;
-  st_table_t traversed;
-#endif
-  Vector *open;
-  Vector *path;
-};
 
-#define MAPNDFS_WORKER_OBJ(W) ((McSearchMAPNDFS *)worker_explorer_obj(W))
+#define MAPNDFS_WORKER_OBJ(W)                                                  \
+  ((slim::verifier::tactics::MAP_NDFS *)&worker_explorer(W))
 #define MAPNDFS_WORKER_OBJ_SET(W, O) worker_explorer_obj_set(W, O)
 #define MAPNDFS_WORKER_OPEN_VEC(W) (MAPNDFS_WORKER_OBJ(W)->open)
 #define MAPNDFS_WORKER_PATH_VEC(W) (MAPNDFS_WORKER_OBJ(W)->path)
 #define MAPNDFS_WORKER_OBJ_CLEAR(W)                                            \
   do {                                                                         \
-    MAPNDFS_WORKER_OPEN_VEC(W)->clear();                                     \
-    MAPNDFS_WORKER_PATH_VEC(W)->clear();                                     \
+    MAPNDFS_WORKER_OPEN_VEC(W)->clear();                                       \
+    MAPNDFS_WORKER_PATH_VEC(W)->clear();                                       \
   } while (0)
 
-void mapndfs_worker_init(LmnWorker *w) {
-  McSearchMAPNDFS *mc = LMN_MALLOC(McSearchMAPNDFS);
-  mc->open = new Vector(1024);
-  mc->path = new Vector(512);
+/* Nested-DFS, Double-DFS, Red-DFS:
+ * 1段階目のDFSで求めたpostorder順に,
+ * 受理頂点seedから自身に戻る閉路(受理サイクル)を探索する. */
+void mapndfs_start(LmnWorker *w, State *seed) {
+  auto t = (slim::verifier::tactics::MAP_NDFS *)w->strategy.explorer.get();
+  t->start(seed);
+}
+
+void mapndfs_found_accepting_cycle(LmnWorker *w, State *seed,
+                                   Vector *cycle_path) {
+  auto t = (slim::verifier::tactics::MAP_NDFS *)w->strategy.explorer.get();
+  t->mapndfs_found_accepting_cycle(w, seed, cycle_path);
+}
+
+namespace slim {
+namespace verifier {
+namespace tactics {
+void MAP_NDFS::initialize(LmnWorker *w) {
+  this->open = new Vector(1024);
+  this->path = new Vector(512);
 
 #ifdef MAPNDFS_USE_MAP
   if (worker_id(w) == LMN_PRIMARY_ID) {
     if (worker_group(w)->workers_get_entried_num() > 1) {
-      mc->propagate = new Queue(LMN_Q_MRMW);
-      mc->waitingSeed = new Queue(LMN_Q_MRMW);
+      this->propagate = new Queue(LMN_Q_MRMW);
+      this->waitingSeed = new Queue(LMN_Q_MRMW);
     } else {
-      mc->propagate = new Queue();
-      mc->waitingSeed = new Queue();
+      this->propagate = new Queue();
+      this->waitingSeed = new Queue();
     }
   } else {
     LmnWorker *prim = worker_group(w)->get_worker(LMN_PRIMARY_ID);
-    mc->propagate = MAP_WORKER_PROPAG_G(prim);
-    mc->waitingSeed = MAP_WORKER_DEL_G(prim);
+    this->propagate = MAP_WORKER_PROPAG_G(prim);
+    this->waitingSeed = MAP_WORKER_DEL_G(prim);
   }
-  mc->traversed = NULL;
+  this->traversed = NULL;
 #endif
-
-  MAPNDFS_WORKER_OBJ_SET(w, mc);
 }
-
-void mapndfs_worker_finalize(LmnWorker *w) {
+void MAP_NDFS::finalize(LmnWorker *w) {
   delete MAPNDFS_WORKER_OPEN_VEC(w);
   delete MAPNDFS_WORKER_PATH_VEC(w);
 
@@ -1017,88 +975,28 @@ void mapndfs_worker_finalize(LmnWorker *w) {
   if (MAP_WORKER_HASHSET(w))
     st_free_table(MAP_WORKER_HASHSET(w));
 #endif
-
-  LMN_FREE(MAPNDFS_WORKER_OBJ(w));
 }
 
-void mapndfs_env_set(LmnWorker *w) {
-  if (lmn_env.core_num == 1)
-    ndfs_env_set(w);
-  else {
-    worker_set_mapndfs(w);
-    worker_explorer_init_f_set(w, mapndfs_worker_init);
-    worker_explorer_finalize_f_set(w, mapndfs_worker_finalize);
-
-    // thread0のみexplorer
-    if (worker_id(w) == lmn_env.core_num - 1)
-      worker_explorer_set(w);
-    else
-      worker_generator_set(w);
-    if (lmn_env.prop_scc_driven) {
-      worker_set_opt_scc(w);
-    }
-#ifdef MAPNDFS_USE_MAP
-    if (lmn_env.enable_map_heuristic) {
-      worker_set_map(w);
-    }
-#endif
-  }
-}
-
-/* Nested-DFS, Double-DFS, Red-DFS:
- * 1段階目のDFSで求めたpostorder順に,
- * 受理頂点seedから自身に戻る閉路(受理サイクル)を探索する. */
-void mapndfs_start(LmnWorker *w, State *seed) {
+void MAP_NDFS::start(State *seed) {
   BOOL has_error;
   START_CYCLE_SEARCH();
 
   has_error = FALSE;
-  MAPNDFS_WORKER_OPEN_VEC(w)->push((vec_data_t)seed);
-  has_error = mapndfs_loop(seed, MAPNDFS_WORKER_OPEN_VEC(w),
-                           MAPNDFS_WORKER_PATH_VEC(w));
+  MAPNDFS_WORKER_OPEN_VEC(this->owner)->push((vec_data_t)seed);
+  has_error = mapndfs_loop(seed, MAPNDFS_WORKER_OPEN_VEC(this->owner),
+                           MAPNDFS_WORKER_PATH_VEC(this->owner));
 
   FINISH_CYCLE_SEARCH();
 
   if (has_error) {
-    mapndfs_found_accepting_cycle(w, seed, MAPNDFS_WORKER_PATH_VEC(w));
+    mapndfs_found_accepting_cycle(this->owner, seed,
+                                  MAPNDFS_WORKER_PATH_VEC(this->owner));
   }
 
-  MAPNDFS_WORKER_OBJ_CLEAR(w);
+  MAPNDFS_WORKER_OBJ_CLEAR(this->owner);
 }
 
-void mapndfs_found_accepting_cycle(LmnWorker *w, State *seed,
-                                   Vector *cycle_path) {
-  LmnWorkerGroup *wp;
-  Vector *v;
-  unsigned long i;
-  BOOL gen_counter_example;
-
-  wp = worker_group(w);
-  wp->workers_found_error();
-
-  gen_counter_example = lmn_env.dump;
- seed->set_on_cycle(); /* 受理サイクルに含まれるフラグを立てる */
-
-  v = gen_counter_example ? new Vector(cycle_path->get_num()) : NULL;
-
-  /* 受理サイクル上の状態にフラグを立てていく */
-  for (i = 0; i < cycle_path->get_num(); i++) {
-    State *s = (State *)cycle_path->get(i);
-   s->set_on_cycle();
-
-    if (gen_counter_example)
-      v->push((vec_data_t)s);
-  }
-
-  /* サイクルを登録 */
-  if (gen_counter_example) {
-    mc_found_invalid_path(wp, v);
-  } else if (!wp->workers_are_do_exhaustive()) {
-    wp->workers_set_exit();
-  }
-}
-
-static BOOL mapndfs_loop(State *seed, Vector *search, Vector *path) {
+BOOL MAP_NDFS::mapndfs_loop(State *seed, Vector *search, Vector *path) {
   while (search->get_num() > 0) {
     State *s = (State *)search->peek();
 
@@ -1111,7 +1009,7 @@ static BOOL mapndfs_loop(State *seed, Vector *search, Vector *path) {
     } else {
       unsigned int i;
       path->push((vec_data_t)s);
-     s->set_snd();
+      s->set_snd();
       for (i = 0; i < s->successor_num; i++) {
         State *succ = state_succ_state(s, i);
 
@@ -1132,42 +1030,81 @@ static BOOL mapndfs_loop(State *seed, Vector *search, Vector *path) {
   return FALSE;
 }
 
+void MAP_NDFS::mapndfs_found_accepting_cycle(LmnWorker *w, State *seed,
+                                             Vector *cycle_path) {
+  LmnWorkerGroup *wp;
+  Vector *v;
+  unsigned long i;
+  BOOL gen_counter_example;
+
+  wp = worker_group(w);
+  wp->workers_found_error();
+
+  gen_counter_example = lmn_env.dump;
+  seed->set_on_cycle(); /* 受理サイクルに含まれるフラグを立てる */
+
+  v = gen_counter_example ? new Vector(cycle_path->get_num()) : NULL;
+
+  /* 受理サイクル上の状態にフラグを立てていく */
+  for (i = 0; i < cycle_path->get_num(); i++) {
+    State *s = (State *)cycle_path->get(i);
+    s->set_on_cycle();
+
+    if (gen_counter_example)
+      v->push((vec_data_t)s);
+  }
+
+  /* サイクルを登録 */
+  if (gen_counter_example) {
+    mc_found_invalid_path(wp, v);
+  } else if (!wp->workers_are_do_exhaustive()) {
+    wp->workers_set_exit();
+  }
+}
+} // namespace tactics
+} // namespace verifier
+} // namespace slim
+
 #ifndef MINIMAL_STATE
 /** ==================================
  *  === Multicore Nested-DFS ========
  *  ==================================
  */
-static BOOL mcndfs_loop(LmnWorker *w, State *seed, Vector *search,
-                        Vector *postordered, Vector *red_states);
-static void mcndfs_found_accepting_cycle(LmnWorker *w, State *seed,
-                                         Vector *cycle_path) LMN_UNUSED;
 
-void mcndfs_worker_init(LmnWorker *w) {
-  McSearchMAPNDFS *mc = LMN_MALLOC(McSearchMAPNDFS);
-  mc->open = new Vector(1024);
-  mc->path = new Vector(512);
+/* Nested-DFS, Double-DFS, Red-DFS:
+ * 1段階目のDFSで求めたpostorder順に,
+ * 受理頂点seedから自身に戻る閉路(受理サイクル)を探索する. */
+void mcndfs_start(LmnWorker *w, State *seed, Vector *red_states) {
+  auto t = (slim::verifier::tactics::MultiNDFS *)w->strategy.explorer.get();
+  t->start(w, seed, red_states);
+}
+
+namespace slim {
+namespace verifier {
+namespace tactics {
+void MultiNDFS::initialize(LmnWorker *w) {
+  this->open = new Vector(1024);
+  this->path = new Vector(512);
 
 #ifdef MAPNDFS_USE_MAP
   if (worker_id(w) == LMN_PRIMARY_ID) {
     if (worker_group(w)->workers_get_entried_num() > 1) {
-      mc->propagate = new Queue(LMN_Q_MRMW);
-      mc->waitingSeed = new Queue(LMN_Q_MRMW);
+      this->propagate = new Queue(LMN_Q_MRMW);
+      this->waitingSeed = new Queue(LMN_Q_MRMW);
     } else {
-      mc->propagate = new Queue();
-      mc->waitingSeed = new Queue();
+      this->propagate = new Queue();
+      this->waitingSeed = new Queue();
     }
   } else {
     LmnWorker *prim = worker_group(w)->get_worker(LMN_PRIMARY_ID);
-    mc->propagate = MAP_WORKER_PROPAG_G(prim);
-    mc->waitingSeed = MAP_WORKER_DEL_G(prim);
+    this->propagate = MAP_WORKER_PROPAG_G(prim);
+    this->waitingSeed = MAP_WORKER_DEL_G(prim);
   }
-  mc->traversed = NULL;
+  this->traversed = NULL;
 #endif
-
-  MAPNDFS_WORKER_OBJ_SET(w, mc);
 }
 
-void mcndfs_worker_finalize(LmnWorker *w) {
+void MultiNDFS::finalize(LmnWorker *w) {
   delete MAPNDFS_WORKER_OPEN_VEC(w);
   delete MAPNDFS_WORKER_PATH_VEC(w);
 
@@ -1179,33 +1116,9 @@ void mcndfs_worker_finalize(LmnWorker *w) {
   if (MAP_WORKER_HASHSET(w))
     st_free_table(MAP_WORKER_HASHSET(w));
 #endif
-
-  LMN_FREE(MAPNDFS_WORKER_OBJ(w));
 }
 
-void mcndfs_env_set(LmnWorker *w) {
-  if (lmn_env.core_num == 1)
-    ndfs_env_set(w);
-  else {
-    worker_set_mcndfs(w);
-    worker_explorer_init_f_set(w, mapndfs_worker_init);
-    worker_explorer_finalize_f_set(w, mapndfs_worker_finalize);
-    w->strategy.is_explorer = FALSE;
-
-    if (lmn_env.prop_scc_driven) {
-      worker_set_opt_scc(w);
-    }
-
-    if (lmn_env.enable_map_heuristic) {
-      worker_set_map(w);
-    }
-  }
-}
-
-/* Nested-DFS, Double-DFS, Red-DFS:
- * 1段階目のDFSで求めたpostorder順に,
- * 受理頂点seedから自身に戻る閉路(受理サイクル)を探索する. */
-void mcndfs_start(LmnWorker *w, State *seed, Vector *red_states) {
+void MultiNDFS::start(LmnWorker *w, State *seed, Vector *red_states) {
   BOOL has_error;
   START_CYCLE_SEARCH();
 
@@ -1223,8 +1136,8 @@ void mcndfs_start(LmnWorker *w, State *seed, Vector *red_states) {
   MAPNDFS_WORKER_OBJ_CLEAR(w);
 }
 
-void mcndfs_found_accepting_cycle(LmnWorker *w, State *seed,
-                                  Vector *cycle_path) {
+void MultiNDFS::mcndfs_found_accepting_cycle(LmnWorker *w, State *seed,
+                                             Vector *cycle_path) {
   LmnWorkerGroup *wp;
   Vector *v;
   unsigned long i;
@@ -1234,14 +1147,14 @@ void mcndfs_found_accepting_cycle(LmnWorker *w, State *seed,
   wp->workers_found_error();
 
   gen_counter_example = lmn_env.dump;
- seed->set_on_cycle(); /* 受理サイクルに含まれるフラグを立てる */
+  seed->set_on_cycle(); /* 受理サイクルに含まれるフラグを立てる */
 
   v = gen_counter_example ? new Vector(cycle_path->get_num()) : NULL;
 
   /* 受理サイクル上の状態にフラグを立てていく */
   for (i = 0; i < cycle_path->get_num(); i++) {
     State *s = (State *)cycle_path->get(i);
-   s->set_on_cycle();
+    s->set_on_cycle();
 
     if (gen_counter_example)
       v->push((vec_data_t)s);
@@ -1255,7 +1168,7 @@ void mcndfs_found_accepting_cycle(LmnWorker *w, State *seed,
   }
 }
 
-static BOOL mcndfs_loop(LmnWorker *w, State *seed, Vector *search, Vector *path,
+BOOL MultiNDFS::mcndfs_loop(LmnWorker *w, State *seed, Vector *search, Vector *path,
                         Vector *red_states) {
   unsigned int i, j, n, m;
   State *t, *succ;
@@ -1273,7 +1186,7 @@ static BOOL mcndfs_loop(LmnWorker *w, State *seed, Vector *search, Vector *path,
     }
 
     put_stack(red_states, s);
-   s->set_snd();
+    s->set_snd();
 
     n = s->successor_num;
     for (i = 0; i < n; i++) {
@@ -1326,4 +1239,9 @@ static BOOL mcndfs_loop(LmnWorker *w, State *seed, Vector *search, Vector *path,
 
   return FALSE;
 }
+
+} // namespace tactics
+} // namespace verifier
+} // namespace slim
+
 #endif
