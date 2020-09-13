@@ -89,8 +89,8 @@ private:
     return nullptr;
   }
 
-  void handoff_all_tasks(Vector *expands, LmnWorker *rn);
-  void handoff_task(State *task, LmnWorker *rn);
+  void handoff_all_tasks(Vector *expands, LmnWorker &rn);
+  void handoff_task(State *task, LmnWorker &rn);
 
 #ifndef MINIMAL_STATE
   void mcdfs_start(LmnWorker *w);

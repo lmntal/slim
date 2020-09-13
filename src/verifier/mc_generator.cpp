@@ -271,12 +271,12 @@ bool DFS::check() { return this->q ? this->q->is_empty() : TRUE; }
 
 /* ベクタexpandsに積まれたタスクをワーカーmeの隣接ワーカーに全てハンドオフする
  */
-void DFS::handoff_all_tasks(Vector *expands, LmnWorker *rn) {
-  if (worker_id(this->owner) > worker_id(rn)) {
+void DFS::handoff_all_tasks(Vector *expands, LmnWorker &rn) {
+  if (this->owner->id > rn.id) {
     worker_set_black(this->owner);
   }
 
-  auto gen = (DFS *)rn->strategy.generator.get();
+  auto gen = (DFS *)rn.strategy.generator.get();
   for (int i = 0; i < expands->get_num(); i++) {
     gen->q->enqueue(expands->get(i));
   }
@@ -285,11 +285,11 @@ void DFS::handoff_all_tasks(Vector *expands, LmnWorker *rn) {
 }
 
 /* タスクtaskをワーカーmeの隣接ワーカーにハンドオフする */
-void DFS::handoff_task(State *task, LmnWorker *rn) {
-  if (worker_id(this->owner) > worker_id(rn)) {
+void DFS::handoff_task(State *task, LmnWorker &rn) {
+  if (this->owner->id > rn.id) {
     worker_set_black(this->owner);
   }
-  auto gen = (DFS *)rn->strategy.generator.get();
+  auto gen = (DFS *)rn.strategy.generator.get();
   gen->q->enqueue((LmnWord)task);
 
   ADD_OPEN_PROFILE(sizeof(Node));
@@ -417,14 +417,14 @@ void DFS::dfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss, AutomataRef a,
       }
     } else { /* 並列アルゴリズム使用時 */
       if (DFS_HANDOFF_COND_STATIC(w, stack)) {
-        handoff_all_tasks(new_ss, &*begin(neighbors(this->owner)));
+        handoff_all_tasks(new_ss, *begin(neighbors(this->owner)));
       } else {
         n = new_ss->get_num();
         for (i = 0; i < n; i++) {
           State *new_s = (State *)new_ss->get(i);
 
           if (DFS_LOAD_BALANCING(stack, w, i, n)) {
-            handoff_task(new_s, &*begin(neighbors(this->owner)));
+            handoff_task(new_s, *begin(neighbors(this->owner)));
           } else {
             put_stack(stack, new_s);
           }
@@ -501,14 +501,14 @@ void DFS::mapdfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
     /* 並列アルゴリズム使用時 MAPNDFS使ってる時点で並列前提だけど一応 */
     if (worker_on_parallel(w)) {
       if (DFS_HANDOFF_COND_STATIC(w, stack) /*|| worker_is_explorer(w)*/) {
-        handoff_all_tasks(new_ss, &*begin(neighbors(this->owner).generators()));
+        handoff_all_tasks(new_ss, *begin(neighbors(this->owner).generators()));
       } else {
         n = new_ss->get_num();
         for (i = 0; i < n; i++) {
           State *new_s = (State *)new_ss->get(i);
 
           if (DFS_LOAD_BALANCING(stack, w, i, n)) {
-            handoff_task(new_s, &*begin(neighbors(this->owner).generators()));
+            handoff_task(new_s, *begin(neighbors(this->owner).generators()));
           } else {
             put_stack(stack, new_s);
           }
@@ -700,14 +700,14 @@ void DFS::costed_dfs_loop(LmnWorker *w, Deque *deq, Vector *new_ss,
       }
     } else { /* 並列アルゴリズム使用時 */
       if (DFS_HANDOFF_COND_STATIC_DEQ(w, deq)) {
-        handoff_all_tasks(new_ss, &*begin(neighbors(this->owner)));
+        handoff_all_tasks(new_ss, *begin(neighbors(this->owner)));
       } else {
         n = new_ss->get_num();
         for (i = 0; i < n; i++) {
           State *new_s = (State *)new_ss->get(i);
 
           if (DFS_LOAD_BALANCING_DEQ(deq, w, i, n)) {
-            handoff_task(new_s, &*begin(neighbors(this->owner)));
+            handoff_task(new_s, *begin(neighbors(this->owner)));
           } else {
             if (!new_s->is_expanded()) {
               push_deq(deq, new_s, TRUE);
