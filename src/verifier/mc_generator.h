@@ -61,7 +61,6 @@ struct DFS : public slim::verifier::StateGenerator {
   struct Vector stack;
   Deque deq;
   unsigned int cutoff_depth;
-  Queue *q;
 
   DFS(LmnWorker *owner) : StateGenerator(owner), deq(8192) {
     type |= WORKER_F1_MC_DFS_MASK;
@@ -73,12 +72,26 @@ struct DFS : public slim::verifier::StateGenerator {
   bool check();
 
 private:
-  LmnWord dfs_work_stealing(LmnWorker *w);
-  void dfs_handoff_all_task(LmnWorker *me, Vector *expands);
-  void dfs_handoff_task(LmnWorker *me, LmnWord task);
-  LmnWord mapdfs_work_stealing(LmnWorker *w);
-  void mapdfs_handoff_all_task(LmnWorker *me, Vector *expands);
-  void mcdfs_handoff_task(LmnWorker *me, LmnWord task);
+  std::unique_ptr<Queue> q;
+
+  /* 他のワーカーothersを未展開状態を奪いに巡回する.
+   * 未展開状態を発見した場合, そのワーカーのキューからdequeueして返す.
+   * 発見できなかった場合, NULLを返す */
+  template <class Container> State *steal_unexpand_state(const Container &others) {
+    for (auto &dst : others) {
+      auto gen = (DFS *)dst.strategy.generator.get();
+      if (worker_is_active(&dst) && !gen->q->is_empty()) {
+        worker_set_active(owner);
+        worker_set_stealer(owner);
+        return (State *)gen->q->dequeue();
+      }
+    }
+    return nullptr;
+  }
+
+  void handoff_all_tasks(Vector *expands, LmnWorker *rn);
+  void handoff_task(State *task, LmnWorker *rn);
+
 #ifndef MINIMAL_STATE
   void mcdfs_start(LmnWorker *w);
 #endif

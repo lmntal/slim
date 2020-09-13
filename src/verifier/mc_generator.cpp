@@ -49,6 +49,9 @@
 #endif
 #include "state.h"
 #include "state.hpp"
+
+namespace c14 = slim::element;
+
 /* TODO: C++ template関数で書き直した方がよい */
 
 /* 邪魔なので上に持ってきた */
@@ -98,7 +101,7 @@
 /* DFS Stackを動的に分割するためのWork Sharingの条件 */
 #define DFS_HANDOFF_COND_DYNAMIC(I, N, W)                                      \
   (worker_on_dynamic_lb(W) && ((I + 1) < (N)) &&                               \
-   !worker_is_active(worker_next(W)))
+   !worker_is_active(begin(neighbors(W))))
 /* 分割条件 */
 #define DFS_LOAD_BALANCING(Stack, W, I, N)                                     \
   (DFS_HANDOFF_COND_STATIC(W, Stack) || DFS_HANDOFF_COND_DYNAMIC(I, N, W))
@@ -137,21 +140,18 @@ void DFS::initialize(LmnWorker *w) {
       this->stack.init(this->cutoff_depth + 1);
 
     if (lmn_env.core_num == 1) {
-      this->q = new Queue();
+      this->q = c14::make_unique<Queue>();
     } else if (worker_on_dynamic_lb(owner)) {
       if (worker_use_mapndfs(owner))
-        this->q = new Queue(LMN_Q_MRMW);
+        this->q = c14::make_unique<Queue>(LMN_Q_MRMW);
       else
-        this->q = new Queue(LMN_Q_MRSW);
+        this->q = c14::make_unique<Queue>(LMN_Q_MRSW);
     } else {
-      this->q = new Queue(LMN_Q_SRSW);
+      this->q = c14::make_unique<Queue>(LMN_Q_SRSW);
     }
   }
 }
 void DFS::finalize(LmnWorker *w) {
-  if (worker_on_parallel(owner)) {
-    delete this->q;
-  }
 #ifdef KWBT_OPT
   if (lmn_env.opt_mode != OPT_NONE) {
     this->deq.destroy();
@@ -167,13 +167,11 @@ void DFS::start() {
   }
 #endif
 
-  LmnWorkerGroup *wp;
   struct Vector new_ss;
   State *s;
-  StateSpaceRef ss;
 
-  ss = worker_states(owner);
-  wp = worker_group(owner);
+  auto ss = worker_states(owner);
+  auto wp = worker_group(owner);
   new_ss.init(32);
 
   if (WORKER_FOR_INIT_STATE(owner, s)) {
@@ -205,9 +203,9 @@ void DFS::start() {
         } else if (worker_on_dynamic_lb(owner)) {
           /* 職探しの旅 */
           if (!worker_use_mapndfs(owner))
-            s = (State *)dfs_work_stealing(owner);
+            s = steal_unexpand_state(neighbors(owner));
           else if (worker_is_generator(owner))
-            s = (State *)mapdfs_work_stealing(owner);
+            s = steal_unexpand_state(neighbors(this->owner).generators());
           else {
 #ifdef DEBUG
             // explorerの仕事無くなったら終了
@@ -271,103 +269,28 @@ void DFS::start() {
 
 bool DFS::check() { return this->q ? this->q->is_empty() : TRUE; }
 
-/* ワーカーwが輪の方向に沿って, 他のワーカーから未展開状態を奪いに巡回する.
- * 未展開状態を発見した場合, そのワーカーのキューからdequeueして返す.
- * 発見できなかった場合, NULLを返す */
-LmnWord DFS::dfs_work_stealing(LmnWorker *w) {
-  LmnWorker *dst;
-  dst = worker_next(owner);
-
-  while (owner != dst) {
-    if (worker_is_active(dst) && !DFS_WORKER_QUEUE(dst)->is_empty()) {
-      worker_set_active(owner);
-      worker_set_stealer(owner);
-      return DFS_WORKER_QUEUE(dst)->dequeue();
-    } else {
-      dst = worker_next(dst);
-    }
-  }
-  return (LmnWord)NULL;
-}
-
 /* ベクタexpandsに積まれたタスクをワーカーmeの隣接ワーカーに全てハンドオフする
  */
-void DFS::dfs_handoff_all_task(LmnWorker *me, Vector *expands) {
-  unsigned long i, n;
-  LmnWorker *rn = worker_next(me);
-  if (worker_id(me) > worker_id(rn)) {
-    worker_set_black(me);
+void DFS::handoff_all_tasks(Vector *expands, LmnWorker *rn) {
+  if (worker_id(this->owner) > worker_id(rn)) {
+    worker_set_black(this->owner);
   }
 
-  n = expands->get_num();
-  for (i = 0; i < n; i++) {
-    DFS_WORKER_QUEUE(rn)->enqueue(expands->get(i));
+  auto gen = (DFS *)rn->strategy.generator.get();
+  for (int i = 0; i < expands->get_num(); i++) {
+    gen->q->enqueue(expands->get(i));
   }
 
-  ADD_OPEN_PROFILE(sizeof(Node) * n);
+  ADD_OPEN_PROFILE(sizeof(Node) * expands->get_num());
 }
 
 /* タスクtaskをワーカーmeの隣接ワーカーにハンドオフする */
-void DFS::dfs_handoff_task(LmnWorker *me, LmnWord task) {
-  LmnWorker *rn = worker_next(me);
-  if (worker_id(me) > worker_id(rn)) {
-    worker_set_black(me);
+void DFS::handoff_task(State *task, LmnWorker *rn) {
+  if (worker_id(this->owner) > worker_id(rn)) {
+    worker_set_black(this->owner);
   }
-  DFS_WORKER_QUEUE(rn)->enqueue(task);
-
-  ADD_OPEN_PROFILE(sizeof(Node));
-}
-
-/* ワーカーwが輪の方向に沿って, 他のワーカーから未展開状態を奪いに巡回する.
- * 未展開状態を発見した場合, そのワーカーのキューからdequeueして返す.
- * 発見できなかった場合, NULLを返す */
-LmnWord DFS::mapdfs_work_stealing(LmnWorker *w) {
-  LmnWorker *dst;
-
-  if (worker_is_explorer(w))
-    return (LmnWord)NULL;
-  dst = worker_next_generator(w);
-
-  while (w != dst) {
-    if (worker_is_active(dst) && !DFS_WORKER_QUEUE(dst)->is_empty()) {
-      worker_set_active(w);
-      worker_set_stealer(w);
-      return DFS_WORKER_QUEUE(dst)->dequeue();
-    } else {
-      dst = worker_next_generator(dst);
-    }
-  }
-  return (LmnWord)NULL;
-}
-
-/* ベクタexpandsに積まれたタスクをワーカーmeの隣接ワーカーに全てハンドオフする
- */
-void DFS::mapdfs_handoff_all_task(LmnWorker *me, Vector *expands) {
-  unsigned long i, n;
-  LmnWorker *rn = worker_next_generator(me);
-
-  if (worker_id(me) > worker_id(rn)) {
-    worker_set_black(me);
-  }
-
-  n = expands->get_num();
-  for (i = 0; i < n; i++) {
-    DFS_WORKER_QUEUE(rn)->enqueue(expands->get(i));
-    // DFS_WORKER_QUEUE(rn)->enqueue_push_head(expands->get(i));
-  }
-
-  ADD_OPEN_PROFILE(sizeof(Node) * n);
-}
-
-/* タスクtaskをワーカーmeの隣接ワーカーにハンドオフする */
-void DFS::mcdfs_handoff_task(LmnWorker *me, LmnWord task) {
-  LmnWorker *rn = worker_next_generator(me);
-
-  if (worker_id(me) > worker_id(rn)) {
-    worker_set_black(me);
-  }
-  DFS_WORKER_QUEUE(rn)->enqueue(task);
-  // DFS_WORKER_QUEUE(rn)->enqueue_push_head(task);
+  auto gen = (DFS *)rn->strategy.generator.get();
+  gen->q->enqueue((LmnWord)task);
 
   ADD_OPEN_PROFILE(sizeof(Node));
 }
@@ -494,14 +417,14 @@ void DFS::dfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss, AutomataRef a,
       }
     } else { /* 並列アルゴリズム使用時 */
       if (DFS_HANDOFF_COND_STATIC(w, stack)) {
-        dfs_handoff_all_task(w, new_ss);
+        handoff_all_tasks(new_ss, &*begin(neighbors(this->owner)));
       } else {
         n = new_ss->get_num();
         for (i = 0; i < n; i++) {
           State *new_s = (State *)new_ss->get(i);
 
           if (DFS_LOAD_BALANCING(stack, w, i, n)) {
-            dfs_handoff_task(w, (LmnWord)new_s);
+            handoff_task(new_s, &*begin(neighbors(this->owner)));
           } else {
             put_stack(stack, new_s);
           }
@@ -578,14 +501,14 @@ void DFS::mapdfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
     /* 並列アルゴリズム使用時 MAPNDFS使ってる時点で並列前提だけど一応 */
     if (worker_on_parallel(w)) {
       if (DFS_HANDOFF_COND_STATIC(w, stack) /*|| worker_is_explorer(w)*/) {
-        mapdfs_handoff_all_task(w, new_ss);
+        handoff_all_tasks(new_ss, &*begin(neighbors(this->owner).generators()));
       } else {
         n = new_ss->get_num();
         for (i = 0; i < n; i++) {
           State *new_s = (State *)new_ss->get(i);
 
           if (DFS_LOAD_BALANCING(stack, w, i, n)) {
-            mcdfs_handoff_task(w, (LmnWord)new_s);
+            handoff_task(new_s, &*begin(neighbors(this->owner).generators()));
           } else {
             put_stack(stack, new_s);
           }
@@ -777,14 +700,14 @@ void DFS::costed_dfs_loop(LmnWorker *w, Deque *deq, Vector *new_ss,
       }
     } else { /* 並列アルゴリズム使用時 */
       if (DFS_HANDOFF_COND_STATIC_DEQ(w, deq)) {
-        dfs_handoff_all_task(w, new_ss);
+        handoff_all_tasks(new_ss, &*begin(neighbors(this->owner)));
       } else {
         n = new_ss->get_num();
         for (i = 0; i < n; i++) {
           State *new_s = (State *)new_ss->get(i);
 
           if (DFS_LOAD_BALANCING_DEQ(deq, w, i, n)) {
-            dfs_handoff_task(w, (LmnWord)new_s);
+            handoff_task(new_s, &*begin(neighbors(this->owner)));
           } else {
             if (!new_s->is_expanded()) {
               push_deq(deq, new_s, TRUE);
@@ -986,4 +909,3 @@ bool BFS::check() {
 } // namespace tactics
 } // namespace verifier
 } // namespace slim
-

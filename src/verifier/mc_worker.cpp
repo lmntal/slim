@@ -80,7 +80,7 @@ inline LmnWorker *lmn_worker_make_minimal() {
   w->f_end2 = FALSE;
   w->wait = FALSE;
   w->states = NULL;
-  w->next = NULL;
+  w->_next = NULL;
   w->invalid_seeds = NULL;
   w->cycles = NULL;
   w->expand = 0;
@@ -139,14 +139,6 @@ void LmnWorkerGroup::start(LmnWorker *w) {
   if (lmn_env.profile_level >= 1)
     profile_finish_exec_thread();
   worker_TLS_finalize();
-}
-
-LmnWorker *worker_next_generator(LmnWorker *w) {
-  LmnWorker *next = worker_next(w);
-
-  while (!worker_is_generator(next))
-    next = worker_next(next);
-  return next;
 }
 
 static void worker_TLS_init(unsigned int inc_id) {
@@ -604,7 +596,7 @@ void LmnWorkerGroup::ring_alignment() {
   unsigned int i, n;
   n = workers_get_entried_num();
   for (i = 0; i < n; i++) {
-    get_worker(i)->next = get_worker((i + 1) % n);
+    get_worker(i)->_next = get_worker((i + 1) % n);
   }
 }
 

@@ -263,6 +263,8 @@ struct LmnWorkerStrategy {
   LmnWorkerStrategy(LmnWorker *w, LmnWorkerStrategyOption const &option);
 };
 
+struct LmnWorkerIterator;
+
 struct LmnWorker {
   lmn_thread_t pth;         /* スレッド識別子(pthread_t) */
   volatile unsigned int id; /* Natural integer id (lmn_thread_id) */
@@ -279,7 +281,7 @@ struct LmnWorker {
 
   StateSpaceRef states;                /* Pointer to StateSpace */
   std::unique_ptr<MCReactContext> cxt; /* ReactContext Object */
-  LmnWorker *next;                     /* Pointer to Neighbor Worker */
+  LmnWorker *_next;                    /* Pointer to Neighbor Worker */
   LmnWorkerGroup *group;
 
   Vector *invalid_seeds;
@@ -288,9 +290,109 @@ struct LmnWorker {
   int expand; // for debug
   int red;
 
+public:
   LmnWorker() : strategy(this) {}
   virtual void set_env();
 };
+
+struct LmnWorkerIterator {
+  using iterator_category = std::input_iterator_tag;
+  using value_type = LmnWorker;
+  using difference_type = std::ptrdiff_t;
+  using pointer = LmnWorker *;
+  using reference = LmnWorker &;
+
+  LmnWorkerIterator(LmnWorker *ptr) : p(ptr) {}
+  LmnWorkerIterator(LmnWorkerIterator const &it) : p(it.p) {}
+  LmnWorkerIterator(LmnWorkerIterator &&it) = default;
+  LmnWorkerIterator &operator=(LmnWorkerIterator const &it) {
+    p = it.p;
+    return *this;
+  }
+  ~LmnWorkerIterator() noexcept = default;
+
+  reference operator*() { return *p; }
+  pointer operator->() { return p; }
+  LmnWorkerIterator &operator++() {
+    p = p->_next;
+    return *this;
+  }
+  LmnWorkerIterator operator++(int i) {
+    auto it = *this;
+    ++(*this);
+    return it;
+  }
+
+  bool operator==(LmnWorkerIterator const &a) { return p == a.p; }
+  bool operator!=(LmnWorkerIterator const &a) { return !(*this == a); }
+
+private:
+  LmnWorker *p;
+};
+
+struct GeneratorWorkerIterator {
+  using iterator_category = std::input_iterator_tag;
+  using value_type = LmnWorker;
+  using difference_type = std::ptrdiff_t;
+  using pointer = LmnWorker *;
+  using reference = LmnWorker &;
+
+  GeneratorWorkerIterator(LmnWorker *ptr) : p(ptr) {}
+  GeneratorWorkerIterator(GeneratorWorkerIterator const &it) : p(it.p) {}
+  GeneratorWorkerIterator(GeneratorWorkerIterator &&it) = default;
+  GeneratorWorkerIterator &operator=(GeneratorWorkerIterator const &it) {
+    p = it.p;
+    return *this;
+  }
+  ~GeneratorWorkerIterator() noexcept = default;
+
+  reference operator*() { return *p; }
+  pointer operator->() { return p; }
+  GeneratorWorkerIterator &operator++() {
+    p = p->_next;
+    while (!p->strategy.is_explorer)
+      p = p->_next;
+    return *this;
+  }
+  GeneratorWorkerIterator operator++(int i) {
+    auto it = *this;
+    ++(*this);
+    return it;
+  }
+
+  bool operator==(GeneratorWorkerIterator const &a) { return p == a.p; }
+  bool operator!=(GeneratorWorkerIterator const &a) { return !(*this == a); }
+
+private:
+  LmnWorker *p;
+};
+
+struct LmnWorkerGeneratorNeighbors {
+  LmnWorker *owner;
+
+  LmnWorkerGeneratorNeighbors(LmnWorker *worker) : owner(worker) {}
+};
+
+struct LmnWorkerNeighbors {
+  LmnWorker *owner;
+
+  LmnWorkerNeighbors(LmnWorker *worker) : owner(worker) {}
+
+  LmnWorkerGeneratorNeighbors generators() const {
+    return LmnWorkerGeneratorNeighbors(owner);
+  }
+};
+
+static inline LmnWorkerNeighbors neighbors(LmnWorker *w) {
+  return LmnWorkerNeighbors(w);
+}
+
+static inline LmnWorkerIterator begin(LmnWorkerNeighbors const &n) {
+  return ++LmnWorkerIterator(n.owner);
+}
+static inline LmnWorkerIterator end(LmnWorkerNeighbors const &n) {
+  return LmnWorkerIterator(n.owner);
+}
 
 /**
  * Macros for data access
@@ -300,7 +402,6 @@ struct LmnWorker {
 #define worker_flags(W) ((W)->f_exec)
 #define worker_flags_set(W, F) ((W)->f_exec |= (F))
 #define worker_states(W) ((W)->states)
-#define worker_next(W) ((W)->next)
 #define worker_rc(W) ((W)->cxt)
 #define worker_generator(W) (*(W)->strategy.generator)
 #define worker_generator_obj_set(W, O) mc_obj_set(&worker_generator(W), (O))
@@ -322,6 +423,17 @@ struct LmnWorker {
 #define worker_explorer_set(W) ((W)->strategy.is_explorer = TRUE)
 #define worker_is_generator(W) (!worker_is_explorer(W))
 #define worker_generator_set(W) ((W)->strategy.is_explorer = FALSE)
+
+static inline GeneratorWorkerIterator
+end(LmnWorkerGeneratorNeighbors const &n) {
+  return GeneratorWorkerIterator(n.owner);
+}
+static inline GeneratorWorkerIterator
+begin(LmnWorkerGeneratorNeighbors const &n) {
+  if (worker_is_explorer(n.owner))
+    return end(n);
+  return ++GeneratorWorkerIterator(n.owner);
+}
 
 #define worker_init(W)                                                         \
   do {                                                                         \
@@ -504,8 +616,6 @@ static inline BOOL worker_check(LmnWorker *w) {
 BOOL lmn_workers_termination_detection_for_rings(LmnWorker *root);
 void lmn_workers_synchronization(LmnWorker *root, void (*func)(LmnWorker *w));
 void lmn_worker_free(LmnWorker *w);
-
-LmnWorker *worker_next_generator(LmnWorker *w);
 
 /* @} */
 
