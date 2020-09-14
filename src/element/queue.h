@@ -51,81 +51,335 @@
  */
 
 #include "../lmntal.h"
+#include "error.h"
 #include "lmntal_thread.h"
 
-typedef struct Queue Queue;
-struct Node {
-  LmnWord v;
-  Node *next;
-  Node(LmnWord v);
-  ~Node();
+#define Q_DEQ 0
+#define Q_ENQ 1
+
+namespace slim {
+namespace element {
+
+enum class concurrent_mode {
+  single_reader_single_writer,
+  single_reader_multi_writer,
+  multi_reader_single_writer,
+  multi_reader_multi_writer,
 };
 
-struct Queue {
-  Queue();
-  Queue(BOOL lock_type);
-  ~Queue();
+template <class T> struct concurrent_queue {
+  using value_type = T;
+  struct Node {
+    value_type v;
+    Node *next;
+    Node(value_type v) {
+      this->v = v;
+      this->next = NULL;
+    }
+  };
+
+  /*  {head, tail}
+   *       ↓
+   *       ○ → NULL
+   *    sentinel
+   */
+  concurrent_queue(concurrent_mode lock_type =
+                       concurrent_mode::single_reader_single_writer) {
+    Node *sentinel = new Node(0);
+    this->head = sentinel;
+    this->tail = sentinel;
+    this->enq_num = 0UL;
+    this->deq_num = 0UL;
+
+    switch (lock_type) {
+    case concurrent_mode::single_reader_single_writer:
+      break;
+    case concurrent_mode::multi_reader_single_writer:
+      lmn_mutex_init(&(this->deq_mtx));
+      /* fall through */
+    case concurrent_mode::single_reader_multi_writer:
+      lmn_mutex_init(&(this->enq_mtx));
+      break;
+    case concurrent_mode::multi_reader_multi_writer:
+      lmn_mutex_init(&(this->deq_mtx));
+      break;
+    default:
+      lmn_fatal("unexpected");
+      break;
+    }
+    this->qlock = lock_type;
+  }
+  ~concurrent_queue() {
+    Node *n, *m;
+    for (n = this->head; n; n = m) {
+      m = n->next;
+      delete n;
+    }
+
+    switch (this->qlock) {
+    case concurrent_mode::multi_reader_multi_writer:
+      lmn_mutex_destroy(&(this->deq_mtx));
+      /* FALL THROUGH */
+    case concurrent_mode::single_reader_multi_writer:
+      lmn_mutex_destroy(&(this->enq_mtx));
+      break;
+    case concurrent_mode::multi_reader_single_writer:
+      lmn_mutex_destroy(&(this->deq_mtx));
+      break;
+    default:
+      /* nothing to do */
+      break;
+    }
+  }
   Node *head;
   Node *tail;
-  BOOL qlock;
+  concurrent_mode qlock;
   unsigned long enq_num, deq_num;
   pthread_mutex_t enq_mtx, deq_mtx;
-  void enqueue(LmnWord v);
-  void enqueue_push_head(LmnWord v);
-  LmnWord dequeue();
-  BOOL is_empty();
-  void lock(BOOL is_enq);
-  void unlock(BOOL is_enq);
-  void clear();
-  unsigned long entry_num();
+  /*{tail, last}
+   *     ↓
+   *   ..○→NULL
+   */
+  void enqueue(value_type v) {
+    Node *last, *node;
+    if (this->qlock != concurrent_mode::single_reader_single_writer) {
+      this->lock(Q_ENQ);
+      /*this->lock(Q_DEQ);*/
+    }
+    last = this->tail;
+    node = new Node(v);
+    last->next = node;
+    this->tail = node;
+    this->enq_num++;
 
+    if (this->qlock != concurrent_mode::single_reader_single_writer) {
+      /*this->unlock(Q_DEQ);*/
+      this->unlock(Q_ENQ);
+    }
+  }
+  void enqueue_push_head(value_type v) {
+    Node *head, *node;
+    if (this->qlock != concurrent_mode::single_reader_single_writer) {
+      this->lock(Q_ENQ);
+      this->lock(Q_DEQ);
+    }
+    head = this->head;
+    node = new Node(v);
+    node->next = head->next;
+    head->next = node;
+    // q->tail = node;
+    this->enq_num++;
+
+    if (this->qlock != concurrent_mode::single_reader_single_writer) {
+      this->unlock(Q_DEQ);
+      this->unlock(Q_ENQ);
+    }
+  }
+
+  /* Queueから要素をdequeueする.
+   * Queueが空の場合, 0を返す */
+  value_type dequeue() {
+    value_type ret = value_type();
+    if (this->qlock != concurrent_mode::single_reader_single_writer) {
+      this->lock(Q_DEQ);
+      /*this->lock(Q_ENQ);*/
+    }
+    if (!this->is_empty()) {
+      Node *sentinel, *next;
+      sentinel = this->head;
+      next = sentinel->next;
+      if (next) {
+        ret = next->v;
+        next->v = 0;
+        this->head = next;
+        free(sentinel);
+        this->deq_num++;
+      }
+    }
+    if (this->qlock != concurrent_mode::single_reader_single_writer) {
+      /*this->unlock(Q_ENQ);*/
+      this->unlock(Q_DEQ);
+    }
+    return ret;
+  }
+  /* キューqが空なら真を返す.*/
+  BOOL is_empty() {
+    return (this->head == this->tail) && (this->enq_num == this->deq_num);
+  }
+  void lock(BOOL is_enq) {
+    if (is_enq) { /* for enqueue */
+      switch (this->qlock) {
+      case concurrent_mode::multi_reader_multi_writer:
+      case concurrent_mode::single_reader_multi_writer:
+        lmn_mutex_lock(&(this->enq_mtx));
+        break;
+      default:
+        break;
+      }
+    } else { /* for dequeue */
+      switch (this->qlock) {
+      case concurrent_mode::multi_reader_multi_writer:
+      case concurrent_mode::multi_reader_single_writer:
+        lmn_mutex_lock(&(this->deq_mtx));
+        break;
+      default:
+        break;
+      }
+    }
+  }
+  void unlock(BOOL is_enq) {
+    if (is_enq) { /* for enqueue */
+      switch (this->qlock) {
+      case concurrent_mode::multi_reader_multi_writer:
+      case concurrent_mode::single_reader_multi_writer:
+        lmn_mutex_unlock(&(this->enq_mtx));
+        break;
+      default:
+        break;
+      }
+    } else { /* for dequeue */
+      switch (this->qlock) {
+      case concurrent_mode::multi_reader_multi_writer:
+      case concurrent_mode::multi_reader_single_writer:
+        lmn_mutex_unlock(&(this->deq_mtx));
+        break;
+      default:
+        break;
+      }
+    }
+  }
+  void clear() {
+    while (this->dequeue())
+      ;
+  }
+  unsigned long entry_num() { return this->enq_num - this->deq_num; }
 };
-
-
-
-/* single dequeue(reader), single enqueue(writer) */
-#define LMN_Q_SRSW 0
-/* single dequeue(reader), multiple enqueue(writer) */
-#define LMN_Q_SRMW 1
-/* multiple dequeue(reader), single enqueue(writer) */
-#define LMN_Q_MRSW 2
-/* multiple dequeue(reader), multiple enqueue(writer) */
-#define LMN_Q_MRMW 4
 
 /** ==========
  *  DeQue (KaWaBaTa code)
  */
 
-typedef struct Deque Deque;
-typedef LmnWord deq_data_t;
-
 #define DEQ_DEC(X, C) (X = X != 0 ? X - 1 : C - 1)
 #define DEQ_INC(X, C) (X = X != C - 1 ? X + 1 : 0)
 
-struct Deque {
-  LmnWord *tbl;
+template <class T> struct deque {
+  using value_type = T;
+  value_type *tbl;
   unsigned int head, tail, cap;
-  Deque(unsigned int init_size);
-  ~Deque();
-  void init(unsigned int init_size);
-  int num();
-  BOOL is_empty();
-  void extend();
-  void push_head(LmnWord keyp);
-  void push_tail(LmnWord keyp);
-  LmnWord pop_head();
-  LmnWord pop_tail();
-  LmnWord peek_head()const;
-  LmnWord peek_tail()const;
-  LmnWord get(unsigned int i)const;
-  void clear();
-  void destroy();
-  unsigned long space();
-  unsigned long space_inner();
-  void print();
-  BOOL contains(LmnWord keyp)const;
-  Deque *copy();
+  deque(unsigned int init_size) {
+    LMN_ASSERT(init_size > 0);
+    this->init(init_size);
+  }
+
+  ~deque() { this->destroy(); }
+  void init(unsigned int init_size) {
+    this->tbl = LMN_NALLOC(value_type, init_size);
+    this->head = 0;
+    this->tail = 1;
+    this->cap = init_size;
+  }
+  int num() {
+    return this->tail > this->head ? this->tail - this->head - 1
+                                   : this->cap - this->head + this->tail - 1;
+  }
+  BOOL is_empty() { return (this->num() == 0); }
+  void extend() {
+    unsigned int old = this->cap;
+    this->cap *= 2;
+    this->tbl = LMN_REALLOC(value_type, this->tbl, this->cap);
+    if (this->tail <= this->head) {
+      unsigned int i;
+      for (i = 0; i < this->tail; i++) {
+        this->tbl[i + old] = this->tbl[i];
+      }
+      this->tail = old + this->tail;
+    }
+  }
+  void push_head(value_type keyp) {
+    if (this->num() == this->cap - 1) {
+      this->extend();
+    }
+    (this->tbl)[this->head] = keyp;
+    DEQ_DEC(this->head, this->cap);
+  }
+  void push_tail(value_type keyp) {
+    if (this->num() == this->cap - 1) {
+      this->extend();
+    }
+    (this->tbl)[this->tail] = keyp;
+    DEQ_INC(this->tail, this->cap);
+  }
+  value_type pop_head() {
+    value_type ret;
+    LMN_ASSERT(this->num() > 0);
+
+    DEQ_INC(this->head, this->cap);
+    ret = this->tbl[this->head];
+    return ret;
+  }
+  value_type pop_tail() {
+    LMN_ASSERT(this->num() > 0);
+    DEQ_DEC(this->tail, this->cap);
+    return this->tbl[this->tail];
+  }
+  value_type peek_head() const {
+    unsigned int x = this->head;
+    return this->tbl[DEQ_INC(x, this->cap)];
+  }
+  value_type peek_tail() const {
+    unsigned int x = this->tail;
+    return this->tbl[DEQ_DEC(x, this->cap)];
+  }
+  value_type get(unsigned int i) const { return this->tbl[i]; }
+  void clear() {
+    this->head = 0;
+    this->tail = 1;
+  }
+  void destroy() { LMN_FREE(this->tbl); }
+  unsigned long space() { return sizeof(struct deque) + this->space_inner(); }
+  unsigned long space_inner() { return this->cap * sizeof(value_type); }
+  void print() {
+    unsigned int i;
+    FILE *f = stdout;
+    fprintf(f, "cap=%u, head=%u, tail=%u, num=%u\n[", this->cap, this->head,
+            this->tail, this->num());
+    for (i = 0; i < this->cap; i++)
+      fprintf(f, "%lu, ", this->tbl[i]);
+    fprintf(f, "]\n");
+  }
+  BOOL contains(value_type keyp) const {
+    unsigned int i = this->tail;
+    while (i != this->head) {
+      DEQ_DEC(i, this->cap);
+      if (this->get(i) == (value_type)keyp) {
+        return TRUE;
+      }
+    }
+    return FALSE;
+  }
+  deque *copy() {
+    unsigned int i;
+    deque *new_deq;
+
+    i = this->tail;
+    new_deq = new deque(this->num() > 0 ? this->num() : 1);
+
+    while (i != this->head) {
+      DEQ_DEC(i, this->cap);
+      new_deq->tbl[i] = this->get(i);
+    }
+
+    new_deq->head = this->head;
+    new_deq->head = this->tail;
+    return new_deq;
+  }
 };
+} // namespace element
+} // namespace slim
+
+using Queue = slim::element::concurrent_queue<LmnWord>;
+using Deque = slim::element::deque<LmnWord>;
+
 /* @} */
 
 #endif

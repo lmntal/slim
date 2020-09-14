@@ -264,8 +264,8 @@ void OWCTY::initialize(LmnWorker *w) {
 
   if (worker_id(w) == LMN_PRIMARY_ID) {
     if (worker_group(w)->workers_get_entried_num() > 1) {
-      this->accepts1 = new Queue(LMN_Q_MRMW);
-      this->accepts2 = new Queue(LMN_Q_MRMW);
+      this->accepts1 = new Queue(element::concurrent_mode::multi_reader_multi_writer);
+      this->accepts2 = new Queue(element::concurrent_mode::multi_reader_multi_writer);
     } else {
       this->accepts1 = new Queue();
       this->accepts2 = new Queue();
@@ -555,8 +555,8 @@ namespace tactics {
 void MAP::initialize(LmnWorker *w) {
   if (worker_id(w) == LMN_PRIMARY_ID) {
     if (worker_group(w)->workers_get_entried_num() > 1) {
-      this->propagate = new Queue(LMN_Q_MRMW);
-      this->waitingSeed = new Queue(LMN_Q_MRMW);
+      this->propagate = new Queue(element::concurrent_mode::multi_reader_multi_writer);
+      this->waitingSeed = new Queue(element::concurrent_mode::multi_reader_multi_writer);
     } else {
       this->propagate = new Queue();
       this->waitingSeed = new Queue();
@@ -790,7 +790,7 @@ namespace tactics {
 void BLE::initialize(LmnWorker *w) {
   if (worker_id(w) == LMN_PRIMARY_ID) {
     if (worker_group(w)->workers_get_entried_num() > 1) {
-      this->layer = new Queue(LMN_Q_MRMW);
+      this->layer = new Queue(element::concurrent_mode::multi_reader_multi_writer);
     } else {
       this->layer = new Queue();
     }
@@ -949,8 +949,8 @@ void MAP_NDFS::initialize(LmnWorker *w) {
 #ifdef MAPNDFS_USE_MAP
   if (worker_id(w) == LMN_PRIMARY_ID) {
     if (worker_group(w)->workers_get_entried_num() > 1) {
-      this->propagate = new Queue(LMN_Q_MRMW);
-      this->waitingSeed = new Queue(LMN_Q_MRMW);
+      this->propagate = new Queue(element::concurrent_mode::multi_reader_multi_writer);
+      this->waitingSeed = new Queue(element::concurrent_mode::multi_reader_multi_writer);
     } else {
       this->propagate = new Queue();
       this->waitingSeed = new Queue();
@@ -1089,8 +1089,8 @@ void MultiNDFS::initialize(LmnWorker *w) {
 #ifdef MAPNDFS_USE_MAP
   if (worker_id(w) == LMN_PRIMARY_ID) {
     if (worker_group(w)->workers_get_entried_num() > 1) {
-      this->propagate = new Queue(LMN_Q_MRMW);
-      this->waitingSeed = new Queue(LMN_Q_MRMW);
+      this->propagate = new Queue(element::concurrent_mode::multi_reader_multi_writer);
+      this->waitingSeed = new Queue(element::concurrent_mode::multi_reader_multi_writer);
     } else {
       this->propagate = new Queue();
       this->waitingSeed = new Queue();

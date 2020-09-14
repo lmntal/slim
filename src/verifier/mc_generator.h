@@ -58,9 +58,6 @@ namespace verifier {
 namespace tactics {
 
 struct DFS : public slim::verifier::StateGenerator {
-  struct Vector stack;
-  Deque deq;
-  unsigned int cutoff_depth;
 
   DFS(LmnWorker *owner) : StateGenerator(owner), deq(8192) {
     type |= WORKER_F1_MC_DFS_MASK;
@@ -72,7 +69,10 @@ struct DFS : public slim::verifier::StateGenerator {
   bool check();
 
 private:
-  std::unique_ptr<Queue> q;
+  slim::element::deque<State *> deq;
+  struct Vector stack;
+  std::unique_ptr<slim::element::concurrent_queue<State *>> q;
+  unsigned int cutoff_depth;
 
   /* 他のワーカーothersを未展開状態を奪いに巡回する.
    * 未展開状態を発見した場合, そのワーカーのキューからdequeueして返す.
@@ -83,7 +83,7 @@ private:
       if (worker_is_active(&dst) && !gen->q->is_empty()) {
         worker_set_active(owner);
         worker_set_stealer(owner);
-        return (State *)gen->q->dequeue();
+        return gen->q->dequeue();
       }
     }
     return nullptr;

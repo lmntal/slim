@@ -140,14 +140,14 @@ void DFS::initialize(LmnWorker *w) {
       this->stack.init(this->cutoff_depth + 1);
 
     if (lmn_env.core_num == 1) {
-      this->q = c14::make_unique<Queue>();
+      this->q = c14::make_unique<slim::element::concurrent_queue<State *>>();
     } else if (worker_on_dynamic_lb(owner)) {
       if (worker_use_mapndfs(owner))
-        this->q = c14::make_unique<Queue>(LMN_Q_MRMW);
+        this->q = c14::make_unique<slim::element::concurrent_queue<State *>>(element::concurrent_mode::multi_reader_multi_writer);
       else
-        this->q = c14::make_unique<Queue>(LMN_Q_MRSW);
+        this->q = c14::make_unique<slim::element::concurrent_queue<State *>>(element::concurrent_mode::multi_reader_single_writer);
     } else {
-      this->q = c14::make_unique<Queue>(LMN_Q_SRSW);
+      this->q = c14::make_unique<slim::element::concurrent_queue<State *>>(element::concurrent_mode::single_reader_single_writer);
     }
   }
 }
@@ -278,7 +278,7 @@ void DFS::handoff_all_tasks(Vector *expands, LmnWorker &rn) {
 
   auto gen = (DFS *)rn.strategy.generator.get();
   for (int i = 0; i < expands->get_num(); i++) {
-    gen->q->enqueue(expands->get(i));
+    gen->q->enqueue((State *)expands->get(i));
   }
 
   ADD_OPEN_PROFILE(sizeof(Node) * expands->get_num());
@@ -290,7 +290,7 @@ void DFS::handoff_task(State *task, LmnWorker &rn) {
     worker_set_black(this->owner);
   }
   auto gen = (DFS *)rn.strategy.generator.get();
-  gen->q->enqueue((LmnWord)task);
+  gen->q->enqueue(task);
 
   ADD_OPEN_PROFILE(sizeof(Node));
 }
@@ -797,8 +797,8 @@ void BFS::initialize(LmnWorker *w) {
   }
   /* MT */
   else if (worker_id(w) == 0) {
-    this->cur = new Queue(LMN_Q_MRMW);
-    this->nxt = worker_use_lsync(w) ? new Queue(LMN_Q_MRMW) : this->cur;
+    this->cur = new Queue(element::concurrent_mode::multi_reader_multi_writer);
+    this->nxt = worker_use_lsync(w) ? new Queue(element::concurrent_mode::multi_reader_multi_writer) : this->cur;
   } else {
     /* Layer Queueは全スレッドで共有 */
     this->cur = BFS_WORKER_Q_CUR(worker_group(w)->get_worker(0));
