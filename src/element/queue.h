@@ -54,12 +54,12 @@
 #include "error.h"
 #include "lmntal_thread.h"
 
-#define Q_DEQ 0
-#define Q_ENQ 1
+#include <mutex>
 
 namespace slim {
 namespace element {
 
+// ビット演算で実装したほうが速くなるかも？
 enum class concurrent_mode {
   single_reader_single_writer,
   single_reader_multi_writer,
@@ -67,16 +67,9 @@ enum class concurrent_mode {
   multi_reader_multi_writer,
 };
 
-template <class T> struct concurrent_queue {
+template <class T> class concurrent_queue {
+public:
   using value_type = T;
-  struct Node {
-    value_type v;
-    Node *next;
-    Node(value_type v) {
-      this->v = v;
-      this->next = NULL;
-    }
-  };
 
   /*  {head, tail}
    *       ↓
@@ -90,23 +83,6 @@ template <class T> struct concurrent_queue {
     this->tail = sentinel;
     this->enq_num = 0UL;
     this->deq_num = 0UL;
-
-    switch (lock_type) {
-    case concurrent_mode::single_reader_single_writer:
-      break;
-    case concurrent_mode::multi_reader_single_writer:
-      lmn_mutex_init(&(this->deq_mtx));
-      /* fall through */
-    case concurrent_mode::single_reader_multi_writer:
-      lmn_mutex_init(&(this->enq_mtx));
-      break;
-    case concurrent_mode::multi_reader_multi_writer:
-      lmn_mutex_init(&(this->deq_mtx));
-      break;
-    default:
-      lmn_fatal("unexpected");
-      break;
-    }
     this->qlock = lock_type;
   }
   ~concurrent_queue() {
@@ -115,79 +91,29 @@ template <class T> struct concurrent_queue {
       m = n->next;
       delete n;
     }
-
-    switch (this->qlock) {
-    case concurrent_mode::multi_reader_multi_writer:
-      lmn_mutex_destroy(&(this->deq_mtx));
-      /* FALL THROUGH */
-    case concurrent_mode::single_reader_multi_writer:
-      lmn_mutex_destroy(&(this->enq_mtx));
-      break;
-    case concurrent_mode::multi_reader_single_writer:
-      lmn_mutex_destroy(&(this->deq_mtx));
-      break;
-    default:
-      /* nothing to do */
-      break;
-    }
   }
-  Node *head;
-  Node *tail;
-  concurrent_mode qlock;
-  unsigned long enq_num, deq_num;
-  pthread_mutex_t enq_mtx, deq_mtx;
   /*{tail, last}
    *     ↓
    *   ..○→NULL
    */
   void enqueue(value_type v) {
-    Node *last, *node;
-    if (this->qlock != concurrent_mode::single_reader_single_writer) {
-      this->lock(Q_ENQ);
-      /*this->lock(Q_DEQ);*/
-    }
-    last = this->tail;
-    node = new Node(v);
+    auto scoped_enq_lock = lock_writer_if_needed();
+    auto last = this->tail;
+    auto node = new Node(v);
     last->next = node;
     this->tail = node;
     this->enq_num++;
-
-    if (this->qlock != concurrent_mode::single_reader_single_writer) {
-      /*this->unlock(Q_DEQ);*/
-      this->unlock(Q_ENQ);
-    }
-  }
-  void enqueue_push_head(value_type v) {
-    Node *head, *node;
-    if (this->qlock != concurrent_mode::single_reader_single_writer) {
-      this->lock(Q_ENQ);
-      this->lock(Q_DEQ);
-    }
-    head = this->head;
-    node = new Node(v);
-    node->next = head->next;
-    head->next = node;
-    // q->tail = node;
-    this->enq_num++;
-
-    if (this->qlock != concurrent_mode::single_reader_single_writer) {
-      this->unlock(Q_DEQ);
-      this->unlock(Q_ENQ);
-    }
   }
 
   /* Queueから要素をdequeueする.
    * Queueが空の場合, 0を返す */
   value_type dequeue() {
+    auto scoped_deq_lock = lock_reader_if_needed();
     value_type ret = value_type();
-    if (this->qlock != concurrent_mode::single_reader_single_writer) {
-      this->lock(Q_DEQ);
-      /*this->lock(Q_ENQ);*/
-    }
+
     if (!this->is_empty()) {
-      Node *sentinel, *next;
-      sentinel = this->head;
-      next = sentinel->next;
+      auto sentinel = this->head;
+      auto next = sentinel->next;
       if (next) {
         ret = next->v;
         next->v = 0;
@@ -196,63 +122,54 @@ template <class T> struct concurrent_queue {
         this->deq_num++;
       }
     }
-    if (this->qlock != concurrent_mode::single_reader_single_writer) {
-      /*this->unlock(Q_ENQ);*/
-      this->unlock(Q_DEQ);
-    }
+
     return ret;
   }
   /* キューqが空なら真を返す.*/
-  BOOL is_empty() {
+  bool is_empty() const {
     return (this->head == this->tail) && (this->enq_num == this->deq_num);
   }
-  void lock(BOOL is_enq) {
-    if (is_enq) { /* for enqueue */
-      switch (this->qlock) {
-      case concurrent_mode::multi_reader_multi_writer:
-      case concurrent_mode::single_reader_multi_writer:
-        lmn_mutex_lock(&(this->enq_mtx));
-        break;
-      default:
-        break;
-      }
-    } else { /* for dequeue */
-      switch (this->qlock) {
-      case concurrent_mode::multi_reader_multi_writer:
-      case concurrent_mode::multi_reader_single_writer:
-        lmn_mutex_lock(&(this->deq_mtx));
-        break;
-      default:
-        break;
-      }
-    }
-  }
-  void unlock(BOOL is_enq) {
-    if (is_enq) { /* for enqueue */
-      switch (this->qlock) {
-      case concurrent_mode::multi_reader_multi_writer:
-      case concurrent_mode::single_reader_multi_writer:
-        lmn_mutex_unlock(&(this->enq_mtx));
-        break;
-      default:
-        break;
-      }
-    } else { /* for dequeue */
-      switch (this->qlock) {
-      case concurrent_mode::multi_reader_multi_writer:
-      case concurrent_mode::multi_reader_single_writer:
-        lmn_mutex_unlock(&(this->deq_mtx));
-        break;
-      default:
-        break;
-      }
-    }
-  }
+
   void clear() {
     while (this->dequeue())
       ;
   }
-  unsigned long entry_num() { return this->enq_num - this->deq_num; }
+  unsigned long entry_num() const { return this->enq_num - this->deq_num; }
+
+private:
+  struct Node {
+    value_type v;
+    Node *next;
+    Node(value_type v) {
+      this->v = v;
+      this->next = NULL;
+    }
+  };
+
+  Node *head;
+  Node *tail;
+  concurrent_mode qlock;
+  std::mutex enq_mtx, deq_mtx;
+  unsigned long enq_num, deq_num;
+
+  std::unique_lock<std::mutex> lock_reader_if_needed() {
+    return this->should_lock_reader() ? std::unique_lock<std::mutex>(deq_mtx)
+                                      : std::unique_lock<std::mutex>();
+  }
+  std::unique_lock<std::mutex> lock_writer_if_needed() {
+    return this->should_lock_writer() ? std::unique_lock<std::mutex>(enq_mtx)
+                                      : std::unique_lock<std::mutex>();
+  }
+
+  bool should_lock_reader() const {
+    return this->qlock == concurrent_mode::multi_reader_multi_writer ||
+           this->qlock == concurrent_mode::multi_reader_single_writer;
+  }
+
+  bool should_lock_writer() const {
+    return this->qlock == concurrent_mode::multi_reader_multi_writer ||
+           this->qlock == concurrent_mode::single_reader_multi_writer;
+  }
 };
 
 /** ==========
