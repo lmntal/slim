@@ -136,7 +136,6 @@ public:
   }
   unsigned long entry_num() const { return this->enq_num - this->deq_num; }
 
-private:
   struct Node {
     value_type v;
     Node *next;
@@ -145,8 +144,10 @@ private:
       this->next = NULL;
     }
   };
-
   Node *head;
+
+private:
+
   Node *tail;
   concurrent_mode qlock;
   std::mutex enq_mtx, deq_mtx;

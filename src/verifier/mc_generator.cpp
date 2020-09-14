@@ -217,7 +217,7 @@ void DFS::start() {
       } else {
         worker_set_active(owner);
 #ifdef DEBUG
-        if (!this->q->is_empty() && !((Queue *)this->q)->head->next) {
+        if (!this->q->is_empty() && !this->q->head->next) {
           printf("%d : queue is not empty? %d\n", worker_id(owner),
                  this->q->entry_num());
         }
