@@ -48,13 +48,59 @@
 
 #include "../lmntal.h"
 #include "mc_worker.h"
+#include "runtime_status.h"
 #include "stack_macro.h"
+
+#include <stack>
+#include <vector>
 
 /** prototypes
  */
 
 namespace slim {
 namespace verifier {
+
+/// プロファイル機能を備えたstd::stackの薄いラッパー。
+/// pop以外はzero-overheadでうごく
+struct profiling_stack {
+  using base_type = typename std::stack<State *, std::vector<State *>>;
+  using container_type = typename base_type::container_type;
+  using value_type = typename base_type::value_type;
+  using reference = typename base_type::reference;
+  using const_reference = typename base_type::const_reference;
+  using size_type = typename base_type::size_type;
+
+  value_type top() { return c.top(); }
+  const_reference top() const { return c.top(); }
+
+  bool empty() const { return c.empty(); }
+
+  size_type size() const { return c.size(); }
+
+  void push(const value_type &x) {
+    if (slim::config::profile && lmn_env.profile_level >= 3) {
+      profile_add_space(PROFILE_SPACE__OPEN_LIST, sizeof(value_type));
+    }
+    c.push(x);
+  }
+  void push(value_type &&x) {
+    if (slim::config::profile && lmn_env.profile_level >= 3) {
+      profile_add_space(PROFILE_SPACE__OPEN_LIST, sizeof(value_type));
+    }
+    c.push(std::move(x));
+  }
+
+  void pop();
+
+  void swap(profiling_stack &s) noexcept(noexcept(std::swap(c, s.c))) {
+    using std::swap;
+    swap(c, s.c);
+  }
+
+private:
+  base_type c;
+};
+
 namespace tactics {
 
 struct DFS : public slim::verifier::StateGenerator {
@@ -70,14 +116,15 @@ struct DFS : public slim::verifier::StateGenerator {
 
 private:
   slim::element::deque<State *> deq;
-  struct Vector stack;
+  profiling_stack stack;
   std::unique_ptr<slim::element::concurrent_queue<State *>> q;
   unsigned int cutoff_depth;
 
   /* 他のワーカーothersを未展開状態を奪いに巡回する.
    * 未展開状態を発見した場合, そのワーカーのキューからdequeueして返す.
    * 発見できなかった場合, NULLを返す */
-  template <class Container> State *steal_unexpand_state(const Container &others) {
+  template <class Container>
+  State *steal_unexpand_state(const Container &others) {
     for (auto &dst : others) {
       auto gen = (DFS *)dst.strategy.generator.get();
       if (worker_is_active(&dst) && !gen->q->is_empty()) {
@@ -92,17 +139,19 @@ private:
   void handoff_all_tasks(Vector *expands, LmnWorker &rn);
   void handoff_task(State *task, LmnWorker &rn);
 
-#ifndef MINIMAL_STATE
   void mcdfs_start(LmnWorker *w);
-#endif
-  void dfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss, AutomataRef a,
-                Vector *psyms);
-  void mapdfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss, AutomataRef a,
-                   Vector *psyms);
-  void mcdfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss, AutomataRef a,
-                  Vector *psyms);
-  void costed_dfs_loop(LmnWorker *w, Deque *deq, Vector *new_ss, AutomataRef a,
-                       Vector *psyms);
+  void dfs_loop(LmnWorker *w, AutomataRef a, Vector *psyms);
+  void mapdfs_loop(LmnWorker *w, AutomataRef a, Vector *psyms);
+  void mcdfs_loop(LmnWorker *w, AutomataRef a, Vector *psyms);
+  void costed_dfs_loop(LmnWorker *w, AutomataRef a, Vector *psyms);
+
+  /* 初期状態を割り当てるワーカーの条件 */
+  bool is_assigned_to_initial_state() const {
+    return (worker_use_mapndfs(this->owner) &&
+            worker_is_explorer(this->owner)) ||
+           (!worker_use_mapndfs(this->owner) && worker_id(this->owner) == 0) ||
+           !worker_on_parallel(this->owner);
+  }
 };
 
 struct BFS : public slim::verifier::StateGenerator {

@@ -551,6 +551,24 @@ static constexpr bool profile = true;
 #else
 static constexpr bool profile = false;
 #endif
+
+#ifdef KWBT_OPT
+static constexpr bool kwbt_opt = true;
+#else
+static constexpr bool kwbt_opt = false;
+#endif
+
+#ifdef DEBUG
+static constexpr bool debug = true;
+#else
+static constexpr bool debug = false;
+#endif
+
+#ifdef MINIMAL_STATE
+static constexpr bool minimal_state = true;
+#else
+static constexpr bool minimal_state = false;
+#endif
 } // namespace config
 } // namespace slim
 

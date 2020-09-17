@@ -1185,7 +1185,7 @@ BOOL MultiNDFS::mcndfs_loop(LmnWorker *w, State *seed, Vector *search, Vector *p
       continue;
     }
 
-    put_stack(red_states, s);
+    put_stack(*red_states, s);
     s->set_snd();
 
     n = s->successor_num;
@@ -1204,7 +1204,7 @@ BOOL MultiNDFS::mcndfs_loop(LmnWorker *w, State *seed, Vector *search, Vector *p
           }
         }
         if (!contained)
-          put_stack(search, succ);
+          put_stack(*search, succ);
       }
     }
 

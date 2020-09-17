@@ -130,6 +130,12 @@ struct State {                /* Total:72(36)byte */
   BOOL s_is_cyan(int i) {
     return (local_flags && (local_flags[i] & STATE_CYAN_MASK));
   }
+  void prepare_local_flags(unsigned int n) {
+    if (!this->local_flags) {
+      this->local_flags = LMN_NALLOC(BYTE, n);
+      memset(this->local_flags, 0, sizeof(BYTE) * n);
+    }
+  }
 #else
   void state_set_expander_id(unsigned long id) {}
   unsigned long state_expander_id() { return 0; }
@@ -137,6 +143,12 @@ struct State {                /* Total:72(36)byte */
   void state_expand_lock_destroy() {}
   void state_expand_lock() {}
   void state_expand_unlock() {}
+
+  /* manipulation for local flags */
+  void s_set_cyan(int i) {}
+  void s_unset_cyan(int i) {}
+  BOOL s_is_cyan(int i) { return false; }
+  void prepare_local_flags(unsigned int n) {}
 #endif
 
   BOOL has_trans_obj() { return flags & TRANS_OBJ_MASK; }
@@ -182,9 +194,9 @@ struct State {                /* Total:72(36)byte */
 #ifdef KWBT_OPT
   LmnCost cost; /*  8(4)byte: cost */
 #endif
-  
+
   unsigned int get_id() const { return state_id; }
-  
+
   LmnBinStrRef state_binstr() {
     if (is_binstr_user()) {
       return (LmnBinStrRef)data;
@@ -279,7 +291,7 @@ struct State {                /* Total:72(36)byte */
 #ifdef PROFILE
       if (lmn_env.profile_level >= 3) {
         profile_add_space(PROFILE_SPACE__TRANS_OBJECT,
-          sizeof(succ_data_t) * v.size());
+                          sizeof(succ_data_t) * v.size());
         profile_remove_space(PROFILE_SPACE__TRANS_OBJECT, 0);
       }
 #endif

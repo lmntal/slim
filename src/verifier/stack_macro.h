@@ -4,7 +4,7 @@
 #ifdef PROFILE
 #define pop_stack(List)                                                        \
   do {                                                                         \
-    State *pop = (State *)List->pop();                                       \
+    State *pop = (State *)(List).pop();                                       \
     if (pop->is_on_stack())                                                      \
      pop->unset_on_stack();                                                     \
     if (lmn_env.profile_level >= 3) {                                          \
@@ -16,14 +16,14 @@
     if (lmn_env.profile_level >= 3) {                                          \
       profile_add_space(PROFILE_SPACE__OPEN_LIST, sizeof(LmnWord));            \
     }                                                                          \
-    (List)->push((vec_data_t)(St));                                        \
+    (List).push((vec_data_t)(St));                                        \
   } while (0)
 #define pop_deq(Deq, Dir)                                                      \
   do {                                                                         \
     if (Dir) {                                                                 \
-      Deq->pop_tail();                                                       \
+      (Deq).pop_tail();                                                       \
     } else {                                                                   \
-      Deq->pop_head();                                                       \
+      (Deq).pop_head();                                                       \
     }                                                                          \
     if (lmn_env.profile_level >= 3) {                                          \
       profile_remove_space(PROFILE_SPACE__OPEN_LIST, sizeof(LmnWord));         \
@@ -35,9 +35,9 @@
       profile_add_space(PROFILE_SPACE__OPEN_LIST, sizeof(LmnWord));            \
     }                                                                          \
     if (Dir) {                                                                 \
-      (List)->push_tail((vec_data_t)(St));                                 \
+      (List).push_tail((St));                                 \
     } else {                                                                   \
-      (List)->push_head((vec_data_t)(St));                                 \
+      (List).push_head((St));                                 \
     }                                                                          \
   } while (0)
 #define EXECUTE_PROFILE_START()                                                \
@@ -59,25 +59,25 @@
 #define ADD_OPEN_PROFILE(M)
 #define pop_stack(List)                                                        \
   do {                                                                         \
-    State *pop = (State *)List->pop();                                       \
+    State *pop = (State *)(List).pop();                                       \
     if (pop->is_on_stack())                                                      \
      pop->unset_on_stack();                                                     \
   } while (0)
-#define put_stack(List, St) (List)->push((vec_data_t)(St))
+#define put_stack(List, St) (List).push((vec_data_t)(St))
 #define pop_deq(Deq, Dir)                                                      \
   do {                                                                         \
     if (Dir) {                                                                 \
-      Deq->pop_tail();                                                       \
+      (Deq).pop_tail();                                                       \
     } else {                                                                   \
-      (State *)(Deq->pop_head());                                              \
+      (State *)((Deq).pop_head());                                              \
     }                                                                          \
   } while (0)
 #define push_deq(List, St, Dir)                                                \
   do {                                                                         \
     if (Dir) {                                                                 \
-      (List)->push_tail((vec_data_t)(St));                                 \
+      (List).push_tail((St));                                 \
     } else {                                                                   \
-      (List)->push_head((vec_data_t)(St));                                 \
+      (List).push_head((St));                                 \
     }                                                                          \
   } while (0)
 
