@@ -624,26 +624,32 @@ LmnWorkerStrategyOption LmnWorkerStrategyOption::from_env() {
 
   if (lmn_env.ltl) {
     if (lmn_env.enable_owcty) {
+      option.is_parallel = true;
       option.modelcheck = strategy::LTLModelCheck::OneWayCatchThemYoung;
       option.prop_scc_driven = lmn_env.prop_scc_driven;
       option.enable_map_heuristic = lmn_env.enable_map_heuristic;
     } else if (lmn_env.enable_map) {
+      option.is_parallel = true;
       option.modelcheck = strategy::LTLModelCheck::MaximalAcceptingPredecessors;
       option.prop_scc_driven = lmn_env.prop_scc_driven;
     } else if (lmn_env.enable_mapndfs) {
       option.modelcheck =
           strategy::LTLModelCheck::MaximalAcceptingPredecessors_NestedDFS;
+      option.is_parallel = true;
       option.prop_scc_driven = lmn_env.prop_scc_driven;
       if (lmn_env.core_num == 1) {
         option.modelcheck = strategy::LTLModelCheck::NestedDepthFirstSearch;
+        option.is_parallel = false;
       }
       option.enable_map_heuristic = lmn_env.enable_map_heuristic;
 #ifndef MINIMAL_STATE
     } else if (lmn_env.enable_mcndfs) {
       option.modelcheck = strategy::LTLModelCheck::MulticoreNestedDFS;
       option.prop_scc_driven = lmn_env.prop_scc_driven;
+      option.is_parallel = true;
       if (lmn_env.core_num == 1) {
         option.modelcheck = strategy::LTLModelCheck::NestedDepthFirstSearch;
+        option.is_parallel = false;
       }
 
       option.enable_map_heuristic = lmn_env.enable_map_heuristic;
@@ -653,6 +659,7 @@ LmnWorkerStrategyOption LmnWorkerStrategyOption::from_env() {
                lmn_env.bfs_layer_sync) {
       // 条件が間違ってそう
       option.modelcheck = strategy::LTLModelCheck::BackLevelEdges;
+      option.is_parallel = true;
       option.prop_scc_driven = lmn_env.prop_scc_driven;
     } else if (option.is_parallel) {
       /* 並列アルゴリズムを使用している場合のデフォルト */
@@ -691,7 +698,16 @@ LmnWorkerStrategy::LmnWorkerStrategy(LmnWorker *w,
     : LmnWorkerStrategy(w) {
   switch (option.construction) {
   case strategy::Construction::DepthFirst:
-    this->generator = c14::make_unique<slim::verifier::tactics::DFS>(w);
+    if (option.is_parallel)
+      this->generator =
+          c14::make_unique<slim::verifier::tactics::DFS_Parallel>(w);
+    else {
+      if (slim::config::kwbt_opt && lmn_env.opt_mode != OPT_NONE)
+        this->generator =
+            c14::make_unique<slim::verifier::tactics::DFS_kwbtopt>(w);
+      else
+        this->generator = c14::make_unique<slim::verifier::tactics::DFS>(w);
+    }
     break;
   case strategy::Construction::BreadthFirst:
     this->generator = c14::make_unique<slim::verifier::tactics::BFS>(w);

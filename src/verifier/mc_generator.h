@@ -92,7 +92,7 @@ struct profiling_stack {
 
   void pop();
 
-  void swap(profiling_stack &s) noexcept(noexcept(std::swap(c, s.c))) {
+  void swap(profiling_stack &s) noexcept {
     using std::swap;
     swap(c, s.c);
   }
@@ -108,17 +108,52 @@ struct DFS : public slim::verifier::StateGenerator {
   DFS(LmnWorker *owner) : StateGenerator(owner), deq(8192) {
     type |= WORKER_F1_MC_DFS_MASK;
   }
+  virtual ~DFS() = default;
 
   void initialize(LmnWorker *w);
   void finalize(LmnWorker *w);
   void start();
   bool check();
 
-private:
+protected:
   slim::element::deque<State *> deq;
   profiling_stack stack;
-  std::unique_ptr<slim::element::concurrent_queue<State *>> q;
+
+private:
+  void dfs_loop(LmnWorker *w, AutomataRef a, Vector *psyms);
+};
+
+struct DFS_kwbtopt : public DFS {
+  using DFS::DFS;
+
+  void initialize(LmnWorker *w);
+  void finalize(LmnWorker *w);
+  void start();
+
+private:
+  void costed_dfs_loop(LmnWorker *w, AutomataRef a, Vector *psyms);
+};
+
+struct DFS_Parallel : public DFS {
+  using DFS::DFS;
+
+  void initialize(LmnWorker *w);
+  void finalize(LmnWorker *w);
+  void start();
+  bool check();
+
+protected:
   unsigned int cutoff_depth;
+  std::unique_ptr<slim::element::concurrent_queue<State *>> q;
+
+  void dfs_loop(LmnWorker *w, AutomataRef a, Vector *psyms);
+  void mcdfs_loop(LmnWorker *w, AutomataRef a, Vector *psyms);
+  void mcdfs_start(LmnWorker *w);
+  void mapdfs_loop(LmnWorker *w, AutomataRef a, Vector *psyms);
+  void costed_dfs_loop(LmnWorker *w, AutomataRef a, Vector *psyms);
+
+  void handoff_all_tasks(Vector *expands, LmnWorker &rn);
+  void handoff_task(State *task, LmnWorker &rn);
 
   /* 他のワーカーothersを未展開状態を奪いに巡回する.
    * 未展開状態を発見した場合, そのワーカーのキューからdequeueして返す.
@@ -126,7 +161,7 @@ private:
   template <class Container>
   State *steal_unexpand_state(const Container &others) {
     for (auto &dst : others) {
-      auto gen = (DFS *)dst.strategy.generator.get();
+      auto gen = (DFS_Parallel *)dst.strategy.generator.get();
       if (worker_is_active(&dst) && !gen->q->is_empty()) {
         worker_set_active(owner);
         worker_set_stealer(owner);
@@ -136,15 +171,7 @@ private:
     return nullptr;
   }
 
-  void handoff_all_tasks(Vector *expands, LmnWorker &rn);
-  void handoff_task(State *task, LmnWorker &rn);
-
-  void mcdfs_start(LmnWorker *w);
-  void dfs_loop(LmnWorker *w, AutomataRef a, Vector *psyms);
-  void mapdfs_loop(LmnWorker *w, AutomataRef a, Vector *psyms);
-  void mcdfs_loop(LmnWorker *w, AutomataRef a, Vector *psyms);
-  void costed_dfs_loop(LmnWorker *w, AutomataRef a, Vector *psyms);
-
+private:
   /* 初期状態を割り当てるワーカーの条件 */
   bool is_assigned_to_initial_state() const {
     return (worker_use_mapndfs(this->owner) &&
