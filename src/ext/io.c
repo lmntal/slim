@@ -72,6 +72,7 @@ void cb_print_line_with_port(LmnReactCxtRef rc,
 {
   port_puts(LMN_PORT(a0), LMN_STRING(a1));
   port_put_raw_s(LMN_PORT(a0), "\n");
+  fflush(NULL);
 
   lmn_mem_newlink(mem,
                   a2, t2, LMN_ATTR_GET_VALUE(t2),
