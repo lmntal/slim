@@ -250,6 +250,7 @@ void lmn_run(Vector *start_rulesets) {
 }
 
 /** 膜スタックに基づいた通常実行 */
+// ここを並列化できるかも
 static void mem_oriented_loop(MemReactContext *ctx, LmnMembraneRef mem) {
   while (!ctx->memstack_isempty()) {
     LmnMembraneRef mem = ctx->memstack_peek();

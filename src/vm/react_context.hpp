@@ -193,6 +193,7 @@ public:
   bool memstack_isempty() const {
     return memstack.empty();
   }
+  // ここらへんをロックフリーにできないか調べる
   void memstack_push(LmnMembrane *mem) {
     memstack.push_back(mem);
     mem->set_active(true);
