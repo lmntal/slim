@@ -46,6 +46,7 @@
 #include <algorithm>
 #include <bitset>
 #include <unordered_map>
+#include <atomic>
 
 typedef struct LmnRegister *LmnRegisterRef;
 
@@ -206,6 +207,24 @@ public:
   }
   LmnMembrane *memstack_peek() {
     return memstack.back();
+  }
+  LmnMembrane *memstack_first() {
+    return memstack.front();
+  }
+  auto memstack_begin() {
+    return memstack.begin();
+  }
+  auto memstack_end() {
+    return memstack.end();
+  }
+  void memstack_clear(){
+    memstack.clear();
+  }
+  auto get_ith_mem(int i){
+    return memstack[i];
+  }
+  int get_size(){
+    return memstack.size();
   }
 
   /* 実行膜スタックからmemを削除する。外部関数が膜の削除しようとするとき

@@ -52,6 +52,10 @@
 #endif
 
 #include <algorithm>
+#include <execution>
+#include <thread>
+#include <mutex>
+#include <iostream>
 
 typedef void (*callback_0)(LmnReactCxtRef, LmnMembraneRef);
 typedef void (*callback_1)(LmnReactCxtRef, LmnMembraneRef, LmnAtomRef,
@@ -123,7 +127,7 @@ struct Vector user_system_rulesets; /* system ruleset defined by user */
 */
 
 static inline BOOL react_ruleset(LmnReactCxtRef rc, LmnMembraneRef mem,
-                                 LmnRuleSetRef ruleset);
+                                 LmnRuleSetRef ruleset, int ti=0);
 static inline void react_initial_rulesets(LmnReactCxtRef rc,
                                           LmnMembraneRef mem);
 static inline BOOL react_ruleset_in_all_mem(LmnReactCxtRef rc, LmnRuleSetRef rs,
@@ -140,6 +144,8 @@ void lmn_dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
 
 namespace c14 = slim::element;
 namespace c17 = slim::element;
+
+std::mutex mut;
 
 /** 通常実行時の入口.
  *  インタタラクティブ実行時の処理フローは以下の通り[yueno]
@@ -252,13 +258,144 @@ void lmn_run(Vector *start_rulesets) {
 /** 膜スタックに基づいた通常実行 */
 // ここを並列化できるかも
 static void mem_oriented_loop(MemReactContext *ctx, LmnMembraneRef mem) {
+  // std::for_each(std::execution::par, ctx->memstack_first(), ctx->memstack_peek(), [&](MemReactContext *ctx, LmnMembraneRef &mem_cur){
+  //   if (!react_all_rulesets(ctx, mem_cur)) {
+  //     /* ルールが何も適用されなければ膜スタックから先頭を取り除く */
+  //     ctx->memstack_pop();
+  //   }
+  // });
+
+  // std::for_each(ctx->memstack_begin(), ctx->memstack_end(), [&](MemReactContext *ctx, LmnMembraneRef mem_cur){
+  //   if (!react_all_rulesets(ctx, mem_cur)) {
+  //     /* ルールが何も適用されなければ膜スタックから先頭を取り除く */
+  //     ctx->memstack_pop();
+  //   }
+  // });
+
+  // int tnum = 4;
+  // std::vector<std::thread> ts(tnum);
+
+  // int sz = ctx->get_size();
+
+  // std::cout << "size: " << sz << std::endl;
+  // int compsz = sz/tnum;
+
+  // auto react = [tnum, compsz, sz](MemReactContext *ctx, int ti){
+    
+  //   int beg = compsz * ti;
+  //   int en  = compsz * (ti+1);
+  //   if(ti == 0) beg=1;
+  //   if(ti == tnum - 1) en = sz-1;
+
+  //   for (int i=beg;i<en;i++){
+
+  //     std::cout << i << std::endl;
+      
+  //     LmnMembraneRef mem = ctx->get_ith_mem(i);
+  //     if (!react_all_rulesets(ctx, mem)) {
+  //       /* ルールが何も適用されなければ膜スタックから先頭を取り除く */
+  //       // ctx->memstack_pop();
+  //     }
+  //   }
+  // };
+
+  // for(int i=0;i<tnum;i++){
+  //   ts[i] = std::thread(react,ctx,i);
+  // }
+  // for(int i=0;i<tnum;i++){
+  //   ts[i].join();
+  // }
+
+  // ctx->memstack_clear();
+
+  /* スレッド使用2 */
+  
+  // auto react = [&](){
+  //   if(ctx->memstack_isempty())
+  //     return;
+
+  //   LmnMembraneRef mem = ctx->memstack_peek();
+
+  //   if (!react_all_rulesets(ctx, mem)) {
+  //     /* ルールが何も適用されなければ膜スタックから先頭を取り除く */
+  //     ctx->memstack_pop();
+  //   }
+  // };
+
+  // while (!ctx->memstack_isempty()) {
+  //   int tnum = 1;
+  //   std::vector<std::thread> ts(tnum);
+
+  //   for(int i=0;i<tnum;i++){
+  //     ts[i] = std::thread(react);
+  //   }
+  //   for(int i=0;i<tnum;i++){
+  //     ts[i].join();
+  //   }
+  // }
+
+  /* ルールセット調査 */
+  // while (!ctx->memstack_isempty()) {
+  //   LmnMembraneRef mem = ctx->memstack_peek();
+
+  //   BOOL reacted = react_all_rulesets(ctx,mem);
+
+  //   if(reacted)
+  //     std::cout << "reacted" << std::endl;
+  //   else{
+  //     std::cout << "not reacted" << std::endl;
+  //   }
+
+  //   if (!reacted) {
+  //     /* ルールが何も適用されなければ膜スタックから先頭を取り除く */
+  //     ctx->memstack_pop();
+  //   }
+  // }
+
+  /* react調査 */
+
+  int tnum = 8; 
+
+  auto react = [&](LmnMembraneRef m, int ti){
+    BOOL reacted = false;
+      do{
+        reacted = react_all_rulesets(ctx,m,ti);
+        // if(reacted)
+        //   std::cout << "reacted" << std::endl;
+        // else{
+        //   std::cout << "not reactfed" << std::endl;
+        // }
+      }while(reacted);
+  };
+
   while (!ctx->memstack_isempty()) {
-    LmnMembraneRef mem = ctx->memstack_peek();
-    if (!react_all_rulesets(ctx, mem)) {
-      /* ルールが何も適用されなければ膜スタックから先頭を取り除く */
-      ctx->memstack_pop();
+    int i;
+    std::vector<std::thread> ts(tnum);
+    for(i=0;i<tnum;i++){
+      if(ctx->memstack_isempty())
+        break;
+      LmnMembraneRef mem = ctx->memstack_pop();
+      ts[i] = std::thread(react, mem, i);
     }
+    // for(int j=0;j<tnum;j++){
+    for(int j=0;j<i;j++){
+      ts[j].join();
+    }
+    std::cout << "ok" << std::endl;
   }
+
+
+  /* 元コード */
+  // while (!ctx->memstack_isempty()) {
+  //   LmnMembraneRef mem = ctx->memstack_peek();
+
+  //   if (!react_all_rulesets(ctx, mem)) {
+  //     /* ルールが何も適用されなければ膜スタックから先頭を取り除く */
+  //     ctx->memstack_pop();
+  //   }
+  // }
+
+
 }
 
 /**
@@ -299,14 +436,14 @@ void react_zerostep_recursive(LmnReactCxtRef rc, LmnMembraneRef cur_mem) {
 /** cur_memに存在するルールすべてに対して適用を試みる
  * @see mem_oriented_loop (task.c)
  * @see expand_inner      (nd.c) */
-BOOL react_all_rulesets(LmnReactCxtRef rc, LmnMembraneRef cur_mem) {
+BOOL react_all_rulesets(LmnReactCxtRef rc, LmnMembraneRef cur_mem, int ti) {
   unsigned int i;
   auto &rulesets = cur_mem->get_rulesets(); /* 本膜のルールセットの集合 */
   BOOL ok = FALSE;
 
   /* ルールセットの適用 */
   for (i = 0; i < rulesets.size(); i++) {
-    if (react_ruleset(rc, cur_mem, rulesets[i])) {
+    if (react_ruleset(rc, cur_mem, rulesets[i], ti)) {
       /* ndでは失敗するまでマッチングバックトラックしているので必ずFALSEが返ってくる
        */
       ok = TRUE;
@@ -343,13 +480,19 @@ BOOL react_all_rulesets(LmnReactCxtRef rc, LmnMembraneRef cur_mem) {
  *   非決定実行では常にFALSEを返す(マッチングに失敗するまでバックトラックする仕様).
  */
 static inline BOOL react_ruleset(LmnReactCxtRef rc, LmnMembraneRef mem,
-                                 LmnRuleSetRef rs) {
+                                 LmnRuleSetRef rs, int ti) {
   for (auto r : *rs) {
+    
 #ifdef PROFILE
     if (!lmn_env.nd && lmn_env.profile_level >= 2)
       profile_rule_obj_set(rs, r);
 #endif
-    if (react_rule(rc, mem, r))
+    // std::cout << "rule start [" << ti << "] " << std::endl;
+    // mut.lock();
+    BOOL reacted = react_rule(rc, mem, r, ti);
+    // mut.unlock();
+    // std::cout << "rule end [" << ti << "] " << std::endl;
+    if (reacted)
       return true;
   }
   return false;
@@ -360,11 +503,12 @@ static inline BOOL react_ruleset(LmnReactCxtRef rc, LmnMembraneRef mem,
  *   通常実行では, 書換えに成功した場合にTRUE,
  * マッチングしなかった場合にFALSEを返す. 非決定実行では,
  * マッチングに失敗するまでバックトラックを繰り返すため常にFALSEが返る. */
-BOOL react_rule(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule) {
+BOOL react_rule(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule, int ti) {
   LmnTranslated translated;
   BYTE *inst_seq;
   BOOL result;
 
+  mut.lock();
   translated = rule->translated;
   inst_seq = rule->inst_seq;
 
@@ -373,14 +517,19 @@ BOOL react_rule(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule) {
   rc->tt(0) = TT_MEM;
 
   profile_start_trial();
-
   if (lmn_env.enable_parallel && !lmn_env.nd)
     rule_wall_time_start();
 
   /* まず、トランスレート済みの関数を実行する
    * それがない場合、命令列をinterpretで実行する */
+  // mut.lock();
   slim::vm::interpreter in(rc, rule, inst_seq);
-  result = (translated && translated(rc, mem, rule)) || (inst_seq && in.run());
+
+  // std::cout << "start translated [" << ti << "] " << std::endl;
+  result = (translated && translated(rc, mem, rule)) || (inst_seq && in.run(ti));
+  mut.unlock();
+  // std::cout << "end translated [" << ti << "] " << std::endl;
+
 
   if (lmn_env.enable_parallel && !lmn_env.nd && normal_parallel_flag)
     rule_wall_time_finish();
@@ -391,6 +540,7 @@ BOOL react_rule(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule) {
     if (reacted && rc->has_mode(REACT_MEM_ORIENTED)) {
       // zerostep中に生成した膜が消えたりすると膜スタック中の膜が解放されメモリアクセス違反になるので膜スタックを作り直す
       // 反応開始時点ではmemが膜スタックの先頭にあるはずなのでmem以下だけ作り直せばいいかも？
+      std::cout << "will reconstruct [" << ti << "] " << std::endl;
       ((MemReactContext *)rc)->memstack_reconstruct(rc->get_global_root());
     }
   }
@@ -398,6 +548,7 @@ BOOL react_rule(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule) {
   profile_finish_trial();
 
   if (rc->has_mode(REACT_MEM_ORIENTED) && !rc->is_zerostep) {
+    std::cout << "reacting!" << std::endl;
     if (lmn_env.trace && result) {
       if (lmn_env.sp_dump_format == LMN_SYNTAX) {
         lmn_dump_mem_stdout(rc->get_global_root());
@@ -971,6 +1122,8 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
 
   if (lmn_env.find_atom_parallel)
     return FALSE;
+
+  std::cout << op << std::endl;
 
   switch (op) {
   case INSTR_SPEC: {
@@ -2282,6 +2435,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     break;
   }
   case INSTR_NEWMEM: {
+    std::cout << "new!" << std::endl;
     LmnInstrVar newmemi, parentmemi;
     LmnMembraneRef mp;
 
@@ -4224,13 +4378,16 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
   return false;
 }
 
-bool slim::vm::interpreter::run() {
+bool slim::vm::interpreter::run(int ti=0) {
+  std::cout << "running!" << std::endl;
   bool result;
   do {
     // キリのいいところまで命令列を実行する
     bool stop = false;
     do {
+      std::cout << "command start [" << ti << "] " << std::endl;
       result = exec_command(this->rc, this->rule, stop);
+      std::cout << "command end [" << ti << "] " << std::endl;
     } while (!stop);
 
     // 成否がわかったのでstack frameに積まれているcallbackを消費する
