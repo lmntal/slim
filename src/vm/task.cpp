@@ -818,7 +818,9 @@ void slim::vm::interpreter::findatom(LmnReactCxtRef rc, LmnRuleRef rule,
     return LmnRegister({(LmnWord)atom, LMN_ATTR_MAKE_LINK(0), TT_ATOM});
   });
 
+  mut.lock();
   this->false_driven_enumerate(reg, std::move(v));
+  mut.unlock();
 }
 
 /** find atom with a hyperlink occurred in the current rule for the first time.
@@ -1480,9 +1482,9 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
           (SameProcCxt *)hashtbl_get(rc->get_hl_sameproccxt(), (HashKeyType)atomi);
       findatom_through_hyperlink(rc, rule, instr, spc, mem, f, atomi);
     } else {
-      mut.lock();
+      // mut.lock();
       findatom(rc, rule, instr, mem, f, atomi);
-      mut.unlock();
+      // mut.unlock();
     }
 
     return false; // false driven loop
