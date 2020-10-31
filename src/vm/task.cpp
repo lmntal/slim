@@ -354,7 +354,7 @@ static void mem_oriented_loop(MemReactContext *ctx, LmnMembraneRef mem) {
 
   /* react調査 */
 
-  int tnum = 4; 
+  int tnum = 8; 
 
   auto react = [&](MemReactContext ctx, LmnMembraneRef m, int ti){
     BOOL reacted = false;
