@@ -354,12 +354,12 @@ static void mem_oriented_loop(MemReactContext *ctx, LmnMembraneRef mem) {
 
   /* react調査 */
 
-  int tnum = 8; 
+  int tnum = 64; 
 
-  auto react = [&](LmnMembraneRef m, int ti){
+  auto react = [&](MemReactContext ctx, LmnMembraneRef m, int ti){
     BOOL reacted = false;
       do{
-        reacted = react_all_rulesets(ctx,m,ti);
+        reacted = react_all_rulesets(&ctx,m,ti);
         // if(reacted)
         //   std::cout << "reacted" << std::endl;
         // else{
@@ -375,13 +375,15 @@ static void mem_oriented_loop(MemReactContext *ctx, LmnMembraneRef mem) {
       if(ctx->memstack_isempty())
         break;
       LmnMembraneRef mem = ctx->memstack_pop();
-      ts[i] = std::thread(react, mem, i);
+      // ctxをコピー
+      MemReactContext ctx_copied = MemReactContext(mem);
+      ts[i] = std::thread(react, ctx_copied, mem, i);
     }
     // for(int j=0;j<tnum;j++){
     for(int j=0;j<i;j++){
       ts[j].join();
     }
-    std::cout << "ok" << std::endl;
+    // std::cout << "ok" << std::endl;
   }
 
 
@@ -508,7 +510,6 @@ BOOL react_rule(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule, int ti) 
   BYTE *inst_seq;
   BOOL result;
 
-  mut.lock();
   translated = rule->translated;
   inst_seq = rule->inst_seq;
 
@@ -522,12 +523,12 @@ BOOL react_rule(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule, int ti) 
 
   /* まず、トランスレート済みの関数を実行する
    * それがない場合、命令列をinterpretで実行する */
-  // mut.lock();
   slim::vm::interpreter in(rc, rule, inst_seq);
 
   // std::cout << "start translated [" << ti << "] " << std::endl;
+  // mut.lock();
   result = (translated && translated(rc, mem, rule)) || (inst_seq && in.run(ti));
-  mut.unlock();
+  // mut.unlock();
   // std::cout << "end translated [" << ti << "] " << std::endl;
 
 
@@ -536,11 +537,11 @@ BOOL react_rule(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule, int ti) 
 
   /* 適用に成功したら0step実行に入る。既に入っていれば何もしない */
   if (result && !rc->is_zerostep) {
+    // ここも関係ない
     bool reacted = react_zerostep_rulesets(rc, mem);
     if (reacted && rc->has_mode(REACT_MEM_ORIENTED)) {
       // zerostep中に生成した膜が消えたりすると膜スタック中の膜が解放されメモリアクセス違反になるので膜スタックを作り直す
       // 反応開始時点ではmemが膜スタックの先頭にあるはずなのでmem以下だけ作り直せばいいかも？
-      std::cout << "will reconstruct [" << ti << "] " << std::endl;
       ((MemReactContext *)rc)->memstack_reconstruct(rc->get_global_root());
     }
   }
@@ -548,7 +549,7 @@ BOOL react_rule(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule, int ti) 
   profile_finish_trial();
 
   if (rc->has_mode(REACT_MEM_ORIENTED) && !rc->is_zerostep) {
-    std::cout << "reacting!" << std::endl;
+    // std::cout << "reacting!" << std::endl;
     if (lmn_env.trace && result) {
       if (lmn_env.sp_dump_format == LMN_SYNTAX) {
         lmn_dump_mem_stdout(rc->get_global_root());
@@ -569,6 +570,7 @@ BOOL react_rule(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule, int ti) 
     }
   }
 
+  // ここは実行されない
   if (rc->get_hl_sameproccxt()) {
     rc->clear_hl_spc(); /* とりあえずここに配置 */
     // normal parallel destroy
@@ -2435,7 +2437,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     break;
   }
   case INSTR_NEWMEM: {
-    std::cout << "new!" << std::endl;
+    // std::cout << "new!" << std::endl;
     LmnInstrVar newmemi, parentmemi;
     LmnMembraneRef mp;
 
@@ -2476,8 +2478,10 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     }
 #endif
 
+    // mut.lock();
     lmn_mem_remove_atom((LmnMembraneRef)rc->wt(memi), (LmnAtomRef)rc->wt(atomi),
                         rc->at(atomi));
+    // mut.unlock();
 
     break;
   }
@@ -2597,9 +2601,11 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       if (attr != pos2)
         return FALSE;
     }
+    mut.lock();
     rc->reg(atom1) = {
         (LmnWord)((LmnSymbolAtomRef)rc->wt(atom2))->get_link(pos1), attr,
         TT_ATOM};
+    mut.unlock();
     break;
   }
   case INSTR_FUNC: {
@@ -4379,15 +4385,17 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
 }
 
 bool slim::vm::interpreter::run(int ti=0) {
-  std::cout << "running!" << std::endl;
+  //  << "running!" << std::endl;
   bool result;
   do {
     // キリのいいところまで命令列を実行する
     bool stop = false;
     do {
-      std::cout << "command start [" << ti << "] " << std::endl;
+      // std::cout << "command start [" << ti << "] " << std::endl;
+      mut.lock();
       result = exec_command(this->rc, this->rule, stop);
-      std::cout << "command end [" << ti << "] " << std::endl;
+      mut.unlock();
+      // std::cout << "command end [" << ti << "] " << std::endl;
     } while (!stop);
 
     // 成否がわかったのでstack frameに積まれているcallbackを消費する
