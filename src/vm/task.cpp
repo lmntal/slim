@@ -1135,9 +1135,9 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     SKIP_VAL(LmnInstrVar, instr);
     READ_VAL(LmnInstrVar, instr, s0);
 
-    // mut.lock();
+    mut.lock();
     rc->resize(s0);
-    // mut.unlock();
+    mut.unlock();
     break;
   }
   case INSTR_INSERTCONNECTORSINNULL: {
@@ -1205,7 +1205,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     LmnInstrVar num, i, n;
     LmnJumpOffset offset;
 
-    mut.lock();
+    // mut.lock();
     auto v = LmnRegisterArray(rc->capacity());
 
     READ_VAL(LmnJumpOffset, instr, offset);
@@ -1244,7 +1244,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       delete tmp;
       return result ? command_result::Success : command_result::Failure;
     });
-    mut.unlock();
+    // mut.unlock();
     break;
   }
   case INSTR_RESETVARS: {
@@ -1480,7 +1480,9 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
           (SameProcCxt *)hashtbl_get(rc->get_hl_sameproccxt(), (HashKeyType)atomi);
       findatom_through_hyperlink(rc, rule, instr, spc, mem, f, atomi);
     } else {
+      mut.lock();
       findatom(rc, rule, instr, mem, f, atomi);
+      mut.unlock();
     }
 
     return false; // false driven loop
@@ -1876,6 +1878,8 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     READ_VAL(LmnInstrVar, instr, link2);
     READ_VAL(LmnInstrVar, instr, mem);
 
+    // mut.lock();
+
     attr1 = rc->at(link1);
     attr2 = rc->at(link2);
 
@@ -1923,6 +1927,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
             ->set_attr(LMN_ATTR_GET_VALUE(attr2), attr1);
       }
     }
+    // mut.unlock();
     break;
   }
   case INSTR_NEWLINK: {
@@ -2609,22 +2614,20 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     READ_VAL(LmnInstrVar, instr, pos1);
     READ_VAL(LmnInstrVar, instr, pos2);
 
-    mut.lock();
 
     attr = ((LmnSymbolAtomRef)rc->wt(atom2))->get_attr(pos1);
     LMN_ASSERT(!LMN_ATTR_IS_DATA(rc->at(atom2)));
     if (LMN_ATTR_IS_DATA(attr)) {
       if (pos2 != 0){
-        mut.unlock();
         return FALSE;
       }
     } else {
       if (attr != pos2){
-        mut.unlock();
         return FALSE;
       }
     }
 
+    mut.lock();
     rc->reg(atom1) = {
         (LmnWord)((LmnSymbolAtomRef)rc->wt(atom2))->get_link(pos1), attr,
         TT_ATOM};
@@ -4284,6 +4287,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
 
     READ_VAL(LmnInstrVar, instr, memi);
     READ_VAL(LmnInstrVar, instr, atomi);
+    mut.lock();
 
     atom = (LmnSymbolAtomRef)rc->wt(atomi);
 
@@ -4349,11 +4353,14 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
         break;
       }
 
+
+
       lmn_mem_delete_atom((LmnMembraneRef)rc->wt(memi),
                           (LmnAtomRef)rc->wt(atomi), rc->at(atomi));
       lmn_mem_delete_atom((LmnMembraneRef)rc->wt(memi),
                           ((LmnSymbolAtomRef)atom)->get_link(0),
                           ((LmnSymbolAtomRef)atom)->get_attr(0));
+      mut.unlock();
     }
 
     break;
