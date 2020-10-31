@@ -1125,7 +1125,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
   if (lmn_env.find_atom_parallel)
     return FALSE;
 
-  std::cout << op << std::endl;
+  // std::cout << op << std::endl;
 
   switch (op) {
   case INSTR_SPEC: {
