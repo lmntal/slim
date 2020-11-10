@@ -354,7 +354,7 @@ static void mem_oriented_loop(MemReactContext *ctx, LmnMembraneRef mem) {
 
   /* react調査 */
 
-  int tnum = 8; 
+  int tnum = 10; 
 
   auto react = [&](MemReactContext ctx, LmnMembraneRef m, int ti){
     BOOL reacted = false;
@@ -363,7 +363,7 @@ static void mem_oriented_loop(MemReactContext *ctx, LmnMembraneRef mem) {
         // if(reacted)
         //   std::cout << "reacted" << std::endl;
         // else{
-        //   std::cout << "not reactfed" << std::endl;
+        //   std::cout << "not reactfed" << std::endl;1
         // }
       }while(reacted);
   };
@@ -807,10 +807,13 @@ void slim::vm::interpreter::findatom(LmnReactCxtRef rc, LmnRuleRef rule,
   if (!atomlist_ent)
     return;
 
+  mut.lock();
   auto iter = std::begin(*atomlist_ent);
   auto end = std::end(*atomlist_ent);
-  if (iter == end)
+  if (iter == end){
+    mut.unlock();
     return;
+  }
 
   auto v = std::vector<LmnRegister>(atomlist_ent->size());
   
@@ -818,7 +821,7 @@ void slim::vm::interpreter::findatom(LmnReactCxtRef rc, LmnRuleRef rule,
     return LmnRegister({(LmnWord)atom, LMN_ATTR_MAKE_LINK(0), TT_ATOM});
   });
 
-  mut.lock();
+  
   this->false_driven_enumerate(reg, std::move(v));
   mut.unlock();
 }
@@ -1137,9 +1140,9 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     SKIP_VAL(LmnInstrVar, instr);
     READ_VAL(LmnInstrVar, instr, s0);
 
-    mut.lock();
+    // mut.lock();
     rc->resize(s0);
-    mut.unlock();
+    // mut.unlock();
     break;
   }
   case INSTR_INSERTCONNECTORSINNULL: {
@@ -1207,7 +1210,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     LmnInstrVar num, i, n;
     LmnJumpOffset offset;
 
-    // mut.lock();
+    mut.lock();
     auto v = LmnRegisterArray(rc->capacity());
 
     READ_VAL(LmnJumpOffset, instr, offset);
@@ -1246,7 +1249,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       delete tmp;
       return result ? command_result::Success : command_result::Failure;
     });
-    // mut.unlock();
+    mut.unlock();
     break;
   }
   case INSTR_RESETVARS: {
@@ -1300,9 +1303,9 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     }
 #endif
 
-    mut.lock();
+    // mut.lock();
     rule->name = rule_name;
-    mut.unlock();
+    // mut.unlock();
 
     profile_apply();
 
@@ -1880,7 +1883,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     READ_VAL(LmnInstrVar, instr, link2);
     READ_VAL(LmnInstrVar, instr, mem);
 
-    // mut.lock();
+    mut.lock();
 
     attr1 = rc->at(link1);
     attr2 = rc->at(link2);
@@ -1929,7 +1932,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
             ->set_attr(LMN_ATTR_GET_VALUE(attr2), attr1);
       }
     }
-    // mut.unlock();
+    mut.unlock();
     break;
   }
   case INSTR_NEWLINK: {
@@ -1941,6 +1944,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     READ_VAL(LmnInstrVar, instr, pos2);
     READ_VAL(LmnInstrVar, instr, memi);
 
+    // TODO(Fukui): 今後atom1と2をそれぞれロックする
     mut.lock();
     lmn_mem_newlink((LmnMembraneRef)rc->wt(memi), (LmnAtomRef)rc->wt(atom1),
                     rc->at(atom1), pos1, (LmnAtomRef)rc->wt(atom2),
@@ -2498,10 +2502,10 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     }
 #endif
 
-    mut.lock();
+    // mut.lock();
     lmn_mem_remove_atom((LmnMembraneRef)rc->wt(memi), (LmnAtomRef)rc->wt(atomi),
                         rc->at(atomi));
-    mut.unlock();
+    // mut.unlock();
 
     break;
   }
@@ -2509,6 +2513,8 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     LmnInstrVar atomi;
 
     READ_VAL(LmnInstrVar, instr, atomi);
+
+    // 仮のロック。atomiやatomlistentryにロックを掛けた方がいいかも。
     mut.lock();
     lmn_free_atom((LmnAtomRef)rc->wt(atomi), rc->at(atomi));
     mut.unlock();
@@ -2616,6 +2622,8 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     READ_VAL(LmnInstrVar, instr, pos1);
     READ_VAL(LmnInstrVar, instr, pos2);
 
+    // TODO(Fukui): atom2にロックをかける
+    mut.lock();
 
     attr = ((LmnSymbolAtomRef)rc->wt(atom2))->get_attr(pos1);
     LMN_ASSERT(!LMN_ATTR_IS_DATA(rc->at(atom2)));
@@ -2629,7 +2637,6 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       }
     }
 
-    mut.lock();
     rc->reg(atom1) = {
         (LmnWord)((LmnSymbolAtomRef)rc->wt(atom2))->get_link(pos1), attr,
         TT_ATOM};
@@ -3505,11 +3512,11 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     READ_VAL(LmnInstrVar, instr, dstatom);
     READ_VAL(LmnInstrVar, instr, atom1);
     READ_VAL(LmnInstrVar, instr, atom2);
-    mut.lock();
+    // mut.lock();
     rc->reg(dstatom) = {
         static_cast<LmnWord>(((long)rc->wt(atom1) + (long)rc->wt(atom2))),
         LMN_INT_ATTR, TT_ATOM};
-    mut.unlock();
+    // mut.unlock();
     break;
   }
   case INSTR_ISUB: {
@@ -3817,6 +3824,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
 
     READ_VAL(LmnInstrVar, instr, atomi);
     READ_VAL(LmnLinkAttr, instr, attr);
+    // mut.lock();
     rc->at(atomi) = attr;
     if (LMN_ATTR_IS_DATA(attr)) {
       LmnWord w;
@@ -3835,6 +3843,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       rc->wt(atomi) = f;
     }
     rc->tt(atomi) = TT_OTHER; /* ヘッドに存在しないのでコピー対象外 */
+    // mut.unlock();
     break;
   }
   case INSTR_ALLOCATOMINDIRECT: {
