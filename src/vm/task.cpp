@@ -56,6 +56,8 @@
 #include <thread>
 #include <mutex>
 #include <iostream>
+#include <sstream>
+#include <stdio.h>
 
 typedef void (*callback_0)(LmnReactCxtRef, LmnMembraneRef);
 typedef void (*callback_1)(LmnReactCxtRef, LmnMembraneRef, LmnAtomRef,
@@ -145,7 +147,13 @@ void lmn_dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
 namespace c14 = slim::element;
 namespace c17 = slim::element;
 
+int tnum = 10;
+
 std::mutex mut;
+std::vector<std::unique_ptr<std::mutex>> tmut;
+
+
+
 
 /** 通常実行時の入口.
  *  インタタラクティブ実行時の処理フローは以下の通り[yueno]
@@ -367,6 +375,11 @@ static void mem_oriented_loop(MemReactContext *ctx, LmnMembraneRef mem) {
         // }
       }while(reacted);
   };
+
+  // グローバルルート膜対策
+  LmnMembraneRef mem_ = ctx->memstack_pop();
+  MemReactContext ctx_copied = MemReactContext(mem);
+  react(ctx_copied, mem_, 0);
 
   while (!ctx->memstack_isempty()) {
     int i;
@@ -802,16 +815,24 @@ HashSet *insertconnectors(slim::vm::RuleContext *rc, LmnMembraneRef mem,
 void slim::vm::interpreter::findatom(LmnReactCxtRef rc, LmnRuleRef rule,
                                      LmnRuleInstr instr, LmnMembrane *mem,
                                      LmnFunctor f, size_t reg) {
+  
+
+  // std::stringstream ss1;
+  // ss1 << "1: " << mem->get_atomlist(f)->size() << " " << mem;
+  // std::cout << ss1.str() << std::endl;
+
+  // printf("1: %d %d\n",mem->get_atomlist(f)->size(), mem);
+
   auto atomlist_ent = mem->get_atomlist(f);
 
   if (!atomlist_ent)
     return;
 
-  mut.lock();
+  // mut.lock();
   auto iter = std::begin(*atomlist_ent);
   auto end = std::end(*atomlist_ent);
   if (iter == end){
-    mut.unlock();
+    // mut.unlock();
     return;
   }
 
@@ -823,7 +844,13 @@ void slim::vm::interpreter::findatom(LmnReactCxtRef rc, LmnRuleRef rule,
 
   
   this->false_driven_enumerate(reg, std::move(v));
-  mut.unlock();
+
+  // std::stringstream ss2;
+  // ss2 << "2: " << mem->get_atomlist(f)->size() << " " << mem;
+  // std::cout << ss2.str() << std::endl;
+  // mut.unlock();
+
+  // printf("2: %d %d\n",mem->get_atomlist(f)->size(), mem);
 }
 
 /** find atom with a hyperlink occurred in the current rule for the first time.
