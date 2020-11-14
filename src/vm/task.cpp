@@ -147,10 +147,10 @@ void lmn_dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
 namespace c14 = slim::element;
 namespace c17 = slim::element;
 
-int tnum = 10;
+// int tnum = 10;
 
 std::mutex mut;
-std::vector<std::unique_ptr<std::mutex>> tmut;
+// std::vector<std::unique_ptr<std::mutex>> tmut;
 
 
 
@@ -382,19 +382,21 @@ static void mem_oriented_loop(MemReactContext *ctx, LmnMembraneRef mem) {
   react(ctx_copied, mem_, 0);
 
   while (!ctx->memstack_isempty()) {
-    int i;
+    int cnt = 0;
     std::vector<std::thread> ts(tnum);
-    for(i=0;i<tnum;i++){
+    for(int i=0;i<tnum;i++){
       if(ctx->memstack_isempty())
         break;
+      cnt++;
       LmnMembraneRef mem = ctx->memstack_pop();
 
       // ctxをコピー
       MemReactContext ctx_copied = MemReactContext(mem);
       ts[i] = std::thread(react, ctx_copied, mem, i);
     }
+    // std::cout << "cnt :" << cnt << std::endl; 
     // for(int j=0;j<tnum;j++){
-    for(int j=0;j<i;j++){
+    for(int j=0;j<cnt;j++){
       ts[j].join();
     }
     // std::cout << "ok" << std::endl;
@@ -842,7 +844,6 @@ void slim::vm::interpreter::findatom(LmnReactCxtRef rc, LmnRuleRef rule,
     return LmnRegister({(LmnWord)atom, LMN_ATTR_MAKE_LINK(0), TT_ATOM});
   });
 
-  
   this->false_driven_enumerate(reg, std::move(v));
 
   // std::stringstream ss2;
