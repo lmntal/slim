@@ -362,7 +362,7 @@ static void mem_oriented_loop(MemReactContext *ctx, LmnMembraneRef mem) {
 
   /* react調査 */
 
-  int tnum = 10; 
+  int tnum = 1; 
 
   auto react = [&](MemReactContext ctx, LmnMembraneRef m, int ti){
     BOOL reacted = false;
@@ -451,6 +451,20 @@ void react_zerostep_recursive(LmnReactCxtRef rc, LmnMembraneRef cur_mem) {
   }
 }
 
+auto react_ruleset_wrap = [](LmnReactCxtRef rc, LmnMembraneRef cur_mem, std::vector<LmnRuleSetRef> rulesets, int tnum, int ti){
+  BOOL ok = FALSE;
+  for (int i = 0; i < rulesets.size(); i++) {
+    if(i%tnum != ti)
+      continue;
+    if (react_ruleset(rc, cur_mem, rulesets[i], ti)) {
+      /* ndでは失敗するまでマッチングバックトラックしているので必ずFALSEが返ってくる
+       */
+      ok = TRUE;
+      break;
+    }
+  }
+};
+
 /** cur_memに存在するルールすべてに対して適用を試みる
  * @see mem_oriented_loop (task.c)
  * @see expand_inner      (nd.c) */
@@ -460,14 +474,34 @@ BOOL react_all_rulesets(LmnReactCxtRef rc, LmnMembraneRef cur_mem, int ti) {
   BOOL ok = FALSE;
 
   /* ルールセットの適用 */
-  for (i = 0; i < rulesets.size(); i++) {
-    if (react_ruleset(rc, cur_mem, rulesets[i], ti)) {
-      /* ndでは失敗するまでマッチングバックトラックしているので必ずFALSEが返ってくる
-       */
-      ok = TRUE;
-      break;
-    }
+  // 並列化してみる
+
+  int tnum = 10;
+
+  // std::vector<MemReactContext> ctxs = std::vector<MemReactContext>(tnum);
+  // for(int i=0;i<tnum;i++){
+  //   ctxs[i] = MemReactContext(cur_mem);
+  // }
+
+  std::vector<std::thread> ts(tnum);
+  for(int i=0;i<tnum;i++){
+    
+    MemReactContext ctx_copied = MemReactContext(cur_mem);
+    ts[i] = std::thread(react_ruleset_wrap, &ctx_copied, cur_mem, rulesets, tnum, i);
   }
+
+  for(int i=0;i<tnum;i++){
+    ts[i].join();
+  }
+
+  // for (i = 0; i < rulesets.size(); i++) {
+  //   if (react_ruleset(rc, cur_mem, rulesets[i], ti)) {
+  //     /* ndでは失敗するまでマッチングバックトラックしているので必ずFALSEが返ってくる
+  //      */
+  //     ok = TRUE;
+  //     break;
+  //   }
+  // }
 
 #ifdef USE_FIRSTCLASS_RULE
   for (i = 0; i < (cur_mem->firstclass_rulesets())->get_num(); i++) {
