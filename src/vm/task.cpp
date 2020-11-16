@@ -451,20 +451,6 @@ void react_zerostep_recursive(LmnReactCxtRef rc, LmnMembraneRef cur_mem) {
   }
 }
 
-auto react_ruleset_wrap = [](LmnReactCxtRef rc, LmnMembraneRef cur_mem, std::vector<LmnRuleSetRef> rulesets, int tnum, int ti){
-  BOOL ok = FALSE;
-  for (int i = 0; i < rulesets.size(); i++) {
-    if(i%tnum != ti)
-      continue;
-    if (react_ruleset(rc, cur_mem, rulesets[i], ti)) {
-      /* ndでは失敗するまでマッチングバックトラックしているので必ずFALSEが返ってくる
-       */
-      ok = TRUE;
-      break;
-    }
-  }
-};
-
 /** cur_memに存在するルールすべてに対して適用を試みる
  * @see mem_oriented_loop (task.c)
  * @see expand_inner      (nd.c) */
@@ -474,34 +460,15 @@ BOOL react_all_rulesets(LmnReactCxtRef rc, LmnMembraneRef cur_mem, int ti) {
   BOOL ok = FALSE;
 
   /* ルールセットの適用 */
-  // 並列化してみる
 
-  int tnum = 10;
-
-  // std::vector<MemReactContext> ctxs = std::vector<MemReactContext>(tnum);
-  // for(int i=0;i<tnum;i++){
-  //   ctxs[i] = MemReactContext(cur_mem);
-  // }
-
-  std::vector<std::thread> ts(tnum);
-  for(int i=0;i<tnum;i++){
-    
-    MemReactContext ctx_copied = MemReactContext(cur_mem);
-    ts[i] = std::thread(react_ruleset_wrap, &ctx_copied, cur_mem, rulesets, tnum, i);
+  for (i = 0; i < rulesets.size(); i++) {
+    if (react_ruleset(rc, cur_mem, rulesets[i], ti)) {
+      /* ndでは失敗するまでマッチングバックトラックしているので必ずFALSEが返ってくる
+       */
+      ok = TRUE;
+      break;
+    }
   }
-
-  for(int i=0;i<tnum;i++){
-    ts[i].join();
-  }
-
-  // for (i = 0; i < rulesets.size(); i++) {
-  //   if (react_ruleset(rc, cur_mem, rulesets[i], ti)) {
-  //     /* ndでは失敗するまでマッチングバックトラックしているので必ずFALSEが返ってくる
-  //      */
-  //     ok = TRUE;
-  //     break;
-  //   }
-  // }
 
 #ifdef USE_FIRSTCLASS_RULE
   for (i = 0; i < (cur_mem->firstclass_rulesets())->get_num(); i++) {
@@ -525,6 +492,27 @@ BOOL react_all_rulesets(LmnReactCxtRef rc, LmnMembraneRef cur_mem, int ti) {
   return ok;
 }
 
+auto react_ruleset_wrap = [](LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleSetRef rs, int tnum, int ti){
+
+  int cnt=0;
+  for (auto r : *rs) {
+    if(cnt%tnum != ti)
+      continue;
+#ifdef PROFILE
+    if (!lmn_env.nd && lmn_env.profile_level >= 2)
+      profile_rule_obj_set(rs, r);
+#endif
+    // std::cout << "rule start [" << ti << "] " << std::endl;
+    // mut.lock();
+    BOOL reacted = react_rule(rc, mem, r, ti);
+    cnt++;
+    // mut.unlock();
+    // std::cout << "rule end [" << ti << "] " << std::endl;
+    if (reacted)
+      return true;
+  }
+};
+
 /** 膜memに対してルールセットrsの各ルールの適用を試みる.
  *  戻り値:
  *   通常実行では, 書換えに成功した場合にTRUE,
@@ -533,20 +521,38 @@ BOOL react_all_rulesets(LmnReactCxtRef rc, LmnMembraneRef cur_mem, int ti) {
  */
 static inline BOOL react_ruleset(LmnReactCxtRef rc, LmnMembraneRef mem,
                                  LmnRuleSetRef rs, int ti) {
-  for (auto r : *rs) {
-    
-#ifdef PROFILE
-    if (!lmn_env.nd && lmn_env.profile_level >= 2)
-      profile_rule_obj_set(rs, r);
-#endif
-    // std::cout << "rule start [" << ti << "] " << std::endl;
-    // mut.lock();
-    BOOL reacted = react_rule(rc, mem, r, ti);
-    // mut.unlock();
-    // std::cout << "rule end [" << ti << "] " << std::endl;
-    if (reacted)
-      return true;
+
+  // ここを並列化する
+
+  int tnum=1;
+  int cnt=0;
+
+  std::vector<std::thread> ts(tnum);
+  for(int i=0;i<tnum;i++){
+    MemReactContext ctx_copied = MemReactContext(mem);
+    ts[i] = std::thread(react_ruleset_wrap, &ctx_copied, mem, rs, tnum, i);
   }
+
+  for(int i=0;i<tnum;i++){
+    ts[i].join();
+  }
+
+//   for (auto r : *rs) {
+//     if(cnt%tnum != ti)
+//       continue;
+// #ifdef PROFILE
+//     if (!lmn_env.nd && lmn_env.profile_level >= 2)
+//       profile_rule_obj_set(rs, r);
+// #endif
+//     // std::cout << "rule start [" << ti << "] " << std::endl;
+//     // mut.lock();
+//     BOOL reacted = react_rule(rc, mem, r, ti);
+//     cnt++;
+//     // mut.unlock();
+//     // std::cout << "rule end [" << ti << "] " << std::endl;
+//     if (reacted)
+//       return true;
+//   }
   return false;
 }
 
