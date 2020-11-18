@@ -44,6 +44,8 @@
 #include "vector.h"
 #include "vm/vm.h"
 
+#include <iostream>
+
 /*----------------------------------------------------------------------
  * memory allocation for atom
  */

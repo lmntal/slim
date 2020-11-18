@@ -56,6 +56,7 @@
 #include "membrane.hpp"
 #include "rule.hpp"
 #include <cassert>
+#include <iostream>
 
 /** ----
  *  AtomListEntry.
