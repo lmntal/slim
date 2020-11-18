@@ -547,6 +547,8 @@ static inline BOOL react_ruleset(LmnReactCxtRef rc, LmnMembraneRef mem,
     std::copy(rc->work_array.begin(), rc->work_array.end(), copied_arr.begin());
 
     ctx_copied.work_array = copied_arr;
+
+    // rc.
     
     std::stringstream ss;
     ss << "[" << ti << "] work_arr: " << rc->work_array.size() << " , copied_arr: " << ctx_copied.work_array.size();
@@ -2657,12 +2659,14 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     break;
   }
   case INSTR_LOADRULESET: {
+    mut.lock();
     LmnInstrVar memi;
     LmnRulesetId id;
     READ_VAL(LmnInstrVar, instr, memi);
     READ_VAL(LmnRulesetId, instr, id);
 
     lmn_mem_add_ruleset((LmnMembraneRef)rc->wt(memi), LmnRuleSetTable::at(id));
+    mut.unlock();
     break;
   }
   case INSTR_LOADMODULE: {
