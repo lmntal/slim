@@ -362,56 +362,56 @@ static void mem_oriented_loop(MemReactContext *ctx, LmnMembraneRef mem) {
 
   /* react調査 */
 
-  int tnum = 1; 
+  // int tnum = 1; 
 
-  auto react = [&](MemReactContext ctx, LmnMembraneRef m, int ti){
-    BOOL reacted = false;
-      do{
-        reacted = react_all_rulesets(&ctx,m,ti);
-        // if(reacted)
-        //   std::cout << "reacted" << std::endl;
-        // else{
-        //   std::cout << "not reactfed" << std::endl;1
-        // }
-      }while(reacted);
-  };
+  // auto react = [&](MemReactContext *ctx, LmnMembraneRef m, int ti){
+  //   BOOL reacted = false;
+  //     do{
+  //       reacted = react_all_rulesets(ctx,m,ti);
+  //       // if(reacted)
+  //       //   std::cout << "reacted" << std::endl;
+  //       // else{
+  //       //   std::cout << "not reactfed" << std::endl;1
+  //       // }
+  //     }while(reacted);
+  // };
 
-  // グローバルルート膜対策
-  LmnMembraneRef mem_ = ctx->memstack_pop();
-  MemReactContext ctx_copied = MemReactContext(mem);
-  react(ctx_copied, mem_, 0);
+  // // グローバルルート膜対策
+  // LmnMembraneRef mem_ = ctx->memstack_pop();
+  // MemReactContext ctx_copied = MemReactContext(mem);
+  // react(ctx_copied, mem_, 0);
 
-  while (!ctx->memstack_isempty()) {
-    int cnt = 0;
-    std::vector<std::thread> ts(tnum);
-    for(int i=0;i<tnum;i++){
-      if(ctx->memstack_isempty())
-        break;
-      cnt++;
-      LmnMembraneRef mem = ctx->memstack_pop();
+  // while (!ctx->memstack_isempty()) {
+  //   int cnt = 0;
+  //   std::vector<std::thread> ts(tnum);
+  //   for(int i=0;i<tnum;i++){
+  //     if(ctx->memstack_isempty())
+  //       break;
+  //     cnt++;
+  //     LmnMembraneRef mem = ctx->memstack_pop();
 
-      // ctxをコピー
-      MemReactContext ctx_copied = MemReactContext(mem);
-      ts[i] = std::thread(react, ctx_copied, mem, i);
-    }
-    // std::cout << "cnt :" << cnt << std::endl; 
-    // for(int j=0;j<tnum;j++){
-    for(int j=0;j<cnt;j++){
-      ts[j].join();
-    }
-    // std::cout << "ok" << std::endl;
-  }
+  //     // ctxをコピー
+  //     // MemReactContext ctx_copied = MemReactContext(mem);
+  //     ts[i] = std::thread(react, ctx, mem, i);
+  //   }
+  //   // std::cout << "cnt :" << cnt << std::endl; 
+  //   // for(int j=0;j<tnum;j++){
+  //   for(int j=0;j<cnt;j++){
+  //     ts[j].join();
+  //   }
+  //   // std::cout << "ok" << std::endl;
+  // }
 
 
   /* 元コード */
-  // while (!ctx->memstack_isempty()) {
-  //   LmnMembraneRef mem = ctx->memstack_peek();
+  while (!ctx->memstack_isempty()) {
+    LmnMembraneRef mem = ctx->memstack_peek();
 
-  //   if (!react_all_rulesets(ctx, mem)) {
-  //     /* ルールが何も適用されなければ膜スタックから先頭を取り除く */
-  //     ctx->memstack_pop();
-  //   }
-  // }
+    if (!react_all_rulesets(ctx, mem)) {
+      /* ルールが何も適用されなければ膜スタックから先頭を取り除く */
+      ctx->memstack_pop();
+    }
+  }
 
 
 }
@@ -547,8 +547,6 @@ static inline BOOL react_ruleset(LmnReactCxtRef rc, LmnMembraneRef mem,
     std::copy(rc->work_array.begin(), rc->work_array.end(), copied_arr.begin());
 
     ctx_copied.work_array = copied_arr;
-
-    // rc.
     
     std::stringstream ss;
     ss << "[" << ti << "] work_arr: " << rc->work_array.size() << " , copied_arr: " << ctx_copied.work_array.size();
