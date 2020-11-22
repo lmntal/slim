@@ -52,7 +52,6 @@
 #endif
 
 #include <algorithm>
-#include <execution>
 #include <thread>
 #include <mutex>
 #include <iostream>
@@ -493,7 +492,8 @@ BOOL react_all_rulesets(LmnReactCxtRef rc, LmnMembraneRef cur_mem, int ti) {
 }
 
 // std::atomic<bool> react_result = std::atomic<bool>(false);
-std::atomic_bool react_result = false;
+// std::atomic_bool react_result = false;
+bool react_result = false;
 
 auto react_ruleset_wrap = [](LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleSetRef rs, int tnum, int ti){
 
