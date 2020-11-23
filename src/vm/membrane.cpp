@@ -88,7 +88,10 @@ void lmn_mem_add_ruleset_sort(std::vector<LmnRuleSet *> *src_v, LmnRuleSetRef ad
   int i, j, n;
   LmnRulesetId add_id;
   add_id = add_rs->id;
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
+  printf("%p\n", src_v);
   n = src_v->size();
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
   for (i = 0; i < n; i++) {
     LmnRuleSetRef rs_i;
     LmnRulesetId dst_id;
@@ -3448,6 +3451,8 @@ void alter_functor(LmnMembraneRef mem, LmnSymbolAtomRef atom, LmnFunctor f) {
 
 /* ルールセットnewを膜memに追加する */
 void lmn_mem_add_ruleset(LmnMembraneRef mem, LmnRuleSetRef ruleset) {
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
+  std::cout << mem->rulesets.size() << std::endl;
   LMN_ASSERT(ruleset);
   lmn_mem_add_ruleset_sort(&(mem->rulesets), ruleset);
 }

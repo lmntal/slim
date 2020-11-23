@@ -498,6 +498,8 @@ bool react_result = false;
 auto react_ruleset_wrap = [](LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleSetRef rs, int tnum, int ti){
 
   int cnt=0;
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
+  std::cout << ti <<":"<<  std::this_thread::get_id()<< std::endl;
   for (auto r : *rs) {
     if(cnt%tnum != ti){
       cnt++;
@@ -507,7 +509,7 @@ auto react_ruleset_wrap = [](LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleSetRe
     if (!lmn_env.nd && lmn_env.profile_level >= 2)
       profile_rule_obj_set(rs, r);
 #endif
-    std::cout << "rule start [" << ti << "] " << std::endl;
+    std::cout << "rule start [" << ti << "] " <<":"<<std::this_thread::get_id()<< std::endl;
     // mut.lock();
     // std::cout << "will react!" << std::endl;
     BOOL reacted = react_rule(rc, mem, r, ti);
@@ -531,7 +533,7 @@ static inline BOOL react_ruleset(LmnReactCxtRef rc, LmnMembraneRef mem,
                                  LmnRuleSetRef rs, int ti) {
 
   // ここを並列化する
-
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
   int tnum=10;
   int cnt=0;
   react_result = false;
@@ -540,19 +542,23 @@ static inline BOOL react_ruleset(LmnReactCxtRef rc, LmnMembraneRef mem,
   for(int i=0;i<tnum;i++){
     // LmnReactCxt rc_copied = LmnReactCxt()
 
-    MemReactContext ctx_copied = MemReactContext(mem);
-    int arr_size = rc->work_array.size();
-
-    LmnRegisterArray copied_arr(arr_size);
-    std::copy(rc->work_array.begin(), rc->work_array.end(), copied_arr.begin());
-
-    ctx_copied.work_array = copied_arr;
+    MemReactContext *ctx_copied = new MemReactContext(mem);
+    //std::cout << __FUNCTION__ <<":"<<__LINE__<<":"<<std::this_thread::get_id()<<":"<<&ctx_copied << std::endl;
     
-    std::stringstream ss;
-    ss << "[" << ti << "] work_arr: " << rc->work_array.size() << " , copied_arr: " << ctx_copied.work_array.size();
-    std::cout << ss.str() << std::endl;
+    int arr_size = rc->work_array.size();
+    ctx_copied->work_array.resize(arr_size);
+    //LmnRegisterArray copied_arr(arr_size);
+    std::copy(rc->work_array.begin(), rc->work_array.end(), ctx_copied->work_array.begin());
 
-    ts[i] = std::thread(react_ruleset_wrap, &ctx_copied, mem, rs, tnum, i);
+    //ctx_copied.work_array = copied_arr;
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
+    std::cout << mem->rulesets.size() << std::endl;
+
+    std::stringstream ss;
+    ss << "[" << ti << "] work_arr: " << rc->work_array.size() << " , copied_arr: " << ctx_copied->work_array.size();
+    std::cout << ss.str() << std::endl;
+    
+    ts[i] = std::thread(react_ruleset_wrap, ctx_copied, mem, rs, tnum, i);
     // ts[i] = std::thread(react_ruleset_wrap, rc,  mem, rs, tnum, i);
   }
 
@@ -589,7 +595,7 @@ BOOL react_rule(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule, int ti) 
   LmnTranslated translated;
   BYTE *inst_seq;
   BOOL result;
-
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
   translated = rule->translated;
   inst_seq = rule->inst_seq;
 
@@ -607,6 +613,8 @@ BOOL react_rule(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule, int ti) 
 
   // std::cout << "start translated [" << ti << "] " << std::endl;
   // mut.lock();
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
+  std::cout << mem->rulesets.size() << std::endl;
   result = (translated && translated(rc, mem, rule)) || (inst_seq && in.run(ti));
   // mut.unlock();
   // std::cout << "end translated [" << ti << "] " << std::endl;
@@ -2662,9 +2670,14 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     LmnRulesetId id;
     READ_VAL(LmnInstrVar, instr, memi);
     READ_VAL(LmnRulesetId, instr, id);
+    std::cout << __FUNCTION__ << ":" << __LINE__ <<" : " << std::this_thread::get_id() << std::endl;
+    //const std::thread::id main_tid = std::this_thread::get_id();
 
+    //std::cout << std::this_thread::get_id()<< ":" << ((LmnMembraneRef)rc->wt(memi))->rulesets.size() << std::endl;
+      
     lmn_mem_add_ruleset((LmnMembraneRef)rc->wt(memi), LmnRuleSetTable::at(id));
     mut.unlock();
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     break;
   }
   case INSTR_LOADMODULE: {
