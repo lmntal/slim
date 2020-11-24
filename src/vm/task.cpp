@@ -1619,6 +1619,11 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       findatom_through_hyperlink(rc, rule, instr, spc, mem, f, atomi);
     } else {
       // mut.lock();
+
+      std::stringstream ss;
+      ss << "findatom " << f << " " << std::this_thread::get_id();
+      std::cout << ss.str() << std::endl;
+
       findatom(rc, rule, instr, mem, f, atomi);
       // mut.unlock();
     }
