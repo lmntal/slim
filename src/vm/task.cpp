@@ -1937,13 +1937,14 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       READ_DATA_ATOM(ap, attr);
     } else { /* symbol atom */
       LmnFunctor f;
+      muts[f-23].lock();
       READ_VAL(LmnFunctor, instr, f);
 
       std::stringstream ss;
       ss << "newatom " << f << " " << std::this_thread::get_id();
       std::cout << ss.str() << std::endl;
       
-      muts[f-23].lock();
+
       ap = lmn_new_atom(f);
       muts[f-23].unlock();
 
