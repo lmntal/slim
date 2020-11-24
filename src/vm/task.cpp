@@ -2694,7 +2694,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
   case INSTR_LOADRULESET: {
     
     // mut.lock();
-    loading = true;
+    // loading = true;
     std::cout << "TRUE" << std::endl;
     LmnInstrVar memi;
     LmnRulesetId id;
