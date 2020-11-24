@@ -3451,7 +3451,7 @@ void alter_functor(LmnMembraneRef mem, LmnSymbolAtomRef atom, LmnFunctor f) {
 
 /* ルールセットnewを膜memに追加する */
 void lmn_mem_add_ruleset(LmnMembraneRef mem, LmnRuleSetRef ruleset) {
-  printf("%s:%d\n", __FUNCTION__, __LINE__);
+  // printf("%s:%d\n", __FUNCTION__, __LINE__);
   std::cout << mem->rulesets.size() << std::endl;
   LMN_ASSERT(ruleset);
   lmn_mem_add_ruleset_sort(&(mem->rulesets), ruleset);
