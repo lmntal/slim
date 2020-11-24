@@ -919,6 +919,11 @@ void slim::vm::interpreter::findatom(LmnReactCxtRef rc, LmnRuleRef rule,
   // std::cout << ss1.str() << std::endl;
 
   // printf("1: %d %d\n",mem->get_atomlist(f)->size(), mem);
+  
+
+  std::stringstream ss;
+  ss << "findatom " << f << " " << std::this_thread::get_id();
+  std::cout << ss.str() << std::endl;
 
   auto atomlist_ent = mem->get_atomlist(f);
 
@@ -1619,10 +1624,6 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       findatom_through_hyperlink(rc, rule, instr, spc, mem, f, atomi);
     } else {
       // mut.lock();
-
-      std::stringstream ss;
-      ss << "findatom " << f << " " << std::this_thread::get_id();
-      std::cout << ss.str() << std::endl;
 
       findatom(rc, rule, instr, mem, f, atomi);
       // mut.unlock();
