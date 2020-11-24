@@ -506,10 +506,10 @@ auto react_ruleset_wrap = [](LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleSetRe
   // std::cout << ti <<":"<<  std::this_thread::get_id()<< std::endl;
   for (auto r : *rs) {
     if(!loading){
-    if(cnt%tnum != ti){
-      cnt++;
-      continue;
-    }
+      if(cnt%tnum != ti){
+        cnt++;
+        continue;
+      }
     }
 #ifdef PROFILE
     if (!lmn_env.nd && lmn_env.profile_level >= 2)
@@ -1250,7 +1250,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
   if (lmn_env.find_atom_parallel)
     return FALSE;
 
-  if(op==INSTR_LOADRULESET){
+  if(op==INSTR_LOADRULESET || op==INSTR_NEWATOM || op==INSTR_ALLOCLINK){
     loading = true;
   }else{
     loading = false;
