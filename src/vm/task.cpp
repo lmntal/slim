@@ -3525,8 +3525,6 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
   case INSTR_COPYATOM: {
     LmnInstrVar atom1, memi, atom2;
 
-    mut.lock();
-
     READ_VAL(LmnInstrVar, instr, atom1);
     READ_VAL(LmnInstrVar, instr, memi);
     READ_VAL(LmnInstrVar, instr, atom2);
@@ -3536,8 +3534,6 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
         rc->at(atom2), TT_OTHER};
     lmn_mem_push_atom((LmnMembraneRef)rc->wt(memi), (LmnAtomRef)rc->wt(atom1),
                       rc->at(atom1));
-
-    mut.unlock();
     break;
   }
   case INSTR_EQATOM: {
