@@ -935,10 +935,19 @@ void slim::vm::interpreter::findatom(LmnReactCxtRef rc, LmnRuleRef rule,
 
   // mut.lock();
   muts[f-23].lock();
+
+  // std::stringstream ss;
+  // ss << "muts[" << f-23 << "] has locked ";
+  // std::cout << ss.str() << std::endl;
+
   auto iter = std::begin(*atomlist_ent);
   auto end = std::end(*atomlist_ent);
   if (iter == end){
     muts[f-23].unlock();
+
+    // std::stringstream ss;
+    // ss << "muts[" << f-23 << "] has unlocked ";
+    // std::cout << ss.str() << std::endl;
     // mut.unlock();
     return;
   }
@@ -953,8 +962,12 @@ void slim::vm::interpreter::findatom(LmnReactCxtRef rc, LmnRuleRef rule,
   // mut.unlock();
 
   this->false_driven_enumerate(reg, std::move(v));
-  
+
   muts[f-23].unlock();
+
+  std::stringstream ss;
+  ss << "muts[" << f-23 << "] has unlocked ";
+  std::cout << ss.str() << std::endl;
 
   // std::stringstream ss2;
   // ss2 << "2: " << mem->get_atomlist(f)->size() << " " << mem;
@@ -1939,8 +1952,8 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       READ_DATA_ATOM(ap, attr);
     } else { /* symbol atom */
       LmnFunctor f;
-      muts[f-23].lock();
       READ_VAL(LmnFunctor, instr, f);
+      muts[f-23].lock();
 
       std::stringstream ss;
       ss << "newatom " << f << " " << std::this_thread::get_id();
