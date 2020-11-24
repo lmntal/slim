@@ -933,13 +933,13 @@ void slim::vm::interpreter::findatom(LmnReactCxtRef rc, LmnRuleRef rule,
   if (!atomlist_ent)
     return;
 
-  mut.lock();
+  // mut.lock();
   muts[f-23].lock();
   auto iter = std::begin(*atomlist_ent);
   auto end = std::end(*atomlist_ent);
   if (iter == end){
     muts[f-23].unlock();
-    mut.unlock();
+    // mut.unlock();
     return;
   }
 
@@ -950,7 +950,7 @@ void slim::vm::interpreter::findatom(LmnReactCxtRef rc, LmnRuleRef rule,
   });
 
   muts[f-23].unlock();
-  mut.unlock();
+  // mut.unlock();
 
   this->false_driven_enumerate(reg, std::move(v));
 
@@ -3544,18 +3544,25 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
   case INSTR_COPYATOM: {
     LmnInstrVar atom1, memi, atom2;
 
-    mut.lock();
+    // mut.lock();
 
     READ_VAL(LmnInstrVar, instr, atom1);
     READ_VAL(LmnInstrVar, instr, memi);
     READ_VAL(LmnInstrVar, instr, atom2);
+
+    LmnSymbolAtomRef copied_atom = (LmnSymbolAtomRef)(LmnAtomRef)rc->wt(atom1);
+
+    LmnFunctor f = copied_atom->get_functor();
+
+    muts[f-23].lock();
 
     rc->reg(atom1) = {
         (LmnWord)lmn_copy_atom((LmnAtomRef)rc->wt(atom2), rc->at(atom2)),
         rc->at(atom2), TT_OTHER};
     lmn_mem_push_atom((LmnMembraneRef)rc->wt(memi), (LmnAtomRef)rc->wt(atom1),
                       rc->at(atom1));
-    mut.unlock();
+    muts[f-23].unlock();
+    // mut.unlock();
     break;
   }
   case INSTR_EQATOM: {
