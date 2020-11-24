@@ -938,8 +938,8 @@ void slim::vm::interpreter::findatom(LmnReactCxtRef rc, LmnRuleRef rule,
   auto iter = std::begin(*atomlist_ent);
   auto end = std::end(*atomlist_ent);
   if (iter == end){
-    mut.unlock();
     muts[f-23].unlock();
+    mut.unlock();
     return;
   }
 
@@ -949,8 +949,8 @@ void slim::vm::interpreter::findatom(LmnReactCxtRef rc, LmnRuleRef rule,
     return LmnRegister({(LmnWord)atom, LMN_ATTR_MAKE_LINK(0), TT_ATOM});
   });
 
-  mut.unlock();
   muts[f-23].unlock();
+  mut.unlock();
 
   this->false_driven_enumerate(reg, std::move(v));
 
