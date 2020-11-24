@@ -151,7 +151,7 @@ namespace c17 = slim::element;
 // std::mutex mut;
 std::vector<std::mutex> muts(10);
 
-// std::mutex mut;
+std::mutex mut;
 int join_count=0;
 // std::vector<std::unique_ptr<std::mutex>> tmut;
 
@@ -935,7 +935,7 @@ void slim::vm::interpreter::findatom(LmnReactCxtRef rc, LmnRuleRef rule,
   if (!atomlist_ent)
     return;
 
-  // mut.lock();
+  mut.lock();
 
 
   // std::stringstream ss;
@@ -946,11 +946,11 @@ void slim::vm::interpreter::findatom(LmnReactCxtRef rc, LmnRuleRef rule,
   auto end = std::end(*atomlist_ent);
   if (iter == end){
     muts[f-23].unlock();
+    mut.unlock();
 
     // std::stringstream ss;
     // ss << "muts[" << f-23 << "] has unlocked ";
     // std::cout << ss.str() << std::endl;
-    // mut.unlock();
     return;
   }
 
@@ -961,10 +961,10 @@ void slim::vm::interpreter::findatom(LmnReactCxtRef rc, LmnRuleRef rule,
   });
 
   // muts[f-23].unlock();
-  // mut.unlock();
 
   this->false_driven_enumerate(reg, std::move(v));
 
+  mut.unlock();
   muts[f-23].unlock();
 
   // std::stringstream ss;
@@ -3561,13 +3561,13 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
   case INSTR_COPYATOM: {
     LmnInstrVar atom1, memi, atom2;
 
-    // mut.lock();
+    mut.lock();
 
     READ_VAL(LmnInstrVar, instr, atom1);
     READ_VAL(LmnInstrVar, instr, memi);
     READ_VAL(LmnInstrVar, instr, atom2);
 
-    LmnSymbolAtomRef copied_atom = (LmnSymbolAtomRef)(LmnAtomRef)rc->wt(atom1);
+    // LmnSymbolAtomRef copied_atom = (LmnSymbolAtomRef)(LmnAtomRef)rc->wt(atom1);
 
     LmnFunctor f = copied_atom->get_functor();
 
@@ -3579,7 +3579,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     lmn_mem_push_atom((LmnMembraneRef)rc->wt(memi), (LmnAtomRef)rc->wt(atom1),
                       rc->at(atom1));
     muts[f-23].unlock();
-    // mut.unlock();
+    mut.unlock();
     break;
   }
   case INSTR_EQATOM: {
