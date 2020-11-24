@@ -2648,9 +2648,9 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     READ_VAL(LmnInstrVar, instr, atomi);
 
     // 仮のロック。atomiやatomlistentryにロックを掛けた方がいいかも。
-    // mut.lock();
+    mut.lock();
     lmn_free_atom((LmnAtomRef)rc->wt(atomi), rc->at(atomi));
-    // mut.unlock();
+    mut.unlock();
     break;
   }
   case INSTR_REMOVEMEM: {
