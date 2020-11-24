@@ -499,7 +499,7 @@ BOOL react_all_rulesets(LmnReactCxtRef rc, LmnMembraneRef cur_mem, int ti) {
 // std::atomic_bool react_result = false;
 bool react_result = false;
 
-auto react_ruleset_wrap = [](LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleSetRef rs, int tnum, int ti){
+auto react_ruleset_wrap = [](LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleSetRef rs, bool parallel, int tnum, int ti){
 
   int cnt=0;
   // printf("%s:%d\n", __FUNCTION__, __LINE__);
@@ -520,13 +520,15 @@ auto react_ruleset_wrap = [](LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleSetRe
     // std::cout << "will react!" << std::endl;
 
     // ここをfalseになるまでやり続ける
+    
     BOOL reacted;
-    do{
+    if(parallel){
+      do{
+        reacted = react_rule(rc, mem, r, ti);
+      }while(reacted);
+    }else{
       reacted = react_rule(rc, mem, r, ti);
-      if(loading){
-        break;
-      }
-    }while(reacted);
+    }
     // std::cout << "reacted!" << std::endl;
     cnt++;
     // mut.unlock();
@@ -576,7 +578,7 @@ static inline BOOL react_ruleset(LmnReactCxtRef rc, LmnMembraneRef mem,
     // std::stringstream ss;
     // ss << "[" << ti << "] work_arr: " << rc->work_array.size() << " , copied_arr: " << rc_copied->work_array.size();
     // std::cout << ss.str() << std::endl;
-    ts[i] = std::thread(react_ruleset_wrap, rc_copied, mem, rs, tnum, i);
+    ts[i] = std::thread(react_ruleset_wrap, rc_copied, mem, rs, parallel, tnum, i);
     // ts[i] = std::thread(react_ruleset_wrap, rc,  mem, rs, tnum, i);
   }
 
