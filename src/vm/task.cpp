@@ -556,7 +556,7 @@ static inline BOOL react_ruleset(LmnReactCxtRef rc, LmnMembraneRef mem,
   // printf("%s:%d\n", __FUNCTION__, __LINE__);
   int tnum=1;
   if(parallel)
-    tnum=10;
+    tnum=1;
   int cnt=0;
   react_result = false;
 
@@ -1946,7 +1946,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     LmnInstrVar atomi, memi;
     LmnAtomRef ap;
     LmnLinkAttr attr;
-    
+
     mut.lock();
 
     READ_VAL(LmnInstrVar, instr, atomi);
