@@ -1262,7 +1262,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
 
   // loading = false;
 
-  std::cout << op << std::endl;
+  // std::cout << op << std::endl;
 
   switch (op) {
   case INSTR_SPEC: {
@@ -2699,7 +2699,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     
     // mut.lock();
     // loading = true;
-    std::cout << "TRUE" << std::endl;
+    // std::cout << "TRUE" << std::endl;
     LmnInstrVar memi;
     LmnRulesetId id;
     READ_VAL(LmnInstrVar, instr, memi);
