@@ -149,7 +149,10 @@ namespace c17 = slim::element;
 // int tnum = 10;
 
 std::mutex mut;
+int join_count=0;
 // std::vector<std::unique_ptr<std::mutex>> tmut;
+
+bool loading = true;
 
 
 
@@ -412,6 +415,7 @@ static void mem_oriented_loop(MemReactContext *ctx, LmnMembraneRef mem) {
     }
   }
 
+  std::cout << "JOIN " << join_count << std::endl;
 
 }
 
@@ -516,9 +520,7 @@ auto react_ruleset_wrap = [](LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleSetRe
     // ここをfalseになるまでやり続ける
     BOOL reacted;
     do{
-      bool tmp = false;
-      bool *loading = &tmp;
-      reacted = react_rule(rc, mem, r, ti, loading);
+      reacted = react_rule(rc, mem, r, ti);
       if(loading){
         break;
       }
@@ -576,6 +578,7 @@ static inline BOOL react_ruleset(LmnReactCxtRef rc, LmnMembraneRef mem,
 
   for(int i=0;i<tnum;i++){
     ts[i].join();
+    join_count++;
   }
 
   //   for (auto r : *rs) {
@@ -603,7 +606,7 @@ static inline BOOL react_ruleset(LmnReactCxtRef rc, LmnMembraneRef mem,
  *   通常実行では, 書換えに成功した場合にTRUE,
  * マッチングしなかった場合にFALSEを返す. 非決定実行では,
  * マッチングに失敗するまでバックトラックを繰り返すため常にFALSEが返る. */
-BOOL react_rule(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule, int ti, bool* loading) {
+BOOL react_rule(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule, int ti) {
   LmnTranslated translated;
   BYTE *inst_seq;
   BOOL result;
@@ -628,7 +631,7 @@ BOOL react_rule(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule, int ti, 
   // printf("%s:%d\n", __FUNCTION__, __LINE__);
   // std::cout << mem->rulesets.size() << std::endl;
 
-  result = (translated && translated(rc, mem, rule)) || (inst_seq && in.run(ti, loading));
+  result = (translated && translated(rc, mem, rule)) || (inst_seq && in.run(ti));
 
   // mut.unlock();
   // std::cout << "end translated [" << ti << "] " << std::endl;
@@ -1237,7 +1240,7 @@ struct exec_subinstructions_branch {
  *  stop becomes true only if executien should be aborted.
  */
 bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
-                                         bool &stop, bool* loading=NULL) {
+                                         bool &stop) {
   LmnInstrOp op;
   READ_VAL(LmnInstrOp, instr, op);
   stop = true;
@@ -1245,7 +1248,15 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
   if (lmn_env.find_atom_parallel)
     return FALSE;
 
-  // std::cout << op << std::endl;
+  if(op==INSTR_LOADRULESET){
+    loading = true;
+  }else{
+    loading = false;
+  }
+
+  // loading = false;
+
+  std::cout << op << std::endl;
 
   switch (op) {
   case INSTR_SPEC: {
@@ -2681,9 +2692,8 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
   case INSTR_LOADRULESET: {
     
     // mut.lock();
-    bool tmp = true;
-    loading = &tmp;
-    // std::cout << "TRUE" << std::endl;
+    loading = true;
+    std::cout << "TRUE" << std::endl;
     LmnInstrVar memi;
     LmnRulesetId id;
     READ_VAL(LmnInstrVar, instr, memi);
@@ -2694,6 +2704,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     //std::cout << std::this_thread::get_id()<< ":" << ((LmnMembraneRef)rc->wt(memi))->rulesets.size() << std::endl;
       
     lmn_mem_add_ruleset((LmnMembraneRef)rc->wt(memi), LmnRuleSetTable::at(id));
+
     // mut.unlock();
     // printf("%s:%d\n", __FUNCTION__, __LINE__);
     break;
@@ -4554,7 +4565,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
   return false;
 }
 
-bool slim::vm::interpreter::run(int ti=0, bool* loading=NULL) {
+bool slim::vm::interpreter::run(int ti=0) {
   //  << "running!" << std::endl;
   bool result;
   do {
@@ -4563,7 +4574,7 @@ bool slim::vm::interpreter::run(int ti=0, bool* loading=NULL) {
     do {
       // std::cout << "command start [" << ti << "] " << std::endl;
       // mut.lock();
-      result = exec_command(this->rc, this->rule, stop, loading);
+      result = exec_command(this->rc, this->rule, stop);
       // std::cout << "result : " << result << std::endl;
       // mut.unlock();
       // std::cout << "command end [" << ti << "] " << std::endl;

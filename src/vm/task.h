@@ -83,7 +83,7 @@ void task_init(void);
 void task_finalize(void);
 void lmn_dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr);
 void lmn_run(Vector *rulesets);
-BOOL react_rule(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule, int ti=0, bool* loading=NULL);
+BOOL react_rule(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule, int ti=0);
 void react_start_rulesets(LmnMembraneRef mem, Vector *rulesets);
 BOOL react_all_rulesets(LmnReactCxtRef rc, LmnMembraneRef cur_mem, int ti=0);
 void memstack_push(LmnMembraneRef mem);
