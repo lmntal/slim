@@ -929,13 +929,13 @@ void slim::vm::interpreter::findatom(LmnReactCxtRef rc, LmnRuleRef rule,
   // std::cout << ss.str() << std::endl;
 
   muts[f-23].lock();
+  mut.lock();
 
   auto atomlist_ent = mem->get_atomlist(f);
 
   if (!atomlist_ent)
     return;
 
-  mut.lock();
 
 
   // std::stringstream ss;
