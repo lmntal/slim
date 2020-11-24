@@ -1926,8 +1926,10 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     } else { /* symbol atom */
       LmnFunctor f;
 
-      printf("newaton %ud  %lu\n", f, std::this_thread::get_id());
-
+      std::stringstream ss;
+      ss << "newatom " << f << " " << std::this_thread::get_id();
+      std::cout << ss.str() << std::endl;
+      
       READ_VAL(LmnFunctor, instr, f);
       mut.lock();
       ap = lmn_new_atom(f);
