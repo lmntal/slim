@@ -1250,7 +1250,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
   if (lmn_env.find_atom_parallel)
     return FALSE;
 
-  if(op==INSTR_LOADRULESET || op==INSTR_NEWATOM || op==INSTR_ALLOCLINK){
+  if(op==INSTR_LOADRULESET){
     loading = true;
   }else{
     loading = false;
