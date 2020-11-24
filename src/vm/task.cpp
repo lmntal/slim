@@ -148,7 +148,7 @@ namespace c17 = slim::element;
 
 // int tnum = 10;
 
-std::mutex mut;
+// std::mutex mut;
 std::vector<std::mutex> muts(10);
 
 // std::mutex mut;
@@ -949,10 +949,12 @@ void slim::vm::interpreter::findatom(LmnReactCxtRef rc, LmnRuleRef rule,
     return LmnRegister({(LmnWord)atom, LMN_ATTR_MAKE_LINK(0), TT_ATOM});
   });
 
-  muts[f-23].unlock();
+  // muts[f-23].unlock();
   // mut.unlock();
 
   this->false_driven_enumerate(reg, std::move(v));
+  
+  muts[f-23].unlock();
 
   // std::stringstream ss2;
   // ss2 << "2: " << mem->get_atomlist(f)->size() << " " << mem;
