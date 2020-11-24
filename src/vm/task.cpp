@@ -3569,16 +3569,16 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
 
     // LmnSymbolAtomRef copied_atom = (LmnSymbolAtomRef)(LmnAtomRef)rc->wt(atom1);
 
-    LmnFunctor f = copied_atom->get_functor();
+    // LmnFunctor f = copied_atom->get_functor();
 
-    muts[f-23].lock();
+    // muts[f-23].lock();
 
     rc->reg(atom1) = {
         (LmnWord)lmn_copy_atom((LmnAtomRef)rc->wt(atom2), rc->at(atom2)),
         rc->at(atom2), TT_OTHER};
     lmn_mem_push_atom((LmnMembraneRef)rc->wt(memi), (LmnAtomRef)rc->wt(atom1),
                       rc->at(atom1));
-    muts[f-23].unlock();
+    // muts[f-23].unlock();
     mut.unlock();
     break;
   }
