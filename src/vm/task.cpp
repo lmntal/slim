@@ -149,7 +149,7 @@ namespace c17 = slim::element;
 // int tnum = 10;
 
 // std::mutex mut;
-std::vector<std::mutex> muts(10);
+// std::vector<std::mutex> muts(10);
 
 std::mutex mut;
 int join_count=0;
@@ -928,7 +928,7 @@ void slim::vm::interpreter::findatom(LmnReactCxtRef rc, LmnRuleRef rule,
   // ss << "findatom " << f << " " << std::this_thread::get_id();
   // std::cout << ss.str() << std::endl;
 
-  muts[f-23].lock();
+  // muts[f-23].lock();
   mut.lock();
 
   auto atomlist_ent = mem->get_atomlist(f);
@@ -945,7 +945,7 @@ void slim::vm::interpreter::findatom(LmnReactCxtRef rc, LmnRuleRef rule,
   auto iter = std::begin(*atomlist_ent);
   auto end = std::end(*atomlist_ent);
   if (iter == end){
-    muts[f-23].unlock();
+    // muts[f-23].unlock();
     mut.unlock();
 
     // std::stringstream ss;
@@ -965,7 +965,7 @@ void slim::vm::interpreter::findatom(LmnReactCxtRef rc, LmnRuleRef rule,
   this->false_driven_enumerate(reg, std::move(v));
 
   mut.unlock();
-  muts[f-23].unlock();
+  // muts[f-23].unlock();
 
   // std::stringstream ss;
   // ss << "muts[" << f-23 << "] has unlocked ";
@@ -1955,7 +1955,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     } else { /* symbol atom */
       LmnFunctor f;
       READ_VAL(LmnFunctor, instr, f);
-      muts[f-23].lock();
+      // muts[f-23].lock();
 
       // std::stringstream ss;
       // ss << "newatom " << f << " " << std::this_thread::get_id();
@@ -1963,7 +1963,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       
 
       ap = lmn_new_atom(f);
-      muts[f-23].unlock();
+      // muts[f-23].unlock();
 
 #ifdef USE_FIRSTCLASS_RULE
       if (f == LMN_COLON_MINUS_FUNCTOR) {
@@ -1972,7 +1972,9 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       }
 #endif
     }
+    mut.lock();
     lmn_mem_push_atom((LmnMembraneRef)rc->wt(memi), (LmnAtomRef)ap, attr);
+    mut.unlock();
     rc->reg(atomi) = {(LmnWord)ap, attr, TT_ATOM};
     break;
   }
