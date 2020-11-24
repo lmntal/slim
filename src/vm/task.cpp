@@ -556,7 +556,7 @@ static inline BOOL react_ruleset(LmnReactCxtRef rc, LmnMembraneRef mem,
   // printf("%s:%d\n", __FUNCTION__, __LINE__);
   int tnum=1;
   if(parallel)
-    tnum=1;
+    tnum=10;
   int cnt=0;
   react_result = false;
 
@@ -924,9 +924,9 @@ void slim::vm::interpreter::findatom(LmnReactCxtRef rc, LmnRuleRef rule,
   // printf("1: %d %d\n",mem->get_atomlist(f)->size(), mem);
   
 
-  std::stringstream ss;
-  ss << "findatom " << f << " " << std::this_thread::get_id();
-  std::cout << ss.str() << std::endl;
+  // std::stringstream ss;
+  // ss << "findatom " << f << " " << std::this_thread::get_id();
+  // std::cout << ss.str() << std::endl;
 
   muts[f-23].lock();
 
@@ -1957,9 +1957,9 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       READ_VAL(LmnFunctor, instr, f);
       muts[f-23].lock();
 
-      std::stringstream ss;
-      ss << "newatom " << f << " " << std::this_thread::get_id();
-      std::cout << ss.str() << std::endl;
+      // std::stringstream ss;
+      // ss << "newatom " << f << " " << std::this_thread::get_id();
+      // std::cout << ss.str() << std::endl;
       
 
       ap = lmn_new_atom(f);
