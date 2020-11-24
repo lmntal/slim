@@ -128,7 +128,7 @@ struct Vector user_system_rulesets; /* system ruleset defined by user */
 */
 
 static inline BOOL react_ruleset(LmnReactCxtRef rc, LmnMembraneRef mem,
-                                 LmnRuleSetRef ruleset, int ti=0);
+                                 LmnRuleSetRef ruleset, bool parallel=false, int ti=0);
 static inline void react_initial_rulesets(LmnReactCxtRef rc,
                                           LmnMembraneRef mem);
 static inline BOOL react_ruleset_in_all_mem(LmnReactCxtRef rc, LmnRuleSetRef rs,
@@ -465,7 +465,7 @@ BOOL react_all_rulesets(LmnReactCxtRef rc, LmnMembraneRef cur_mem, int ti) {
   /* ルールセットの適用 */
 
   for (i = 0; i < rulesets.size(); i++) {
-    if (react_ruleset(rc, cur_mem, rulesets[i], ti)) {
+    if (react_ruleset(rc, cur_mem, rulesets[i], true, ti)) {
       /* ndでは失敗するまでマッチングバックトラックしているので必ずFALSEが返ってくる
        */
       ok = TRUE;
@@ -545,11 +545,13 @@ auto react_ruleset_wrap = [](LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleSetRe
  *   非決定実行では常にFALSEを返す(マッチングに失敗するまでバックトラックする仕様).
  */
 static inline BOOL react_ruleset(LmnReactCxtRef rc, LmnMembraneRef mem,
-                                 LmnRuleSetRef rs, int ti) {
+                                 LmnRuleSetRef rs, bool parallel, int ti) {
 
   // ここを並列化する
   // printf("%s:%d\n", __FUNCTION__, __LINE__);
-  int tnum=10;
+  int tnum=1;
+  if(parallel)
+    tnum=10;
   int cnt=0;
   react_result = false;
 
