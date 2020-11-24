@@ -914,18 +914,18 @@ void slim::vm::interpreter::findatom(LmnReactCxtRef rc, LmnRuleRef rule,
                                      LmnFunctor f, size_t reg) {
   
 
-  std::stringstream ss1;
-  ss1 << "1: " << mem->get_atomlist(f)->size() << " " << mem;
-  std::cout << ss1.str() << std::endl;
+  // std::stringstream ss1;
+  // ss1 << "1: " << mem->get_atomlist(f)->size() << " " << mem;
+  // std::cout << ss1.str() << std::endl;
 
-  printf("1: %d %d\n",mem->get_atomlist(f)->size(), mem);
+  // printf("1: %d %d\n",mem->get_atomlist(f)->size(), mem);
 
   auto atomlist_ent = mem->get_atomlist(f);
 
   if (!atomlist_ent)
     return;
 
-  // mut.lock();
+  mut.lock();
   auto iter = std::begin(*atomlist_ent);
   auto end = std::end(*atomlist_ent);
   if (iter == end){
@@ -939,14 +939,16 @@ void slim::vm::interpreter::findatom(LmnReactCxtRef rc, LmnRuleRef rule,
     return LmnRegister({(LmnWord)atom, LMN_ATTR_MAKE_LINK(0), TT_ATOM});
   });
 
+  mut.unlock();
+
   this->false_driven_enumerate(reg, std::move(v));
 
-  std::stringstream ss2;
-  ss2 << "2: " << mem->get_atomlist(f)->size() << " " << mem;
-  std::cout << ss2.str() << std::endl;
+  // std::stringstream ss2;
+  // ss2 << "2: " << mem->get_atomlist(f)->size() << " " << mem;
+  // std::cout << ss2.str() << std::endl;
   // mut.unlock();
 
-  printf("2: %d %d\n",mem->get_atomlist(f)->size(), mem);
+  // printf("2: %d %d\n",mem->get_atomlist(f)->size(), mem);
 }
 
 /** find atom with a hyperlink occurred in the current rule for the first time.
@@ -3525,6 +3527,8 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
   case INSTR_COPYATOM: {
     LmnInstrVar atom1, memi, atom2;
 
+    mut.lock();
+
     READ_VAL(LmnInstrVar, instr, atom1);
     READ_VAL(LmnInstrVar, instr, memi);
     READ_VAL(LmnInstrVar, instr, atom2);
@@ -3534,6 +3538,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
         rc->at(atom2), TT_OTHER};
     lmn_mem_push_atom((LmnMembraneRef)rc->wt(memi), (LmnAtomRef)rc->wt(atom1),
                       rc->at(atom1));
+    mut.unlock();
     break;
   }
   case INSTR_EQATOM: {
