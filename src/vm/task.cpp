@@ -965,9 +965,9 @@ void slim::vm::interpreter::findatom(LmnReactCxtRef rc, LmnRuleRef rule,
 
   muts[f-23].unlock();
 
-  std::stringstream ss;
-  ss << "muts[" << f-23 << "] has unlocked ";
-  std::cout << ss.str() << std::endl;
+  // std::stringstream ss;
+  // ss << "muts[" << f-23 << "] has unlocked ";
+  // std::cout << ss.str() << std::endl;
 
   // std::stringstream ss2;
   // ss2 << "2: " << mem->get_atomlist(f)->size() << " " << mem;
