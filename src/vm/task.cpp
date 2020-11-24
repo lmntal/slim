@@ -505,12 +505,12 @@ auto react_ruleset_wrap = [](LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleSetRe
   // printf("%s:%d\n", __FUNCTION__, __LINE__);
   // std::cout << ti <<":"<<  std::this_thread::get_id()<< std::endl;
   for (auto r : *rs) {
-    if(!loading){
+    //if(!loading){
       if(cnt%tnum != ti){
         cnt++;
         continue;
       }
-    }
+    //∂}
 #ifdef PROFILE
     if (!lmn_env.nd && lmn_env.profile_level >= 2)
       profile_rule_obj_set(rs, r);
