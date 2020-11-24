@@ -1616,9 +1616,9 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
           (SameProcCxt *)hashtbl_get(rc->get_hl_sameproccxt(), (HashKeyType)atomi);
       findatom_through_hyperlink(rc, rule, instr, spc, mem, f, atomi);
     } else {
-      // mut.lock();
+      mut.lock();
       findatom(rc, rule, instr, mem, f, atomi);
-      // mut.unlock();
+      mut.unlock();
     }
 
     return false; // false driven loop
