@@ -148,6 +148,7 @@ namespace c17 = slim::element;
 
 // int tnum = 10;
 
+std::mutex mut;
 std::vector<std::mutex> muts(10);
 
 // std::mutex mut;
@@ -933,9 +934,11 @@ void slim::vm::interpreter::findatom(LmnReactCxtRef rc, LmnRuleRef rule,
     return;
 
   muts[f-23].lock();
+  mut.lock();
   auto iter = std::begin(*atomlist_ent);
   auto end = std::end(*atomlist_ent);
   if (iter == end){
+    mut.unlock();
     muts[f-23].unlock();
     return;
   }
@@ -946,6 +949,7 @@ void slim::vm::interpreter::findatom(LmnReactCxtRef rc, LmnRuleRef rule,
     return LmnRegister({(LmnWord)atom, LMN_ATTR_MAKE_LINK(0), TT_ATOM});
   });
 
+  mut.unlock();
   muts[f-23].unlock();
 
   this->false_driven_enumerate(reg, std::move(v));
@@ -3539,7 +3543,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
   case INSTR_COPYATOM: {
     LmnInstrVar atom1, memi, atom2;
 
-    // mut.lock();
+    mut.lock();
 
     READ_VAL(LmnInstrVar, instr, atom1);
     READ_VAL(LmnInstrVar, instr, memi);
@@ -3550,7 +3554,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
         rc->at(atom2), TT_OTHER};
     lmn_mem_push_atom((LmnMembraneRef)rc->wt(memi), (LmnAtomRef)rc->wt(atom1),
                       rc->at(atom1));
-    // mut.unlock();
+    mut.unlock();
     break;
   }
   case INSTR_EQATOM: {
