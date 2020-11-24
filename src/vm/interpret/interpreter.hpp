@@ -73,7 +73,7 @@ struct interpreter {
       : rc(rc), rule(rule), instr(instr) {}
 
   bool interpret(LmnReactCxt *rc, LmnRule *rule, LmnRuleInstr instr);
-  bool exec_command(LmnReactCxt *rc, LmnRule *rule, bool &stop);
+  bool exec_command(LmnReactCxt *rc, LmnRule *rule, bool &stop, bool* loading);
   void findatom(LmnReactCxt *rc, LmnRule *rule, LmnRuleInstr instr,
                 LmnMembrane *mem, LmnFunctor f, size_t reg);
   void findatom_original_hyperlink(LmnReactCxt *rc, LmnRule *rule,
@@ -85,7 +85,7 @@ struct interpreter {
   void findatom_through_hyperlink(LmnReactCxt *rc, LmnRule *rule,
                                   LmnRuleInstr instr, SameProcCxt *spc,
                                   LmnMembrane *mem, LmnFunctor f, size_t reg);
-  bool run(int ti);
+  bool run(int ti, bool* loading);
 
   template <typename... Args> void push_stackframe(Args... args) {
     callstack.emplace_back(std::forward<Args>(args)...);
