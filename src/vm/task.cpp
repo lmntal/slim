@@ -1947,7 +1947,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     LmnAtomRef ap;
     LmnLinkAttr attr;
     
-    mut.lock();
+    // mut.lock();
 
     READ_VAL(LmnInstrVar, instr, atomi);
     READ_VAL(LmnInstrVar, instr, memi);
@@ -1974,6 +1974,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       }
 #endif
     }
+    mut.lock();
     lmn_mem_push_atom((LmnMembraneRef)rc->wt(memi), (LmnAtomRef)ap, attr);
     mut.unlock();
     rc->reg(atomi) = {(LmnWord)ap, attr, TT_ATOM};
