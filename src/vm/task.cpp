@@ -377,11 +377,11 @@ static void mem_oriented_loop(MemReactContext *ctx, LmnMembraneRef mem) {
   };
 
   // グローバルルート膜対策
-  LmnMembraneRef mem = ctx->memstack_pop();
+  LmnMembraneRef gmem = ctx->memstack_pop();
   // MemReactContext *ctx_copied = new MemReactContext(gmem, REACT_MEM_ORIENTED);
   // LmnReactCxt *rc_copied = new LmnReactCxt(*rc);
   // MemReactContext ctx_copied = MemReactContext(mem);
-  react(ctx, mem, 0);
+  react(ctx, gmem, 0);
 
   while (!ctx->memstack_isempty()) {
     int cnt = 0;
