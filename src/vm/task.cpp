@@ -393,9 +393,10 @@ static void mem_oriented_loop(MemReactContext *ctx, LmnMembraneRef mem) {
       LmnMembraneRef mem = ctx->memstack_pop();
 
       // ctxをコピー
-      LmnReactCxt *rc_copied = new LmnReactCxt(*rc);
+      MemReactContext *ctx_copied = new MemReactContext(mem);
+      // LmnReactCxt *rc_copied = new LmnReactCxt(*rc);
       // MemReactContext ctx_copied = MemReactContext(mem);
-      ts[i] = std::thread(react, rc_copied, mem, i);
+      ts[i] = std::thread(react, ctx_copied, mem, i);
     }
     // std::cout << "cnt :" << cnt << std::endl; 
     // for(int j=0;j<tnum;j++){
