@@ -398,7 +398,7 @@ static void mem_oriented_loop(MemReactContext *ctx, LmnMembraneRef mem) {
 
       // ctxをコピー
       MemReactContext *ctx_copied = new MemReactContext(*ctx);
-      ctx_copied_vec.push_back(&ctx_copied);
+      ctx_copied_vec.push_back(ctx_copied);
       // LmnReactCxt *rc_copied = new LmnReactCxt(*rc);
       // MemReactContext ctx_copied = MemReactContext(mem);
       ts[i] = std::thread(react, ctx_copied, mem, i);
