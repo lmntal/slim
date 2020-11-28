@@ -384,6 +384,10 @@ static void mem_oriented_loop(MemReactContext *ctx, LmnMembraneRef mem) {
   react(ctx, gmem, 0);
 
   while (!ctx->memstack_isempty()) {
+
+    // 後でdelete出来るように保存しておく
+    std::vector<MemReactContext *> ctx_copied_vec();
+
     int cnt = 0;
     std::vector<std::thread> ts(tnum);
     for(int i=0;i<tnum;i++){
@@ -394,6 +398,7 @@ static void mem_oriented_loop(MemReactContext *ctx, LmnMembraneRef mem) {
 
       // ctxをコピー
       MemReactContext *ctx_copied = new MemReactContext(*ctx);
+      ctx_copied_vec.push_back(&ctx_copied);
       // LmnReactCxt *rc_copied = new LmnReactCxt(*rc);
       // MemReactContext ctx_copied = MemReactContext(mem);
       ts[i] = std::thread(react, ctx_copied, mem, i);
@@ -402,6 +407,7 @@ static void mem_oriented_loop(MemReactContext *ctx, LmnMembraneRef mem) {
     // for(int j=0;j<tnum;j++){
     for(int j=0;j<cnt;j++){
       ts[j].join();
+      delete ctx_copied_vec[j];
     }
     // std::cout << "ok" << std::endl;
   }
