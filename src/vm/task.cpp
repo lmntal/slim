@@ -377,11 +377,11 @@ static void mem_oriented_loop(MemReactContext *ctx, LmnMembraneRef mem) {
   };
 
   // グローバルルート膜対策
-  LmnMembraneRef mem_ = ctx->memstack_pop();
-  MemReactContext *ctx_copied = new MemReactContext(mem_);
+  LmnMembraneRef mem = ctx->memstack_pop();
+  // MemReactContext *ctx_copied = new MemReactContext(gmem, REACT_MEM_ORIENTED);
   // LmnReactCxt *rc_copied = new LmnReactCxt(*rc);
   // MemReactContext ctx_copied = MemReactContext(mem);
-  react(ctx_copied, mem_, 0);
+  react(ctx, mem, 0);
 
   while (!ctx->memstack_isempty()) {
     int cnt = 0;
@@ -393,7 +393,7 @@ static void mem_oriented_loop(MemReactContext *ctx, LmnMembraneRef mem) {
       LmnMembraneRef mem = ctx->memstack_pop();
 
       // ctxをコピー
-      MemReactContext *ctx_copied = new MemReactContext(mem);
+      MemReactContext *ctx_copied = new MemReactContext(*ctx);
       // LmnReactCxt *rc_copied = new LmnReactCxt(*rc);
       // MemReactContext ctx_copied = MemReactContext(mem);
       ts[i] = std::thread(react, ctx_copied, mem, i);
@@ -834,11 +834,11 @@ void slim::vm::interpreter::findatom(LmnReactCxtRef rc, LmnRuleRef rule,
   if (!atomlist_ent)
     return;
 
-  // mut.lock();
+  mut.lock();
   auto iter = std::begin(*atomlist_ent);
   auto end = std::end(*atomlist_ent);
   if (iter == end){
-    // mut.unlock();
+    mut.unlock();
     return;
   }
 
@@ -848,7 +848,7 @@ void slim::vm::interpreter::findatom(LmnReactCxtRef rc, LmnRuleRef rule,
     return LmnRegister({(LmnWord)atom, LMN_ATTR_MAKE_LINK(0), TT_ATOM});
   });
 
-  mut.lock();
+  // mut.lock();
   this->false_driven_enumerate(reg, std::move(v));
   mut.unlock();
 
