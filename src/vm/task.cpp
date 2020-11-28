@@ -52,7 +52,7 @@
 #endif
 
 #include <algorithm>
-#include <execution>
+// #include <execution>
 #include <thread>
 #include <mutex>
 #include <iostream>
@@ -364,7 +364,7 @@ static void mem_oriented_loop(MemReactContext *ctx, LmnMembraneRef mem) {
 
   int tnum = 10; 
 
-  auto react = [&](LmnReactContextRef ctx, LmnMembraneRef m, int ti){
+  auto react = [&](MemReactContext *ctx, LmnMembraneRef m, int ti){
     BOOL reacted = false;
       do{
         reacted = react_all_rulesets(ctx,m,ti);
@@ -378,9 +378,10 @@ static void mem_oriented_loop(MemReactContext *ctx, LmnMembraneRef mem) {
 
   // グローバルルート膜対策
   LmnMembraneRef mem_ = ctx->memstack_pop();
-  LmnReactCxt *rc_copied = new LmnReactCxt(*rc);
+  MemReactContext *ctx_copied = new MemReactContext(mem);
+  // LmnReactCxt *rc_copied = new LmnReactCxt(*rc);
   // MemReactContext ctx_copied = MemReactContext(mem);
-  react(rc_copied, mem_, 0);
+  react(ctx_copied, mem_, 0);
 
   while (!ctx->memstack_isempty()) {
     int cnt = 0;
