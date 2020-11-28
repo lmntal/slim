@@ -364,10 +364,10 @@ static void mem_oriented_loop(MemReactContext *ctx, LmnMembraneRef mem) {
 
   int tnum = 10; 
 
-  auto react = [&](MemReactContext ctx, LmnMembraneRef m, int ti){
+  auto react = [&](LmnReactContextRef ctx, LmnMembraneRef m, int ti){
     BOOL reacted = false;
       do{
-        reacted = react_all_rulesets(&ctx,m,ti);
+        reacted = react_all_rulesets(ctx,m,ti);
         // if(reacted)
         //   std::cout << "reacted" << std::endl;
         // else{
@@ -378,8 +378,9 @@ static void mem_oriented_loop(MemReactContext *ctx, LmnMembraneRef mem) {
 
   // グローバルルート膜対策
   LmnMembraneRef mem_ = ctx->memstack_pop();
-  MemReactContext ctx_copied = MemReactContext(mem);
-  react(ctx_copied, mem_, 0);
+  LmnReactCxt *rc_copied = new LmnReactCxt(*rc);
+  // MemReactContext ctx_copied = MemReactContext(mem);
+  react(rc_copied, mem_, 0);
 
   while (!ctx->memstack_isempty()) {
     int cnt = 0;
@@ -391,8 +392,9 @@ static void mem_oriented_loop(MemReactContext *ctx, LmnMembraneRef mem) {
       LmnMembraneRef mem = ctx->memstack_pop();
 
       // ctxをコピー
-      MemReactContext ctx_copied = MemReactContext(mem);
-      ts[i] = std::thread(react, ctx_copied, mem, i);
+      LmnReactCxt *rc_copied = new LmnReactCxt(*rc);
+      // MemReactContext ctx_copied = MemReactContext(mem);
+      ts[i] = std::thread(react, rc_copied, mem, i);
     }
     // std::cout << "cnt :" << cnt << std::endl; 
     // for(int j=0;j<tnum;j++){
