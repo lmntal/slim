@@ -378,7 +378,7 @@ static void mem_oriented_loop(MemReactContext *ctx, LmnMembraneRef mem) {
 
   // グローバルルート膜対策
   LmnMembraneRef mem_ = ctx->memstack_pop();
-  MemReactContext *ctx_copied = new MemReactContext(mem);
+  MemReactContext *ctx_copied = new MemReactContext(mem_);
   // LmnReactCxt *rc_copied = new LmnReactCxt(*rc);
   // MemReactContext ctx_copied = MemReactContext(mem);
   react(ctx_copied, mem_, 0);
