@@ -1500,6 +1500,11 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     break;
   }
   case INSTR_FINDATOM: {
+
+    std::stringstream ss;
+    ss << "findatom started: " << std::this_thread::get_id();
+    std::cout << ss.str() << std::endl;
+
     LmnInstrVar atomi, memi;
     LmnLinkAttr attr;
 
@@ -1529,6 +1534,10 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       findatom(rc, rule, instr, mem, f, atomi);
       // mut.unlock();
     }
+
+    std::stringstream ss;
+    ss << "findatom ended: " << std::this_thread::get_id();
+    std::cout << ss.str() << std::endl;
 
     return false; // false driven loop
   }
@@ -1821,6 +1830,11 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     break;
   }
   case INSTR_NEWATOM: {
+
+    std::stringstream ss;
+    ss << "newatom started: " << std::this_thread::get_id();
+    std::cout << ss.str() << std::endl;
+
     LmnInstrVar atomi, memi;
     LmnAtomRef ap;
     LmnLinkAttr attr;
@@ -1847,6 +1861,10 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     }
     lmn_mem_push_atom((LmnMembraneRef)rc->wt(memi), (LmnAtomRef)ap, attr);
     rc->reg(atomi) = {(LmnWord)ap, attr, TT_ATOM};
+
+    std::stringstream ss;
+    ss << "newatom ended: " << std::this_thread::get_id();
+    std::cout << ss.str() << std::endl;
     break;
   }
   case INSTR_NATOMS: {
