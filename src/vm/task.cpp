@@ -386,7 +386,7 @@ static void mem_oriented_loop(MemReactContext *ctx, LmnMembraneRef mem) {
   while (!ctx->memstack_isempty()) {
 
     // 後でdelete出来るように保存しておく
-    std::vector<MemReactContext *> ctx_copied_vec();
+    std::vector<MemReactContext *> ctx_copied_vec;
 
     int cnt = 0;
     std::vector<std::thread> ts(tnum);
