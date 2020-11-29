@@ -40,7 +40,6 @@
 #include "functor.h"
 #include "lmntal.h"
 #include "membrane.hpp"
-#include "memstack.h"
 #include "react_context.hpp"
 #include "rule.hpp"
 #include "symbol.h"
@@ -85,8 +84,8 @@ static BOOL delete_redundant_outproxies(LmnReactCxtRef rc, LmnMembraneRef mem,
                   lmn_mem_unify_atom_args(m0, i0, 1, i1, 1);
                   ent->remove(i0);
                   ent->remove(i1);
-                  if (RC_GET_MODE(rc, REACT_MEM_ORIENTED)) {
-                    lmn_memstack_push(((MemReactContext *)rc)->MEMSTACK(), m0);
+                  if (rc->has_mode(REACT_MEM_ORIENTED)) {
+                    ((MemReactContext *)rc)->memstack_push(m0);
                   }
                   return TRUE;
                 }

@@ -564,7 +564,7 @@ void state_D_flush(State *s) {
 }
 
 /* 差分圧縮バイト列に基づく状態生成処理のfinalizeを行う. */
-void state_D_progress(State *s, LmnReactCxtRef rc) {
+void state_D_progress(State *s, MCReactContext *rc) {
   RC_D_PROGRESS(rc);
   state_D_flush(s);
 }

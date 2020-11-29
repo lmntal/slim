@@ -128,6 +128,83 @@ void cb_string_reverse(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
   lmn_mem_newlink(mem, a1, t1, LMN_ATTR_GET_VALUE(t1), a0, t0, 0);
 }
 
+void cb_string_replace(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
+                      LmnLinkAttr t0, LmnAtomRef a1, LmnLinkAttr t1,
+                      LmnAtomRef a2, LmnLinkAttr t2,
+                      LmnAtomRef a3, LmnLinkAttr t3) {
+  LmnStringRef ret;
+
+  auto ret_str = reinterpret_cast<LmnString *>(a0)->str;
+  auto sub_str = reinterpret_cast<LmnString *>(a1)->str;
+  auto rep_str = reinterpret_cast<LmnString *>(a2)->str;
+
+  auto pos = std::string::size_type(0);
+  if(!sub_str.empty()) {
+    while((pos = ret_str.find(sub_str, pos)) != std::string::npos) {
+      ret_str.replace(pos, sub_str.length(), rep_str);
+      pos += rep_str.length();
+    }
+  } else {
+    while(pos <= ret_str.length()) {
+      ret_str.insert(pos, rep_str);
+      pos += rep_str.length() + 1;
+    }
+  }
+
+  ret = new LmnString(ret_str);
+  lmn_mem_push_atom(mem, ret, LMN_SP_ATOM_ATTR);
+  LINK_STR(mem, a3, t3, ret);
+
+  lmn_mem_delete_atom(mem, a0, t0);
+  lmn_mem_delete_atom(mem, a1, t1);
+  lmn_mem_delete_atom(mem, a2, t2);
+}
+
+void cb_string_split(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
+                      LmnLinkAttr t0, LmnAtomRef a1, LmnLinkAttr t1,
+                      LmnAtomRef a2, LmnLinkAttr t2) {
+
+  auto split_str = reinterpret_cast<LmnString *>(a0)->str;
+  auto sep_str = reinterpret_cast<LmnString *>(a1)->str;
+  auto sep_len = sep_str.length();
+  auto ls = std::vector<std::string>();
+
+  if(sep_len == 0) {
+    ls.push_back(split_str);
+  } else {
+    auto offset = std::string::size_type(0);
+    while (1) {
+      auto pos = split_str.find(sep_str, offset);
+      if (pos == std::string::npos) {
+        ls.push_back(split_str.substr(offset));
+        break;
+      }
+      ls.push_back(split_str.substr(offset, pos - offset));
+      offset = pos + sep_len;
+    }
+  }
+
+  LmnStringRef car;
+  LmnSymbolAtomRef cons;
+  LmnSymbolAtomRef cdr = lmn_mem_newatom(mem, LMN_NIL_FUNCTOR);
+  int cdr_pos = 0;
+
+  for (auto itr = ls.rbegin(), e = ls.rend(); itr != e; itr++) {
+    car = new LmnString(itr->c_str());
+    lmn_mem_push_atom(mem, car, LMN_SP_ATOM_ATTR);
+    cons = lmn_mem_newatom(mem, LMN_LIST_FUNCTOR);
+
+    LINK_STR(mem, cons, LMN_ATTR_MAKE_LINK(0), car);
+    lmn_newlink_in_symbols(cons, 1, cdr, cdr_pos);
+    cdr = cons;
+    cdr_pos = 2;
+  }
+  lmn_mem_newlink(mem, cdr, LMN_ATTR_MAKE_LINK(cdr_pos), cdr_pos, a2, t2, LMN_ATTR_GET_VALUE(t2));
+
+  lmn_mem_delete_atom(mem, a0, t0);
+  lmn_mem_delete_atom(mem, a1, t1);
+}
+
 void cb_string_substr(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
                       LmnLinkAttr t0, LmnAtomRef begin_, LmnLinkAttr t1,
                       LmnAtomRef end_, LmnLinkAttr t2, LmnAtomRef a3,
@@ -222,6 +299,8 @@ void string_init() {
   CCallback::lmn_register_c_fun("string_reverse", (void *)cb_string_reverse, 2);
   CCallback::lmn_register_c_fun("string_substr", (void *)cb_string_substr, 4);
   CCallback::lmn_register_c_fun("string_substr_right", (void *)cb_string_substr_right, 3);
+  CCallback::lmn_register_c_fun("string_replace", (void *)cb_string_replace, 4);
+  CCallback::lmn_register_c_fun("string_split", (void *)cb_string_split, 3);
 }
 
 void string_finalize() {}

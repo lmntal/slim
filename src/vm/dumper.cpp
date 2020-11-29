@@ -39,7 +39,6 @@
 #include "dumper.h"
 #include "atomlist.hpp"
 #include "ccallback.h"
-#include "memstack.h"
 #include "rule.hpp"
 #include "symbol.h"
 #include <ctype.h>
@@ -1080,8 +1079,8 @@ void cb_dump_mem(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
 
   lmn_mem_newlink(mem, a0, t0, 0, a2, t2, LMN_ATTR_GET_VALUE(t2));
 
-  if (RC_GET_MODE(rc, REACT_MEM_ORIENTED)) {
-    lmn_memstack_delete(((MemReactContext *)rc)->MEMSTACK(), m);
+  if (rc->has_mode(REACT_MEM_ORIENTED)) {
+    ((MemReactContext *)rc)->memstack_remove(m);
   }
   (m->mem_parent())->delete_mem(m);
 }

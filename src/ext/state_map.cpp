@@ -79,7 +79,7 @@ void cb_state_map_init(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
 
 void cb_state_map_free(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
                        LmnLinkAttr t0) {
-  delete (LmnStateMapRef)a0, mem;
+  delete ((LmnStateMapRef)a0)->states, mem;
   lmn_mem_remove_data_atom(mem, (LmnDataAtomRef)a0, t0);
 }
 
@@ -108,7 +108,7 @@ void cb_state_map_id_find(LmnReactCxtRef rc,
   lmn_newlink_in_symbols(plus, 0, at, 0);
 
   lmn_mem_delete_atom(m, in, in_attr);
-  lmn_memstack_delete(((MemReactContext *)rc)->MEMSTACK(), m);
+  ((MemReactContext *)rc)->memstack_remove(m);
   mem->remove_mem(m);
 
   State *new_s = new State(m, 0, TRUE);

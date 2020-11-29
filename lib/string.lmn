@@ -157,4 +157,28 @@ S = string.join(Glue, [A]) :- string(Glue) | S = A.
 S = string.join(Glue, [A,B|X]) :- string(Glue) |
     S = string.concat(A, string.concat(Glue, string.join(Glue, [B|X]))).
 
+
+/**
+ * string.replace(+Str, +SubStr, +ReplacementStr, -Ret)
+ * 
+ * 文字列Str中の全てのSubStrをReplacementStrで置き換える
+ * @param +Str 元の文字列
+ * @param +SubStr 置き換えたい文字列
+ * @param +ReplacementStr 置き換え後の文字列
+ * @param -Res 結果(文字列)
+ */
+Ret = string.replace(S, Sub, Rep) :- string(S), string(Sub), string(Rep) |
+    '$callback'('string_replace', S, Sub, Rep, Ret).
+
+/**
+ * string.split(+Str, +Separator, -StrList)
+ * 
+ * 文字列Strを分割してStrListに格納する。分割箇所は文字列Separatorで決定する。
+ * @param +Str 元の文字列
+ * @param +Separator セパレータ。空文字の場合1文字ずつ分割される。
+ * @param -StrList 結果(文字列のリスト)
+ */
+Ret = string.split(S, Sep) :- string(S), string(Sep) |
+    '$callback'('string_split', S, Sep, Ret).
+
 }.

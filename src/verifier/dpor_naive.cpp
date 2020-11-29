@@ -36,6 +36,9 @@
  * $Id$
  */
 #include "dpor_naive.h"
+
+#include <vector>
+
 #include "delta_membrane.h"
 #include "dpor.h"
 #include "mc.h"
@@ -130,10 +133,10 @@ void McPorData::free_por_vars() {
   }
 }
 
-void McPorData::por_calc_ampleset(StateSpaceRef ss, State *s, LmnReactCxtRef rc,
+void McPorData::por_calc_ampleset(StateSpaceRef ss, State *s, MCReactContext *rc,
                        Vector *new_s, BOOL f) {
   if (!this->rc) {
-    this->rc = c14::make_unique<MCReactContext>();
+    this->rc = c14::make_unique<MCReactContext>(nullptr);
     this->flags = f;
     mc_unset_por(this->flags);
     mc_set_trans(this->flags);
@@ -209,7 +212,7 @@ void McPorData::finalize_ample(BOOL org_f) {
  * reduced state graphに必要なサクセッサを状態空間ssとsに登録する.
  * ample(s)=en(s)の場合にFALSEを返す. */
 
-BOOL McPorData::ample(StateSpaceRef ss, State *s, LmnReactCxtRef rc, Vector *new_s,
+BOOL McPorData::ample(StateSpaceRef ss, State *s, MCReactContext *rc, Vector *new_s,
                   BOOL org_f) {
   set_ample(s);
   set_por_expanded(s);
@@ -299,7 +302,7 @@ BOOL McPorData::ample(StateSpaceRef ss, State *s, LmnReactCxtRef rc, Vector *new
 }
 
 
-void McPorData::por_gen_successors(State *s, LmnReactCxtRef rc, AutomataRef a,
+void McPorData::por_gen_successors(State *s, MCReactContext *rc, AutomataRef a,
                                Vector *psyms) {
   LmnMembraneRef mem;
   mem = state_restore_mem(s);
@@ -384,29 +387,27 @@ inline State *McPorData::por_state_insert_statespace(StateSpaceRef ss,
   return t;
 }
 
-inline void McPorData::por_store_successors_inner(State *s, LmnReactCxtRef rc) {
-  st_table_t succ_tbl;
+inline void McPorData::por_store_successors_inner(State *s, MCReactContext *rc) {
   unsigned int i, succ_i;
 
   succ_i = 0;
-  succ_tbl = RC_SUCC_TBL(rc);
 
   for (i = 0; i < mc_react_cxt_expanded_num(rc); i++) {
     TransitionRef src_t;
-    st_data_t tmp;
+    TransitionRef tmp;
     State *src_succ, *succ;
     MemDeltaRoot *d;
 
     if (s->has_trans_obj()) {
-      src_t = (TransitionRef)RC_EXPANDED(rc)->get(i);
+      src_t = (TransitionRef)rc->expanded_states(i);
       src_succ = transition_next_state(src_t);
     } else {
-      src_succ = (State *)RC_EXPANDED(rc)->get(i);
+      src_succ = (State *)rc->expanded_states(i);
       src_t = transition_make(
-          src_succ, (lmn_interned_str)RC_EXPANDED_RULES(rc)->get(i));
+          src_succ, rc->get_expanded_rule(i)->name);
     }
 
-    d = RC_MC_USE_DMEM(rc) ? (MemDeltaRoot *)RC_MEM_DELTAS(rc)->get(i)
+    d = rc->has_optmode(DeltaMembrane) ? rc->get_mem_delta_roots().at(i)
                            : NULL;
     succ = this->por_state_insert(src_succ, d);
     if (succ != src_succ) {
@@ -414,25 +415,25 @@ inline void McPorData::por_store_successors_inner(State *s, LmnReactCxtRef rc) {
       transition_set_state(src_t, succ);
     }
 
-    tmp = 0;
-    if (!st_lookup(succ_tbl, (st_data_t)succ, (st_data_t *)&tmp)) {
-      st_add_direct(succ_tbl, (st_data_t)succ, (st_data_t)src_t);
-      RC_EXPANDED(rc)->set(succ_i, (vec_data_t)src_t);
-      if (RC_MC_USE_DMEM(rc)) {
-        RC_MEM_DELTAS(rc)->set(succ_i, RC_MEM_DELTAS(rc)->get(i));
+    tmp = reinterpret_cast<TransitionRef>(rc->get_transition_to(succ));
+    if (tmp == nullptr) {
+      rc->set_transition_to(succ, src_t);
+      rc->set_expanded_state(succ_i, src_t);
+      if (rc->has_optmode(DeltaMembrane)) {
+        rc->set_mem_delta_root(succ_i, rc->get_mem_delta_roots().at(i));
       }
       succ_i++;
     } else {
-      transition_add_rule((TransitionRef)tmp, transition_rule(src_t, 0),
+      transition_add_rule(tmp, transition_rule(src_t, 0),
                           transition_cost(src_t));
       transition_free(src_t);
     }
   }
 
-  RC_EXPANDED(rc)->set_num(succ_i);
-  RC_EXPANDED_RULES(rc)->set_num(succ_i);
-  if (RC_MC_USE_DMEM(rc)) {
-    RC_MEM_DELTAS(rc)->set_num(succ_i);
+  rc->resize_expanded_states(succ_i);
+  rc->resize_expanded_rules(succ_i);
+  if (rc->has_optmode(DeltaMembrane)) {
+    rc->resize_mem_delta_roots(succ_i);
   }
 
   if (!s->has_trans_obj()) {
@@ -444,8 +445,8 @@ inline void McPorData::por_store_successors_inner(State *s, LmnReactCxtRef rc) {
     StateDumper::from_env(stdout)->dump((State *)(s->successors[0]));
   }
 
-  s->succ_set(RC_EXPANDED(rc));
-  st_clear(RC_SUCC_TBL(rc));
+  s->succ_set(rc->expanded_states());
+  rc->clear_successor_table();
 }
 
 /* ReactCxtに生成してあるサクセッサをPOR状態空間と状態sに登録する.
@@ -454,7 +455,7 @@ inline void McPorData::por_store_successors_inner(State *s, LmnReactCxtRef rc) {
  * サクセッサに対する遷移オブジェクトが存在しない場合はこの時点でmallocを行う.
  * 入力したis_storeが真である場合は,
  * IDの発行と同時に独立性情報テーブルの拡張を行う */
-void McPorData::por_store_successors(State *s, LmnReactCxtRef rc, BOOL is_store) {
+void McPorData::por_store_successors(State *s, MCReactContext *rc, BOOL is_store) {
   unsigned int i;
 
   this->por_store_successors_inner(s, rc);
@@ -999,9 +1000,8 @@ int McPorData::build_ample_satisfying_lemma(st_data_t key, st_data_t val, st_dat
 
 void McPorData::push_ample_to_expanded(StateSpaceRef ss, State *s, LmnReactCxtRef rc, Vector *new_ss, BOOL f){
   if (s->successor_num > 0) {
-    struct Vector tmp;
+    std::vector<void *> tmp;
     unsigned int i;
-    tmp.init(32);
 
     for (i = 0; i < s->successor_num; i++) {
       TransitionRef succ_t;
@@ -1012,7 +1012,7 @@ void McPorData::push_ample_to_expanded(StateSpaceRef ss, State *s, LmnReactCxtRe
 
       if (is_inserted(succ_s) && is_outside_exist(succ_s)) {
         /* C3 check時, 探索空間への追加に成功してしまっていた場合 */
-        tmp.push((vec_data_t)succ_t);
+        tmp.push_back(succ_t);
       } else if (!ample_candidate->contains(
                                (vec_data_t)transition_id(succ_t))) {
         /* amplesetに含まれない遷移は除去 */
@@ -1023,15 +1023,14 @@ void McPorData::push_ample_to_expanded(StateSpaceRef ss, State *s, LmnReactCxtRe
         if (!is_inserted(succ_s)) {
           por_state_insert_statespace(ss, succ_t, succ_s, new_ss, f);
         }
-        tmp.push((vec_data_t)succ_t);
+        tmp.push_back(succ_t);
       }
     }
 
     LMN_FREE(s->successors);
     s->successors = NULL;
     s->successor_num = 0;
-    s->succ_set(&tmp);
-    tmp.destroy();
+    s->succ_set(tmp);
   }
 }
 

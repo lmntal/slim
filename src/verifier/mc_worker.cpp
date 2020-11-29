@@ -103,7 +103,7 @@ LmnWorker *lmn_worker_make(StateSpaceRef ss, unsigned long id, BOOL flags) {
   LmnWorker *w = lmn_worker_make_minimal();
   w->states = ss;
   w->id = id;
-  w->cxt = c14::make_unique<MCReactContext>();
+  w->cxt = c14::make_unique<MCReactContext>(nullptr);
   worker_flags_set(w, flags);
   worker_set_active(w);
   worker_set_white(w);
@@ -124,7 +124,7 @@ static void lmn_worker_start(void *arg) {
   id = worker_id(w);
   worker_TLS_init(id);
 
-  worker_rc(w) = c14::make_unique<MCReactContext>();
+  worker_rc(w) = c14::make_unique<MCReactContext>(nullptr);
 
   if (worker_id(w) == LMN_PRIMARY_ID && mc_is_dump(worker_flags(w))) {
     StateSpaceRef ss = worker_states(w);
