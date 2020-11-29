@@ -106,7 +106,8 @@ struct RuleContext {
 
   RuleContext &operator=(const RuleContext &cxt) {
     // work array を deep copy するように変更
-    this->work_array = new std::vector<LmnRegister>(cxt.work_array.begin(), cxt.work_array.end());
+    //this->work_array = new Vector(cxt.work_array);
+    this->work_array = std::vector<LmnRegister>(std::begin(cxt.work_array), std::end(cxt.work_array));
     //this->work_array = cxt.work_array;
 #ifdef USE_FIRSTCLASS_RULE
     delete this->insertion_events;
