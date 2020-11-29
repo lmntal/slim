@@ -1501,9 +1501,9 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
   }
   case INSTR_FINDATOM: {
 
-    std::stringstream ss;
-    ss << "findatom started: " << std::this_thread::get_id();
-    std::cout << ss.str() << std::endl;
+    std::stringstream ss_start;
+    ss_start << "findatom started: " << std::this_thread::get_id();
+    std::cout << ss_start.str() << std::endl;
 
     LmnInstrVar atomi, memi;
     LmnLinkAttr attr;
@@ -1535,9 +1535,9 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       // mut.unlock();
     }
 
-    std::stringstream ss;
-    ss << "findatom ended: " << std::this_thread::get_id();
-    std::cout << ss.str() << std::endl;
+    std::stringstream ss_end;
+    ss_end << "findatom ended: " << std::this_thread::get_id();
+    std::cout << ss_end.str() << std::endl;
 
     return false; // false driven loop
   }
