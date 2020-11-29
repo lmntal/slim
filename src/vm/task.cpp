@@ -1848,9 +1848,9 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       LmnFunctor f;
 
       READ_VAL(LmnFunctor, instr, f);
-      mut.lock();
+      // mut.lock();
       ap = lmn_new_atom(f);
-      mut.unlock();
+      // mut.unlock();
 
 #ifdef USE_FIRSTCLASS_RULE
       if (f == LMN_COLON_MINUS_FUNCTOR) {
@@ -1859,7 +1859,9 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       }
 #endif
     }
+    mut.lock();
     lmn_mem_push_atom((LmnMembraneRef)rc->wt(memi), (LmnAtomRef)ap, attr);
+    mut.unlock();
     rc->reg(atomi) = {(LmnWord)ap, attr, TT_ATOM};
 
     // std::stringstream ss_end;
