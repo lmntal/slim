@@ -1831,9 +1831,9 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
   }
   case INSTR_NEWATOM: {
 
-    std::stringstream ss;
-    ss << "newatom started: " << std::this_thread::get_id();
-    std::cout << ss.str() << std::endl;
+    std::stringstream ss_start;
+    ss_start << "newatom started: " << std::this_thread::get_id();
+    std::cout << ss_start.str() << std::endl;
 
     LmnInstrVar atomi, memi;
     LmnAtomRef ap;
@@ -1862,9 +1862,9 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     lmn_mem_push_atom((LmnMembraneRef)rc->wt(memi), (LmnAtomRef)ap, attr);
     rc->reg(atomi) = {(LmnWord)ap, attr, TT_ATOM};
 
-    std::stringstream ss;
-    ss << "newatom ended: " << std::this_thread::get_id();
-    std::cout << ss.str() << std::endl;
+    std::stringstream ss_end;
+    ss_end << "newatom ended: " << std::this_thread::get_id();
+    std::cout << ss_end.str() << std::endl;
     break;
   }
   case INSTR_NATOMS: {
