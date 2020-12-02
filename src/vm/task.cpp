@@ -377,7 +377,6 @@ static void mem_oriented_loop(MemReactContext *ctx, LmnMembraneRef mem) {
         // std::cout << "reacted " << ti << std::endl;
       }while(reacted);
       std::cout << "reacted outer " << ti << std::endl;
-      return;
   };
 
   // グローバルルート膜対策 -> 最初に初期状態空間を構築しているので意味ない
@@ -392,35 +391,38 @@ static void mem_oriented_loop(MemReactContext *ctx, LmnMembraneRef mem) {
     // 後でdelete出来るように保存しておく
     std::vector<MemReactContext *> ctx_copied_vec;
 
-    int cnt = 0;
-    std::vector<std::thread> ts(tnum);
+    std::vector<std::thread> ts;
     for(int i=0;i<tnum;i++){
       if(ctx->memstack_isempty())
         break;
-      cnt++;
       LmnMembraneRef mem = ctx->memstack_pop();
 
       // ctxをコピー
       MemReactContext *ctx_copied = new MemReactContext(*ctx);
 
 
-      // std::stringstream ss_start;
-      // ss_start << "mtc copy: " << std::this_thread::get_id() << " ctx_copied: " << &(ctx_copied->work_array);
-      // std::cout << ss_start.str() << std::endl;
+      std::stringstream ss_start;
+      ss_start << "mtc copy: " << std::this_thread::get_id() << " ctx_copied: " << &(ctx_copied->work_array);
+      std::cout << ss_start.str() << std::endl;
 
       // ctx_copied->work_array = std::vector<LmnRegister>(std::begin(ctx->work_array), std::end(ctx->work_array));
 
       ctx_copied_vec.push_back(ctx_copied);
       // LmnReactCxt *rc_copied = new LmnReactCxt(*rc);
       // MemReactContext ctx_copied = MemReactContext(mem);
-      ts[i] = std::thread(react, ctx_copied, mem, i);
+      ts.push_back(std::thread(react, ctx_copied, mem, i));
     }
     // std::cout << "cnt :" << cnt << std::endl; 
     // for(int j=0;j<tnum;j++){
-    for(int j=0;j<tnum;j++){
-      std::cout << "thread[" << j << "] will be finished"<< std::endl;
-      ts[j].join(); 
-      std::cout << "thread[" << j << "] finished"<< std::endl;
+
+    ts[1].join();
+    ts[0].join();
+    // for(int j=0;j<ts.size();j++){
+    //   std::cout << "thread[" << j << "] will be finished"<< std::endl;
+    //   ts[j].join(); 
+    //   std::cout << "thread[" << j << "] finished"<< std::endl;
+    // }
+    for(int j=0;j<ts.size();j++){
       delete ctx_copied_vec[j];
     }
     // std::cout << "ok" << std::endl;
@@ -546,6 +548,8 @@ static inline BOOL react_ruleset(LmnReactCxtRef rc, LmnMembraneRef mem,
  * マッチングしなかった場合にFALSEを返す. 非決定実行では,
  * マッチングに失敗するまでバックトラックを繰り返すため常にFALSEが返る. */
 BOOL react_rule(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule, int ti) {
+
+  // std::cout << "start react_rule " << ti << std::endl;
   LmnTranslated translated;
   BYTE *inst_seq;
   BOOL result;
@@ -621,6 +625,7 @@ BOOL react_rule(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule, int ti) 
       }
     }
   }
+  // std::cout << "end react_rule " << ti << std::endl;
 
   return result;
 }
@@ -1193,7 +1198,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
   if (lmn_env.find_atom_parallel)
     return FALSE;
 
-  // std::cout << op << std::endl;
+  std::cout << op << std::endl;
 
   switch (op) {
   case INSTR_SPEC: {
