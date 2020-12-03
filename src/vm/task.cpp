@@ -367,14 +367,14 @@ static void mem_oriented_loop(MemReactContext *ctx, LmnMembraneRef mem) {
   auto react = [&](MemReactContext *ctx, LmnMembraneRef m, int ti){
     BOOL reacted = false;
       do{
-        // std::cout << "will react " << ti << std::endl;
+        std::cout << "will react " << ti << std::endl;
         reacted = react_all_rulesets(ctx,m,ti);
-        // if(reacted)
-        //   std::cout << "reacted" << std::endl;
-        // else{
-        //   std::cout << "not reactfed" << std::endl;1
-        // }
-        // std::cout << "reacted " << ti << std::endl;
+        if(reacted)
+          std::cout << "reacted " << ti << std::endl;
+        else{
+          std::cout << "not reactfed " << ti << std::endl;
+        }
+        std::cout << "reacted " << ti << std::endl;
       }while(reacted);
       std::cout << "reacted outer " << ti << std::endl;
   };
@@ -414,14 +414,11 @@ static void mem_oriented_loop(MemReactContext *ctx, LmnMembraneRef mem) {
     }
     // std::cout << "cnt :" << cnt << std::endl; 
     // for(int j=0;j<tnum;j++){
-
-    ts[1].join();
-    ts[0].join();
-    // for(int j=0;j<ts.size();j++){
-    //   std::cout << "thread[" << j << "] will be finished"<< std::endl;
-    //   ts[j].join(); 
-    //   std::cout << "thread[" << j << "] finished"<< std::endl;
-    // }
+    for(int j=0;j<ts.size();j++){
+      // std::cout << "thread[" << j << "] will be finished"<< std::endl;
+      ts[j].join(); 
+      // std::cout << "thread[" << j << "] finished"<< std::endl;
+    }
     for(int j=0;j<ts.size();j++){
       delete ctx_copied_vec[j];
     }
@@ -526,6 +523,7 @@ BOOL react_all_rulesets(LmnReactCxtRef rc, LmnMembraneRef cur_mem, int ti) {
 static inline BOOL react_ruleset(LmnReactCxtRef rc, LmnMembraneRef mem,
                                  LmnRuleSetRef rs, int ti) {
   for (auto r : *rs) {
+    std::cout << "ruleset start [" << ti << "]" << std::endl;
     
 #ifdef PROFILE
     if (!lmn_env.nd && lmn_env.profile_level >= 2)
@@ -536,8 +534,10 @@ static inline BOOL react_ruleset(LmnReactCxtRef rc, LmnMembraneRef mem,
     BOOL reacted = react_rule(rc, mem, r, ti);
     // mut.unlock();
     // std::cout << "rule end [" << ti << "] " << std::endl;
-    if (reacted)
+    if (reacted){
+      std::cout << "ruleset ok [" << ti << "]" << std::endl;
       return true;
+    }
   }
   return false;
 }
@@ -549,7 +549,7 @@ static inline BOOL react_ruleset(LmnReactCxtRef rc, LmnMembraneRef mem,
  * マッチングに失敗するまでバックトラックを繰り返すため常にFALSEが返る. */
 BOOL react_rule(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule, int ti) {
 
-  // std::cout << "start react_rule " << ti << std::endl;
+  std::cout << "start react_rule " << ti << std::endl;
   LmnTranslated translated;
   BYTE *inst_seq;
   BOOL result;
@@ -625,7 +625,7 @@ BOOL react_rule(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule, int ti) 
       }
     }
   }
-  // std::cout << "end react_rule " << ti << std::endl;
+  std::cout << "end react_rule " << ti << std::endl;
 
   return result;
 }
