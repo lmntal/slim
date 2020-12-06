@@ -320,11 +320,11 @@ void mem_push_symbol_atom(LmnMembraneRef mem, LmnSymbolAtomRef atom) {
   LmnFunctor f = atom->get_functor();
 
   // if文も含めてロックが必要。今後要検証
-  // mut.lock();
+  mut.lock();
   if (atom->get_id() == 0) { /* 膜にpushしたならばidを割り当てる */
     atom->set_id(env_gen_next_id());
   }
-  // mut.unlock();
+  mut.unlock();
 
   as = mem->get_atomlist(f);
   if (!as) { /* 本膜内に初めてアトムatomがPUSHされた場合 */

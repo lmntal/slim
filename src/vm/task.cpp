@@ -1952,9 +1952,9 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       LmnFunctor f;
 
       READ_VAL(LmnFunctor, instr, f);
-      mut.lock();
+      // mut.lock();
       ap = lmn_new_atom(f);
-      mut.unlock();
+      // mut.unlock();
 
 #ifdef USE_FIRSTCLASS_RULE
       if (f == LMN_COLON_MINUS_FUNCTOR) {
@@ -1963,9 +1963,9 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       }
 #endif
     }
-    mut.lock();
+    // mut.lock();
     lmn_mem_push_atom((LmnMembraneRef)rc->wt(memi), (LmnAtomRef)ap, attr);
-    mut.unlock();
+    // mut.unlock();
     rc->reg(atomi) = {(LmnWord)ap, attr, TT_ATOM};
 
     // std::stringstream ss_end;
@@ -2666,10 +2666,10 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     }
 #endif
 
-    mut.lock();
+    // mut.lock();
     lmn_mem_remove_atom((LmnMembraneRef)rc->wt(memi), (LmnAtomRef)rc->wt(atomi),
                         rc->at(atomi));
-    mut.unlock();
+    // mut.unlock();
 
     break;
   }
@@ -2678,10 +2678,9 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
 
     READ_VAL(LmnInstrVar, instr, atomi);
 
-    // 仮のロック。atomiやatomlistentryにロックを掛けた方がいいかも。
-    mut.lock();
+    // mut.lock();
     lmn_free_atom((LmnAtomRef)rc->wt(atomi), rc->at(atomi));
-    mut.unlock();
+    // mut.unlock();
     break;
   }
   case INSTR_REMOVEMEM: {
@@ -3551,7 +3550,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     READ_VAL(LmnInstrVar, instr, memi);
     READ_VAL(LmnInstrVar, instr, atom2);
 
-    mut.lock();
+    // mut.lock();
 
     rc->reg(atom1) = {
         (LmnWord)lmn_copy_atom((LmnAtomRef)rc->wt(atom2), rc->at(atom2)),
@@ -3559,7 +3558,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     lmn_mem_push_atom((LmnMembraneRef)rc->wt(memi), (LmnAtomRef)rc->wt(atom1),
                       rc->at(atom1));
 
-    mut.unlock();
+    // mut.unlock();
     break;
   }
   case INSTR_EQATOM: {
