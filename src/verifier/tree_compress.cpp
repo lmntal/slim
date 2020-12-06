@@ -123,7 +123,7 @@ int tree_get_split_position(int start, int end) {
   return (int)(size / 2.0);
 }
 
-TreeNodeUnit vector_unit(TreeNodeStrRef str, int start, int end, TreeNodeID prev_ref) {
+TreeNodeUnit vector_unit(TreeNodeStrRef str, int start, int end) {
   unsigned long long ret;
   int copy_len = TREE_UNIT_SIZE;
   if (str->extra && end == str->len - 1) {
@@ -134,7 +134,6 @@ TreeNodeUnit vector_unit(TreeNodeStrRef str, int start, int end, TreeNodeID prev
   memcpy(&ret, ((BYTE *)str->nodes + (start * TREE_UNIT_SIZE)),
          sizeof(BYTE) * copy_len);
   // printf("start :0x%14llx\n", ret);
-  prev_ref = ret;
   return ret;
 }
 TreeNodeUnit vector_unit_inc(TreeNodeStrRef str, int start, int end, TreeNodeID prev_ref, BOOL check) {
@@ -152,7 +151,6 @@ TreeNodeUnit vector_unit_inc(TreeNodeStrRef str, int start, int end, TreeNodeID 
     check=true;
   }else{
     check=false;
-    prev_ref = ret;
   }
   return ret;
 }
@@ -251,19 +249,19 @@ TreeDatabase::~TreeDatabase() {
   return;
 }
 
-TreeNodeElement TreeDatabase::tree_find_or_put_rec(TreeNodeStrRef str,
+TreeNodeElement TreeDatabase::tree_find_or_put_rec(TreeNodeStrRef str, TreeNodeRef prev_str, 
                                      int start, int end, BOOL *found) {
   int split;
-  TreeNodeID ref, prev_ref;
-
+  TreeNodeID ref;
+  TreeNodeElement prev_ref;
   if ((end - start + 1) <= 1) {
     return vector_unit(str, start, end, prev_ref);
   }
   split = tree_get_split_position(start, end);
   TreeNodeElement left =
-      this->tree_find_or_put_rec(str, start, start + split, found);
+    this->tree_find_or_put_rec(str, prev_str, start, start + split, found);
   TreeNodeElement right =
-      this->tree_find_or_put_rec(str, start + split + 1, end, found);
+    this->tree_find_or_put_rec(str, prev_str, start + split + 1, end, found);
   if ((end - start + 1) == str->len) {
     BOOL _found = this->table_find_or_put(left, right, &ref);
     if (found)
@@ -272,9 +270,11 @@ TreeNodeElement TreeDatabase::tree_find_or_put_rec(TreeNodeStrRef str,
     this->table_find_or_put(left, right, &ref);
   }
   prev_ref = ref;
+  prev_str->left = left;
+  prev_str->right = right;
   return ref;
 }
-TreeNodeElement TreeDatabase::tree_find_or_put_inc_rec(TreeNodeStrRef str,
+TreeNodeElement TreeDatabase::tree_find_or_put_inc_rec(TreeNodeStrRef str, TreeNodeRef prev_str, 
 						       int start, int end, BOOL *found, BOOL prev_check, TreeNodeID prev_ref) {
   int split;
   TreeNodeID ref, prev_ref_l, prev_ref_r;
@@ -284,6 +284,8 @@ TreeNodeElement TreeDatabase::tree_find_or_put_inc_rec(TreeNodeStrRef str,
     return vector_unit_inc(str, start, end, prev_ref, prev_check);
   }
   split = tree_get_split_position(start, end);
+  prev_ref_l = prev_str->left;
+  prev_ref_r = prev_str->right;
   TreeNodeElement left =
     this->tree_find_or_put_inc_rec(str, start, start + split, found, prev_check_l, prev_ref_l);
   TreeNodeElement right =
@@ -306,6 +308,8 @@ TreeNodeElement TreeDatabase::tree_find_or_put_inc_rec(TreeNodeStrRef str,
     }
   }
   prev_check = prev_check_l && prev_check_r;
+  prev_str->left = left;
+  prev_str->right = right;
   return ref;
 }
 
