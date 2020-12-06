@@ -129,7 +129,7 @@ struct Vector user_system_rulesets; /* system ruleset defined by user */
 */
 
 static inline BOOL react_ruleset(LmnReactCxtRef rc, LmnMembraneRef mem,
-                                 LmnRuleSetRef ruleset, int ti=0);
+                                 LmnRuleSetRef ruleset, int ti=9999);
 static inline void react_initial_rulesets(LmnReactCxtRef rc,
                                           LmnMembraneRef mem);
 static inline BOOL react_ruleset_in_all_mem(LmnReactCxtRef rc, LmnRuleSetRef rs,
@@ -365,18 +365,19 @@ static void mem_oriented_loop(MemReactContext *ctx, LmnMembraneRef mem) {
   int tnum = 2; 
 
   auto react = [&](MemReactContext *ctx, LmnMembraneRef m, int ti){
+
     BOOL reacted = false;
       do{
-        std::cout << "will react " << ti << std::endl;
+        // std::cout << "will react " << ti << std::endl;
         reacted = react_all_rulesets(ctx,m,ti);
-        if(reacted)
-          std::cout << "reacted " << ti << std::endl;
-        else{
-          std::cout << "not reactfed " << ti << std::endl;
-        }
-        std::cout << "reacted " << ti << std::endl;
+        // if(reacted)
+          // std::cout << "reacted " << ti << std::endl;
+        // else{
+          // std::cout << "not reactfed " << ti << std::endl;
+        // }
+        // std::cout << "reacted " << ti << std::endl;
       }while(reacted);
-      std::cout << "reacted outer " << ti << std::endl;
+      // std::cout << "reacted outer " << ti << std::endl;
   };
 
   // グローバルルート膜対策 -> 最初に初期状態空間を構築しているので意味ない
@@ -386,7 +387,12 @@ static void mem_oriented_loop(MemReactContext *ctx, LmnMembraneRef mem) {
   // MemReactContext ctx_copied = MemReactContext(mem);
   // react(ctx, gmem, 0);
 
+  // int cnt = 0;
+
   while (!ctx->memstack_isempty()) {
+    // cnt++;
+    // if(cnt != 1)
+    //   break;
 
     // 後でdelete出来るように保存しておく
     std::vector<MemReactContext *> ctx_copied_vec;
@@ -403,20 +409,24 @@ static void mem_oriented_loop(MemReactContext *ctx, LmnMembraneRef mem) {
 
       std::stringstream ss_start;
       ss_start << "mtc copy: " << std::this_thread::get_id() << " ctx_copied: " << &(ctx_copied->work_array);
-      std::cout << ss_start.str() << std::endl;
+      // std::cout << ss_start.str() << std::endl;
 
       // ctx_copied->work_array = std::vector<LmnRegister>(std::begin(ctx->work_array), std::end(ctx->work_array));
 
       ctx_copied_vec.push_back(ctx_copied);
       // LmnReactCxt *rc_copied = new LmnReactCxt(*rc);
       // MemReactContext ctx_copied = MemReactContext(mem);
+
+      std::cout << *mem << std::endl;
       ts.push_back(std::thread(react, ctx_copied, mem, i));
+      std::cout << "ts_size" << ts.size() << std::endl;
     }
     // std::cout << "cnt :" << cnt << std::endl; 
     // for(int j=0;j<tnum;j++){
     for(int j=0;j<ts.size();j++){
       // std::cout << "thread[" << j << "] will be finished"<< std::endl;
       ts[j].join(); 
+      // ts[j].detach();
       // std::cout << "thread[" << j << "] finished"<< std::endl;
     }
     for(int j=0;j<ts.size();j++){
@@ -484,13 +494,18 @@ BOOL react_all_rulesets(LmnReactCxtRef rc, LmnMembraneRef cur_mem, int ti) {
 
   /* ルールセットの適用 */
   for (i = 0; i < rulesets.size(); i++) {
+    // std::cout << "aaa [" << ti << "]" << std::endl;
     if (react_ruleset(rc, cur_mem, rulesets[i], ti)) {
       /* ndでは失敗するまでマッチングバックトラックしているので必ずFALSEが返ってくる
        */
       ok = TRUE;
+      //  std::cout << "bbb [" << ti << "]" << std::endl;
       break;
     }
+    // std::cout << "ccc [" << ti << "]" << std::endl;
   }
+
+ 
 
 #ifdef USE_FIRSTCLASS_RULE
   for (i = 0; i < (cur_mem->firstclass_rulesets())->get_num(); i++) {
@@ -506,6 +521,8 @@ BOOL react_all_rulesets(LmnReactCxtRef rc, LmnMembraneRef cur_mem, int ti) {
   /* 通常実行では, 適用が発生しなかった場合にシステムルールの適用を行う
    * ndではokはFALSEなので, system_rulesetが適用される. */
   ok = ok || react_ruleset(rc, cur_mem, system_ruleset);
+
+  // std::cout << "system ruleset end [" << ti << "]" << std::endl;
 
 #ifdef USE_FIRSTCLASS_RULE
   lmn_rc_execute_insertion_events(rc);
@@ -523,7 +540,7 @@ BOOL react_all_rulesets(LmnReactCxtRef rc, LmnMembraneRef cur_mem, int ti) {
 static inline BOOL react_ruleset(LmnReactCxtRef rc, LmnMembraneRef mem,
                                  LmnRuleSetRef rs, int ti) {
   for (auto r : *rs) {
-    std::cout << "ruleset start [" << ti << "]" << std::endl;
+    // std::cout << "ruleset start [" << ti << "]" << std::endl;
     
 #ifdef PROFILE
     if (!lmn_env.nd && lmn_env.profile_level >= 2)
@@ -535,9 +552,10 @@ static inline BOOL react_ruleset(LmnReactCxtRef rc, LmnMembraneRef mem,
     // mut.unlock();
     // std::cout << "rule end [" << ti << "] " << std::endl;
     if (reacted){
-      std::cout << "ruleset ok [" << ti << "]" << std::endl;
+      // std::cout << "ruleset ok [" << ti << "]" << std::endl;
       return true;
     }
+    // std::cout << "ruleset not ok [" << ti << "]" << std::endl;
   }
   return false;
 }
@@ -549,7 +567,7 @@ static inline BOOL react_ruleset(LmnReactCxtRef rc, LmnMembraneRef mem,
  * マッチングに失敗するまでバックトラックを繰り返すため常にFALSEが返る. */
 BOOL react_rule(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule, int ti) {
 
-  std::cout << "start react_rule " << ti << std::endl;
+  // std::cout << "start react_rule " << ti << std::endl;
   LmnTranslated translated;
   BYTE *inst_seq;
   BOOL result;
@@ -625,7 +643,7 @@ BOOL react_rule(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule, int ti) 
       }
     }
   }
-  std::cout << "end react_rule " << ti << std::endl;
+  // std::cout << "end react_rule " << ti << std::endl;
 
   return result;
 }
@@ -845,16 +863,21 @@ HashSet *insertconnectors(slim::vm::RuleContext *rc, LmnMembraneRef mem,
 
 void slim::vm::interpreter::findatom(LmnReactCxtRef rc, LmnRuleRef rule,
                                      LmnRuleInstr instr, LmnMembrane *mem,
-                                     LmnFunctor f, size_t reg) {
+                                     LmnFunctor f, size_t reg, int ti=9999) {
   
 
+  // std::cout << *mem << std::endl;
   // std::stringstream ss1;
   // ss1 << "1: " << mem->get_atomlist(f)->size() << " " << mem;
   // std::cout << ss1.str() << std::endl;
 
   // printf("1: %d %d\n",mem->get_atomlist(f)->size(), mem);
 
+  // std::cout << "atomlist get start " << ti << std::endl;
+
   auto atomlist_ent = mem->get_atomlist(f);
+
+  // std::cout << "atomlist get end " << ti << std::endl;
 
   // std::stringstream ss_start;
   // ss_start << "findatom internal: " << std::this_thread::get_id() << " atomlist_ent: " << atomlist_ent;
@@ -864,26 +887,73 @@ void slim::vm::interpreter::findatom(LmnReactCxtRef rc, LmnRuleRef rule,
   if (!atomlist_ent)
     return;
 
-  // std::cout << "will find!" << std::endl;
+  // std::stringstream ss1;
+  // ss1 << "will find! " << ti;
+  // std::cout << ss1.str() << std::endl;
 
   // mut.lock();
   auto iter = std::begin(*atomlist_ent);
   auto end = std::end(*atomlist_ent);
-  if (iter == end){
-    // mut.unlock();
+  // if (iter == end){
+  //   // mut.unlock();
+  //   return;
+  // }
+  
+  if(atomlist_ent->size() == 0)
     return;
-  }
+
+  // std::stringstream ss2;
+  // ss2 << "transform start " << ti;
+  // std::cout << ss2.str() << std::endl;
+
+  // std::cout << "transform start " << ti << std::endl;
 
   auto v = std::vector<LmnRegister>();
-  std::transform(iter, end, std::back_inserter(v), [](LmnSymbolAtomRef atom) {
-    return LmnRegister({(LmnWord)atom, LMN_ATTR_MAKE_LINK(0), TT_ATOM});
-  });
+
+  int atomlist_len = atomlist_ent->size();
+  int at_cnt = 0;
+
+  for(auto atom: *atomlist_ent){
+    v.push_back(LmnRegister({(LmnWord)atom, LMN_ATTR_MAKE_LINK(0), TT_ATOM}));
+    at_cnt++;
+    if(at_cnt > atomlist_len){
+      auto atom = atomlist_ent->head;
+      for(int i=0;i<atomlist_len;i++){
+        std::cout << atom->str() << " " << (long long)atom->attr[0] << std::endl;
+        atom = atom->next;
+      }
+      // std::cout << *mem << std::endl;
+      std::cout << atomlist_len << std::endl;
+      std::cout << "ERROR" << std::endl;
+      // 異常終了させる
+      // return;
+      exit(1);
+    }
+    // std::stringstream ss;
+    // ss << "transformed " << at_cnt++ << "/" << atomlist_len << " " << ti;
+    
+    // std::cout << ss.str() << std::endl;
+  }
+  // std::transform(iter, end, std::back_inserter(v), [at_cnt,atomlist_len](LmnSymbolAtomRef atom) {
+  //   at_cnt++;
+  //   if(at_cnt > atomlist_len)
+  //     exit(1);
+  //   return LmnRegister({(LmnWord)atom, LMN_ATTR_MAKE_LINK(0), TT_ATOM});
+  // });
+
+  // std::stringstream ss3;
+  // ss3 << "transform end  " << ti;
+  // std::cout << ss3.str() << std::endl;
 
   // mut.lock();
   this->false_driven_enumerate(reg, std::move(v));
   // mut.unlock();
 
-  // std::cout << "find finished!" << std::endl;
+  // std::stringstream ss4;
+  // ss4 << "find finished!  " << ti;
+  // std::cout << ss4.str() << std::endl;
+
+  // std::cout << "find finished!" << ti << std::endl;
 
   // std::stringstream ss2;
   // ss2 << "2: " << mem->get_atomlist(f)->size() << " " << mem;
@@ -1190,7 +1260,7 @@ struct exec_subinstructions_branch {
  *  stop becomes true only if executien should be aborted.
  */
 bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
-                                         bool &stop) {
+                                         bool &stop, int ti=9999) {
   LmnInstrOp op;
   READ_VAL(LmnInstrOp, instr, op);
   stop = true;
@@ -1198,7 +1268,9 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
   if (lmn_env.find_atom_parallel)
     return FALSE;
 
-  std::cout << op << std::endl;
+
+
+  // std::cout << instr_spec.at((LmnInstruction)op).op_str << " " << ti << std::endl;
 
   switch (op) {
   case INSTR_SPEC: {
@@ -1563,7 +1635,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       // ss_start << "findatom will start : " << std::this_thread::get_id() << " rc: " << rc << " rule: " << rule << " instr: " << instr << " mem: " << mem << " f: " << f << " atomi: " << atomi;
       // std::cout << ss_start.str() << std::endl;
 
-      findatom(rc, rule, instr, mem, f, atomi);
+      findatom(rc, rule, instr, mem, f, atomi, ti);
       // mut.unlock();
     }
 
@@ -1891,10 +1963,10 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       }
 #endif
     }
-    // mut.lock();
+    mut.lock();
     lmn_mem_push_atom((LmnMembraneRef)rc->wt(memi), (LmnAtomRef)ap, attr);
-    // mut.unlock();
     rc->reg(atomi) = {(LmnWord)ap, attr, TT_ATOM};
+    mut.unlock();
 
     // std::stringstream ss_end;
     // ss_end << "newatom ended: " << std::this_thread::get_id();
@@ -3479,11 +3551,15 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     READ_VAL(LmnInstrVar, instr, memi);
     READ_VAL(LmnInstrVar, instr, atom2);
 
+    mut.lock();
+
     rc->reg(atom1) = {
         (LmnWord)lmn_copy_atom((LmnAtomRef)rc->wt(atom2), rc->at(atom2)),
         rc->at(atom2), TT_OTHER};
     lmn_mem_push_atom((LmnMembraneRef)rc->wt(memi), (LmnAtomRef)rc->wt(atom1),
                       rc->at(atom1));
+
+    mut.unlock();
     break;
   }
   case INSTR_EQATOM: {
@@ -4521,7 +4597,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
   return false;
 }
 
-bool slim::vm::interpreter::run(int ti=0) {
+bool slim::vm::interpreter::run(int ti=9999) {
   //  << "running!" << std::endl;
   bool result;
   do {
@@ -4530,7 +4606,7 @@ bool slim::vm::interpreter::run(int ti=0) {
     do {
       // std::cout << "command start [" << ti << "] " << std::endl;
       // mut.lock();
-      result = exec_command(this->rc, this->rule, stop);
+      result = exec_command(this->rc, this->rule, stop, ti);
       // mut.unlock();
       // std::cout << "command end [" << ti << "] " << std::endl;
     } while (!stop);

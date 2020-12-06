@@ -73,9 +73,9 @@ struct interpreter {
       : rc(rc), rule(rule), instr(instr) {}
 
   bool interpret(LmnReactCxt *rc, LmnRule *rule, LmnRuleInstr instr);
-  bool exec_command(LmnReactCxt *rc, LmnRule *rule, bool &stop);
+  bool exec_command(LmnReactCxt *rc, LmnRule *rule, bool &stop, int ti);
   void findatom(LmnReactCxt *rc, LmnRule *rule, LmnRuleInstr instr,
-                LmnMembrane *mem, LmnFunctor f, size_t reg);
+                LmnMembrane *mem, LmnFunctor f, size_t reg, int ti);
   void findatom_original_hyperlink(LmnReactCxt *rc, LmnRule *rule,
                                    LmnRuleInstr instr, SameProcCxt *spc,
                                    LmnMembrane *mem, LmnFunctor f, size_t reg);

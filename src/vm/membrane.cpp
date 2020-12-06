@@ -334,10 +334,12 @@ void mem_push_symbol_atom(LmnMembraneRef mem, LmnSymbolAtomRef atom) {
         int org_size = mem->atomset_size;
         mem->atomset_size *= 2;
         LMN_ASSERT(mem->atomset_size > 0);
+        // mut.lock();
         mem->atomset = LMN_REALLOC(struct AtomListEntry *, mem->atomset,
                                    mem->atomset_size);
         memset(mem->atomset + org_size, 0,
                (mem->atomset_size - org_size) * sizeof(struct AtomListEntry *));
+        // mut.unlock();
       }
     }
     as = mem->atomset[f] = make_atomlist();
