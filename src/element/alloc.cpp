@@ -71,9 +71,9 @@ LmnSymbolAtomRef lmn_new_atom(LmnFunctor f) {
     // ここもロックをかけた方が良いかも？
     atom_memory_pools[arity][cid] = memory_pool_new(LMN_SATOM_SIZE(arity));
   }
-  mut.lock();
+  // mut.lock();
   ap = (LmnSymbolAtomRef)memory_pool_malloc(atom_memory_pools[arity][cid]);
-  mut.unlock();
+  // mut.unlock();
   ap->set_functor(f);
   ap->set_id(0);
 

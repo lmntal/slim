@@ -362,7 +362,7 @@ static void mem_oriented_loop(MemReactContext *ctx, LmnMembraneRef mem) {
 
   /* react調査 */
 
-  int tnum = 10; 
+  int tnum = 96; 
 
   auto react = [&](MemReactContext *ctx, LmnMembraneRef m, int ti){
 
@@ -417,9 +417,9 @@ static void mem_oriented_loop(MemReactContext *ctx, LmnMembraneRef mem) {
       // LmnReactCxt *rc_copied = new LmnReactCxt(*rc);
       // MemReactContext ctx_copied = MemReactContext(mem);
 
-      std::cout << *mem << std::endl;
+      // std::cout << *mem << std::endl;
       ts.push_back(std::thread(react, ctx_copied, mem, i));
-      std::cout << "ts_size" << ts.size() << std::endl;
+      // std::cout << "ts_size" << ts.size() << std::endl;
     }
     // std::cout << "cnt :" << cnt << std::endl; 
     // for(int j=0;j<tnum;j++){
@@ -1952,9 +1952,9 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       LmnFunctor f;
 
       READ_VAL(LmnFunctor, instr, f);
-      // mut.lock();
+      mut.lock();
       ap = lmn_new_atom(f);
-      // mut.unlock();
+      mut.unlock();
 
 #ifdef USE_FIRSTCLASS_RULE
       if (f == LMN_COLON_MINUS_FUNCTOR) {
@@ -1963,9 +1963,9 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       }
 #endif
     }
-    // mut.lock();
+    mut.lock();
     lmn_mem_push_atom((LmnMembraneRef)rc->wt(memi), (LmnAtomRef)ap, attr);
-    // mut.unlock();
+    mut.unlock();
     rc->reg(atomi) = {(LmnWord)ap, attr, TT_ATOM};
 
     // std::stringstream ss_end;
@@ -2666,10 +2666,10 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     }
 #endif
 
-    // mut.lock();
+    mut.lock();
     lmn_mem_remove_atom((LmnMembraneRef)rc->wt(memi), (LmnAtomRef)rc->wt(atomi),
                         rc->at(atomi));
-    // mut.unlock();
+    mut.unlock();
 
     break;
   }
