@@ -362,7 +362,7 @@ static void mem_oriented_loop(MemReactContext *ctx, LmnMembraneRef mem) {
 
   /* react調査 */
 
-  int tnum = 2; 
+  int tnum = 10; 
 
   auto react = [&](MemReactContext *ctx, LmnMembraneRef m, int ti){
 
@@ -1963,10 +1963,10 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       }
 #endif
     }
-    mut.lock();
+    // mut.lock();
     lmn_mem_push_atom((LmnMembraneRef)rc->wt(memi), (LmnAtomRef)ap, attr);
+    // mut.unlock();
     rc->reg(atomi) = {(LmnWord)ap, attr, TT_ATOM};
-    mut.unlock();
 
     // std::stringstream ss_end;
     // ss_end << "newatom ended: " << std::this_thread::get_id();
