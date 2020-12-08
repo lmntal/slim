@@ -556,7 +556,7 @@ static inline BOOL react_ruleset(LmnReactCxtRef rc, LmnMembraneRef mem,
   // printf("%s:%d\n", __FUNCTION__, __LINE__);
   int tnum=1;
   if(parallel)
-    tnum=10;
+    tnum=2;
   int cnt=0;
   react_result = false;
 
@@ -565,6 +565,7 @@ static inline BOOL react_ruleset(LmnReactCxtRef rc, LmnMembraneRef mem,
     // LmnReactCxt rc_copied = LmnReactCxt()
 
     LmnReactCxt *rc_copied = new LmnReactCxt(*rc);
+    // std::cout << &(rc_copied->work_array) << " " << i << std::endl;
 
     // MemReactContext *ctx_copied = new MemReactContext(mem);
     //std::cout << __FUNCTION__ <<":"<<__LINE__<<":"<<std::this_thread::get_id()<<":"<<&ctx_copied << std::endl;
@@ -929,7 +930,7 @@ void slim::vm::interpreter::findatom(LmnReactCxtRef rc, LmnRuleRef rule,
   // std::cout << ss.str() << std::endl;
 
   // muts[f-23].lock();
-  mut.lock();
+  // mut.lock();
 
   auto atomlist_ent = mem->get_atomlist(f);
 
@@ -946,7 +947,7 @@ void slim::vm::interpreter::findatom(LmnReactCxtRef rc, LmnRuleRef rule,
   auto end = std::end(*atomlist_ent);
   if (iter == end){
     // muts[f-23].unlock();
-    mut.unlock();
+    // mut.unlock();
 
     // std::stringstream ss;
     // ss << "muts[" << f-23 << "] has unlocked ";
@@ -964,7 +965,7 @@ void slim::vm::interpreter::findatom(LmnReactCxtRef rc, LmnRuleRef rule,
 
   this->false_driven_enumerate(reg, std::move(v));
 
-  mut.unlock();
+  // mut.unlock();
   // muts[f-23].unlock();
 
   // std::stringstream ss;
@@ -1963,8 +1964,9 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       // ss << "newatom " << f << " " << std::this_thread::get_id();
       // std::cout << ss.str() << std::endl;
       
-
+      mut.lock();
       ap = lmn_new_atom(f);
+      mut.unlock();
       // muts[f-23].unlock();
 
 #ifdef USE_FIRSTCLASS_RULE
@@ -2675,10 +2677,10 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     }
 #endif
 
-    // mut.lock();
+    mut.lock();
     lmn_mem_remove_atom((LmnMembraneRef)rc->wt(memi), (LmnAtomRef)rc->wt(atomi),
                         rc->at(atomi));
-    // mut.unlock();
+    mut.unlock();
 
     break;
   }
@@ -2807,7 +2809,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     READ_VAL(LmnInstrVar, instr, pos2);
 
     // TODO(Fukui): atom2にロックをかける
-    // mut.lock();
+    mut.lock();
 
     attr = ((LmnSymbolAtomRef)rc->wt(atom2))->get_attr(pos1);
     LMN_ASSERT(!LMN_ATTR_IS_DATA(rc->at(atom2)));
@@ -2824,7 +2826,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     rc->reg(atom1) = {
         (LmnWord)((LmnSymbolAtomRef)rc->wt(atom2))->get_link(pos1), attr,
         TT_ATOM};
-    // mut.unlock();
+    mut.unlock();
     break;
   }
   case INSTR_FUNC: {

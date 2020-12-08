@@ -88,10 +88,10 @@ void lmn_mem_add_ruleset_sort(std::vector<LmnRuleSet *> *src_v, LmnRuleSetRef ad
   int i, j, n;
   LmnRulesetId add_id;
   add_id = add_rs->id;
-  printf("%s:%d\n", __FUNCTION__, __LINE__);
-  printf("%p\n", src_v);
+  // printf("%s:%d\n", __FUNCTION__, __LINE__);
+  // printf("%p\n", src_v);
   n = src_v->size();
-  printf("%s:%d\n", __FUNCTION__, __LINE__);
+  // printf("%s:%d\n", __FUNCTION__, __LINE__);
   for (i = 0; i < n; i++) {
     LmnRuleSetRef rs_i;
     LmnRulesetId dst_id;
