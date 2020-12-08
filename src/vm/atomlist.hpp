@@ -133,7 +133,6 @@ struct AtomListEntry {
     };
 
     const_iterator &operator++() {
-      // std::cout << "++" << std::endl;
       a_index = a_index->get_next();
       return *this;
     };
