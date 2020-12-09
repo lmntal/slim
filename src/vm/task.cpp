@@ -362,7 +362,7 @@ static void mem_oriented_loop(MemReactContext *ctx, LmnMembraneRef mem) {
 
   /* react調査 */
 
-  int tnum = 96; 
+  int tnum = 88; 
 
   auto react = [&](MemReactContext *ctx, LmnMembraneRef m, int ti){
 
@@ -389,7 +389,12 @@ static void mem_oriented_loop(MemReactContext *ctx, LmnMembraneRef mem) {
 
   // int cnt = 0;
 
+  std::cout << "Global: " << ctx->get_global_root()->id << std::endl;
+
+  
+
   while (!ctx->memstack_isempty()) {
+    int parent_id = -1;
     // cnt++;
     // if(cnt != 1)
     //   break;
@@ -401,15 +406,23 @@ static void mem_oriented_loop(MemReactContext *ctx, LmnMembraneRef mem) {
     for(int i=0;i<tnum;i++){
       if(ctx->memstack_isempty())
         break;
+
+      if(ctx->memstack_peek()->id==parent_id)
+        break;
+      
       LmnMembraneRef mem = ctx->memstack_pop();
+      if(mem->parent!=NULL)
+        parent_id = mem->parent->id;
 
       // ctxをコピー
       MemReactContext *ctx_copied = new MemReactContext(*ctx);
 
 
       std::stringstream ss_start;
-      ss_start << "mtc copy: " << std::this_thread::get_id() << " ctx_copied: " << &(ctx_copied->work_array);
-      // std::cout << ss_start.str() << std::endl;
+      ss_start << "Local:\t" << mem->id;
+      if(mem->parent!=NULL)
+        ss_start << "\tParent:\t" << parent_id;
+      std::cout << ss_start.str() << std::endl;
 
       // ctx_copied->work_array = std::vector<LmnRegister>(std::begin(ctx->work_array), std::end(ctx->work_array));
 
