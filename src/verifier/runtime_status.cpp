@@ -680,18 +680,18 @@ void dump_profile_data(FILE *f) {
 
     fprintf(f,
             "\n== Static Profiler Report ==================================\n");
-    fprintf(f, "%-20s%8s  : %15.2lf\n", "Wall Time (sec)", "Total",
+    fprintf(f, "%-20s%8s  : %15.6lf\n", "Wall Time (sec)", "Total",
             tmp_total_wall_time);
-    fprintf(f, "%-20s%8s  : %15.2lf\n", " ", " Exec", tmp_total_wall_time_main);
+    fprintf(f, "%-20s%8s  : %15.6lf\n", " ", " Exec", tmp_total_wall_time_main);
     fprintf(f,
             "------------------------------------------------------------\n");
 
     if (!lmn_env.nd && lmn_env.enable_parallel) {
-      fprintf(f, "%-20s%8s  : %15.2lf\n", "CPU Usage (sec)", "Main",
+      fprintf(f, "%-20s%8s  : %15.6lf\n", "CPU Usage (sec)", "Main",
               tmp_total_cpu_time);
       if (lmn_prof.thread_num == 1) {
         // child_thread == 1
-        fprintf(f, "%-20s%8s  : %15.2lf\n", " ", "Sub",
+        fprintf(f, "%-20s%8s  : %15.6lf\n", " ", "Sub",
                 lmn_prof.thread_cpu_time_main[0]);
       } else {
         // child_thread > 1
@@ -701,7 +701,7 @@ void dump_profile_data(FILE *f) {
         fprintf(f, "%-18s%10s  : %15s\n", " ", "---------",
                 "--------------------------");
         for (i = 0; i < lmn_prof.thread_num; i++) {
-          fprintf(f, "%-12s%13s%3u  : %15.2lf\n", " ", "Thread", i,
+          fprintf(f, "%-12s%13s%3u  : %15.6lf\n", " ", "Thread", i,
                   lmn_prof.thread_cpu_time_main[i]);
         }
 #else

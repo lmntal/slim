@@ -40,6 +40,7 @@
 
 #include "atom.h"
 #include <iterator>
+#include <iostream>
 
 struct SimpleHashtbl;
 struct AtomListEntry;

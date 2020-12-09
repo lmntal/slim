@@ -44,6 +44,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <mutex>
 
 #ifdef WITH_DMALLOC
 #include <dmalloc.h>
@@ -148,6 +149,13 @@ typedef long long __int64;
 #define HAVE___INT64
 #endif
 #endif
+
+
+/*----------------------------------------------------------------------
+ * Mutex
+ */
+
+extern std::mutex mut;
 
 /*----------------------------------------------------------------------
  * Special Atom

@@ -46,6 +46,7 @@
 #include <algorithm>
 #include <bitset>
 #include <unordered_map>
+#include <atomic>
 
 typedef struct LmnRegister *LmnRegisterRef;
 
@@ -104,6 +105,9 @@ struct RuleContext {
   }
 
   RuleContext &operator=(const RuleContext &cxt) {
+    // work array を deep copy するように変更
+    //this->work_array = new Vector(cxt.work_array);
+    //this->work_array = std::vector<LmnRegister>(std::begin(cxt.work_array), std::end(cxt.work_array));
     this->work_array = cxt.work_array;
 #ifdef USE_FIRSTCLASS_RULE
     delete this->insertion_events;
@@ -193,6 +197,7 @@ public:
   bool memstack_isempty() const {
     return memstack.empty();
   }
+  // ここらへんをロックフリーにできないか調べる
   void memstack_push(LmnMembrane *mem) {
     memstack.push_back(mem);
     mem->set_active(true);
@@ -206,6 +211,24 @@ public:
   LmnMembrane *memstack_peek() {
     return memstack.back();
   }
+  LmnMembrane *memstack_first() {
+    return memstack.front();
+  }
+  // auto memstack_begin() {
+  //   return memstack.begin();
+  // }
+  // auto memstack_end() {
+  //   return memstack.end();
+  // }
+  // void memstack_clear(){
+  //   memstack.clear();
+  // }
+  // auto get_ith_mem(int i){
+  //   return memstack[i];
+  // }
+  // int get_size(){
+  //   return memstack.size();
+  // }
 
   /* 実行膜スタックからmemを削除する。外部関数が膜の削除しようとするとき
    に、その膜がスタックに積まれている事がある。そのため、安全な削除を行

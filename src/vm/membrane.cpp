@@ -319,9 +319,12 @@ void mem_push_symbol_atom(LmnMembraneRef mem, LmnSymbolAtomRef atom) {
   AtomListEntry *as;
   LmnFunctor f = atom->get_functor();
 
+  // if文も含めてロックが必要。今後要検証
+  mut.lock();
   if (atom->get_id() == 0) { /* 膜にpushしたならばidを割り当てる */
     atom->set_id(env_gen_next_id());
   }
+  mut.unlock();
 
   as = mem->get_atomlist(f);
   if (!as) { /* 本膜内に初めてアトムatomがPUSHされた場合 */
@@ -3435,7 +3438,9 @@ void lmn_mem_push_atom(LmnMembraneRef mem, LmnAtomRef atom, LmnLinkAttr attr) {
   if (LMN_ATTR_IS_DATA_WITHOUT_EX(attr)) {
     mem->data_atom_inc();
   } else { /* symbol atom */
+    // mut.lock();
     mem_push_symbol_atom(mem, (LmnSymbolAtomRef)atom);
+    // mut.unlock();
   }
 }
 
