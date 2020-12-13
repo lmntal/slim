@@ -253,9 +253,8 @@ TreeNodeElement TreeDatabase::tree_find_or_put_rec(TreeNodeStrRef str, TreeNodeR
                                      int start, int end, BOOL *found) {
   int split;
   TreeNodeID ref;
-  TreeNodeElement prev_ref;
   if ((end - start + 1) <= 1) {
-    return vector_unit(str, start, end, prev_ref);
+    return vector_unit(str, start, end);
   }
   split = tree_get_split_position(start, end);
   TreeNodeElement left =
@@ -269,27 +268,33 @@ TreeNodeElement TreeDatabase::tree_find_or_put_rec(TreeNodeStrRef str, TreeNodeR
   } else {
     this->table_find_or_put(left, right, &ref);
   }
-  prev_ref = ref;
   prev_str->left = left;
   prev_str->right = right;
   return ref;
 }
 TreeNodeElement TreeDatabase::tree_find_or_put_inc_rec(TreeNodeStrRef str, TreeNodeRef prev_str, 
-						       int start, int end, BOOL *found, BOOL prev_check, TreeNodeID prev_ref) {
+						       int start, int end, int prev_start, int prev_end, BOOL *found, BOOL prev_check, TreeNodeID prev_ref) {
   int split;
-  TreeNodeID ref, prev_ref_l, prev_ref_r;
+  TreeNodeID ref;
   BOOL prev_check_l, prev_check_r;
 
   if ((end - start + 1) <= 1) {
     return vector_unit_inc(str, start, end, prev_ref, prev_check);
   }
   split = tree_get_split_position(start, end);
-  prev_ref_l = prev_str->left;
-  prev_ref_r = prev_str->right;
-  TreeNodeElement left =
-    this->tree_find_or_put_inc_rec(str, start, start + split, found, prev_check_l, prev_ref_l);
-  TreeNodeElement right =
-    this->tree_find_or_put_inc_rec(str, start + split + 1, end, found, prev_check_r, prev_ref_r);
+  if((prev_end - prev_start +1) <= 1) {
+    TreeNodeElement left =
+      this->tree_find_or_put_rec(str, prev_str, start, start + split, found);
+    TreeNodeElement right =
+      this->tree_find_or_put_rec(str, prev_str, start + split + 1, end, found);
+  }else{
+    prev_split = tree_get_split_position(prev_start, prev_end);
+    TreeNodeRef prev_node = this->nodes[prev_ref & this->mask];
+    TreeNodeElement left =
+      this->tree_find_or_put_inc_rec(str, prev_str, start, start + split, prev_start, prev_start + prev_split, found, prev_check_l, prev_node->left);
+    TreeNodeElement right =
+      this->tree_find_or_put_inc_rec(str, prev_str, start + split + 1, end, prev_start + prev_split + 1, prev_end, found, prev_check_r, prev_node->right);
+  }
   if ((end - start + 1) == str->len) {
     if(!(prev_check_l) || !(prev_check_r)){
       BOOL _found = this->table_find_or_put(left, right, &ref);
@@ -313,7 +318,7 @@ TreeNodeElement TreeDatabase::tree_find_or_put_inc_rec(TreeNodeStrRef str, TreeN
   return ref;
 }
 
-TreeNodeID TreeDatabase::tree_find_or_put(LmnBinStrRef bs,
+TreeNodeID TreeDatabase::tree_find_or_put(LmnBinStrRef bs, LmnBinStrRef prev_bs, TreeNodeID prev_ref, 
                             BOOL *found) {
   struct TreeNodeStr str;
   TreeNodeID ref;
@@ -326,6 +331,31 @@ TreeNodeID TreeDatabase::tree_find_or_put(LmnBinStrRef bs,
     str.len += 1;
   // printf("node_count: %d, extra:%d\n", str.len, str.extra);
   ref = this->tree_find_or_put_rec(&str, 0, str.len - 1, found);
+  prev_ref = ref;
+  prev_bs = bs;
+  return ref;
+}
+TreeNodeID TreeDatabase::tree_find_or_put_inc(LmnBinStrRef bs, LmnBinStrRef prev_bs, TreeNodeID prev_ref, 
+                            BOOL *found) {
+  struct TreeNodeStr str, prev_str;
+  TreeNodeID ref;
+  int v_len_real = ((bs->len + 1) / TAG_IN_BYTE);
+  int prev_v_len_real = ((prev_bs->len + 1) / TAG_IN_BYTE);
+  str.len = v_len_real / TREE_UNIT_SIZE;
+  str.extra = v_len_real % TREE_UNIT_SIZE;
+  str.nodes = (TreeNodeElement *)bs->v;
+  prev_str.len = prev_v_len_real / TREE_UNIT_SIZE;
+  prev_str.extra = prev_v_len_real % TREE_UNIT_SIZE;
+  prev_str.nodes = (TreeNodeElement *)prev_bs->v;
+
+  if (str.extra > 0)
+    str.len += 1;
+  if (prev_sre.extra > 0)
+    prev_str.len += 1;
+  // printf("node_count: %d, extra:%d\n", str.len, str.extra);
+  ref = this->tree_find_or_put_inc_rec(&str, &prev_str, 0, str.len - 1, 0, prev_str.len-1, found, false, prev_ref);
+  prev_ref = ref;
+  prev_bs = bs;
   return ref;
 }
 
