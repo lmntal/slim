@@ -362,7 +362,7 @@ static void mem_oriented_loop(MemReactContext *ctx, LmnMembraneRef mem) {
 
   /* react調査 */
 
-  int tnum = 96; 
+  int tnum = 4; 
 
   auto react = [&](MemReactContext *ctx, LmnMembraneRef m, int ti){
 
@@ -405,7 +405,8 @@ static void mem_oriented_loop(MemReactContext *ctx, LmnMembraneRef mem) {
 
       // ctxをコピー
       MemReactContext *ctx_copied = new MemReactContext(*ctx);
-
+      ctx = ctx_copied;
+      // ctx_copied->memstack = ctx->memstack;
 
       std::stringstream ss_start;
       ss_start << "mtc copy: " << std::this_thread::get_id() << " ctx_copied: " << &(ctx_copied->work_array);
@@ -429,9 +430,9 @@ static void mem_oriented_loop(MemReactContext *ctx, LmnMembraneRef mem) {
       // ts[j].detach();
       // std::cout << "thread[" << j << "] finished"<< std::endl;
     }
-    for(int j=0;j<ts.size();j++){
-      delete ctx_copied_vec[j];
-    }
+    // for(int j=0;j<ts.size();j++){
+    //   delete ctx_copied_vec[j];
+    // }
     // std::cout << "ok" << std::endl;
   }
 

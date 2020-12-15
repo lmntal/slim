@@ -188,16 +188,28 @@ public:
  */
 
 class MemReactContext : public LmnReactCxt {
-  std::vector<LmnMembrane *> memstack;
 
 public:
+  std::vector<LmnMembrane *> memstack;
+  // MemReactContext& operator=(const MemReactContext &mrc) {
+  //   *this = new LmnReactCxt(mrc.global_root, REACT_MEM_ORIENTED);
+  //   this->memstack = mrc.memstack;
+  //   return *this;
+  // }
+
+  // LmnReactCxt &operator=(const LmnReactCxt &from) {
+  //   this->RuleContext::operator=(from);
+  //   this->mode = from.mode;
+  //   this->global_root = from.global_root;
+  //   return *this;
+  // }
+
   MemReactContext(LmnMembrane *mem) :
       LmnReactCxt(mem, REACT_MEM_ORIENTED) {}
 
   bool memstack_isempty() const {
     return memstack.empty();
   }
-  // ここらへんをロックフリーにできないか調べる
   void memstack_push(LmnMembrane *mem) {
     memstack.push_back(mem);
     mem->set_active(true);
