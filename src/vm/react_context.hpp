@@ -210,6 +210,9 @@ public:
   bool memstack_isempty() const {
     return memstack.empty();
   }
+  void memstack_push_front(LmnMembrane *mem){
+    memstack.insert(memstack.begin(), mem);
+  }
   void memstack_push(LmnMembrane *mem) {
     memstack.push_back(mem);
     mem->set_active(true);

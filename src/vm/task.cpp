@@ -366,10 +366,20 @@ static void mem_oriented_loop(MemReactContext *ctx, LmnMembraneRef mem) {
 
   auto react = [&](MemReactContext *ctx, LmnMembraneRef m, int ti){
 
+    // 膜を生成する個数
+    int newmem_cnt = 4;
+
     BOOL reacted = false;
       do{
         // std::cout << "will react " << ti << std::endl;
         reacted = react_all_rulesets(ctx,m,ti);
+        if(reacted && m->id==1){
+          newmem_cnt--;
+          if(newmem_cnt==0){
+            ctx->memstack_push_front(m);
+            break;
+          }
+        }
         // if(reacted)
           // std::cout << "reacted " << ti << std::endl;
         // else{
@@ -403,13 +413,15 @@ static void mem_oriented_loop(MemReactContext *ctx, LmnMembraneRef mem) {
         break;
       LmnMembraneRef mem = ctx->memstack_pop();
 
+      // std::cout << mem->id << std::endl;
+
       // ctxをコピー
       MemReactContext *ctx_copied = new MemReactContext(*ctx);
       ctx = ctx_copied;
       // ctx_copied->memstack = ctx->memstack;
 
-      std::stringstream ss_start;
-      ss_start << "mtc copy: " << std::this_thread::get_id() << " ctx_copied: " << &(ctx_copied->work_array);
+      // std::stringstream ss_start;
+      // ss_start << "mtc copy: " << std::this_thread::get_id() << " ctx_copied: " << &(ctx_copied->work_array);
       // std::cout << ss_start.str() << std::endl;
 
       // ctx_copied->work_array = std::vector<LmnRegister>(std::begin(ctx->work_array), std::end(ctx->work_array));
@@ -420,6 +432,10 @@ static void mem_oriented_loop(MemReactContext *ctx, LmnMembraneRef mem) {
 
       // std::cout << *mem << std::endl;
       ts.push_back(std::thread(react, ctx_copied, mem, i));
+
+      // ルート膜は並列化しない
+      if(mem->id == 1)
+        break;
       // std::cout << "ts_size" << ts.size() << std::endl;
     }
     // std::cout << "cnt :" << cnt << std::endl; 
@@ -576,6 +592,10 @@ BOOL react_rule(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule, int ti) 
   translated = rule->translated;
   inst_seq = rule->inst_seq;
 
+  if(rule->inst_seq_len>0){
+    for(int i=0; i<rule->inst_seq_len; i++)
+      printf("Inst: %hhu\n",*(inst_seq + i*sizeof(LmnInstrOp)));
+  }
   rc->resize(1);
   rc->wt(0) = (LmnWord)mem;
   rc->tt(0) = TT_MEM;
@@ -2626,7 +2646,6 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     break;
   }
   case INSTR_NEWMEM: {
-    // std::cout << "new!" << std::endl;
     LmnInstrVar newmemi, parentmemi;
     LmnMembraneRef mp;
 
@@ -2635,6 +2654,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     SKIP_VAL(LmnInstrVar, instr);
 
     mp = new LmnMembrane(); /*lmn_new_mem(memf);*/
+    std::cout << "new!" << mp->id << std::endl;
     ((LmnMembraneRef)rc->wt(parentmemi))->add_child_mem(mp);
     rc->wt(newmemi) = (LmnWord)mp;
     rc->tt(newmemi) = TT_MEM;
