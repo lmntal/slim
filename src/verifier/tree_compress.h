@@ -70,6 +70,7 @@ struct TreeDatabase {
   size_t mask;
   void clear();
   TreeNodeElement tree_find_or_put_rec(TreeNodeStr* str, int start, int end, BOOL *found);
+  TreeNodeElement tree_find_or_put_inc_rec(TreeNodeStr* str, int start, int end, int prev_start, int prev_end, BOOL *found, BOOL prev_check, TreeNodeID prev_ref);
   TreeNodeID tree_find_or_put(LmnBinStrRef bs, BOOL *found);
   BOOL table_find_or_put(TreeNodeElement left,
                        TreeNodeElement right, TreeNodeID *ref);

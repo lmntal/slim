@@ -47,6 +47,7 @@
 #include <ctype.h>
 #include <getopt.h>
 #include <unistd.h>
+#include "incremental.h"
 /* #include "ext.h" */
 #include "verifier/runtime_status.h"
 
@@ -64,7 +65,6 @@ void init_rules();
 void destroy_rules();
 void sym_tbl_destroy();
 void sym_tbl_init();
-
 static void usage(void) {
   fprintf(
       stderr,

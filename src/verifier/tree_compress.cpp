@@ -41,6 +41,7 @@
  *  Parallel Recursive State Compression for Free
  */
 #include "tree_compress.h"
+#include "../incremental.h"
 #include <math.h>
 
 #define atomic_fetch_and_inc(t) __sync_fetch_and_add(t, 1)
@@ -53,6 +54,9 @@
 #define TREE_CACHE_LINE 8
 
 typedef struct TreeNodeStr *TreeNodeStrRef;
+
+LmnBinStrRef prev_bs;
+TreeNodeID prev_ref_top = -1;
 
 struct TreeNodeStr {
   TreeNodeElement *nodes;
@@ -249,7 +253,7 @@ TreeDatabase::~TreeDatabase() {
   return;
 }
 
-TreeNodeElement TreeDatabase::tree_find_or_put_rec(TreeNodeStrRef str, TreeNodeRef prev_str, 
+TreeNodeElement TreeDatabase::tree_find_or_put_rec(TreeNodeStrRef str, 
                                      int start, int end, BOOL *found) {
   int split;
   TreeNodeID ref;
@@ -258,9 +262,9 @@ TreeNodeElement TreeDatabase::tree_find_or_put_rec(TreeNodeStrRef str, TreeNodeR
   }
   split = tree_get_split_position(start, end);
   TreeNodeElement left =
-    this->tree_find_or_put_rec(str, prev_str, start, start + split, found);
+    this->tree_find_or_put_rec(str, start, start + split, found);
   TreeNodeElement right =
-    this->tree_find_or_put_rec(str, prev_str, start + split + 1, end, found);
+    this->tree_find_or_put_rec(str, start + split + 1, end, found);
   if ((end - start + 1) == str->len) {
     BOOL _found = this->table_find_or_put(left, right, &ref);
     if (found)
@@ -268,57 +272,45 @@ TreeNodeElement TreeDatabase::tree_find_or_put_rec(TreeNodeStrRef str, TreeNodeR
   } else {
     this->table_find_or_put(left, right, &ref);
   }
-  prev_str->left = left;
-  prev_str->right = right;
   return ref;
 }
-TreeNodeElement TreeDatabase::tree_find_or_put_inc_rec(TreeNodeStrRef str, TreeNodeRef prev_str, 
+TreeNodeElement TreeDatabase::tree_find_or_put_inc_rec(TreeNodeStrRef str,
 						       int start, int end, int prev_start, int prev_end, BOOL *found, BOOL prev_check, TreeNodeID prev_ref) {
-  int split;
+  int split, prev_split;
   TreeNodeID ref;
   BOOL prev_check_l, prev_check_r;
-
+  TreeNodeElement left_ref;
+  TreeNodeElement right_ref;
   if ((end - start + 1) <= 1) {
     return vector_unit_inc(str, start, end, prev_ref, prev_check);
   }
   split = tree_get_split_position(start, end);
   if((prev_end - prev_start +1) <= 1) {
-    TreeNodeElement left =
-      this->tree_find_or_put_rec(str, prev_str, start, start + split, found);
-    TreeNodeElement right =
-      this->tree_find_or_put_rec(str, prev_str, start + split + 1, end, found);
+    left_ref = this->tree_find_or_put_rec(str, start, start + split, found);
+    right_ref = this->tree_find_or_put_rec(str, start + split + 1, end, found);
   }else{
     prev_split = tree_get_split_position(prev_start, prev_end);
     TreeNodeRef prev_node = this->nodes[prev_ref & this->mask];
-    TreeNodeElement left =
-      this->tree_find_or_put_inc_rec(str, prev_str, start, start + split, prev_start, prev_start + prev_split, found, prev_check_l, prev_node->left);
-    TreeNodeElement right =
-      this->tree_find_or_put_inc_rec(str, prev_str, start + split + 1, end, prev_start + prev_split + 1, prev_end, found, prev_check_r, prev_node->right);
+    left_ref = this->tree_find_or_put_inc_rec(str, start, start + split, prev_start, prev_start + prev_split, found, prev_check_l, prev_node->left);
+    right_ref = this->tree_find_or_put_inc_rec(str, start + split + 1, end, prev_start + prev_split + 1, prev_end, found, prev_check_r, prev_node->right);
   }
   if ((end - start + 1) == str->len) {
     if(!(prev_check_l) || !(prev_check_r)){
-      BOOL _found = this->table_find_or_put(left, right, &ref);
+      BOOL _found = this->table_find_or_put(left_ref, right_ref, &ref);
       if (found)
 	(*found) = _found;
-      prev_ref = ref;
-    }else{
-      ref = prev_ref;
     }
   } else {
     if(!(prev_check_l) || !(prev_check_r)){
-      this->table_find_or_put(left, right, &ref);
+      this->table_find_or_put(left_ref, right_ref, &ref);
       prev_ref = ref;
-    }else{
-      ref = prev_ref;
     }
   }
   prev_check = prev_check_l && prev_check_r;
-  prev_str->left = left;
-  prev_str->right = right;
   return ref;
 }
 
-TreeNodeID TreeDatabase::tree_find_or_put(LmnBinStrRef bs, LmnBinStrRef prev_bs, TreeNodeID prev_ref, 
+TreeNodeID TreeDatabase::tree_find_or_put(LmnBinStrRef bs, 
                             BOOL *found) {
   struct TreeNodeStr str;
   TreeNodeID ref;
@@ -326,35 +318,22 @@ TreeNodeID TreeDatabase::tree_find_or_put(LmnBinStrRef bs, LmnBinStrRef prev_bs,
   str.len = v_len_real / TREE_UNIT_SIZE;
   str.extra = v_len_real % TREE_UNIT_SIZE;
   str.nodes = (TreeNodeElement *)bs->v;
-
   if (str.extra > 0)
     str.len += 1;
-  // printf("node_count: %d, extra:%d\n", str.len, str.extra);
-  ref = this->tree_find_or_put_rec(&str, 0, str.len - 1, found);
-  prev_ref = ref;
-  prev_bs = bs;
-  return ref;
-}
-TreeNodeID TreeDatabase::tree_find_or_put_inc(LmnBinStrRef bs, LmnBinStrRef prev_bs, TreeNodeID prev_ref, 
-                            BOOL *found) {
-  struct TreeNodeStr str, prev_str;
-  TreeNodeID ref;
-  int v_len_real = ((bs->len + 1) / TAG_IN_BYTE);
-  int prev_v_len_real = ((prev_bs->len + 1) / TAG_IN_BYTE);
-  str.len = v_len_real / TREE_UNIT_SIZE;
-  str.extra = v_len_real % TREE_UNIT_SIZE;
-  str.nodes = (TreeNodeElement *)bs->v;
-  prev_str.len = prev_v_len_real / TREE_UNIT_SIZE;
-  prev_str.extra = prev_v_len_real % TREE_UNIT_SIZE;
-  prev_str.nodes = (TreeNodeElement *)prev_bs->v;
-
-  if (str.extra > 0)
-    str.len += 1;
-  if (prev_sre.extra > 0)
-    prev_str.len += 1;
-  // printf("node_count: %d, extra:%d\n", str.len, str.extra);
-  ref = this->tree_find_or_put_inc_rec(&str, &prev_str, 0, str.len - 1, 0, prev_str.len-1, found, false, prev_ref);
-  prev_ref = ref;
+  if(prev_ref_top > -1  && prev_bs != NULL){//初期状態でないとき
+    struct TreeNodeStr prev_str;
+    int prev_v_len_real = ((prev_bs->len + 1) / TAG_IN_BYTE);
+    prev_str.len = prev_v_len_real / TREE_UNIT_SIZE;
+    prev_str.extra = prev_v_len_real % TREE_UNIT_SIZE;
+    prev_str.nodes = (TreeNodeElement *)prev_bs->v;
+    if (prev_str.extra > 0)
+      prev_str.len += 1;
+    ref = this->tree_find_or_put_inc_rec(&str, 0, str.len - 1, 0, prev_str.len-1, found, false, prev_ref_top);
+  }else{//初期状態のとき
+    // printf("node_count: %d, extra:%d\n", str.len, str.extra);
+    ref = this->tree_find_or_put_rec(&str, 0, str.len - 1, found);
+  }
+  prev_ref_top = ref;
   prev_bs = bs;
   return ref;
 }
