@@ -47,7 +47,7 @@
 #include <ctype.h>
 #include <getopt.h>
 #include <unistd.h>
-#include "incremental.h"
+
 /* #include "ext.h" */
 #include "verifier/runtime_status.h"
 
