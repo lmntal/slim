@@ -373,6 +373,8 @@ static void mem_oriented_loop(MemReactContext *ctx, LmnMembraneRef mem) {
       do{
         // std::cout << "will react " << ti << std::endl;
         reacted = react_all_rulesets(ctx,m,ti);
+
+        // mのルールセットに，anymemが含まれていないか確かめる
         if(reacted && m->id==1){
           newmem_cnt--;
           if(newmem_cnt==0){
