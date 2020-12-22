@@ -362,12 +362,12 @@ static void mem_oriented_loop(MemReactContext *ctx, LmnMembraneRef mem) {
 
   /* react調査 */
 
-  int tnum = 4; 
+  int tnum = 24; 
 
   auto react = [&](MemReactContext *ctx, LmnMembraneRef m, int ti){
 
     // 膜を生成する個数
-    int newmem_cnt = 4;
+    int newmem_cnt = 24;
 
     BOOL reacted = false;
       do{
@@ -592,10 +592,10 @@ BOOL react_rule(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule, int ti) 
   translated = rule->translated;
   inst_seq = rule->inst_seq;
 
-  if(rule->inst_seq_len>0){
-    for(int i=0; i<rule->inst_seq_len; i++)
-      printf("Inst: %hhu\n",*(inst_seq + i*sizeof(LmnInstrOp)));
-  }
+  // if(rule->inst_seq_len>0){
+  //   for(int i=0; i<rule->inst_seq_len; i++)
+  //     printf("Inst: %hhu\n",*(inst_seq + i*sizeof(LmnInstrOp)));
+  // }
   rc->resize(1);
   rc->wt(0) = (LmnWord)mem;
   rc->tt(0) = TT_MEM;

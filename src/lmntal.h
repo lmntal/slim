@@ -45,6 +45,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <mutex>
+#include <thread>
 
 #ifdef WITH_DMALLOC
 #include <dmalloc.h>
@@ -156,6 +157,13 @@ typedef long long __int64;
  */
 
 extern std::mutex mut;
+
+
+/*----------------------------------------------------------------------
+ * Thread pool
+ */
+
+extern std::map<int, std::thread> threadpool;
 
 /*----------------------------------------------------------------------
  * Special Atom
