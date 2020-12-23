@@ -157,13 +157,7 @@ typedef long long __int64;
  */
 
 extern std::mutex mut;
-
-
-/*----------------------------------------------------------------------
- * Thread pool
- */
-
-extern std::map<int, std::thread> threadpool;
+extern std::mutex stack_mut;
 
 /*----------------------------------------------------------------------
  * Special Atom

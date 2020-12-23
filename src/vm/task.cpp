@@ -47,6 +47,8 @@
 #include "verifier/runtime_status.h"
 #include "verifier/verifier.h"
 
+#include "lmntal.h"
+
 #ifdef USE_FIRSTCLASS_RULE
 #include "firstclass_rule.h"
 #endif
@@ -150,9 +152,11 @@ namespace c17 = slim::element;
 // int tnum = 10;
 
 std::mutex mut;
+std::mutex stack_mut;
+
 // std::vector<std::unique_ptr<std::mutex>> tmut;
 
-
+std::atomic<int> newmem_cnt(0);
 
 
 /** 通常実行時の入口.
@@ -362,97 +366,157 @@ static void mem_oriented_loop(MemReactContext *ctx, LmnMembraneRef mem) {
 
   /* react調査 */
 
-  int tnum = 24; 
+  // int tnum = 24; 
 
-  auto react = [&](MemReactContext *ctx, LmnMembraneRef m, int ti){
+  // auto react = [&](MemReactContext *ctx, LmnMembraneRef m, int ti){
 
-    // 膜を生成する個数
-    int newmem_cnt = 24;
+  //   // 膜を生成する個数
+  //   int newmem_cnt = 24;
+
+  //   BOOL reacted = false;
+  //     do{
+  //       // std::cout << "will react " << ti << std::endl;
+  //       reacted = react_all_rulesets(ctx,m,ti);
+
+  //       // mのルールセットに，anymemが含まれていないか確かめる
+  //       if(reacted && m->id==1){
+  //         newmem_cnt--;
+  //         if(newmem_cnt==0){
+  //           ctx->memstack_push_front(m);
+  //           break;
+  //         }
+  //       }
+  //       // if(reacted)
+  //         // std::cout << "reacted " << ti << std::endl;
+  //       // else{
+  //         // std::cout << "not reactfed " << ti << std::endl;
+  //       // }
+  //       // std::cout << "reacted " << ti << std::endl;
+  //     }while(reacted);
+  //     // std::cout << "reacted outer " << ti << std::endl;
+  // };
+
+  // // グローバルルート膜対策 -> 最初に初期状態空間を構築しているので意味ない
+  // // LmnMembraneRef gmem = ctx->memstack_pop();
+  // // MemReactContext *ctx_copied = new MemReactContext(gmem, REACT_MEM_ORIENTED);
+  // // LmnReactCxt *rc_copied = new LmnReactCxt(*rc);
+  // // MemReactContext ctx_copied = MemReactContext(mem);
+  // // react(ctx, gmem, 0);
+
+  // // int cnt = 0;
+
+  // while (!ctx->memstack_isempty()) {
+  //   // cnt++;
+  //   // if(cnt != 1)
+  //   //   break;
+
+  //   // 後でdelete出来るように保存しておく
+  //   std::vector<MemReactContext *> ctx_copied_vec;
+
+  //   std::vector<std::thread> ts;
+  //   for(int i=0;i<tnum;i++){
+  //     if(ctx->memstack_isempty())
+  //       break;
+  //     LmnMembraneRef mem = ctx->memstack_pop();
+
+  //     // std::cout << mem->id << std::endl;
+
+  //     // ctxをコピー
+  //     MemReactContext *ctx_copied = new MemReactContext(*ctx);
+  //     ctx = ctx_copied;
+  //     // ctx_copied->memstack = ctx->memstack;
+
+  //     // std::stringstream ss_start;
+  //     // ss_start << "mtc copy: " << std::this_thread::get_id() << " ctx_copied: " << &(ctx_copied->work_array);
+  //     // std::cout << ss_start.str() << std::endl;
+
+  //     // ctx_copied->work_array = std::vector<LmnRegister>(std::begin(ctx->work_array), std::end(ctx->work_array));
+
+  //     ctx_copied_vec.push_back(ctx_copied);
+  //     // LmnReactCxt *rc_copied = new LmnReactCxt(*rc);
+  //     // MemReactContext ctx_copied = MemReactContext(mem);
+
+  //     // std::cout << *mem << std::endl;
+  //     ts.push_back(std::thread(react, ctx_copied, mem, i));
+
+  //     // ルート膜は並列化しない
+  //     if(mem->id == 1)
+  //       break;
+  //     // std::cout << "ts_size" << ts.size() << std::endl;
+  //   }
+  //   // std::cout << "cnt :" << cnt << std::endl; 
+  //   // for(int j=0;j<tnum;j++){
+  //   for(int j=0;j<ts.size();j++){
+  //     // std::cout << "thread[" << j << "] will be finished"<< std::endl;
+  //     ts[j].join(); 
+  //     // ts[j].detach();
+  //     // std::cout << "thread[" << j << "] finished"<< std::endl;
+  //   }
+  //   // for(int j=0;j<ts.size();j++){
+  //   //   delete ctx_copied_vec[j];
+  //   // }
+  //   // std::cout << "ok" << std::endl;
+  // }
+
+
+
+ std::function<void(MemReactContext*,LmnMembraneRef,int)> react = [&](MemReactContext *ctx, LmnMembraneRef m, int ti){
 
     BOOL reacted = false;
+    std::vector<std::thread> ts;
       do{
         // std::cout << "will react " << ti << std::endl;
         reacted = react_all_rulesets(ctx,m,ti);
 
-        // mのルールセットに，anymemが含まれていないか確かめる
-        if(reacted && m->id==1){
-          newmem_cnt--;
-          if(newmem_cnt==0){
-            ctx->memstack_push_front(m);
-            break;
+        // mut.lock();
+
+        if(!ctx->memstack_isempty()){
+
+          for(int i=0;i<newmem_cnt; i++){
+            LmnMembraneRef mem = ctx->memstack_pop();
+            newmem_cnt--;
+            MemReactContext *ctx_copied = new MemReactContext(*ctx);
+            ctx_copied->memstack = ctx->memstack;
+
+            ts.push_back(std::thread(react, ctx_copied, mem, 1));
+            
           }
         }
-        // if(reacted)
-          // std::cout << "reacted " << ti << std::endl;
-        // else{
-          // std::cout << "not reactfed " << ti << std::endl;
-        // }
-        // std::cout << "reacted " << ti << std::endl;
+        // mut.unlock();
+
       }while(reacted);
-      // std::cout << "reacted outer " << ti << std::endl;
+
+      if(!reacted){
+        for(int i=0;i<ts.size();i++)
+          ts[i].join();
+        do{
+          reacted = react_all_rulesets(ctx,m,ti);
+        }while(reacted);
+      }
   };
 
-  // グローバルルート膜対策 -> 最初に初期状態空間を構築しているので意味ない
-  // LmnMembraneRef gmem = ctx->memstack_pop();
-  // MemReactContext *ctx_copied = new MemReactContext(gmem, REACT_MEM_ORIENTED);
-  // LmnReactCxt *rc_copied = new LmnReactCxt(*rc);
-  // MemReactContext ctx_copied = MemReactContext(mem);
-  // react(ctx, gmem, 0);
+  LmnMembraneRef m = ctx->memstack_pop();
 
-  // int cnt = 0;
+  // ルート膜スレッドを動かす
+  std::thread t_root = std::thread(react, ctx, m, 0);
 
-  while (!ctx->memstack_isempty()) {
-    // cnt++;
-    // if(cnt != 1)
-    //   break;
+  // std::vector<MemReactContext> mrcs = 
 
-    // 後でdelete出来るように保存しておく
-    std::vector<MemReactContext *> ctx_copied_vec;
 
-    std::vector<std::thread> ts;
-    for(int i=0;i<tnum;i++){
-      if(ctx->memstack_isempty())
-        break;
-      LmnMembraneRef mem = ctx->memstack_pop();
+  // while (!ctx->memstack_isempty()) {
+  //   LmnMembraneRef mem = ctx->memstack_peek();
 
-      // std::cout << mem->id << std::endl;
+  //   MemReactContext *ctx_copied = new MemReactContext(*ctx);
+  //   ctx = ctx_copied;
+    
 
-      // ctxをコピー
-      MemReactContext *ctx_copied = new MemReactContext(*ctx);
-      ctx = ctx_copied;
-      // ctx_copied->memstack = ctx->memstack;
+  //   if (!react_all_rulesets(ctx, mem)) {
+  //     /* ルールが何も適用されなければ膜スタックから先頭を取り除く */
+  //     ctx->memstack_pop();
+  //   }
+  // }
 
-      // std::stringstream ss_start;
-      // ss_start << "mtc copy: " << std::this_thread::get_id() << " ctx_copied: " << &(ctx_copied->work_array);
-      // std::cout << ss_start.str() << std::endl;
-
-      // ctx_copied->work_array = std::vector<LmnRegister>(std::begin(ctx->work_array), std::end(ctx->work_array));
-
-      ctx_copied_vec.push_back(ctx_copied);
-      // LmnReactCxt *rc_copied = new LmnReactCxt(*rc);
-      // MemReactContext ctx_copied = MemReactContext(mem);
-
-      // std::cout << *mem << std::endl;
-      ts.push_back(std::thread(react, ctx_copied, mem, i));
-
-      // ルート膜は並列化しない
-      if(mem->id == 1)
-        break;
-      // std::cout << "ts_size" << ts.size() << std::endl;
-    }
-    // std::cout << "cnt :" << cnt << std::endl; 
-    // for(int j=0;j<tnum;j++){
-    for(int j=0;j<ts.size();j++){
-      // std::cout << "thread[" << j << "] will be finished"<< std::endl;
-      ts[j].join(); 
-      // ts[j].detach();
-      // std::cout << "thread[" << j << "] finished"<< std::endl;
-    }
-    // for(int j=0;j<ts.size();j++){
-    //   delete ctx_copied_vec[j];
-    // }
-    // std::cout << "ok" << std::endl;
-  }
+  t_root.join();
 
 
   /* 元コード */
@@ -464,7 +528,6 @@ static void mem_oriented_loop(MemReactContext *ctx, LmnMembraneRef mem) {
   //     ctx->memstack_pop();
   //   }
   // }
-
 
 }
 
@@ -2655,7 +2718,9 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     READ_VAL(LmnInstrVar, instr, parentmemi);
     SKIP_VAL(LmnInstrVar, instr);
 
+    mut.lock();
     mp = new LmnMembrane(); /*lmn_new_mem(memf);*/
+    mut.unlock();
     std::cout << "new!" << mp->id << std::endl;
     ((LmnMembraneRef)rc->wt(parentmemi))->add_child_mem(mp);
     rc->wt(newmemi) = (LmnWord)mp;
@@ -2664,6 +2729,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     if (rc->has_mode(REACT_MEM_ORIENTED)) {
       ((MemReactContext *)rc)->memstack_push(mp);
     }
+    newmem_cnt++;
     break;
   }
   case INSTR_ALLOCMEM: {

@@ -220,7 +220,7 @@ public:
   LmnMembrane *memstack_pop() {
     auto result = memstack.back();
     memstack.pop_back();
-    result->set_active(false);
+    // result->set_active(false);
     return result;
   }
   LmnMembrane *memstack_peek() {
