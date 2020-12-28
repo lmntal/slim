@@ -463,6 +463,7 @@ static void mem_oriented_loop(MemReactContext *ctx, LmnMembraneRef mem) {
  std::function<void(MemReactContext*,LmnMembraneRef,int)> react = [&](MemReactContext *ctx, LmnMembraneRef m, int ti){
 
     BOOL reacted = false;
+    std::vector<int> ids;
     std::vector<std::thread> ts;
       do{
         // std::cout << "will react " << ti << std::endl;
@@ -473,22 +474,27 @@ static void mem_oriented_loop(MemReactContext *ctx, LmnMembraneRef mem) {
         if(!ctx->memstack_isempty()){
 
           for(int i=0;i<newmem_map[mem->id].size(); i++){
-            LmnMembraneRef mem = ctx->erace_and_get(newmem_map[mem->id][i]);
+            std::cout << "will get " << newmem_map[mem->id][i] << std::endl;
+            LmnMembraneRef mem = ctx->get_by_id(newmem_map[mem->id][i]);
             // newmem_map[mem->id].erase(newmem_map[mem->id].begin);
             MemReactContext *ctx_copied = new MemReactContext(*ctx);
             ctx_copied->memstack = ctx->memstack;
+            ids.push_back(mem->id);
 
             ts.push_back(std::thread(react, ctx_copied, mem, 1));
             
           }
+          newmem_map.erase(mem->id);
         }
         // mut.unlock();
 
       }while(reacted);
 
       if(!reacted){
-        for(int i=0;i<ts.size();i++)
+        for(int i=0;i<ts.size();i++){
+          ctx->erace_by_id(ids[i]);
           ts[i].join();
+        }
         do{
           reacted = react_all_rulesets(ctx,m,ti);
         }while(reacted);
@@ -2722,6 +2728,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     mp = new LmnMembrane(); /*lmn_new_mem(memf);*/
     mut.unlock();
     std::cout << "new!" << mp->id << std::endl;
+    int parent_mem_id = ((LmnMembraneRef)rc->wt(parentmemi))->id;
     ((LmnMembraneRef)rc->wt(parentmemi))->add_child_mem(mp);
     rc->wt(newmemi) = (LmnWord)mp;
     rc->tt(newmemi) = TT_MEM;
@@ -2731,11 +2738,11 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     }
 
     // もしもkeyがなかったらinsert，あったらvectorにpush_back
-    if(newmem_map[parentmemi]){
-      newmem_map.insert(std::make_pair<int,int>(parentmemi, std::vector(newmemi)));
-    }else{
-      newmem_map[parentmemi].push_back(mp->id);
+    if(newmem_map.count(parent_mem_id)==0){
+      std::vector<int> v;
+      newmem_map.emplace(parent_mem_id, v);
     }
+    newmem_map[parent_mem_id].push_back(mp->id);
     break;
   }
   case INSTR_ALLOCMEM: {

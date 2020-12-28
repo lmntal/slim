@@ -47,6 +47,7 @@
 #include <bitset>
 #include <unordered_map>
 #include <atomic>
+#include <iostream>
 
 typedef struct LmnRegister *LmnRegisterRef;
 
@@ -223,16 +224,27 @@ public:
     result->set_active(false);
     return result;
   }
-  LmnMembrane *erace_and_get(int id){
-    mut.lock();
+  LmnMembrane *get_by_id(int id){
+    std::cout << "ID " << id;
     for(int i=0;i<memstack.size(); i++){
       if(memstack[i]->id == id){
         LmnMembrane* m = memstack[i];
-        memstack.erase(memstack.begin()+i);
-        mut.unlock();
         return m;
       }
     }
+    return nullptr;
+  }
+  void erace_by_id(int id){
+    std::cout << "ID " << id;
+    mut.lock();
+    for(int i=0;i<memstack.size(); i++){
+      if(memstack[i]->id == id){
+        memstack.erase(memstack.begin()+i);
+        mut.unlock();
+        return;
+      }
+    }
+    mut.unlock();
   }
   LmnMembrane *memstack_peek() {
     return memstack.back();
