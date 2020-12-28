@@ -471,21 +471,21 @@ static void mem_oriented_loop(MemReactContext *ctx, LmnMembraneRef mem) {
 
         // mut.lock();
 
-        if(!ctx->memstack_isempty()){
+          std::cout << m->id << std::endl;
 
-          for(int i=0;i<newmem_map[mem->id].size(); i++){
-            std::cout << "will get " << newmem_map[mem->id][i] << std::endl;
-            LmnMembraneRef mem = ctx->get_by_id(newmem_map[mem->id][i]);
+          for(int i=0;i<newmem_map[m->id].size(); i++){
+            std::cout << "will get " << newmem_map[m->id][i] << std::endl;
+            LmnMembraneRef m_child = ctx->get_by_id(newmem_map[m->id][i]);
             // newmem_map[mem->id].erase(newmem_map[mem->id].begin);
             MemReactContext *ctx_copied = new MemReactContext(*ctx);
             ctx_copied->memstack = ctx->memstack;
-            ids.push_back(mem->id);
+            ids.push_back(m_child->id);
 
-            ts.push_back(std::thread(react, ctx_copied, mem, 1));
-            
+            ts.push_back(std::thread(react, ctx_copied, m_child, 1));
+             
           }
-          newmem_map.erase(mem->id);
-        }
+          newmem_map.erase(m->id);
+        
         // mut.unlock();
 
       }while(reacted);
@@ -501,10 +501,10 @@ static void mem_oriented_loop(MemReactContext *ctx, LmnMembraneRef mem) {
       }
   };
 
-  LmnMembraneRef m = ctx->memstack_pop();
+  // LmnMembraneRef m = ctx->memstack_pop();
 
   // ルート膜スレッドを動かす
-  std::thread t_root = std::thread(react, ctx, m, 0);
+  std::thread t_root = std::thread(react, ctx, mem, 0);
 
   // std::vector<MemReactContext> mrcs = 
 
@@ -2727,8 +2727,8 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     mut.lock();
     mp = new LmnMembrane(); /*lmn_new_mem(memf);*/
     mut.unlock();
-    std::cout << "new!" << mp->id << std::endl;
     int parent_mem_id = ((LmnMembraneRef)rc->wt(parentmemi))->id;
+    std::cout << "new! " << parent_mem_id << " " << mp->id << std::endl;
     ((LmnMembraneRef)rc->wt(parentmemi))->add_child_mem(mp);
     rc->wt(newmemi) = (LmnWord)mp;
     rc->tt(newmemi) = TT_MEM;
