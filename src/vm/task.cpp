@@ -156,7 +156,7 @@ std::mutex stack_mut;
 
 // std::vector<std::unique_ptr<std::mutex>> tmut;
 
-std::atomic<int> newmem_cnt(0);
+std::map<int,std::vector<int>> newmem_map;
 
 
 /** 通常実行時の入口.
@@ -472,9 +472,9 @@ static void mem_oriented_loop(MemReactContext *ctx, LmnMembraneRef mem) {
 
         if(!ctx->memstack_isempty()){
 
-          for(int i=0;i<newmem_cnt; i++){
-            LmnMembraneRef mem = ctx->memstack_pop();
-            newmem_cnt--;
+          for(int i=0;i<newmem_map[mem->id].size(); i++){
+            LmnMembraneRef mem = ctx->erace_and_get(newmem_map[mem->id][i]);
+            // newmem_map[mem->id].erase(newmem_map[mem->id].begin);
             MemReactContext *ctx_copied = new MemReactContext(*ctx);
             ctx_copied->memstack = ctx->memstack;
 
@@ -2729,7 +2729,13 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     if (rc->has_mode(REACT_MEM_ORIENTED)) {
       ((MemReactContext *)rc)->memstack_push(mp);
     }
-    newmem_cnt++;
+
+    // もしもkeyがなかったらinsert，あったらvectorにpush_back
+    if(newmem_map[parentmemi]){
+      newmem_map.insert(std::make_pair<int,int>(parentmemi, std::vector(newmemi)));
+    }else{
+      newmem_map[parentmemi].push_back(mp->id);
+    }
     break;
   }
   case INSTR_ALLOCMEM: {

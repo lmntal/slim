@@ -220,8 +220,19 @@ public:
   LmnMembrane *memstack_pop() {
     auto result = memstack.back();
     memstack.pop_back();
-    // result->set_active(false);
+    result->set_active(false);
     return result;
+  }
+  LmnMembrane *erace_and_get(int id){
+    mut.lock();
+    for(int i=0;i<memstack.size(); i++){
+      if(memstack[i]->id == id){
+        LmnMembrane* m = memstack[i];
+        memstack.erase(memstack.begin()+i);
+        mut.unlock();
+        return m;
+      }
+    }
   }
   LmnMembrane *memstack_peek() {
     return memstack.back();
