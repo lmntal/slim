@@ -234,6 +234,18 @@ public:
     }
     return nullptr;
   }
+  void deactivate_by_id(int id){
+    std::cout << "ID " << id;
+    mut.lock();
+    for(int i=0;i<memstack.size(); i++){
+      if(memstack[i]->id == id){
+        memstack[i]->set_active(false);
+        mut.unlock();
+        return;
+      }
+    }
+    mut.unlock();
+  }
   void erace_by_id(int id){
     std::cout << "ID " << id;
     mut.lock();

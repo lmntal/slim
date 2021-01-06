@@ -490,15 +490,19 @@ static void mem_oriented_loop(MemReactContext *ctx, LmnMembraneRef mem) {
 
       }while(reacted);
 
-      if(!reacted){
-        for(int i=0;i<ts.size();i++){
-          ctx->erace_by_id(ids[i]);
-          ts[i].join();
-        }
-        do{
-          reacted = react_all_rulesets(ctx,m,ti);
-        }while(reacted);
+      for(int i=0;i<ts.size();i++){
+        ctx->deactivate_by_id(ids[i]);
+        ts[i].join();
       }
+      // 子膜へのルール適用は全て終了させた
+      do{
+        reacted = react_all_rulesets(ctx,m,ti);
+      }while(reacted);
+
+      for(int i=0;i<ts.size();i++){
+        ctx->erace_by_id(ids[i]);
+      }
+      
   };
 
   // LmnMembraneRef m = ctx->memstack_pop();
