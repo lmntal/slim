@@ -465,13 +465,19 @@ static void mem_oriented_loop(MemReactContext *ctx, LmnMembraneRef mem) {
     BOOL reacted = false;
     std::vector<int> ids;
     std::vector<std::thread> ts;
+
+    std::vector<MemReactContext *> hold_ctxs;
+    std::vector<LmnMembraneRef> hold_mems;
+    std::vector<std::thread> hold_ts;
+    std::vector<int> hold_ids;
+
       do{
         // std::cout << "will react " << ti << std::endl;
         reacted = react_all_rulesets(ctx,m,ti);
 
         // mut.lock();
 
-          std::cout << m->id << std::endl;
+          // std::cout << m->id << std::endl;
 
           for(int i=0;i<newmem_map[m->id].size(); i++){
             std::cout << "will get " << newmem_map[m->id][i] << std::endl;
@@ -479,9 +485,18 @@ static void mem_oriented_loop(MemReactContext *ctx, LmnMembraneRef mem) {
             // newmem_map[mem->id].erase(newmem_map[mem->id].begin);
             MemReactContext *ctx_copied = new MemReactContext(*ctx);
             ctx_copied->memstack = ctx->memstack;
-            ids.push_back(m_child->id);
-
-            ts.push_back(std::thread(react, ctx_copied, m_child, 1));
+           
+            // ルールが空だったらスレッドを立てるのを保留する
+            std::cout << "ruleset num " << m_child->ruleset_num() << std::endl;
+            if(m_child->ruleset_num()==0){
+              // 保留情報を保存する
+              hold_ctxs.push_back(ctx_copied);
+              hold_mems.push_back(m_child);
+              hold_ids.push_back(m_child->id);
+            }else{
+              ts.push_back(std::thread(react, ctx_copied, m_child, 1));
+              ids.push_back(m_child->id);
+            }
              
           }
           newmem_map.erase(m->id);
@@ -491,18 +506,35 @@ static void mem_oriented_loop(MemReactContext *ctx, LmnMembraneRef mem) {
       }while(reacted);
 
       for(int i=0;i<ts.size();i++){
-        ctx->deactivate_by_id(ids[i]);
         ts[i].join();
+        ctx->deactivate_by_id(ids[i]);
       }
       // 子膜へのルール適用は全て終了させた
       do{
         reacted = react_all_rulesets(ctx,m,ti);
       }while(reacted);
 
+      // もしあれば，保留したスレッドの実行を行う
+      if(hold_ctxs.size()>0){
+        for(int i=0;i<hold_ctxs.size();i++){
+          hold_ts.push_back(std::thread(react, hold_ctxs[i], hold_mems[i], 1));
+        }
+        for(int i=0;i<hold_ts.size();i++){
+          hold_ts[i].join();
+          ctx->deactivate_by_id(hold_ids[i]);
+        }
+        // もう一度親を実行する
+        do{
+          reacted = react_all_rulesets(ctx,m,ti);
+        }while(reacted);
+        for(int i=0;i<ts.size();i++){
+          ctx->erace_by_id(hold_ids[i]);
+        }
+      }
+
       for(int i=0;i<ts.size();i++){
         ctx->erace_by_id(ids[i]);
-      }
-      
+      } 
   };
 
   // LmnMembraneRef m = ctx->memstack_pop();

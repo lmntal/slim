@@ -48,6 +48,7 @@
 #include <unordered_map>
 #include <atomic>
 #include <iostream>
+#include <stack>
 
 typedef struct LmnRegister *LmnRegisterRef;
 
@@ -225,7 +226,7 @@ public:
     return result;
   }
   LmnMembrane *get_by_id(int id){
-    std::cout << "ID " << id;
+    // std::cout << "ID " << id;
     for(int i=0;i<memstack.size(); i++){
       if(memstack[i]->id == id){
         LmnMembrane* m = memstack[i];
@@ -235,11 +236,35 @@ public:
     return nullptr;
   }
   void deactivate_by_id(int id){
-    std::cout << "ID " << id;
+    // std::cout << "ID " << id;
     mut.lock();
     for(int i=0;i<memstack.size(); i++){
       if(memstack[i]->id == id){
-        memstack[i]->set_active(false);
+        LmnMembraneRef nowm = memstack[i];
+        // deactivate children
+        std::stack<LmnMembraneRef> ms;
+        ms.push(nowm);
+        while(!ms.empty()){
+          nowm = ms.top();
+          ms.pop();
+          if(nowm->child_mem_num()>0){
+            LmnMembraneRef nowchild = nowm->child_head;
+            ms.push(nowchild);
+            for(int j=0;j<nowm->child_mem_num()-1;j++){
+              nowchild = nowchild->next;
+              ms.push(nowchild);
+            }
+          }
+          nowm->set_active(false);
+        }
+        // deactivate parents
+        nowm = memstack[i];
+        while(true){
+          nowm->set_active(false);
+          if(nowm->parent==nullptr)
+            break;
+          nowm = nowm->parent;
+        }
         mut.unlock();
         return;
       }
@@ -247,7 +272,7 @@ public:
     mut.unlock();
   }
   void erace_by_id(int id){
-    std::cout << "ID " << id;
+    // std::cout << "ID " << id;
     mut.lock();
     for(int i=0;i<memstack.size(); i++){
       if(memstack[i]->id == id){
