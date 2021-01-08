@@ -466,43 +466,33 @@ static void mem_oriented_loop(MemReactContext *ctx, LmnMembraneRef mem) {
     std::vector<int> ids;
     std::vector<std::thread> ts;
 
+    // 実行を保留した膜の情報を保存
     std::vector<MemReactContext *> hold_ctxs;
     std::vector<LmnMembraneRef> hold_mems;
     std::vector<std::thread> hold_ts;
     std::vector<int> hold_ids;
 
       do{
-        // std::cout << "will react " << ti << std::endl;
         reacted = react_all_rulesets(ctx,m,ti);
-
-        // mut.lock();
-
-          // std::cout << m->id << std::endl;
-
-          for(int i=0;i<newmem_map[m->id].size(); i++){
-            std::cout << "will get " << newmem_map[m->id][i] << std::endl;
-            LmnMembraneRef m_child = ctx->get_by_id(newmem_map[m->id][i]);
-            // newmem_map[mem->id].erase(newmem_map[mem->id].begin);
-            MemReactContext *ctx_copied = new MemReactContext(*ctx);
-            ctx_copied->memstack = ctx->memstack;
-           
-            // ルールが空だったらスレッドを立てるのを保留する
-            std::cout << "ruleset num " << m_child->ruleset_num() << std::endl;
-            if(m_child->ruleset_num()==0){
-              // 保留情報を保存する
-              hold_ctxs.push_back(ctx_copied);
-              hold_mems.push_back(m_child);
-              hold_ids.push_back(m_child->id);
-            }else{
-              ts.push_back(std::thread(react, ctx_copied, m_child, 1));
-              ids.push_back(m_child->id);
-            }
-             
+        for(int i=0;i<newmem_map[m->id].size(); i++){
+          std::cout << "will get " << newmem_map[m->id][i] << std::endl;
+          LmnMembraneRef m_child = ctx->get_by_id(newmem_map[m->id][i]);
+          // newmem_map[mem->id].erase(newmem_map[mem->id].begin);
+          MemReactContext *ctx_copied = new MemReactContext(*ctx);
+          ctx_copied->memstack = ctx->memstack;
+          // ルールが空だったらスレッドを立てるのを保留する
+          std::cout << "ruleset num " << m_child->ruleset_num() << std::endl;
+          if(m_child->ruleset_num()==0){
+            // 保留情報を保存する
+            hold_ctxs.push_back(ctx_copied);
+            hold_mems.push_back(m_child);
+            hold_ids.push_back(m_child->id);
+          }else{
+            ts.push_back(std::thread(react, ctx_copied, m_child, 1));
+            ids.push_back(m_child->id);
           }
-          newmem_map.erase(m->id);
-        
-        // mut.unlock();
-
+        }
+        newmem_map.erase(m->id);
       }while(reacted);
 
       for(int i=0;i<ts.size();i++){
@@ -527,14 +517,7 @@ static void mem_oriented_loop(MemReactContext *ctx, LmnMembraneRef mem) {
         do{
           reacted = react_all_rulesets(ctx,m,ti);
         }while(reacted);
-        for(int i=0;i<ts.size();i++){
-          ctx->erace_by_id(hold_ids[i]);
-        }
       }
-
-      for(int i=0;i<ts.size();i++){
-        ctx->erace_by_id(ids[i]);
-      } 
   };
 
   // LmnMembraneRef m = ctx->memstack_pop();
