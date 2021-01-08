@@ -466,6 +466,8 @@ static void mem_oriented_loop(MemReactContext *ctx, LmnMembraneRef mem) {
     std::vector<int> ids;
     std::vector<std::thread> ts;
 
+
+
     // 実行を保留した膜の情報を保存
     std::vector<MemReactContext *> hold_ctxs;
     std::vector<LmnMembraneRef> hold_mems;
@@ -474,10 +476,17 @@ static void mem_oriented_loop(MemReactContext *ctx, LmnMembraneRef mem) {
 
       do{
         reacted = react_all_rulesets(ctx,m,ti);
-        for(int i=0;i<newmem_map[m->id].size(); i++){
-          std::cout << "will get " << newmem_map[m->id][i] << std::endl;
-          LmnMembraneRef m_child = ctx->get_by_id(newmem_map[m->id][i]);
-          // newmem_map[mem->id].erase(newmem_map[mem->id].begin);
+
+
+        // すぐ実行する
+        std::vector<MemReactContext *> immediate_ctxs;
+        std::vector<LmnMembraneRef> immediate_mems;
+
+        mut.lock();
+        std::vector<int> newmem_ids = newmem_map[m->id];
+        for(int i=0;i<newmem_ids.size(); i++){
+          std::cout << "will get " << newmem_ids[i] << std::endl;
+          LmnMembraneRef m_child = ctx->get_by_id(newmem_ids[i]);
           MemReactContext *ctx_copied = new MemReactContext(*ctx);
           ctx_copied->memstack = ctx->memstack;
           // ルールが空だったらスレッドを立てるのを保留する
@@ -488,11 +497,17 @@ static void mem_oriented_loop(MemReactContext *ctx, LmnMembraneRef mem) {
             hold_mems.push_back(m_child);
             hold_ids.push_back(m_child->id);
           }else{
-            ts.push_back(std::thread(react, ctx_copied, m_child, 1));
-            ids.push_back(m_child->id);
+            immediate_ctxs.push_back(ctx_copied);
+            immediate_mems.push_back(m_child);
+           
           }
         }
         newmem_map.erase(m->id);
+        mut.unlock();
+
+        for(int i=0;i<immediate_ctxs.size();i++){
+          ts.push_back(std::thread(react, immediate_ctxs[i], immediate_mems[i], 1));
+        }
       }while(reacted);
 
       for(int i=0;i<ts.size();i++){
@@ -517,7 +532,14 @@ static void mem_oriented_loop(MemReactContext *ctx, LmnMembraneRef mem) {
         do{
           reacted = react_all_rulesets(ctx,m,ti);
         }while(reacted);
+
+        // for(int i=0;i<ts.size();i++){
+        //   ctx->erace_by_id(hold_ids[i]);
+        // }
       }
+      // for(int i=0;i<ts.size();i++){
+      //   ctx->erace_by_id(ids[i]);
+      // }
   };
 
   // LmnMembraneRef m = ctx->memstack_pop();
@@ -700,6 +722,7 @@ BOOL react_rule(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule, int ti) 
 
   // std::cout << "start translated [" << ti << "] " << std::endl;
   // mut.lock();
+  // std::cout << *mem << std::endl;
   result = (translated && translated(rc, mem, rule)) || (inst_seq && in.run(ti));
   // mut.unlock();
   // std::cout << "end translated [" << ti << "] " << std::endl;
@@ -2744,8 +2767,8 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     SKIP_VAL(LmnInstrVar, instr);
 
     mut.lock();
+    std::cout << "lock start" << std::endl;
     mp = new LmnMembrane(); /*lmn_new_mem(memf);*/
-    mut.unlock();
     int parent_mem_id = ((LmnMembraneRef)rc->wt(parentmemi))->id;
     std::cout << "new! " << parent_mem_id << " " << mp->id << std::endl;
     ((LmnMembraneRef)rc->wt(parentmemi))->add_child_mem(mp);
@@ -2762,6 +2785,8 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       newmem_map.emplace(parent_mem_id, v);
     }
     newmem_map[parent_mem_id].push_back(mp->id);
+    std::cout << "lock end" << std::endl;
+    mut.unlock();
     break;
   }
   case INSTR_ALLOCMEM: {
@@ -2810,7 +2835,9 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     READ_VAL(LmnInstrVar, instr, memi);
     READ_VAL(LmnInstrVar, instr, parenti);
 
+    mut.lock();
     ((LmnMembraneRef)rc->wt(parenti))->remove_mem((LmnMembraneRef)rc->wt(memi));
+    mut.unlock();
     break;
   }
   case INSTR_FREEMEM: {
@@ -2819,8 +2846,10 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
 
     READ_VAL(LmnInstrVar, instr, memi);
 
+    mut.lock();
     mp = (LmnMembraneRef)rc->wt(memi);
     delete mp;
+    mut.unlock();
     break;
   }
   case INSTR_ADDMEM: {

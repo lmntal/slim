@@ -227,12 +227,15 @@ public:
   }
   LmnMembrane *get_by_id(int id){
     // std::cout << "ID " << id;
+    // mut.lock();
     for(int i=0;i<memstack.size(); i++){
       if(memstack[i]->id == id){
         LmnMembrane* m = memstack[i];
+        // mut.unlock();
         return m;
       }
     }
+    // mut.unlock();
     return nullptr;
   }
   void deactivate_by_id(int id){
