@@ -46,6 +46,9 @@
 #include <algorithm>
 #include <bitset>
 #include <unordered_map>
+#include <atomic>
+#include <iostream>
+#include <stack>
 
 typedef struct LmnRegister *LmnRegisterRef;
 
@@ -104,6 +107,9 @@ struct RuleContext {
   }
 
   RuleContext &operator=(const RuleContext &cxt) {
+    // work array を deep copy するように変更
+    //this->work_array = new Vector(cxt.work_array);
+    //this->work_array = std::vector<LmnRegister>(std::begin(cxt.work_array), std::end(cxt.work_array));
     this->work_array = cxt.work_array;
 #ifdef USE_FIRSTCLASS_RULE
     delete this->insertion_events;
@@ -184,14 +190,30 @@ public:
  */
 
 class MemReactContext : public LmnReactCxt {
-  std::vector<LmnMembrane *> memstack;
 
 public:
+  std::vector<LmnMembrane *> memstack;
+  // MemReactContext& operator=(const MemReactContext &mrc) {
+  //   *this = new LmnReactCxt(mrc.global_root, REACT_MEM_ORIENTED);
+  //   this->memstack = mrc.memstack;
+  //   return *this;
+  // }
+
+  // LmnReactCxt &operator=(const LmnReactCxt &from) {
+  //   this->RuleContext::operator=(from);
+  //   this->mode = from.mode;
+  //   this->global_root = from.global_root;
+  //   return *this;
+  // }
+
   MemReactContext(LmnMembrane *mem) :
       LmnReactCxt(mem, REACT_MEM_ORIENTED) {}
 
   bool memstack_isempty() const {
     return memstack.empty();
+  }
+  void memstack_push_front(LmnMembrane *mem){
+    memstack.insert(memstack.begin(), mem);
   }
   void memstack_push(LmnMembrane *mem) {
     memstack.push_back(mem);
@@ -203,9 +225,88 @@ public:
     result->set_active(false);
     return result;
   }
+  LmnMembrane *get_by_id(int id){
+    // std::cout << "ID " << id;
+    // mut.lock();
+    for(int i=0;i<memstack.size(); i++){
+      if(memstack[i]->id == id){
+        LmnMembrane* m = memstack[i];
+        // mut.unlock();
+        return m;
+      }
+    }
+    // mut.unlock();
+    return nullptr;
+  }
+  void deactivate_by_id(int id){
+    // std::cout << "ID " << id;
+    mut.lock();
+    for(int i=0;i<memstack.size(); i++){
+      if(memstack[i]->id == id){
+        LmnMembraneRef nowm = memstack[i];
+        // deactivate children
+        std::stack<LmnMembraneRef> ms;
+        ms.push(nowm);
+        while(!ms.empty()){
+          nowm = ms.top();
+          ms.pop();
+          if(nowm->child_mem_num()>0){
+            LmnMembraneRef nowchild = nowm->child_head;
+            ms.push(nowchild);
+            for(int j=0;j<nowm->child_mem_num()-1;j++){
+              nowchild = nowchild->next;
+              ms.push(nowchild);
+            }
+          }
+          nowm->set_active(false);
+        }
+        // deactivate parents
+        nowm = memstack[i];
+        while(true){
+          nowm->set_active(false);
+          if(nowm->parent==nullptr)
+            break;
+          nowm = nowm->parent;
+        }
+        mut.unlock();
+        return;
+      }
+    }
+    mut.unlock();
+  }
+  void erace_by_id(int id){
+    // std::cout << "ID " << id;
+    mut.lock();
+    for(int i=0;i<memstack.size(); i++){
+      if(memstack[i]->id == id){
+        memstack.erase(memstack.begin()+i);
+        mut.unlock();
+        return;
+      }
+    }
+    mut.unlock();
+  }
   LmnMembrane *memstack_peek() {
     return memstack.back();
   }
+  LmnMembrane *memstack_first() {
+    return memstack.front();
+  }
+  // auto memstack_begin() {
+  //   return memstack.begin();
+  // }
+  // auto memstack_end() {
+  //   return memstack.end();
+  // }
+  // void memstack_clear(){
+  //   memstack.clear();
+  // }
+  // auto get_ith_mem(int i){
+  //   return memstack[i];
+  // }
+  // int get_size(){
+  //   return memstack.size();
+  // }
 
   /* 実行膜スタックからmemを削除する。外部関数が膜の削除しようとするとき
    に、その膜がスタックに積まれている事がある。そのため、安全な削除を行

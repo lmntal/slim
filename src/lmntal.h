@@ -44,6 +44,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <mutex>
+#include <thread>
 
 #ifdef WITH_DMALLOC
 #include <dmalloc.h>
@@ -148,6 +150,14 @@ typedef long long __int64;
 #define HAVE___INT64
 #endif
 #endif
+
+
+/*----------------------------------------------------------------------
+ * Mutex
+ */
+
+extern std::mutex mut;
+extern std::mutex stack_mut;
 
 /*----------------------------------------------------------------------
  * Special Atom
@@ -490,6 +500,7 @@ void lmn_stream_destroy(void);
 #define env_set_threads_num(N) (lmn_tls.thread_num = (N))
 #define env_reset_proc_ids() (lmn_tls.proc_next_id = 1U)
 #define env_set_next_id(N) (lmn_tls.proc_next_id = (N))
+// IDの改良の余地はありそう
 #define env_gen_next_id()                                                      \
   ((lmn_id_pool && lmn_id_pool->get_num() > 0) ? lmn_id_pool->pop()            \
                                              : lmn_tls.proc_next_id++)
