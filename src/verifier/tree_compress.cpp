@@ -42,6 +42,9 @@
  */
 #include "tree_compress.h"
 #include <math.h>
+#include <mutex>
+using namespace std;
+std::mutex mtx;
 
 #define atomic_fetch_and_inc(t) __sync_fetch_and_add(t, 1)
 #define atomic_fetch_and_dec(t) __sync_fetch_and_sub(t, 1)
@@ -313,27 +316,37 @@ TreeNodeID TreeDatabase::tree_find_or_put(LmnBinStrRef bs,
                             BOOL *found) {
   struct TreeNodeStr str;
   TreeNodeID ref;
+  LmnBinStrRef prev_bs1;
+  TreeNodeID prev_ref_top1;
+  {
+    std::lock_guard<std::mutex> lock(mtx);
+    prev_bs1 = prev_bs;
+    prev_ref_top1 = prev_ref_top;
+  }
   int v_len_real = ((bs->len + 1) / TAG_IN_BYTE);
   str.len = v_len_real / TREE_UNIT_SIZE;
   str.extra = v_len_real % TREE_UNIT_SIZE;
   str.nodes = (TreeNodeElement *)bs->v;
   if (str.extra > 0)
     str.len += 1;
-  if(prev_ref_top > -1  && prev_bs != NULL){//初期状態でないとき
+  if(prev_ref_top1 > -1  && prev_bs1 != NULL){//初期状態でないとき
     struct TreeNodeStr prev_str;
-    int prev_v_len_real = ((prev_bs->len + 1) / TAG_IN_BYTE);
+    int prev_v_len_real = ((prev_bs1->len + 1) / TAG_IN_BYTE);
     prev_str.len = prev_v_len_real / TREE_UNIT_SIZE;
     prev_str.extra = prev_v_len_real % TREE_UNIT_SIZE;
-    prev_str.nodes = (TreeNodeElement *)prev_bs->v;
+    prev_str.nodes = (TreeNodeElement *)prev_bs1->v;
     if (prev_str.extra > 0)
       prev_str.len += 1;
-    ref = this->tree_find_or_put_inc_rec(&str, 0, str.len - 1, 0, prev_str.len-1, found, false, prev_ref_top);
+    ref = this->tree_find_or_put_inc_rec(&str, 0, str.len - 1, 0, prev_str.len-1, found, false, prev_ref_top1);
   }else{//初期状態のとき
     // printf("node_count: %d, extra:%d\n", str.len, str.extra);
     ref = this->tree_find_or_put_rec(&str, 0, str.len - 1, found);
   }
-  prev_ref_top = ref;
-  prev_bs = bs;
+  {
+    std::lock_guard<std::mutex> lock(mtx);
+    prev_ref_top = ref;
+    prev_bs = bs;
+  }
   return ref;
 }
 
