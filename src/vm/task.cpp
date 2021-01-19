@@ -505,7 +505,7 @@ bool react_result = false;
 auto react_ruleset_wrap = [](LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleSetRef rs, bool parallel, int tnum, int ti){
 
   // ルールの数
-  int N_RULE = 3;
+  int N_RULE = 1;
 
   int cnt=0;
   // printf("%s:%d\n", __FUNCTION__, __LINE__);
@@ -565,7 +565,7 @@ static inline BOOL react_ruleset(LmnReactCxtRef rc, LmnMembraneRef mem,
   // printf("%s:%d\n", __FUNCTION__, __LINE__);
   int tnum=1;
   if(parallel)
-    tnum=96;
+    tnum=3;
   int cnt=0;
   react_result = false;
 
@@ -597,6 +597,7 @@ static inline BOOL react_ruleset(LmnReactCxtRef rc, LmnMembraneRef mem,
   }
 
   for(int i=0;i<tnum;i++){
+    std::cout << "thread " << i << "will join";
     ts[i].join();
     join_count++;
   }
@@ -944,8 +945,10 @@ void slim::vm::interpreter::findatom(LmnReactCxtRef rc, LmnRuleRef rule,
 
   auto atomlist_ent = mem->get_atomlist(f);
 
-  if (!atomlist_ent)
+  if (!atomlist_ent){
+    mut.unlock();
     return;
+  }
 
 
 
@@ -958,6 +961,7 @@ void slim::vm::interpreter::findatom(LmnReactCxtRef rc, LmnRuleRef rule,
   auto iter = std::begin(*atomlist_ent);
   auto end = std::end(*atomlist_ent);
   if (iter == end){
+    mut.unlock();
     // mut.unlock();
     // muts[f-23].unlock();
     // mut.unlock();
@@ -970,9 +974,11 @@ void slim::vm::interpreter::findatom(LmnReactCxtRef rc, LmnRuleRef rule,
   auto v = std::vector<LmnRegister>();
   // std::cout << "transform will start" << std::endl;
 
-  std::transform(iter, end, std::back_inserter(v), [](LmnSymbolAtomRef atom) {
+  std::cout << "b" << std::endl;
+  std::transform(iter, end, std::back_inserter(v), [](LmnSymbolAtomRef atom) { 
     return LmnRegister({(LmnWord)atom, LMN_ATTR_MAKE_LINK(0), TT_ATOM});
   });
+  std::cout << "a" << std::endl;
   // mut.unlock();
   // std::cout << "transform will finish" << std::endl;
 
@@ -1336,7 +1342,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
 
   // loading = false;
 
-  // std::cout << op << std::endl;
+  std::cout << op << std::endl;
 
   switch (op) {
   case INSTR_SPEC: {
@@ -4114,9 +4120,13 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     READ_VAL(LmnInstrVar, instr, atom1);
     READ_VAL(LmnInstrVar, instr, atom2);
 
+    mut.lock();
     if (!lmn_eq_func((LmnAtomRef)rc->wt(atom1), rc->at(atom1),
-                     (LmnAtomRef)rc->wt(atom2), rc->at(atom2)))
+                     (LmnAtomRef)rc->wt(atom2), rc->at(atom2))){
+      mut.unlock();
       return FALSE;
+    }
+    mut.unlock();
     break;
   }
   case INSTR_GETFUNC: {
