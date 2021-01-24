@@ -353,7 +353,7 @@ TreeNodeID TreeDatabase::tree_find_or_put(LmnBinStrRef bs,
   {
     std::lock_guard<std::mutex> lock(mtx1);
     prev_ref_top = ref;
-    prev_bs->type = bs->type;
+    prev_bs->type = bs->type;//ここでセグフォが発生
     prev_bs->len = bs->len;
     prev_bs->v = bs->v;
   }
