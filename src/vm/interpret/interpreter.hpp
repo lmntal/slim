@@ -46,6 +46,7 @@ struct SameProcCxt;
 
 #include <functional>
 #include <vector>
+#include <mutex>
 
 namespace slim {
 namespace vm {
@@ -84,7 +85,7 @@ struct interpreter {
   void findatom_through_hyperlink(LmnReactCxt *rc, LmnRule *rule,
                                   LmnRuleInstr instr, SameProcCxt *spc,
                                   LmnMembrane *mem, LmnFunctor f, size_t reg);
-  bool run();
+  bool run(int ti);
 
   template <typename... Args> void push_stackframe(Args... args) {
     callstack.emplace_back(std::forward<Args>(args)...);
@@ -112,6 +113,7 @@ private:
    */
   template <typename Container>
   void false_driven_enumerate(size_t reg_idx, Container &&values) {
+
     // ヒープ上にvaluesをコピーorムーブ
     auto p = new
         typename std::decay<Container>::type(std::forward<Container>(values));

@@ -46,6 +46,7 @@
 #include <algorithm>
 #include <bitset>
 #include <unordered_map>
+#include <atomic>
 
 typedef struct LmnRegister *LmnRegisterRef;
 
@@ -193,6 +194,7 @@ public:
   bool memstack_isempty() const {
     return memstack.empty();
   }
+  // ここらへんをロックフリーにできないか調べる
   void memstack_push(LmnMembrane *mem) {
     memstack.push_back(mem);
     mem->set_active(true);
@@ -205,6 +207,9 @@ public:
   }
   LmnMembrane *memstack_peek() {
     return memstack.back();
+  }
+  LmnMembrane *memstack_first() {
+    return memstack.front();
   }
 
   /* 実行膜スタックからmemを削除する。外部関数が膜の削除しようとするとき
