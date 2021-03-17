@@ -16,8 +16,8 @@ jobs:
           #   debug_flag: "--enable-debug"
           - compiler: gcc
             slim_check_nd: "yes"
-          - compiler: clang
-            slim_check_nd: "yes"
+          # - compiler: clang
+          #   slim_check_nd: "yes"
     env:
       DEBUG_FLAG: ${{ matrix.debug_flag }}
       slim_CHECK_ND: ${{ matrix.slim_check_nd }}
