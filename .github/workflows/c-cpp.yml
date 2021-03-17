@@ -29,11 +29,7 @@ jobs:
     - run: sudo apt install -y ant re2c
     - run: git clone https://github.com/lmntal/lmntal-compiler.git
     - run: cd lmntal-compiler && ant compile && cd ..
-    - name: autogen
-      run: ./autogen.sh
-    - name: configure
-      run: ./configure $DEBUG_FLAG
-    - name: make
-      run: make
-    - name: make check
-      run: make check
+    - run: ./autogen.sh
+    - run: ./configure $DEBUG_FLAG
+    - run: make
+    - run: make check
