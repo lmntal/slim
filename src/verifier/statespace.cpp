@@ -78,7 +78,7 @@ StateSpace::StateSpace(int thread_num, AutomataRef a, Vector *psyms)
     make_table_pair(memid_table);
   } else if (lmn_env.optimize_hash) {
     make_table_pair(memid_table);
-    make_table_pair(mhash_table, mhash_table);
+    make_table_pair(mhash_table, mhash_table);//ここの第2引数を変更
   } else {
     make_table_pair(mhash_table);
 
