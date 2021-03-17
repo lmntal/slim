@@ -8,33 +8,27 @@ jobs:
     strategy:
       matrix:
         include:
-          - if: ${{! (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop')}}
-            cc: gcc
+          - compiler: gcc
+          - compiler: clang
+          - compiler: gcc
             debug_flag: "--enable-debug"
-          - if: ${{! (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop')}}
-            compiler: clang
+          - compiler: clang
             debug_flag: "--enable-debug"
-          - if: ${{! (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop')}}
-            compiler: gcc
-          - if: ${{! (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop')}}
-            compiler: clang
-          - if: ${{github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop'}}
-            compiler: gcc
+          - compiler: gcc
             slim_check_nd: "yes"
-          - if: ${{github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop'}}
-            compiler: gcc
+          - compiler: clang
             slim_check_nd: "yes"
     env:
       DEBUG_FLAG: ${{ matrix.debug_flag }}
       slim_CHECK_ND: ${{ matrix.slim_check_nd }}
       CC: ${{ matrix.compiler }}
+      LMNTAL_HOME: ${{ github.workspace }}/lmntal-compiler
     steps:
     - uses: actions/checkout@v2
     - run: sudo apt -qq update
     - run: sudo apt install -y ant re2c
     - run: git clone https://github.com/lmntal/lmntal-compiler.git
     - run: cd lmntal-compiler && ant compile && cd ..
-    - run: export LMNTAL_HOME="`pwd`/lmntal-compiler"
     - name: autogen
       run: ./autogen.sh
     - name: configure
