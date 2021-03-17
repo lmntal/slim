@@ -8,20 +8,27 @@ jobs:
     strategy:
       matrix:
         include:
-          # - compiler: gcc
-          # - compiler: clang
-          # - compiler: gcc
+          # - cc: gcc
+          #   cxx: g++
+          # - cc: clang
+          #   cxx: clang++
+          # - cc: gcc
+          #   cxx: g++
           #   debug_flag: "--enable-debug"
-          # - compiler: clang
+          # - cc: clang
+          #   cxx: clang++
           #   debug_flag: "--enable-debug"
-          - compiler: gcc
+          - cc: gcc
+            cxx: g++
             slim_check_nd: "yes"
-          # - compiler: clang
-          #   slim_check_nd: "yes"
+          - cc: clang
+            cxx: clang++
+            slim_check_nd: "yes"
     env:
       DEBUG_FLAG: ${{ matrix.debug_flag }}
       slim_CHECK_ND: ${{ matrix.slim_check_nd }}
-      CC: ${{ matrix.compiler }}
+      CC: ${{ matrix.cc }}
+      CXX: ${{ matrix.cxx }}
       LMNTAL_HOME: ${{ github.workspace }}/lmntal-compiler
     steps:
     - uses: actions/checkout@v2
