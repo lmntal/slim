@@ -8,15 +8,15 @@ jobs:
     strategy:
       matrix:
         include:
-          - if: ! (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop')
+          - if: ${{! (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop')}}
             cc: gcc
             debug_flag: "--enable-debug"
-          - if: ! (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop')
+          - if: ${{! (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop')}}
             compiler: clang
             debug_flag: "--enable-debug"
-          - if: ! (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop')
+          - if: ${{! (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop')}}
             compiler: gcc
-          - if: ! (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop')
+          - if: ${{! (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop')}}
             compiler: clang
           - if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop'
             compiler: gcc
