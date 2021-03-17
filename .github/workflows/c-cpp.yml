@@ -1,6 +1,6 @@
 name: C/C++ CI
 
-on: [push, pull_request]
+on: push
 
 jobs:
   build:
@@ -18,10 +18,10 @@ jobs:
             compiler: gcc
           - if: ${{! (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop')}}
             compiler: clang
-          - if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop'
+          - if: ${{github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop'}}
             compiler: gcc
             slim_check_nd: "yes"
-          - if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop'
+          - if: ${{github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop'}}
             compiler: gcc
             slim_check_nd: "yes"
     env:
@@ -36,7 +36,7 @@ jobs:
     - run: cd lmntal-compiler && ant compile && cd ..
     - run: export LMNTAL_HOME="`pwd`/lmntal-compiler"
     - name: autogen
-      run: autogen
+      run: ./autogen.sh
     - name: configure
       run: ./configure $DEBUG_FLAG
     - name: make
