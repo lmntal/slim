@@ -31,5 +31,5 @@ jobs:
     - run: cd lmntal-compiler && ant compile && cd ..
     - run: ./autogen.sh
     - run: ./configure $DEBUG_FLAG
-    - run: make -j
+    - run: make
     - run: make check
