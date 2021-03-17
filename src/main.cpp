@@ -78,6 +78,7 @@ static void usage(void) {
       "  -p[<0-3>] (-p=-p1)   Profiler level.\n"
       "  --use-builtin-rule   Load the rules builtin this application for "
       "arithmetic, nlmem, etc\n"
+      "  --findatomopt        optimization with atoms for history management\n"
       "  --nd                 Change the execution mode from RunTime(RT) to "
       "ModelChecker(MC)\n"
       "  --translate          Change the execution mode to Output translated C "
@@ -233,6 +234,7 @@ static void parse_options(int *optid, int argc, char *argv[]) {
                                   {"hash-depth", 1, 0, 6061},
                                   {"tree-compress", 1, 0, 6062},
                                   {"run-test", 0, 0, 6070},
+				  {"findatomopt", 0, 0, 6071},
                                   {0, 0, 0, 0}};
 
   while ((c = getopt_long(argc, argv, "+dvhtI:O::p::", long_options,
@@ -579,6 +581,9 @@ static void parse_options(int *optid, int argc, char *argv[]) {
     }
     case 6070:
       lmn_env.run_test = TRUE;
+      break;
+    case 6071:
+      slimopt_test_flag = true;
       break;
     case 'I':
       lmn_env.load_path[lmn_env.load_path_num++] = optarg;
