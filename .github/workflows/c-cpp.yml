@@ -1,0 +1,42 @@
+name: C/C++ CI
+
+on: push
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          # - cc: gcc
+          #   cxx: g++
+          # - cc: clang
+          #   cxx: clang++
+          # - cc: gcc
+          #   cxx: g++
+          #   debug_flag: "--enable-debug"
+          # - cc: clang
+          #   cxx: clang++
+          #   debug_flag: "--enable-debug"
+          - cc: gcc
+            cxx: g++
+            slim_check_nd: "yes"
+          - cc: clang
+            cxx: clang++
+            slim_check_nd: "yes"
+    env:
+      DEBUG_FLAG: ${{ matrix.debug_flag }}
+      slim_CHECK_ND: ${{ matrix.slim_check_nd }}
+      CC: ${{ matrix.cc }}
+      CXX: ${{ matrix.cxx }}
+      LMNTAL_HOME: ${{ github.workspace }}/lmntal-compiler
+    steps:
+    - uses: actions/checkout@v2
+    - run: sudo apt -qq update
+    - run: sudo apt install -y ant re2c
+    - run: git clone https://github.com/lmntal/lmntal-compiler.git
+    - run: cd lmntal-compiler && ant compile && cd ..
+    - run: ./autogen.sh
+    - run: ./configure $DEBUG_FLAG
+    - run: make
+    - run: make check
