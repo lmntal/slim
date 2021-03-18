@@ -46,8 +46,9 @@
 #include "verifier/verifier.h"
 #include "vm/vm.h"
 
-struct LmnStateMap {
+class LmnStateMap {
   static int state_map_atom_type;
+  typedef class LmnStateMap *LmnStateMapRef;
   LMN_SP_ATOM_HEADER;
   StateSpaceRef states;
   LmnStateMap(LmnMembraneRef mem) {
@@ -59,10 +60,23 @@ struct LmnStateMap {
                        LmnLinkAttr t0);
   static void cb_state_map_free(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
                        LmnLinkAttr t0);
-
-  static void init_state_map(void);
+  static void cb_state_map_id_find(LmnReactCxtRef rc,
+                          LmnMembraneRef mem,
+                          LmnAtomRef a0, LmnLinkAttr t0,
+                          LmnAtomRef a1, LmnLinkAttr t1,
+                          LmnAtomRef a2, LmnLinkAttr t2,
+                          LmnAtomRef a3, LmnLinkAttr t3);
+  static void cb_state_map_state_find(LmnReactCxtRef rc, LmnMembraneRef mem,
+                             LmnAtomRef a0, LmnLinkAttr t0, LmnAtomRef a1,
+                             LmnLinkAttr t1, LmnAtomRef a2, LmnLinkAttr t2,
+                             LmnAtomRef a3, LmnLinkAttr t3);
+  static void *sp_cb_state_map_copy(void *data);
+  static void sp_cb_state_map_free(void *data);
+  static unsigned char sp_cb_state_map_eq(void *_p1, void *_p2);
+  static void sp_cb_state_map_dump(void *state_map, LmnPortRef port);
+  static unsigned char sp_cb_state_map_is_ground(void *data);
   public:
-  typedef struct LmnStateMap *LmnStateMapRef;
+  static void init_state_map(void);
 };
 
 

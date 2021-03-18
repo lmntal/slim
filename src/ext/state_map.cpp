@@ -80,7 +80,7 @@ void LmnStateMap::cb_state_map_free(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAt
  * -a2 ID
  * -a3 Map
  */
-void cb_state_map_id_find(LmnReactCxtRef rc,
+void LmnStateMap::cb_state_map_id_find(LmnReactCxtRef rc,
                           LmnMembraneRef mem,
                           LmnAtomRef a0, LmnLinkAttr t0,
                           LmnAtomRef a1, LmnLinkAttr t1,
@@ -126,7 +126,7 @@ void cb_state_map_id_find(LmnReactCxtRef rc,
  * -a2 状態
  * -a3 Map
  */
-void cb_state_map_state_find(LmnReactCxtRef rc, LmnMembraneRef mem,
+void LmnStateMap::cb_state_map_state_find(LmnReactCxtRef rc, LmnMembraneRef mem,
                              LmnAtomRef a0, LmnLinkAttr t0, LmnAtomRef a1,
                              LmnLinkAttr t1, LmnAtomRef a2, LmnLinkAttr t2,
                              LmnAtomRef a3, LmnLinkAttr t3) {
@@ -169,17 +169,17 @@ void cb_state_map_state_find(LmnReactCxtRef rc, LmnMembraneRef mem,
  * Initialization
  */
 
-void *sp_cb_state_map_copy(void *data) { return data; }
+void *LmnStateMap::sp_cb_state_map_copy(void *data) { return data; }
 
-void sp_cb_state_map_free(void *data) {}
+void LmnStateMap::sp_cb_state_map_free(void *data) {}
 
-unsigned char sp_cb_state_map_eq(void *_p1, void *_p2) { return 0; }
+unsigned char LmnStateMap::sp_cb_state_map_eq(void *_p1, void *_p2) { return 0; }
 
-void sp_cb_state_map_dump(void *state_map, LmnPortRef port) {
+void LmnStateMap::sp_cb_state_map_dump(void *state_map, LmnPortRef port) {
   port_put_raw_s(port, "<state_map>");
 }
 
-unsigned char sp_cb_state_map_is_ground(void *data) { return 1; }
+unsigned char LmnStateMap::sp_cb_state_map_is_ground(void *data) { return 1; }
 
 void LmnStateMap::init_state_map(void) {
   state_map_atom_type = lmn_sp_atom_register(
