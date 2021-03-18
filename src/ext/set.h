@@ -43,16 +43,11 @@
 #include "element/element.h"
 #include "verifier/verifier.h"
 #include "vm/vm.h"
-struct LmnSet {
-  typedef struct LmnSet *LmnSetRef;
+class LmnSet {
+  typedef class LmnSet *LmnSetRef;
   LMN_SP_ATOM_HEADER;
   st_table_t tbl; /* hash table */
-  LmnSet(struct st_hash_type *ht);
-  ~LmnSet();
-  public://本当にpublicなメソッドはこの下に
-  static int public_mem_cmp(LmnMembraneRef m0, LmnMembraneRef m1);//迂回路を作成。OOP的にはご法度なのであとで消す方法を考える
-  public://リファクタリング中につき一時的にpublic設定
-  //  typedef struct LmnSet *LmnSetRef;
+  private:
   /* id set */
   static unsigned long id_hash(st_data_t a);
   static int id_cmp(st_data_t a, st_data_t b);
@@ -72,7 +67,72 @@ struct LmnSet {
   static void lmn_set_free(LmnSetRef set);
   static void cb_set_free(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
                  LmnLinkAttr t0);
+
+  static void cb_set_insert(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
+                   LmnLinkAttr t0, LmnAtomRef a1, LmnLinkAttr t1, LmnAtomRef a2,
+                   LmnLinkAttr t2);
+  static void cb_set_find(LmnReactCxtRef *rc, LmnMembraneRef mem, LmnAtomRef a0,
+                 LmnLinkAttr t0, LmnAtomRef a1, LmnLinkAttr t1, LmnAtomRef a2,
+                 LmnLinkAttr t2, LmnAtomRef a3, LmnLinkAttr t3);
+
+
+  static void cb_set_to_list(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
+                    LmnLinkAttr t0, LmnAtomRef a1, LmnLinkAttr t1);  
+  static int inner_set_to_list(st_data_t, st_data_t, st_data_t);
+
+  static void cb_set_copy(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
+                 LmnLinkAttr t0, LmnAtomRef a1, LmnLinkAttr t1, LmnAtomRef a2,
+                 LmnLinkAttr t2);
+  static int inner_set_copy(st_data_t, st_data_t, st_data_t);
+
+  static void cb_set_erase(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
+                  LmnLinkAttr t0, LmnAtomRef a1, LmnLinkAttr t1, LmnAtomRef a2,
+                  LmnLinkAttr t2);
+
+  static void cb_set_union(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
+                  LmnLinkAttr t0, LmnAtomRef a1, LmnLinkAttr t1, LmnAtomRef a2,
+                  LmnLinkAttr t2);
+  static int inner_set_union(st_data_t, st_data_t, st_data_t);
+
+  static void cb_set_intersect(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
+                      LmnLinkAttr t0, LmnAtomRef a1, LmnLinkAttr t1,
+                      LmnAtomRef a2, LmnLinkAttr t2);
+  static int inner_set_intersect(st_data_t, st_data_t, st_data_t);
+
+  static void cb_set_diff(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
+                 LmnLinkAttr t0, LmnAtomRef a1, LmnLinkAttr t1, LmnAtomRef a2,
+                 LmnLinkAttr t2);
+  static int inner_set_diff(st_data_t, st_data_t, st_data_t);
+
+  static void*sp_cb_set_copy(void *data);
+  static void sp_cb_set_free(void *data);
+  static unsigned char sp_cb_set_eq(void *data1, void *data2);
+  static void sp_cb_set_dump(void *set, LmnPortRef port);
+  static unsigned char sp_cb_set_is_ground(void *data);
+
+  public:
+  static int public_mem_cmp(LmnMembraneRef m0, LmnMembraneRef m1);//迂回路を作成。OOP的にはご法度なのであとで消す方法を誰かが考える
+  static void init_set(void); //何かの初期化メンバ関数
+  LmnSet(struct st_hash_type *ht);
+  ~LmnSet();
 };
+class InnerToList {
+  LmnMembraneRef mem_data;
+  LmnAtomRef cons_data;
+  LmnAtomRef prev_data;
+  struct st_hash_type *ht_data;
+  public:
+  typedef class InnerToList *InnerToListRef;//こっちでいいんだろうか
+  LmnMembraneRef mem();
+  void set_mem_as(LmnMembraneRef data);
+  LmnAtomRef cons();
+  void set_cons_as(LmnAtomRef data);
+  LmnAtomRef prev();
+  void set_prev_as(LmnAtomRef data);
+  struct st_hash_type *ht();
+  void set_ht_as(struct st_hash_type *data);
+};
+
 
 //static int LmnSet::mem_cmp(LmnMembraneRef m0, LmnMembraneRef m1);
 //extern struct st_hash_type type_id_hash;

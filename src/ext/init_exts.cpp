@@ -39,6 +39,7 @@
 
 #include "../lmntal.h"
 #include "membrane.h"
+#include "set.h"
 void init_integer(void);
 void init_float(void);
 void init_nlmem(void);
@@ -48,7 +49,7 @@ void init_time(void);
 void init_array(void);
 void init_atom(void);
 void init_react_rule(void);
-void init_set(void);
+//void init_set(void); //set.hにてクラスメンバ化
 void init_state_map(void);
 void init_zerostep(void);
 void init_builtin_extensions(void);
@@ -64,7 +65,7 @@ void init_builtin_extensions(void)
   init_array();
   init_atom();
   init_react_rule();
-  init_set();
+  LmnSet::init_set();
   init_state_map();
   init_membrane();
   init_zerostep();
