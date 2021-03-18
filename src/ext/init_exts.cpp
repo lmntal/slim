@@ -50,8 +50,6 @@ void init_time(void);
 void init_array(void);
 void init_atom(void);
 void init_react_rule(void);
-//void init_set(void); //set.hにてクラスメンバ化
-//void init_state_map(void); //state_map.hにてクラスメンバ化
 void init_zerostep(void);
 void init_builtin_extensions(void);
 

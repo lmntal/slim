@@ -314,18 +314,6 @@ void LmnSet::cb_set_find(LmnReactCxtRef *rc, LmnMembraneRef mem, LmnAtomRef a0,
     mem->delete_mem((LmnMembraneRef)key);
 }
 
-/* inner_set_to_listで使用するためだけの構造体 */
-//ヘッダファイルへ移動、class化
-/*
-class InnerToList {
-  LmnMembraneRef mem;
-  LmnAtomRef cons;
-  LmnAtomRef prev;
-  class st_hash_type *ht;
-};
-*/
-//型定義もヘッダファイルへ移動
-//typedef struct InnerToList *InnerToListRef;
 
 /* 代わりにgetterとsetterを実装 */
 // 本当はOOP的にsetterは存在しちゃいけないそうなのだけれど仕方がない
@@ -426,9 +414,6 @@ int LmnSet::inner_set_to_list(st_data_t key, st_data_t rec, st_data_t obj) {
   return ST_CONTINUE;
 }
 
-/* プロトタイプ宣言はクラス定義にしまっちゃおうね〜 */
-//int inner_set_copy(st_data_t, st_data_t, st_data_t);
-
 /*
  * 複製
  *
@@ -506,10 +491,6 @@ void LmnSet::cb_set_erase(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
                   LMN_ATTR_GET_VALUE(t2));
 }
 
-/* cb_set_union内で使用する関数のプロトタイプ宣言 */
-/* プロトタイプ宣言はクラス定義にしまっちゃおうね〜 */
-//int inner_set_union(st_data_t, st_data_t, st_data_t);
-
 /*
  * 和集合
  *
@@ -548,10 +529,6 @@ int LmnSet::inner_set_union(st_data_t key, st_data_t rec, st_data_t arg) {
   }
   return ST_CONTINUE;
 }
-
-/* cb_set_intersect内で使用する関数のプロトタイプ宣言 */
-/* プロトタイプ宣言はクラス定義にしまっちゃおうね〜 */
-//int inner_set_intersect(st_data_t, st_data_t, st_data_t);
 
 /*
  * 積集合
