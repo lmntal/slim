@@ -44,6 +44,7 @@
 #include "verifier/verifier.h"
 #include "vm/vm.h"
 struct LmnSet {
+  typedef struct LmnSet *LmnSetRef;
   LMN_SP_ATOM_HEADER;
   st_table_t tbl; /* hash table */
   LmnSet(struct st_hash_type *ht);
@@ -66,6 +67,11 @@ struct LmnSet {
   static struct st_hash_type type_mem_hash;
   static struct st_hash_type type_tuple_hash;
 
+  static int set_atom_type; /* special atom type */
+  static int inner_set_free(st_data_t, st_data_t, st_data_t);
+  static void lmn_set_free(LmnSetRef set);
+  static void cb_set_free(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
+                 LmnLinkAttr t0);
 };
 
 //static int LmnSet::mem_cmp(LmnMembraneRef m0, LmnMembraneRef m1);

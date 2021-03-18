@@ -50,7 +50,8 @@
  * @memberof LmnSet
  * @private
  */
-typedef struct LmnSet *LmnSetRef;
+//型定義もヘッダファイルへ移動
+//typedef struct LmnSet *LmnSetRef;
 
 /* id set */
 /**
@@ -179,7 +180,8 @@ struct st_hash_type LmnSet::type_tuple_hash = {(st_cmp_func)LmnSet::tuple_cmp,
  * @memberof LmnSet
  * @private
  */
-static int set_atom_type; /* special atom type */
+int LmnSet::set_atom_type; /* special atom type */ 
+//初期化はされてないようなのだが一応このように記述しておかねばならないらしい
 
 /**
  * @brief Internal Constructor
@@ -192,24 +194,25 @@ LmnSet::LmnSet(struct st_hash_type *ht) {
 }
 
 /* cb_set_free内で使用する関数のプロトタイプ宣言 */
-int inner_set_free(st_data_t, st_data_t, st_data_t);
+/* プロトタイプ宣言はclass定義にしまっちゃおうね〜 */
+//int inner_set_free(st_data_t, st_data_t, st_data_t);
 
 /**
  * @brief Internal Constructor
  * @memberof LmnSet
  * @private
  */
-void lmn_set_free(LmnSetRef set) {
+void LmnSet::lmn_set_free(LmnSetRef set) {
   st_table_t tbl = set->tbl;
   if (tbl->type != &(LmnSet::type_id_hash))
-    st_foreach(tbl, (st_iter_func)inner_set_free, (st_data_t)tbl->type);
+    st_foreach(tbl, (st_iter_func)(LmnSet::inner_set_free), (st_data_t)tbl->type);
   st_free_table(tbl);
 }
 
 LmnSet::~LmnSet() {
   st_table_t tbl = this->tbl;
   if (tbl->type != &(LmnSet::type_id_hash))
-    st_foreach(tbl, (st_iter_func)inner_set_free, (st_data_t)tbl->type);
+    st_foreach(tbl, (st_iter_func)(LmnSet::inner_set_free), (st_data_t)tbl->type);
   st_free_table(tbl);
 }
 
@@ -217,7 +220,7 @@ LmnSet::~LmnSet() {
  * @memberof LmnSet
  * @private
  */
-int inner_set_free(st_data_t key, st_data_t rec, st_data_t arg) {
+int LmnSet::inner_set_free(st_data_t key, st_data_t rec, st_data_t arg) {
   if (arg == (st_data_t)&(LmnSet::type_mem_hash))
     ((LmnMembraneRef)key)->free_rec();
   else
@@ -237,10 +240,10 @@ int inner_set_free(st_data_t key, st_data_t rec, st_data_t arg) {
  * @memberof LmnSet
  * @private
  */
-void cb_set_free(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
+void LmnSet::cb_set_free(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
                  LmnLinkAttr t0) {
   lmn_mem_remove_data_atom(mem, (LmnDataAtomRef)a0, t0);
-  lmn_set_free((LmnSetRef)a0);
+  LmnSet::lmn_set_free((LmnSetRef)a0);
 }
 
 /*
@@ -267,7 +270,7 @@ void cb_set_insert(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
     else
       a0 = (LmnAtomRef) new LmnSet(&(LmnSet::type_tuple_hash));
   }
-  st_table_t tbl = ((LmnSetRef)a0)->tbl;
+  st_table_t tbl = ((LmnSet::LmnSetRef)a0)->tbl;
   LmnAtomRef v = (tbl->type == &(LmnSet::type_mem_hash)) ? LMN_PROXY_GET_MEM((LmnSymbolAtomRef)((LmnSymbolAtomRef)a1)->get_link(0)) : a1;
   st_insert(tbl, (st_data_t)v, (st_data_t)v);
   if (tbl->type == &(LmnSet::type_tuple_hash)) {
@@ -296,7 +299,7 @@ void cb_set_insert(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
 void cb_set_find(LmnReactCxtRef *rc, LmnMembraneRef mem, LmnAtomRef a0,
                  LmnLinkAttr t0, LmnAtomRef a1, LmnLinkAttr t1, LmnAtomRef a2,
                  LmnLinkAttr t2, LmnAtomRef a3, LmnLinkAttr t3) {
-  st_table_t tbl = ((LmnSetRef)a0)->tbl;
+  st_table_t tbl = ((LmnSet::LmnSetRef)a0)->tbl;
   LmnAtomRef key = (tbl->type == &(LmnSet::type_mem_hash)) ? (LmnAtomRef)LMN_PROXY_GET_MEM((LmnSymbolAtomRef)((LmnSymbolAtomRef)a1)->get_link(0)) : a1;
   st_data_t entry;
   int res = st_lookup(tbl, (st_data_t)key, &entry);
@@ -339,7 +342,7 @@ void cb_set_to_list(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
   LmnAtomRef cons = lmn_mem_newatom(mem, LMN_LIST_FUNCTOR);
   lmn_mem_newlink(mem, a1, t1, LMN_ATTR_GET_VALUE(t1), cons,
                   LMN_ATTR_MAKE_LINK(2), 2);
-  st_table_t tbl = ((LmnSetRef)a0)->tbl;
+  st_table_t tbl = ((LmnSet::LmnSetRef)a0)->tbl;
   InnerToListRef itl = LMN_MALLOC(struct InnerToList);
   itl->cons = cons;
   itl->mem = mem;
@@ -351,7 +354,7 @@ void cb_set_to_list(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
   lmn_newlink_in_symbols((LmnSymbolAtomRef)nil, 0, (LmnSymbolAtomRef)itl->prev,
                          1);
   LMN_FREE(itl);
-  st_free_table(((LmnSetRef)a0)->tbl);
+  st_free_table(((LmnSet::LmnSetRef)a0)->tbl);
 }
 
 /**
@@ -406,9 +409,9 @@ int inner_set_copy(st_data_t, st_data_t, st_data_t);
 void cb_set_copy(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
                  LmnLinkAttr t0, LmnAtomRef a1, LmnLinkAttr t1, LmnAtomRef a2,
                  LmnLinkAttr t2) {
-  LmnSetRef s;
+  LmnSet::LmnSetRef s;
   LmnLinkAttr at = LMN_SP_ATOM_ATTR;
-  st_table_t tbl = ((LmnSetRef)a0)->tbl;
+  st_table_t tbl = ((LmnSet::LmnSetRef)a0)->tbl;
   if (tbl->type == &(LmnSet::type_id_hash)) {
     s = new LmnSet(tbl->type);
     s->tbl = st_copy(tbl);
@@ -428,7 +431,7 @@ void cb_set_copy(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
  * @private
  */
 int inner_set_copy(st_data_t key, st_data_t rec, st_data_t arg) {
-  st_table_t tbl = ((LmnSetRef)arg)->tbl;
+  st_table_t tbl = ((LmnSet::LmnSetRef)arg)->tbl;
   st_data_t val =
       (tbl->type == &(LmnSet::type_mem_hash))
     ? (st_data_t)((LmnMembraneRef)key)->copy()
@@ -451,10 +454,10 @@ int inner_set_copy(st_data_t key, st_data_t rec, st_data_t arg) {
 void cb_set_erase(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
                   LmnLinkAttr t0, LmnAtomRef a1, LmnLinkAttr t1, LmnAtomRef a2,
                   LmnLinkAttr t2) {
-  st_table_t tbl = ((LmnSetRef)a0)->tbl;
+  st_table_t tbl = ((LmnSet::LmnSetRef)a0)->tbl;
   st_data_t entry;
   if (tbl->type == &(LmnSet::type_id_hash)) {
-    st_delete(((LmnSetRef)a0)->tbl, (st_data_t)a1, &entry);
+    st_delete(((LmnSet::LmnSetRef)a0)->tbl, (st_data_t)a1, &entry);
   } else if(tbl->type == &(LmnSet::type_mem_hash)) {
     LmnMembraneRef m = LMN_PROXY_GET_MEM((LmnSymbolAtomRef)((LmnSymbolAtomRef)a1)->get_link(0));
     if(st_delete(tbl, (st_data_t)m, &entry))
@@ -486,11 +489,11 @@ int inner_set_union(st_data_t, st_data_t, st_data_t);
 void cb_set_union(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
                   LmnLinkAttr t0, LmnAtomRef a1, LmnLinkAttr t1, LmnAtomRef a2,
                   LmnLinkAttr t2) {
-  st_foreach(((LmnSetRef)a0)->tbl, (st_iter_func)inner_set_union,
+  st_foreach(((LmnSet::LmnSetRef)a0)->tbl, (st_iter_func)inner_set_union,
              (st_data_t)a1);
   lmn_mem_newlink(mem, a1, t1, LMN_ATTR_GET_VALUE(t1), a2, t2,
                   LMN_ATTR_GET_VALUE(t2));
-  lmn_set_free((LmnSetRef)a0);
+  LmnSet::lmn_set_free((LmnSet::LmnSetRef)a0);
 }
 
 /**
@@ -498,7 +501,7 @@ void cb_set_union(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
  * @private
  */
 int inner_set_union(st_data_t key, st_data_t rec, st_data_t arg) {
-  st_table_t tbl = ((LmnSetRef)arg)->tbl;
+  st_table_t tbl = ((LmnSet::LmnSetRef)arg)->tbl;
   st_data_t entry;
   if (tbl->type == &(LmnSet::type_id_hash)) {
     st_insert(tbl, key, rec);
@@ -528,9 +531,9 @@ int inner_set_intersect(st_data_t, st_data_t, st_data_t);
 void cb_set_intersect(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
                       LmnLinkAttr t0, LmnAtomRef a1, LmnLinkAttr t1,
                       LmnAtomRef a2, LmnLinkAttr t2) {
-  st_table_t tbl = ((LmnSetRef)a0)->tbl;
+  st_table_t tbl = ((LmnSet::LmnSetRef)a0)->tbl;
   st_foreach(tbl, (st_iter_func)inner_set_intersect, (st_data_t)a1);
-  lmn_set_free((LmnSetRef)a1);
+  LmnSet::lmn_set_free((LmnSet::LmnSetRef)a1);
   if (st_num(tbl) > 0) {
     lmn_mem_newlink(mem, a2, t2, LMN_ATTR_GET_VALUE(t2), a0, t0,
                     LMN_ATTR_GET_VALUE(t0));
@@ -539,7 +542,7 @@ void cb_set_intersect(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
         mem, lmn_functor_table->intern(ANONYMOUS, lmn_intern("set_empty"), 1));
     lmn_mem_newlink(mem, a2, t2, LMN_ATTR_GET_VALUE(t2), empty_set,
                     LMN_ATTR_MAKE_LINK(0), 0);
-    lmn_set_free((LmnSetRef)a0);
+    LmnSet::lmn_set_free((LmnSet::LmnSetRef)a0);
   }
 }
 
@@ -548,7 +551,7 @@ void cb_set_intersect(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
  * @private
  */
 int inner_set_intersect(st_data_t key, st_data_t rec, st_data_t arg) {
-  st_table_t tbl = ((LmnSetRef)arg)->tbl;
+  st_table_t tbl = ((LmnSet::LmnSetRef)arg)->tbl;
   st_data_t entry;
   int found = st_lookup(tbl, key, &entry);
   if (found)
@@ -576,9 +579,9 @@ int inner_set_diff(st_data_t, st_data_t, st_data_t);
 void cb_set_diff(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
                  LmnLinkAttr t0, LmnAtomRef a1, LmnLinkAttr t1, LmnAtomRef a2,
                  LmnLinkAttr t2) {
-  st_table_t tbl = ((LmnSetRef)a0)->tbl;
+  st_table_t tbl = ((LmnSet::LmnSetRef)a0)->tbl;
   st_foreach(tbl, (st_iter_func)inner_set_diff, (st_data_t)a1);
-  lmn_set_free((LmnSetRef)a1);
+  LmnSet::lmn_set_free((LmnSet::LmnSetRef)a1);
   if (st_num(tbl) > 0) {
     lmn_mem_newlink(mem, a2, t2, LMN_ATTR_GET_VALUE(t2), a0, t0,
                     LMN_ATTR_GET_VALUE(t0));
@@ -587,7 +590,7 @@ void cb_set_diff(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
         mem, lmn_functor_table->intern(ANONYMOUS, lmn_intern("set_empty"), 1));
     lmn_mem_newlink(mem, a2, t2, LMN_ATTR_GET_VALUE(t2), (LmnAtomRef)empty_set,
                     LMN_ATTR_MAKE_LINK(0), 0);
-    lmn_set_free((LmnSetRef)a0);
+    LmnSet::lmn_set_free((LmnSet::LmnSetRef)a0);
   }
 }
 
@@ -596,7 +599,7 @@ void cb_set_diff(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
  * @private
  */
 int inner_set_diff(st_data_t key, st_data_t rec, st_data_t arg) {
-  st_table_t tbl = ((LmnSetRef)arg)->tbl;
+  st_table_t tbl = ((LmnSet::LmnSetRef)arg)->tbl;
   st_data_t entry;
   int found = st_lookup(tbl, key, &entry);
   if (!found)
@@ -648,11 +651,11 @@ unsigned char sp_cb_set_is_ground(void *data) { return 1; }
  * @private
  */
 void init_set(void) {
-  set_atom_type =
+  LmnSet::set_atom_type =
       lmn_sp_atom_register("set", sp_cb_set_copy, sp_cb_set_free, sp_cb_set_eq,
                            sp_cb_set_dump, sp_cb_set_is_ground);
 
-  CCallback::lmn_register_c_fun("cb_set_free", (void *)cb_set_free, 1);
+  CCallback::lmn_register_c_fun("cb_set_free", (void *)(LmnSet::cb_set_free), 1);
   CCallback::lmn_register_c_fun("cb_set_insert", (void *)cb_set_insert, 3);
   CCallback::lmn_register_c_fun("cb_set_find", (void *)cb_set_find, 4);
   CCallback::lmn_register_c_fun("cb_set_to_list", (void *)cb_set_to_list, 2);
