@@ -471,7 +471,6 @@ struct LmnTLS {
 extern struct Vector *lmn_id_pool;
 extern struct LmnEnv lmn_env;
 extern LMN_TLS_TYPE(LmnTLS) lmn_tls;
-extern bool slimopt_test_flag;
 
 void env_my_TLS_init(unsigned int th_id);
 void env_my_TLS_finalize(void);
