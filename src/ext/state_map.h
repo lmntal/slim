@@ -51,11 +51,8 @@ class LmnStateMap {
   typedef class LmnStateMap *LmnStateMapRef;
   LMN_SP_ATOM_HEADER;
   StateSpaceRef states;
-  LmnStateMap(LmnMembraneRef mem) {
-    LMN_SP_ATOM_SET_TYPE(this, state_map_atom_type);
-    this->states = new StateSpace(NULL, NULL);
-  };
-  ~LmnStateMap() { delete (this->states); };
+  LmnStateMap(LmnMembraneRef mem);
+  ~LmnStateMap();
   static void cb_state_map_init(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
                        LmnLinkAttr t0);
   static void cb_state_map_free(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,

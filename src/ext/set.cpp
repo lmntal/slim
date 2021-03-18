@@ -45,13 +45,12 @@
  * @ingroup  Ext
  * @struct LmnSet set.c "ext/set.c"
  */
-//ヘッダファイルへ移動
+
 /**
  * @memberof LmnSet
  * @private
  */
-//型定義もヘッダファイルへ移動
-//typedef struct LmnSet *LmnSetRef;
+
 
 /* id set */
 /**
@@ -141,7 +140,7 @@ int LmnSet::mem_cmp(LmnMembraneRef m0, LmnMembraneRef m1) {
   lmn_binstr_free(s1);
   return res;
 }
-//membrane.cppから呼ばれてしまっているようなのでpublicで代用メソッドを実装
+//membrane.cppから呼ばれてしまっているのでpublicで迂回用メソッドを実装
 int LmnSet::public_mem_cmp(LmnMembraneRef m0, LmnMembraneRef m1){
   return LmnSet::mem_cmp(m0,m1);
 }
@@ -192,10 +191,6 @@ LmnSet::LmnSet(struct st_hash_type *ht) {
   LMN_SP_ATOM_SET_TYPE(this, set_atom_type);
   this->tbl = st_init_table(ht);
 }
-
-/* cb_set_free内で使用する関数のプロトタイプ宣言 */
-/* プロトタイプ宣言はclass定義にしまっちゃおうね〜 */
-//int inner_set_free(st_data_t, st_data_t, st_data_t);
 
 /**
  * @brief Internal Constructor
@@ -315,7 +310,6 @@ void LmnSet::cb_set_find(LmnReactCxtRef *rc, LmnMembraneRef mem, LmnAtomRef a0,
 }
 
 
-/* 代わりにgetterとsetterを実装 */
 // 本当はOOP的にsetterは存在しちゃいけないそうなのだけれど仕方がない
 LmnMembraneRef InnerToList::mem(){
   return mem_data;
@@ -341,12 +335,6 @@ struct st_hash_type *InnerToList::ht(){
 void InnerToList::set_ht_as(struct st_hash_type *data){
   ht_data = data;
 }
-
-
-/* cb_set_to_list内で使用する関数のプロトタイプ宣言 */
-/* プロトタイプ宣言はクラス定義にしまっちゃおうね〜 */
-//本体の宣言がLmnSetのメンバ想定らしいのでそちらへ
-//int inner_set_to_list(st_data_t, st_data_t, st_data_t);
 
 /*
  * リストへの変換
@@ -575,9 +563,6 @@ int LmnSet::inner_set_intersect(st_data_t key, st_data_t rec, st_data_t arg) {
     free_symbol_atom_with_buddy_data((LmnSymbolAtomRef)key);
   return ST_DELETE;
 }
-
-/* プロトタイプ宣言はクラス定義にしまっちゃおうね〜 */
-//int inner_set_diff(st_data_t, st_data_t, st_data_t);
 
 /*
  * 差集合

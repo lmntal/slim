@@ -44,6 +44,13 @@
 
 int LmnStateMap::state_map_atom_type;
 
+/* constructor */
+LmnStateMap::LmnStateMap(LmnMembraneRef mem) {
+  LMN_SP_ATOM_SET_TYPE(this, state_map_atom_type);
+  this->states = new StateSpace(NULL, NULL);
+}
+LmnStateMap::~LmnStateMap() { delete (this->states); }
+
 /*----------------------------------------------------------------------
  * Callbacks
  */

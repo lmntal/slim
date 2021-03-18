@@ -66,6 +66,6 @@ void init_builtin_extensions(void)
   init_react_rule();
   LmnSet::init_set();
   LmnStateMap::init_state_map();
-  init_membrane();
+  Membrane::init_membrane();
   init_zerostep();
 }
