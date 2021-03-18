@@ -131,8 +131,4 @@ class InnerToList {
   void set_ht_as(struct st_hash_type *data);
 };
 
-
-//static int LmnSet::mem_cmp(LmnMembraneRef m0, LmnMembraneRef m1);
-//extern struct st_hash_type type_id_hash;
-
 #endif
