@@ -158,11 +158,6 @@ LmnMembrane::LmnMembrane(){
   this->id = 0UL;
   this->atomset = LMN_CALLOC(struct AtomListEntry *, this->atomset_size);
   this->set_id(env_gen_next_id());
-
-#ifdef USE_FIRSTCLASS_RULE
-  this->firstclass_rulesets = new Vector(4);
-#endif
-
 }
 const char *LmnMembrane::MEM_NAME() {
   return LMN_SYMBOL_STR(this->NAME_ID());
@@ -197,7 +192,13 @@ LmnMembrane::~LmnMembrane(){
   
   env_return_id(this->mem_id());
 #ifdef USE_FIRSTCLASS_RULE
-  delete this->firstclass_rulesets;
+  for (int i = 0; i < this->firstclass_rulesets.size(); i++) {
+    auto rs = this->firstclass_rulesets[i];
+    if(rs->is_copy()) {
+      delete rs;
+    }
+  }
+  this->firstclass_rulesets.clear();
 #endif
   delete this->atomset;
 }
@@ -3478,16 +3479,11 @@ void newlink_symbol_and_something(LmnSymbolAtomRef atom0, int pos,
     ((LmnSymbolAtomRef)atom1)->set_attr(LMN_ATTR_GET_VALUE(attr), LMN_ATTR_MAKE_LINK(pos));
   }
 }
-#ifdef USE_FIRSTCLASS_RULE
-Vector *LmnMembrane::firstclass_rulesets() {
-  return this->firstclass_rulesets;
-}
-#endif
 
 #ifdef USE_FIRSTCLASS_RULE
 void lmn_mem_add_firstclass_ruleset(LmnMembraneRef mem, LmnRuleSetRef fcr) {
   LMN_ASSERT(fcr);
-  lmn_mem_add_ruleset_sort(mem->firstclass_rulesets, fcr);
+  lmn_mem_add_ruleset_sort(&(mem->firstclass_rulesets), fcr);
 }
 #endif
 
@@ -3495,19 +3491,19 @@ void lmn_mem_add_firstclass_ruleset(LmnMembraneRef mem, LmnRuleSetRef fcr) {
 void lmn_mem_remove_firstclass_ruleset(LmnMembraneRef mem, LmnRuleSetRef fcr) {
   LmnRulesetId del_id = fcr->id;
 
-  for (int i = 0; i < mem->firstclass_rulesets->get_num(); i++) {
-    LmnRuleSetRef rs = (LmnRuleSetRef)mem->firstclass_rulesets->get(i);
+  for (int i = 0; i < mem->firstclass_rulesets.size(); i++) {
+    LmnRuleSetRef rs = (LmnRuleSetRef)mem->firstclass_rulesets[i];
     if (rs->id != del_id)
       continue;
 
     /* move successors forward */
-    for (int j = i; j < mem->firstclass_rulesets->get_num() - 1; j++) {
+    for (int j = i; j < mem->firstclass_rulesets.size() - 1; j++) {
       LmnRuleSetRef next =
-          (LmnRuleSetRef)mem->firstclass_rulesets->get(j + 1);
-      mem->firstclass_rulesets->set(j, (vec_data_t)next);
+          (LmnRuleSetRef)mem->firstclass_rulesets[j + 1];
+      mem->firstclass_rulesets[j] = next;
     }
 
-    mem->firstclass_rulesets->num--;
+    mem->firstclass_rulesets.resize(mem->firstclass_rulesets.size()-1);
     return;
   }
 
@@ -3525,7 +3521,7 @@ void LmnMembrane::delete_ruleset(LmnRulesetId del_id) {
     }
     
     //    mem_rulesets->num--;
-    rulesets->resize(rulesets.size()-1);
+    rulesets.resize(rulesets.size()-1);
     break;
   }
 }
