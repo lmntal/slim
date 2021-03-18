@@ -41,11 +41,6 @@
 #include "interpreter.hpp"
 #include "verifier/runtime_status.h"
 
-/* 履歴管理用アトムのための変数(nakata) */
-extern bool successflag;
-/* ここまで(nakata)*/
-
-
 /**
  * 失敗駆動ループの候補を返すためのfunctional object
  */

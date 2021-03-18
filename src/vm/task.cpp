@@ -667,8 +667,6 @@ void slim::vm::interpreter::findatom(LmnReactCxtRef rc, LmnRuleRef rule,
 /* 以下, 履歴管理用アトムのための関数・変数(nakata) */
 int rule_number;
 bool slimopt_test_flag = false;
-bool successflag = false;
-bool debug_mode = false;
 RecordList record_list(0);
 
 void slim::vm::interpreter::findatomopt(LmnRuleRef rule, LmnMembrane *mem, LmnFunctor f, size_t reg) {
