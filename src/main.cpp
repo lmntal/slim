@@ -583,7 +583,7 @@ static void parse_options(int *optid, int argc, char *argv[]) {
       lmn_env.run_test = TRUE;
       break;
     case 6071:
-      slimopt_test_flag = true;
+      lmn_env.slimopt_test_flag = true;
       break;
     case 'I':
       lmn_env.load_path[lmn_env.load_path_num++] = optarg;

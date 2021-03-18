@@ -85,7 +85,7 @@ template <typename InputIterator> struct false_driven_enumerator {
 
   slim::vm::interpreter::command_result operator()(slim::vm::interpreter &itr, bool result) {
 
-    if(!slimopt_test_flag || record_list.atoms.size() == 0) {
+    if(!lmn_env.slimopt_test_flag || record_list.atoms.size() == 0) {
       // 成功ならループしないで終了
       if (result)
         return slim::vm::interpreter::command_result::Success;

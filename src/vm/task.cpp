@@ -670,7 +670,7 @@ bool slimopt_test_flag = false;
 RecordList record_list(0);
 
 void slim::vm::interpreter::findatomopt(LmnRuleRef rule, LmnMembrane *mem, LmnFunctor f, size_t reg) {
-  slimopt_test_flag = true;
+  lmn_env.slimopt_test_flag = true;
   AtomListEntryRef atomlist_ent = mem->get_atomlist(f);
   if(!atomlist_ent || atomlist_ent->n == atomlist_ent->n_record) {
     return;
@@ -1371,7 +1371,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
           (SameProcCxt *)hashtbl_get(rc->get_hl_sameproccxt(), (HashKeyType)atomi);
       findatom_through_hyperlink(rc, rule, instr, spc, mem, f, atomi);
     } else {
-      if(slimopt_test_flag) findatomopt(rule, mem, f, atomi);
+      if(lmn_env.slimopt_test_flag) findatomopt(rule, mem, f, atomi);
       else findatom(rc, rule, instr, mem, f, atomi);
     }
 
