@@ -299,7 +299,7 @@ void LmnSet::cb_set_find(LmnReactCxtRef *rc, LmnMembraneRef mem, LmnAtomRef a0,
     mem->delete_mem((LmnMembraneRef)key);
 }
 
-
+/* set.cpp専用クラス用getter/setter */
 // 本当はOOP的にsetterは存在しちゃいけないそうなのだけれど仕方がない
 LmnMembraneRef InnerToList::mem(){
   return mem_data;
