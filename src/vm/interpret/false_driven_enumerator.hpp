@@ -93,48 +93,47 @@ template <typename InputIterator> struct false_driven_enumerator {
     if(!slimopt_test_flag || record_list.atoms.size() == 0) {
       // 成功ならループしないで終了
       if (result)
-	return slim::vm::interpreter::command_result::Success;
+        return slim::vm::interpreter::command_result::Success;
       
       // 候補がなくなったら終了
       if (this->begin == this->end)
-	return slim::vm::interpreter::command_result::Failure;
+        return slim::vm::interpreter::command_result::Failure;
       
       // 命令列の巻き戻し
       itr.instr = this->instr;
       
       // 候補を再設定
       itr.rc->reg(this->reg_idx) =
-        false_driven_enumerator_get_candidate<InputIterator, value_type>()(
-									   this->begin);
+        false_driven_enumerator_get_candidate<InputIterator, value_type>()(this->begin);
       
       // 次の候補の準備
       ++this->begin;
     } else { // else内が履歴管理用アトムを用いた場合の挙動になる.
       int rule_number = record_list.get_rule_number();
       if(result) {
-	if(record_list.get_delete_flag(record_list.get_rule_number())) {
-	  // delete
-	} else {
-	  record_list.loop_back(rule_number, this->reg_idx);
-	}
-	// ここを変える (TO DO)
-	record_list.loop_flag[rule_number][reg_idx-1] = true;
-	return slim::vm::interpreter::command_result::Success;
+        if(record_list.get_delete_flag(record_list.get_rule_number())) {
+          // delete
+        } else {
+          record_list.loop_back(rule_number, this->reg_idx);
+        }
+        // ここを変える (TO DO)
+        record_list.loop_flag[rule_number][reg_idx-1] = true;
+        return slim::vm::interpreter::command_result::Success;
       }
 
       // 候補がなくなったら終了
       if(this->begin == this->end) {
-	if(record_list.get_delete_flag(record_list.get_rule_number())) {
-	  // delete
-	} else  {
-	  if(record_list.loop_flag[rule_number][reg_idx-1]) {
-	    record_list.loop_flag[rule_number][reg_idx-1] = false;
-	    record_list.atoms[rule_number][this->reg_idx-1]->go_head();
-	    return slim::vm::interpreter::command_result::Success;
-	  }
-	  if(this->reg_idx != 1) record_list.atoms[rule_number][this->reg_idx-1]->go_head();
-	}
-	return slim::vm::interpreter::command_result::Failure;
+        if(record_list.get_delete_flag(record_list.get_rule_number())) {
+          // delete
+        } else {
+          if(record_list.loop_flag[rule_number][reg_idx-1]) {
+            record_list.loop_flag[rule_number][reg_idx-1] = false;
+            record_list.atoms[rule_number][this->reg_idx-1]->go_head();
+            return slim::vm::interpreter::command_result::Success;
+          }
+          if(this->reg_idx != 1) record_list.atoms[rule_number][this->reg_idx-1]->go_head();
+        }
+        return slim::vm::interpreter::command_result::Failure;
       }
 
       // 命令列の巻き戻し
@@ -148,23 +147,24 @@ template <typename InputIterator> struct false_driven_enumerator {
       // 次の候補の準備
       ++this->begin;
       if(!record_list.get_delete_flag(record_list.get_rule_number())){
-	record_list.atoms[rule_number][this->reg_idx-1]->record_forward();
+        record_list.atoms[rule_number][this->reg_idx-1]->record_forward();
 	
-	while(record_list.atoms[rule_number][this->reg_idx-1]->get_record()->next->record_flag) {
-	  if(this->begin == this->end) {
-	    if(record_list.loop_flag[rule_number][reg_idx-1]) {
-	      record_list.loop_flag[rule_number][reg_idx-1] = false;
-	      record_list.atoms[rule_number][this->reg_idx-1]->go_head();
-	      record_list.start_flag[rule_number] = true;
-	      return slim::vm::interpreter::command_result::Success;
-	    }
+        while(record_list.atoms[rule_number][this->reg_idx-1]->get_record()->next->record_flag) {
+          if(this->begin == this->end) {
+            if(record_list.loop_flag[rule_number][reg_idx-1]) {
+              record_list.loop_flag[rule_number][reg_idx-1] = false;
+              record_list.atoms[rule_number][this->reg_idx-1]->go_head();
+              record_list.start_flag[rule_number] = true;
+              return slim::vm::interpreter::command_result::Success;
+            }
 	    
-	    if(this->reg_idx != 1)record_list.atoms[rule_number][this->reg_idx-1]->go_head();
-	    return slim::vm::interpreter::command_result::Failure;
-	  }
-	  ++this->begin;
-	  record_list.atoms[rule_number][this->reg_idx-1]->record_forward();
-	}
+            if(this->reg_idx != 1) record_list.atoms[rule_number][this->reg_idx-1]->go_head();
+ 
+            return slim::vm::interpreter::command_result::Failure;
+          }
+          ++this->begin;
+          record_list.atoms[rule_number][this->reg_idx-1]->record_forward();
+        }
       }
     }
     profile_backtrack();
