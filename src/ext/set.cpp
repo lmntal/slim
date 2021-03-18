@@ -46,12 +46,6 @@
  * @struct LmnSet set.c "ext/set.c"
  */
 
-/**
- * @memberof LmnSet
- * @private
- */
-
-
 /* id set */
 /**
  * @memberof LmnSet
@@ -139,10 +133,6 @@ int LmnSet::mem_cmp(LmnMembraneRef m0, LmnMembraneRef m1) {
   lmn_binstr_free(s0);
   lmn_binstr_free(s1);
   return res;
-}
-//membrane.cppから呼ばれてしまっているのでpublicで迂回用メソッドを実装
-int LmnSet::public_mem_cmp(LmnMembraneRef m0, LmnMembraneRef m1){
-  return LmnSet::mem_cmp(m0,m1);
 }
 
 /**

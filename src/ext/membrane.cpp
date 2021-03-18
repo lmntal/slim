@@ -76,7 +76,7 @@ void Membrane::cb_mem_equals(LmnReactCxtRef rc,
 {
   LmnMembraneRef m0 = LMN_PROXY_GET_MEM((LmnSymbolAtomRef)((LmnSymbolAtomRef)mem0_proxy)->get_link(0));
   LmnMembraneRef m1 = LMN_PROXY_GET_MEM((LmnSymbolAtomRef)((LmnSymbolAtomRef)mem1_proxy)->get_link(0));
-  LmnFunctor judge = (LmnSet::public_mem_cmp(m0, m1) == 0) ? LMN_TRUE_FUNCTOR : LMN_FALSE_FUNCTOR;
+  LmnFunctor judge = (LmnSet::mem_cmp(m0, m1) == 0) ? LMN_TRUE_FUNCTOR : LMN_FALSE_FUNCTOR;
   LmnSymbolAtomRef result = lmn_mem_newatom(mem, judge);
 
   lmn_mem_newlink(mem,

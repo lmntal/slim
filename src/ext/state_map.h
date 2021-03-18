@@ -47,9 +47,9 @@
 #include "vm/vm.h"
 
 class LmnStateMap {
+  LMN_SP_ATOM_HEADER;
   static int state_map_atom_type;
   typedef class LmnStateMap *LmnStateMapRef;
-  LMN_SP_ATOM_HEADER;
   StateSpaceRef states;
   LmnStateMap(LmnMembraneRef mem);
   ~LmnStateMap();

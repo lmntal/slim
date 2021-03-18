@@ -38,6 +38,7 @@
  */
 
 #include "../lmntal.h"
+#include "array.h"
 #include "membrane.h"
 #include "set.h"
 #include "state_map.h"
@@ -47,7 +48,6 @@ void init_nlmem(void);
 void init_initial_ruleset(void);
 void init_nd_conf(void);
 void init_time(void);
-void init_array(void);
 void init_atom(void);
 void init_react_rule(void);
 void init_zerostep(void);
@@ -61,7 +61,7 @@ void init_builtin_extensions(void)
   init_initial_ruleset();
   init_nd_conf();
   init_time();
-  init_array();
+  LmnArray::init_array();
   init_atom();
   init_react_rule();
   LmnSet::init_set();

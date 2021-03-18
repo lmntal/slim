@@ -52,7 +52,6 @@ class LmnSet {
   /* id set */
   static unsigned long id_hash(st_data_t a);
   static int id_cmp(st_data_t a, st_data_t b);
-  static int mem_cmp(LmnMembraneRef m0, LmnMembraneRef m1);
   static unsigned long tuple_hash(LmnSymbolAtomRef cons);
   static int tuple_cmp(LmnSymbolAtomRef cons0, LmnSymbolAtomRef cons1);
   /* mem set */
@@ -112,8 +111,8 @@ class LmnSet {
   static unsigned char sp_cb_set_is_ground(void *data);
 
   public:
-  static int public_mem_cmp(LmnMembraneRef m0, LmnMembraneRef m1);//迂回路を作成。OOP的にはご法度(というほどでもないが)なのであとで消す方法を誰かが考える
-  static void init_set(void); //何かの初期化メンバ関数
+  static int mem_cmp(LmnMembraneRef m0, LmnMembraneRef m1);
+  static void init_set(void);
 };
 class InnerToList {
   LmnMembraneRef mem_data;
@@ -121,7 +120,7 @@ class InnerToList {
   LmnAtomRef prev_data;
   struct st_hash_type *ht_data;
   public:
-  typedef class InnerToList *InnerToListRef;//こっちでいいんだろうか
+  typedef class InnerToList *InnerToListRef;
   LmnMembraneRef mem();
   void set_mem_as(LmnMembraneRef data);
   LmnAtomRef cons();
