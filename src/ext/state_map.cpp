@@ -42,17 +42,7 @@
 #include "verifier/verifier.h"
 #include "vm/vm.h"
 
-static int state_map_atom_type;
-
-struct LmnStateMap {
-  LMN_SP_ATOM_HEADER;
-  StateSpaceRef states;
-  LmnStateMap(LmnMembraneRef mem) {
-    LMN_SP_ATOM_SET_TYPE(this, state_map_atom_type);
-    this->states = new StateSpace(NULL, NULL);
-  };
-  ~LmnStateMap() { delete (this->states); };
-};
+int LmnStateMap::state_map_atom_type;
 
 /*----------------------------------------------------------------------
  * Callbacks
@@ -63,7 +53,7 @@ struct LmnStateMap {
  * -a0 Map
  */
 
-void cb_state_map_init(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
+void LmnStateMap::cb_state_map_init(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
                        LmnLinkAttr t0) {
   LmnStateMapRef atom = new LmnStateMap(mem);
   LmnLinkAttr attr = LMN_SP_ATOM_ATTR;
@@ -77,7 +67,7 @@ void cb_state_map_init(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
  * +a0 Map
  */
 
-void cb_state_map_free(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
+void LmnStateMap::cb_state_map_free(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
                        LmnLinkAttr t0) {
   delete ((LmnStateMapRef)a0)->states, mem;
   lmn_mem_remove_data_atom(mem, (LmnDataAtomRef)a0, t0);
@@ -98,7 +88,7 @@ void cb_state_map_id_find(LmnReactCxtRef rc,
                           LmnAtomRef a3, LmnLinkAttr t3)
 {
   LmnMembraneRef m = LMN_PROXY_GET_MEM((LmnSymbolAtomRef)((LmnSymbolAtomRef)a1)->get_link(0));
-  StateSpaceRef ss = ((LmnStateMapRef)a0)->states;
+  StateSpaceRef ss = ((LmnStateMap::LmnStateMapRef)a0)->states;
   LmnSymbolAtomRef out = (LmnSymbolAtomRef)a1;
   LmnSymbolAtomRef in = (LmnSymbolAtomRef)((LmnSymbolAtomRef)a1)->get_link(0);
   LmnLinkAttr in_attr = ((LmnSymbolAtomRef)a1)->get_attr(0);
@@ -191,7 +181,7 @@ void sp_cb_state_map_dump(void *state_map, LmnPortRef port) {
 
 unsigned char sp_cb_state_map_is_ground(void *data) { return 1; }
 
-void init_state_map(void) {
+void LmnStateMap::init_state_map(void) {
   state_map_atom_type = lmn_sp_atom_register(
       "state_map", sp_cb_state_map_copy, sp_cb_state_map_free,
       sp_cb_state_map_eq, sp_cb_state_map_dump, sp_cb_state_map_is_ground);

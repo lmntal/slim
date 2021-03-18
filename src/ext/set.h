@@ -47,7 +47,8 @@ class LmnSet {
   typedef class LmnSet *LmnSetRef;
   LMN_SP_ATOM_HEADER;
   st_table_t tbl; /* hash table */
-  private:
+  LmnSet(struct st_hash_type *ht);
+  ~LmnSet();
   /* id set */
   static unsigned long id_hash(st_data_t a);
   static int id_cmp(st_data_t a, st_data_t b);
@@ -113,8 +114,6 @@ class LmnSet {
   public:
   static int public_mem_cmp(LmnMembraneRef m0, LmnMembraneRef m1);//迂回路を作成。OOP的にはご法度なのであとで消す方法を誰かが考える
   static void init_set(void); //何かの初期化メンバ関数
-  LmnSet(struct st_hash_type *ht);
-  ~LmnSet();
 };
 class InnerToList {
   LmnMembraneRef mem_data;

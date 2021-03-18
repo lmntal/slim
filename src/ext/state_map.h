@@ -42,9 +42,29 @@
 
 #include "lmntal.h"
 #include "element/element.h"
+#include "set.h"
+#include "verifier/verifier.h"
+#include "vm/vm.h"
 
+struct LmnStateMap {
+  static int state_map_atom_type;
+  LMN_SP_ATOM_HEADER;
+  StateSpaceRef states;
+  LmnStateMap(LmnMembraneRef mem) {
+    LMN_SP_ATOM_SET_TYPE(this, state_map_atom_type);
+    this->states = new StateSpace(NULL, NULL);
+  };
+  ~LmnStateMap() { delete (this->states); };
+  static void cb_state_map_init(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
+                       LmnLinkAttr t0);
+  static void cb_state_map_free(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
+                       LmnLinkAttr t0);
 
-typedef struct LmnStateMap *LmnStateMapRef;
+  static void init_state_map(void);
+  public:
+  typedef struct LmnStateMap *LmnStateMapRef;
+};
+
 
 
 #endif /* EXT_STATE_MAP_H */
