@@ -245,6 +245,12 @@ class encoder {
   template <class Iterator>
   void write_mols(Iterator begin, Iterator end, BinStrCursor &bsp,
                   VisitLogRef visited) {
+    BinStrCursor last_valid_bsp;
+    Iterator last_valid_it = end;
+    int first_func = 0;
+    CheckpointRef last_valid_checkpoint = NULL;
+
+    
     if (!bsp.is_valid())
       return;
 
@@ -255,6 +261,10 @@ class encoder {
       if (LMN_IS_HL(atom))
         continue;
 
+      /* 最適化: 最小のファンクタ以外は試す必要なし */
+      if (last_valid_it != end && atom->get_functor() != first_func)
+        break;
+      
       if (visited->get_atom(atom, NULL))
         continue;
 
@@ -264,15 +274,33 @@ class encoder {
       write_mol(atom, LMN_ATTR_MAKE_LINK(0), -1, new_bsptr, visited, TRUE);
       if (new_bsptr.is_valid()) {
         /* atomからたどった分子が書き込みに成功したので次のアトムの書き込みを試みる */
-        write_mols(std::next(it), end, new_bsptr, visited);
         
-        if (new_bsptr.is_valid()) {
-          bsp = new_bsptr;
-          visited->commit_checkpoint();
-        } else {
-          visited->revert_checkpoint();
-        }
-        break;
+	if (last_valid_it == end) {
+	  first_func = atom->get_functor();
+	} else {
+	  delete last_valid_checkpoint;
+	}
+
+	last_valid_bsp = new_bsptr;
+	last_valid_checkpoint = visited->pop_checkpoint();
+	last_valid_it = it;
+      } else {
+        visited->revert_checkpoint();
+      }
+    }
+
+    
+    if (last_valid_it != end) {
+      /* 書き込みに成功した分子をログに記録して、次の分子に進む */
+      auto t = *last_valid_it;
+      *last_valid_it = 0;
+      visited->push_checkpoint(last_valid_checkpoint);
+      write_mols(begin, end, last_valid_bsp, visited);
+      *last_valid_it = t;
+
+      if (last_valid_bsp.is_valid()) {
+        bsp = last_valid_bsp;
+        visited->commit_checkpoint();
       } else {
         visited->revert_checkpoint();
       }
