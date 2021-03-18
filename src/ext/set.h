@@ -112,7 +112,7 @@ class LmnSet {
   static unsigned char sp_cb_set_is_ground(void *data);
 
   public:
-  static int public_mem_cmp(LmnMembraneRef m0, LmnMembraneRef m1);//迂回路を作成。OOP的にはご法度なのであとで消す方法を誰かが考える
+  static int public_mem_cmp(LmnMembraneRef m0, LmnMembraneRef m1);//迂回路を作成。OOP的にはご法度(というほどでもないが)なのであとで消す方法を誰かが考える
   static void init_set(void); //何かの初期化メンバ関数
 };
 class InnerToList {
