@@ -48,22 +48,27 @@ struct LmnSet {
   st_table_t tbl; /* hash table */
   LmnSet(struct st_hash_type *ht);
   ~LmnSet();
+  public://本当にpublicなメソッドはこの下に
+  static int public_mem_cmp(LmnMembraneRef m0, LmnMembraneRef m1);//迂回路を作成。OOP的にはご法度なのであとで消す方法を考える
   public://リファクタリング中につき一時的にpublic設定
   //  typedef struct LmnSet *LmnSetRef;
   /* id set */
   static unsigned long id_hash(st_data_t a);
   static int id_cmp(st_data_t a, st_data_t b);
+  static int mem_cmp(LmnMembraneRef m0, LmnMembraneRef m1);
   static unsigned long tuple_hash(LmnSymbolAtomRef cons);
   static int tuple_cmp(LmnSymbolAtomRef cons0, LmnSymbolAtomRef cons1);
   /* mem set */
   static LmnBinStrRef lmn_inner_mem_encode(LmnMembraneRef m);
   static unsigned long mem_hash(LmnMembraneRef m);
-  public://本当にpublicなメソッドはこの下に
-  static int mem_cmp(LmnMembraneRef m0, LmnMembraneRef m1);
+
+  static struct st_hash_type type_id_hash;
+  static struct st_hash_type type_mem_hash;
+  static struct st_hash_type type_tuple_hash;
 
 };
 
 //static int LmnSet::mem_cmp(LmnMembraneRef m0, LmnMembraneRef m1);
-extern struct st_hash_type type_id_hash;
+//extern struct st_hash_type type_id_hash;
 
 #endif
