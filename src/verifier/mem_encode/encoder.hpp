@@ -49,6 +49,8 @@ namespace slim {
 namespace verifier {
 namespace mem_encode {
 class encoder {
+  /* 膜memの中のシンボルアトムのバイトストリングを書き込む
+   */
   void write_mem_atoms(LmnMembraneRef mem, BinStrCursor &bsp,
                        VisitLogRef visited) {
     if (!bsp.is_valid())
