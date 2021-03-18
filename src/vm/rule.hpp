@@ -46,7 +46,7 @@
 #include "membrane.h"
 #include "react_context.hpp"
 
-//#include <random>
+#include <random>
 
 typedef BOOL (*LmnTranslated)(LmnReactCxtRef, LmnMembraneRef, LmnRuleRef);
 
