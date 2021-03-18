@@ -343,7 +343,11 @@ BOOL react_all_rulesets(LmnReactCxtRef rc, LmnMembraneRef cur_mem) {
  */
 static inline BOOL react_ruleset(LmnReactCxtRef rc, LmnMembraneRef mem,
                                  LmnRuleSetRef rs) {
-  for (auto r : *rs) {
+  
+  //shuffle_ruleオプションが付いている場合はruleをシャッフル
+  if(lmn_env.shuffle_rule) rs->shuffle();
+
+  for (auto r : *rs) {//koko
 #ifdef PROFILE
     if (!lmn_env.nd && lmn_env.profile_level >= 2)
       profile_rule_obj_set(rs, r);

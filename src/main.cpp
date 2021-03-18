@@ -85,6 +85,7 @@ static void usage(void) {
       "  -t                   (RT) Show execution path\n"
       "                       (MC) Show state space\n"
       "  --hide-ruleset       Hide ruleset from result\n"
+      "  --shuffle-rule       (RT) Apply rules randomly\n"
       "  --hl                 (RT) Allow using hyperlink system\n"
       "  --show-proxy         Show proxy atoms\n"
       "  --show-chr           Show applied history in uniq rulesets "
@@ -233,6 +234,7 @@ static void parse_options(int *optid, int argc, char *argv[]) {
                                   {"hash-depth", 1, 0, 6061},
                                   {"tree-compress", 1, 0, 6062},
                                   {"run-test", 0, 0, 6070},
+                                  {"shuffle-rule",0,0,6080},
                                   {0, 0, 0, 0}};
 
   while ((c = getopt_long(argc, argv, "+dvhtI:O::p::", long_options,
@@ -579,6 +581,9 @@ static void parse_options(int *optid, int argc, char *argv[]) {
     }
     case 6070:
       lmn_env.run_test = TRUE;
+      break;
+    case 6080:
+      lmn_env.shuffle_rule = TRUE;
       break;
     case 'I':
       lmn_env.load_path[lmn_env.load_path_num++] = optarg;
