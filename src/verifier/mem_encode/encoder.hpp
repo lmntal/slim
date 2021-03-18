@@ -248,7 +248,7 @@ class encoder {
     BinStrCursor last_valid_bsp;
     Iterator last_valid_it = end;
     int first_func = 0;
-    CheckpointRef last_valid_checkpoint = NULL;
+    CheckpointRef last_valid_checkpoint = nullptr;
 
     
     if (!bsp.is_valid())
@@ -273,17 +273,17 @@ class encoder {
 
       write_mol(atom, LMN_ATTR_MAKE_LINK(0), -1, new_bsptr, visited, TRUE);
       if (new_bsptr.is_valid()) {
-        /* atomからたどった分子が書き込みに成功したので次のアトムの書き込みを試みる */
+        /* atomからたどった分子が書き込みに成功したのでlast_validに記憶する */
         
-	if (last_valid_it == end) {
-	  first_func = atom->get_functor();
-	} else {
-	  delete last_valid_checkpoint;
-	}
-
-	last_valid_bsp = new_bsptr;
-	last_valid_checkpoint = visited->pop_checkpoint();
-	last_valid_it = it;
+        if (last_valid_it == end) {
+          first_func = atom->get_functor();
+        } else {
+          delete last_valid_checkpoint;
+        }
+        
+        last_valid_bsp = new_bsptr;
+        last_valid_checkpoint = visited->pop_checkpoint();
+        last_valid_it = it;
       } else {
         visited->revert_checkpoint();
       }
