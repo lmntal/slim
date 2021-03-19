@@ -86,6 +86,9 @@ static void usage(void) {
       "  -t                   (RT) Show execution path\n"
       "                       (MC) Show state space\n"
       "  --hide-ruleset       Hide ruleset from result\n"
+      "  --shuffle-rule       (RT) Apply rules randomly\n"
+      "  --shuffle-atom       (RT) Choose atoms to be applied randomly\n"
+      "  --shuffle            (RT) Apply both shuffle-rule option and shuffle-atom options\n"
       "  --hl                 (RT) Allow using hyperlink system\n"
       "  --show-proxy         Show proxy atoms\n"
       "  --show-chr           Show applied history in uniq rulesets "
@@ -234,7 +237,10 @@ static void parse_options(int *optid, int argc, char *argv[]) {
                                   {"hash-depth", 1, 0, 6061},
                                   {"tree-compress", 1, 0, 6062},
                                   {"run-test", 0, 0, 6070},
-				  {"history-management", 0, 0, 6071},
+                                  {"history-management", 0, 0, 6071},
+                                  {"shuffle-rule",0,0,6080},
+                                  {"shuffle-atom",0,0,6081},
+                                  {"shuffle",0,0,6082},
                                   {0, 0, 0, 0}};
 
   while ((c = getopt_long(argc, argv, "+dvhtI:O::p::", long_options,
@@ -584,6 +590,16 @@ static void parse_options(int *optid, int argc, char *argv[]) {
       break;
     case 6071:
       lmn_env.history_management = TRUE;
+      break;
+    case 6080:
+      lmn_env.shuffle_rule = TRUE;
+      break;
+    case 6081:
+      lmn_env.shuffle_atom = TRUE;
+      break;
+    case 6082:
+      lmn_env.shuffle_rule = TRUE;
+      lmn_env.shuffle_atom = TRUE;
       break;
     case 'I':
       lmn_env.load_path[lmn_env.load_path_num++] = optarg;
