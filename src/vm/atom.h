@@ -133,6 +133,8 @@ struct LmnSymbolAtom {
   LmnSymbolAtomRef prev;
   LmnSymbolAtomRef next;
   LmnWord procId;
+  bool record_flag = false;
+  int rule_number = -1;
   union {
     struct {
       LmnFunctor functor;
@@ -243,6 +245,12 @@ struct LmnSymbolAtom {
    * @memberof LmnSymbolAtom
    */
   const char *str() const;
+
+  /* 以下, 履歴管理用アトム(nakata)の追加関数*/
+  void atom_swap_forward();
+  void swap_to_head(LmnSymbolAtomRef head);
+  void remove_atom();
+  /* ここまで(nakata)*/
 };
 
 /**

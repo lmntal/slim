@@ -40,6 +40,7 @@
 
 #include "atom.h"
 #include <iterator>
+#include <vector>
 
 struct SimpleHashtbl;
 struct AtomListEntry;
@@ -50,6 +51,7 @@ LmnSymbolAtomRef lmn_atomlist_end(AtomListEntry *lst);
 struct AtomListEntry {
   LmnSymbolAtomRef tail, head;
   int n;
+  int n_record = 0; // 履歴管理用アトムのための変数(nakata)
   struct SimpleHashtbl *record;
 
   bool is_empty() {
@@ -114,6 +116,54 @@ struct AtomListEntry {
     this->tail->set_next(a);
   }
 
+  /* 以下, 履歴管理用アトムのためのコード(nakata) */
+  void make_head_record() {
+    //insert head atom
+    LmnSymbolAtomRef head_atom = new LmnSymbolAtom;
+    auto funct = lmn_functor_table->intern(ANONYMOUS, lmn_intern("head"), 0);
+    head_atom->procId = -2;
+    head_atom->set_functor(funct);
+    head_atom->record_flag = true;
+
+    head_atom->set_next(this->head);
+    this->head->set_prev(head_atom);
+    head_atom->set_prev(this->head->prev);
+    this->head = head_atom;
+
+    this->n += 1;
+    this->n_record += 1;
+  }
+  
+  LmnSymbolAtomRef make_new_recordatom(bool record_flag, LmnFunctor f) {
+    // exception
+    if(!this->head->record_flag) {
+      fprintf(stdout, "\033[31mthere isn't the head atom for record\33[0m\n");
+      make_head_record();
+    }
+
+    // make new record atom
+    LmnSymbolAtomRef newatom = new LmnSymbolAtom;
+
+    newatom->procId = -1;
+    newatom->set_functor(f);
+    newatom->record_flag = true;
+
+    // change the pointer
+    auto next_head_atom = this->head->get_next();
+
+    next_head_atom->set_prev(newatom);
+    newatom->set_next(next_head_atom);
+
+    this->head->set_next(newatom);
+    newatom->set_prev(this->head);
+    
+    this->n += 1;
+    this->n_record += 1;
+
+    return newatom;
+  }
+  /* ここまで(nakata) */
+  
   class const_iterator {
     LmnSymbolAtomRef a_index;
     const AtomListEntry *a_ent;
@@ -165,6 +215,10 @@ struct AtomListEntry {
                                     const_cast<AtomListEntry *>(this)));
   }
 
+  const_iterator make_iterator(LmnSymbolAtomRef atom) const {
+    return const_iterator(this, atom);
+  }
+  
   const_iterator insert(int findatomid, LmnSymbolAtomRef record) {
     hashtbl_put(this->record, findatomid, (HashKeyType)record);
     auto start_atom = atomlist_head(this);
@@ -202,6 +256,139 @@ void move_atom_to_atomlist_head(LmnSymbolAtomRef a, LmnMembrane *mem);
 void move_atomlist_to_atomlist_tail(LmnSymbolAtomRef a, LmnMembrane *mem);
 void move_atom_to_atom_tail(LmnSymbolAtomRef a, LmnSymbolAtomRef a1,
                             LmnMembrane *mem);
+
+/* RecordAtom, RecordList クラスは履歴管理用アトムのためのクラス */
+class RecordAtom {
+  LmnSymbolAtomRef atom_record;
+  LmnSymbolAtomRef head_record; // necessary to move atom_record to the beginning(head) after backtracking
+public:
+  bool first_time;
+  RecordAtom(LmnSymbolAtomRef atom_record, LmnSymbolAtomRef head_record, int rule_number) {
+    this->atom_record = atom_record;
+    this->head_record = head_record;
+    this->atom_record->rule_number = rule_number;
+    first_time = true;
+  }
+
+  void go_head() {
+    this->atom_record->swap_to_head(this->head_record);
+  }
+
+  void record_forward() {
+    this->atom_record->atom_swap_forward();
+  }
+
+  LmnSymbolAtomRef get_record() {
+    return atom_record;
+  }
+
+  LmnSymbolAtomRef get_head() {
+    return head_record;
+  }
+
+  void set_record(LmnSymbolAtomRef atom_record) {
+    this->atom_record = atom_record;
+  }
+
+  void set_head(LmnSymbolAtomRef head_record) {
+    this->head_record = head_record;
+  }
+};
+
+
+class RecordList {
+  int latest_rule_number = 0;
+  std::vector<bool> delete_flag;
+public:
+  std::vector<bool> start_flag;
+  std::vector<std::vector<int>> rule_reset;
+  std::vector<std::vector<bool>> loop_flag;
+  std::vector<std::vector<RecordAtom*>> atoms;
+
+  RecordList(int rule_number) {
+    latest_rule_number = rule_number;
+  }
+
+  int get_rule_number() {
+    return latest_rule_number;
+  }
+
+  void set_rule_number(int rule_number) {
+    latest_rule_number = rule_number;
+  }
+
+  void set_delete_flag(bool flag) {
+    delete_flag.push_back(flag);
+  }
+  
+  void set_delete_flag(bool flag, int rule_number) {
+    if(rule_number >= delete_flag.size()) return;
+    delete_flag[rule_number] = flag;
+  }
+
+  bool get_delete_flag(int rule_number) {
+    return delete_flag[rule_number];
+  }
+
+  void push_back_newatom(AtomListEntry* atomlist_ent, int rule_number, size_t reg) {
+    if(rule_number >= this->atoms.size()) {
+      // size error
+      fprintf(stdout, "\033[31mpush_back_newatom is fault : atomlist.hpp\33[0m\n");
+      exit(-1);
+    }
+
+    auto func_record = lmn_functor_table->intern(ANONYMOUS, lmn_intern("record"), 0);
+    RecordAtom* atom = new RecordAtom(atomlist_ent->make_new_recordatom(true, func_record), atomlist_ent->head, rule_number);
+    this->atoms[rule_number].resize(reg);
+    this->loop_flag[rule_number].resize(reg);
+    this->atoms[rule_number][reg-1] = atom;
+    this->loop_flag[rule_number][reg-1] = false;
+  }
+
+  void loop(AtomListEntry* atomlist_ent, int rule_number, int reg) {
+    auto recordatom = atoms[rule_number][reg-1];
+    auto atom = recordatom->get_record();
+    if(atom == atomlist_ent->tail && loop_flag[rule_number][reg-1]) {
+      loop_flag[rule_number][reg-1] = false;
+      recordatom->go_head();
+    }
+    while(atom->next->record_flag && atom != atomlist_ent->tail) {
+      atom->atom_swap_forward();
+    }
+  }
+
+  void loop_back(int rule_number, int reg) {
+    auto atom = atoms[rule_number][reg-1]->get_record();
+    auto head = atoms[rule_number][reg-1]->get_head();
+
+    if(atom->prev != head) atom->prev->atom_swap_forward();
+    while (atom->prev->record_flag && atom->prev != head) {
+      atom->prev->atom_swap_forward();
+    }
+  }
+
+  void push_reset(LmnFunctor f) {
+    for(int i = 0; i < atoms.size(); i++) {
+      if(rule_reset[i][f]) {
+	for(int j = 0; j < atoms[i].size(); j++) {
+	  if(atoms[i][j]) {
+	    loop_flag[i][j] = true;
+	  }
+	}
+      }
+    }
+  }
+
+  void push_reset_all() {
+    for(int i = 0; i < atoms.size(); i++) {
+      for(int j = 0; j < atoms[i].size(); j++) {
+	if(atoms[i][j]) loop_flag[i][j] = true;
+      }
+    }
+  }
+};
+
+extern RecordList record_list;
 
 #define EACH_ATOMLIST_WITH_FUNC(MEM, ENT, F, CODE)                             \
   do {                                                                         \

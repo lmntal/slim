@@ -60,6 +60,7 @@ public:
   int inst_seq_len;
   LmnTranslated translated;
   lmn_interned_str name;
+  int rule_number = -1; // 履歴管理用アトムのための変数
 
   /* コストを動的に変えたい場合, このcostに一時的に値を入れておく or
    * costの計算式を入れる */
