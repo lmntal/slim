@@ -104,9 +104,11 @@ struct LmnMembrane {
   const std::vector<LmnRuleSet *> &get_rulesets() const {
     return this->rulesets;
   }
+#ifdef USE_FIRSTCLASS_RULE
   const std::vector<LmnRuleSet *> &get_firstclass_rulesets() const {
     return this->firstclass_rulesets;
   }
+#endif
   size_t ruleset_num() const {
     return (this->get_rulesets()).size();
   }
