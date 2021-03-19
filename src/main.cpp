@@ -585,16 +585,14 @@ static void parse_options(int *optid, int argc, char *argv[]) {
     case 6070:
       lmn_env.run_test = TRUE;
       break;
-<<<<<<< HEAD
+    case 6071:
+      lmn_env.history_management = TRUE;
+      break;
     case 6080:
       lmn_env.shuffle_rule = TRUE;
       break;
     case 6081:
       lmn_env.shuffle_atom = TRUE;
-=======
-    case 6071:
-      lmn_env.history_management = TRUE;
->>>>>>> develop
       break;
     case 'I':
       lmn_env.load_path[lmn_env.load_path_num++] = optarg;
