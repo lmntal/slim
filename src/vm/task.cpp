@@ -52,7 +52,7 @@
 #endif
 
 #include <algorithm>
-
+#include <iostream> 
 typedef void (*callback_0)(LmnReactCxtRef, LmnMembraneRef);
 typedef void (*callback_1)(LmnReactCxtRef, LmnMembraneRef, LmnAtomRef,
                            LmnLinkAttr);
@@ -234,7 +234,6 @@ void lmn_run(Vector *start_rulesets) {
       normal_parallel_prof_dump(stderr);
     normal_parallel_free();
   }
-
   /* 後始末 */
   if (lmn_env.normal_remain) {
     lmn_env.normal_remaining = TRUE;
@@ -314,10 +313,10 @@ BOOL react_all_rulesets(LmnReactCxtRef rc, LmnMembraneRef cur_mem) {
   }
 
 #ifdef USE_FIRSTCLASS_RULE
-  for (i = 0; i < (cur_mem->firstclass_rulesets())->get_num(); i++) {
+  for (i = 0; i < cur_mem->firstclass_rulesets.size(); i++) {
     if (react_ruleset(
             rc, cur_mem,
-            (LmnRuleSetRef)(cur_mem->firstclass_rulesets())->get(i))) {
+            (LmnRuleSetRef)(cur_mem->firstclass_rulesets[i]))) {
       ok = TRUE;
       break;
     }
@@ -665,6 +664,62 @@ void slim::vm::interpreter::findatom(LmnReactCxtRef rc, LmnRuleRef rule,
 
   this->false_driven_enumerate(reg, std::move(v));
 }
+
+/* 以下, 履歴管理用アトムのための関数・変数(nakata) */
+RecordList record_list(0);
+
+void slim::vm::interpreter::findatom_history_management(LmnRuleRef rule, LmnMembrane *mem, LmnFunctor f, size_t reg) {
+  lmn_env.history_management = TRUE;
+  AtomListEntryRef atomlist_ent = mem->get_atomlist(f);
+  if(!atomlist_ent || atomlist_ent->n == atomlist_ent->n_record) {
+    return;
+  }
+
+  // if the head of atomlist isn't an atom for record. make an atom and insert.
+  if(!atomlist_ent->head->record_flag) {
+    atomlist_ent->make_head_record();
+  }
+  // rule is applied findatom_history_management first time, rule_number will be change -1 to new number
+  if(rule->rule_number == -1) {
+    rule->rule_number = record_list.atoms.size();
+    record_list.atoms.resize(record_list.atoms.size()+1);
+    record_list.set_delete_flag(false);
+    record_list.loop_flag.resize(record_list.loop_flag.size()+1);
+    record_list.rule_reset.resize(record_list.rule_reset.size()+1);
+    record_list.start_flag.resize(record_list.start_flag.size()+1);
+  }
+  
+  if(record_list.rule_reset[rule->rule_number].size() < f+1) record_list.rule_reset[rule->rule_number].resize(f+1);
+
+  record_list.rule_reset[rule->rule_number][f] = true;
+  record_list.set_rule_number(rule->rule_number);
+
+  if(record_list.atoms[rule->rule_number].size() < reg) {
+    record_list.push_back_newatom(atomlist_ent, rule->rule_number, reg);
+  }
+
+  auto head = atomlist_ent->head;
+  
+  record_list.loop(atomlist_ent, rule->rule_number, reg);
+  
+  AtomListEntry::const_iterator begin;
+  AtomListEntry::const_iterator end;
+
+  begin = atomlist_ent->make_iterator(record_list.atoms[rule->rule_number][reg-1]->get_record()->next);
+  end = std::end(*atomlist_ent);
+
+  if(begin == end) return;
+
+  auto v = std::vector<LmnRegister>();
+
+  std::transform(begin, end, std::back_inserter(v), [](LmnSymbolAtomRef atom) {
+						      return LmnRegister({(LmnWord)atom, LMN_ATTR_MAKE_LINK(0), TT_ATOM});
+						    });
+  this->false_driven_enumerate(reg, std::move(v));
+  
+}
+
+/* ここまで(nakata)*/
 
 /** find atom with a hyperlink occurred in the current rule for the first time.
  */
@@ -1315,7 +1370,8 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
           (SameProcCxt *)hashtbl_get(rc->get_hl_sameproccxt(), (HashKeyType)atomi);
       findatom_through_hyperlink(rc, rule, instr, spc, mem, f, atomi);
     } else {
-      findatom(rc, rule, instr, mem, f, atomi);
+      if(lmn_env.history_management) findatom_history_management(rule, mem, f, atomi);
+      else findatom(rc, rule, instr, mem, f, atomi);
     }
 
     return false; // false driven loop
@@ -1623,11 +1679,11 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
 
       READ_VAL(LmnFunctor, instr, f);
       ap = lmn_new_atom(f);
-
+      ((LmnSymbolAtomRef)ap)->record_flag = false;
 #ifdef USE_FIRSTCLASS_RULE
       if (f == LMN_COLON_MINUS_FUNCTOR) {
         lmn_rc_push_insertion(rc, (LmnSymbolAtomRef)ap,
-                              (LmnMembraneRef)wt(rc, memi));
+                              (LmnMembraneRef)rc->wt(memi));
       }
 #endif
     }
@@ -2320,7 +2376,6 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       firstclass_ruleset_release(atom);
     }
 #endif
-
     lmn_mem_remove_atom((LmnMembraneRef)rc->wt(memi), (LmnAtomRef)rc->wt(atomi),
                         rc->at(atomi));
 

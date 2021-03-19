@@ -617,7 +617,8 @@ static void lmn_dump_cell_internal(LmnPortRef port, LmnMembraneRef mem,
               }
               /* 0 argument atom */
               else if (arity == 0) {
-                pred_atoms[P0].push((LmnWord)atom);
+		if(!atom->record_flag) 
+		  pred_atoms[P0].push((LmnWord)atom);
               }
               /* 1 argument, link to the last argument */
               else if (arity == 1 && f != LMN_NIL_FUNCTOR &&
