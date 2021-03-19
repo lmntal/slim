@@ -237,10 +237,10 @@ static void parse_options(int *optid, int argc, char *argv[]) {
                                   {"hash-depth", 1, 0, 6061},
                                   {"tree-compress", 1, 0, 6062},
                                   {"run-test", 0, 0, 6070},
-				                          {"history-management", 0, 0, 6071},
+				  {"history-management", 0, 0, 6071},
                                   {"shuffle-rule",0,0,6080},
-				                          {"shuffle-atom",0,0,6081},
-				                          {"shuffle",0,0,6082},
+				  {"shuffle-atom",0,0,6081},
+				  {"shuffle",0,0,6082},
                                   {0, 0, 0, 0}};
 
   while ((c = getopt_long(argc, argv, "+dvhtI:O::p::", long_options,
