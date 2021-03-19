@@ -95,20 +95,20 @@ struct AtomListEntry {
         this->head = a;
       } else if(startpoint == n) { // tail 処理
         a->set_next(reinterpret_cast<LmnSymbolAtomRef>(this));
-	      a->set_prev(this->tail);
+        a->set_prev(this->tail);
         this->tail->set_next(a);
         this->tail = a;
       } else {
-	      // 挿入するアトムまで移動するためのアトム
+        // 挿入するアトムまで移動するためのアトム
         auto insertpoint_atom = this->head;
         for(int i = 0; i < startpoint; i++) {
           insertpoint_atom = insertpoint_atom->get_next();
         }
-	      // 挿入した
+        // 挿入した
         a->set_prev(insertpoint_atom);
-	      a->set_next(insertpoint_atom->get_next());
-	      insertpoint_atom->set_next(a);
-	      a->get_next()->set_prev(a);
+        a->set_next(insertpoint_atom->get_next());
+        insertpoint_atom->set_next(a);
+        a->get_next()->set_prev(a);
       }
     } else {
       a->set_next(reinterpret_cast<LmnSymbolAtomRef>(this));
