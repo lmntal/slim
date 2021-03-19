@@ -87,6 +87,8 @@ static void usage(void) {
       "                       (MC) Show state space\n"
       "  --hide-ruleset       Hide ruleset from result\n"
       "  --shuffle-rule       (RT) Apply rules randomly\n"
+      "  --shuffle-atom       (RT) Choose atoms to be applied randomly\n"
+      "  --shuffle            (RT) Execute shuffle-rule option and shuffle-atom option\n"
       "  --hl                 (RT) Allow using hyperlink system\n"
       "  --show-proxy         Show proxy atoms\n"
       "  --show-chr           Show applied history in uniq rulesets "
