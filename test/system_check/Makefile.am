@@ -184,6 +184,7 @@ check_DATA = \
 	testsuite/simpagation/case2.il \
 	testsuite/count/case1.il \
 	testsuite/count/case2.il \
+	testsuite/count/case3.il \
 	testsuite/mem_name/case1.il \
 	testsuite/mem_name/case2.il \
 	testsuite/uniq/case1.il \
