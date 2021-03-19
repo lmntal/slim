@@ -235,6 +235,7 @@ static void parse_options(int *optid, int argc, char *argv[]) {
                                   {"tree-compress", 1, 0, 6062},
                                   {"run-test", 0, 0, 6070},
                                   {"shuffle-rule",0,0,6080},
+				  {"shuffle-atom",0,0,6081},
                                   {0, 0, 0, 0}};
 
   while ((c = getopt_long(argc, argv, "+dvhtI:O::p::", long_options,
@@ -584,6 +585,9 @@ static void parse_options(int *optid, int argc, char *argv[]) {
       break;
     case 6080:
       lmn_env.shuffle_rule = TRUE;
+      break;
+    case 6081:
+      lmn_env.shuffle_atom = TRUE;
       break;
     case 'I':
       lmn_env.load_path[lmn_env.load_path_num++] = optarg;

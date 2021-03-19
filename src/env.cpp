@@ -215,6 +215,9 @@ LmnEnv::LmnEnv() {
   this->debug_por = FALSE;
 #endif
 
+  this->shuffle_rule = FALSE;
+  this->shuffle_atom = FALSE;
+  
   this->findatom_parallel_mode = FALSE;
   this->find_atom_parallel = FALSE;
   this->findatom_parallel_inde = FALSE;
