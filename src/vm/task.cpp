@@ -678,8 +678,9 @@ void slim::vm::interpreter::findatom(LmnReactCxtRef rc, LmnRuleRef rule,
   if (iter == end)
     return;
 
-  auto v = std::vector<LmnRegister>();
-  std::transform(iter, end, std::back_inserter(v), [](LmnSymbolAtomRef atom) {
+  auto v = std::vector<LmnRegister>(atomlist_ent->size());
+  
+  std::transform(iter, end, v.begin(), [](LmnSymbolAtomRef atom) {
     return LmnRegister({(LmnWord)atom, LMN_ATTR_MAKE_LINK(0), TT_ATOM});
   });
 
