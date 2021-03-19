@@ -342,6 +342,10 @@ BOOL Task::react_all_rulesets(LmnReactCxtRef rc, LmnMembraneRef cur_mem) {
  */
 static inline BOOL react_ruleset(LmnReactCxtRef rc, LmnMembraneRef mem,
                                  LmnRuleSetRef rs) {
+  
+  //shuffle_ruleオプションが付いている場合はruleをシャッフル
+  if(lmn_env.shuffle_rule) rs->shuffle();
+
   for (auto r : *rs) {
 #ifdef PROFILE
     if (!lmn_env.nd && lmn_env.profile_level >= 2)
@@ -646,11 +650,29 @@ HashSet *Task::insertconnectors(slim::vm::RuleContext *rc, LmnMembraneRef mem,
 void slim::vm::interpreter::findatom(LmnReactCxtRef rc, LmnRuleRef rule,
                                      LmnRuleInstr instr, LmnMembrane *mem,
                                      LmnFunctor f, size_t reg) {
+ 
   auto atomlist_ent = mem->get_atomlist(f);
-
   if (!atomlist_ent)
     return;
 
+  if(lmn_env.shuffle_atom) {
+    std::random_device rnd;
+    int startpoint = rnd() % (atomlist_ent->n+1);
+    // リング状にする
+    atomlist_ent->head->set_prev(atomlist_ent->tail);
+    atomlist_ent->tail->set_next(atomlist_ent->head);
+    
+    if(startpoint != atomlist_ent->n && startpoint != 0) {
+      // head, tailの移動
+      for(int i = 0; i < startpoint; i++) {
+	atomlist_ent->head = atomlist_ent->head->get_next();
+	atomlist_ent->tail = atomlist_ent->tail->get_next();
+      }
+    }
+    // リング状を鎖状に戻す
+    atomlist_ent->head->set_prev(reinterpret_cast<LmnSymbolAtomRef>(atomlist_ent));
+    atomlist_ent->tail->set_next(reinterpret_cast<LmnSymbolAtomRef>(atomlist_ent));
+  }
   auto iter = std::begin(*atomlist_ent);
   auto end = std::end(*atomlist_ent);
   if (iter == end)
