@@ -307,7 +307,7 @@ struct LmnEnv {
   // #endif
 
   //findatom最適化オプション（変数名は仮置き）
-  BOOL slimopt_test_flag;
+  BOOL history_management;
 
 #ifdef DEBUG
   BOOL debug_isomor;

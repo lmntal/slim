@@ -665,11 +665,10 @@ void slim::vm::interpreter::findatom(LmnReactCxtRef rc, LmnRuleRef rule,
 }
 
 /* 以下, 履歴管理用アトムのための関数・変数(nakata) */
-int rule_number;
 RecordList record_list(0);
 
-void slim::vm::interpreter::findatomopt(LmnRuleRef rule, LmnMembrane *mem, LmnFunctor f, size_t reg) {
-  lmn_env.slimopt_test_flag = true;
+void slim::vm::interpreter::findatom_history_management(LmnRuleRef rule, LmnMembrane *mem, LmnFunctor f, size_t reg) {
+  lmn_env.history_management = TRUE;
   AtomListEntryRef atomlist_ent = mem->get_atomlist(f);
   if(!atomlist_ent || atomlist_ent->n == atomlist_ent->n_record) {
     return;
@@ -679,7 +678,7 @@ void slim::vm::interpreter::findatomopt(LmnRuleRef rule, LmnMembrane *mem, LmnFu
   if(!atomlist_ent->head->record_flag) {
     atomlist_ent->make_head_record();
   }
-  // rule is applied findatomopt first time, rule_number will be change -1 to new number
+  // rule is applied findatom_history_management first time, rule_number will be change -1 to new number
   if(rule->rule_number == -1) {
     rule->rule_number = record_list.atoms.size();
     record_list.atoms.resize(record_list.atoms.size()+1);
@@ -1370,7 +1369,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
           (SameProcCxt *)hashtbl_get(rc->get_hl_sameproccxt(), (HashKeyType)atomi);
       findatom_through_hyperlink(rc, rule, instr, spc, mem, f, atomi);
     } else {
-      if(lmn_env.slimopt_test_flag) findatomopt(rule, mem, f, atomi);
+      if(lmn_env.history_management) findatom_history_management(rule, mem, f, atomi);
       else findatom(rc, rule, instr, mem, f, atomi);
     }
 

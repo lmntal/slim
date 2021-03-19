@@ -85,7 +85,7 @@ template <typename InputIterator> struct false_driven_enumerator {
 
   slim::vm::interpreter::command_result operator()(slim::vm::interpreter &itr, bool result) {
 
-    if(!lmn_env.slimopt_test_flag || record_list.atoms.size() == 0) {
+    if(!lmn_env.history_management || record_list.atoms.size() == 0) {
       // 成功ならループしないで終了
       if (result)
         return slim::vm::interpreter::command_result::Success;
@@ -111,7 +111,11 @@ template <typename InputIterator> struct false_driven_enumerator {
         } else {
           record_list.loop_back(rule_number, this->reg_idx);
         }
-        // ここを変える (TO DO)
+        /*
+	  ここを変える(TO DO)
+	  ルールが適用したらループを一回増やすのではなく, アトムが追加されたらループを一回増やすようにしたい-> NEWATOMなどで追加できるが.... 
+	  --use-swaplinkを用いると, 中間命令でそのようなことが起きないので実行が失敗に終わってしまう. ゆえに放置
+	 */
         record_list.loop_flag[rule_number][reg_idx-1] = true;
         return slim::vm::interpreter::command_result::Success;
       }
