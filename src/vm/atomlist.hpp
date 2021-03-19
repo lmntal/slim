@@ -51,7 +51,7 @@ LmnSymbolAtomRef lmn_atomlist_end(AtomListEntry *lst);
 
 struct AtomListEntry {
   LmnSymbolAtomRef tail, head;
-  LmnSymbolAtomRef shuffle_tail, shuffle_head;
+  //  LmnSymbolAtomRef shuffle_tail, shuffle_head;
   int n;
   int n_record = 0; // 履歴管理用アトムのための変数(nakata)
   struct SimpleHashtbl *record;
