@@ -91,7 +91,7 @@ template <typename InputIterator> struct false_driven_enumerator {
         return slim::vm::interpreter::command_result::Success;
       
       // 候補がなくなったら終了
-      if (this->begin == this->end) 
+      if (this->begin == this->end)
         return slim::vm::interpreter::command_result::Failure;
       
       // 命令列の巻き戻し

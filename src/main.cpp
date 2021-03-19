@@ -88,7 +88,7 @@ static void usage(void) {
       "  --hide-ruleset       Hide ruleset from result\n"
       "  --shuffle-rule       (RT) Apply rules randomly\n"
       "  --shuffle-atom       (RT) Choose atoms to be applied randomly\n"
-      "  --shuffle            (RT) Execute shuffle-rule option and shuffle-atom option\n"
+      "  --shuffle            (RT) Apply both shuffle-rule option and shuffle-atom options\n"
       "  --hl                 (RT) Allow using hyperlink system\n"
       "  --show-proxy         Show proxy atoms\n"
       "  --show-chr           Show applied history in uniq rulesets "
@@ -237,10 +237,10 @@ static void parse_options(int *optid, int argc, char *argv[]) {
                                   {"hash-depth", 1, 0, 6061},
                                   {"tree-compress", 1, 0, 6062},
                                   {"run-test", 0, 0, 6070},
-				  {"history-management", 0, 0, 6071},
+				                          {"history-management", 0, 0, 6071},
                                   {"shuffle-rule",0,0,6080},
-				  {"shuffle-atom",0,0,6081},
-				  {"shuffle",0,0,6082},
+				                          {"shuffle-atom",0,0,6081},
+				                          {"shuffle",0,0,6082},
                                   {0, 0, 0, 0}};
 
   while ((c = getopt_long(argc, argv, "+dvhtI:O::p::", long_options,

@@ -80,7 +80,7 @@ struct AtomListEntry {
   // ランダムに位置につなげる->楽？
   /*
     先頭と最後尾を保持しておいて
-    リング上にする. ランダムな位置をheadにして, shuffle-tailやshuffle-head変数を追加する.
+    リング状にする. ランダムな位置をheadにして, shuffle-tailやshuffle-head変数を追加する.
     -> 非決定実行いけるかな？
    */
   void push(LmnSymbolAtomRef a) {
@@ -89,26 +89,26 @@ struct AtomListEntry {
       int startpoint = rnd() % (n+1);
       
       if(startpoint == 0) { // head処理
-	a->set_next(this->head);
-	a->set_prev(reinterpret_cast<LmnSymbolAtomRef>(this));
-	this->head->set_prev(a);
-	this->head = a;
+        a->set_next(this->head);
+        a->set_prev(reinterpret_cast<LmnSymbolAtomRef>(this));
+        this->head->set_prev(a);
+        this->head = a;
       } else if(startpoint == n) { // tail 処理
-	a->set_next(reinterpret_cast<LmnSymbolAtomRef>(this));
-	a->set_prev(this->tail);
-	this->tail->set_next(a);
-	this->tail = a;
+        a->set_next(reinterpret_cast<LmnSymbolAtomRef>(this));
+	      a->set_prev(this->tail);
+        this->tail->set_next(a);
+        this->tail = a;
       } else {
-	// 挿入するアトムまで移動するためのアトム
+	      // 挿入するアトムまで移動するためのアトム
         auto insertpoint_atom = this->head;
         for(int i = 0; i < startpoint; i++) {
-	  insertpoint_atom = insertpoint_atom->get_next();
-	}
-	// 挿入した
+          insertpoint_atom = insertpoint_atom->get_next();
+        }
+	      // 挿入した
         a->set_prev(insertpoint_atom);
-	a->set_next(insertpoint_atom->get_next());
-	insertpoint_atom->set_next(a);
-	a->get_next()->set_prev(a);
+	      a->set_next(insertpoint_atom->get_next());
+	      insertpoint_atom->set_next(a);
+	      a->get_next()->set_prev(a);
       }
     } else {
       a->set_next(reinterpret_cast<LmnSymbolAtomRef>(this));
