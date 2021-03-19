@@ -2315,7 +2315,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     LmnLinkAttr attr = rc->at(atomi);
     if (LMN_HAS_FUNCTOR(atom, attr, LMN_COLON_MINUS_FUNCTOR)) {
       LmnMembraneRef mem = (LmnMembraneRef)rc->wt(memi);
-      lmn_mem_remove_firstclass_ruleset(mem, firstclass_ruleset_lookup(atom));
+      LmnMembrane::remove_firstclass_ruleset(mem, firstclass_ruleset_lookup(atom));
       firstclass_ruleset_release(atom);
     }
 #endif
