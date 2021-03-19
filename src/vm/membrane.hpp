@@ -68,7 +68,7 @@ struct LmnMembrane {
   LmnMembraneRef prev, next;
   std::vector<LmnRuleSet *> rulesets;
 #ifdef USE_FIRSTCLASS_RULE
-  Vector *firstclass_rulesets;
+  std::vector<LmnRuleSet *> firstclass_rulesets;
 #endif
 
   std::map<LmnFunctor, AtomListEntry *> atom_lists() const {
@@ -104,6 +104,11 @@ struct LmnMembrane {
   const std::vector<LmnRuleSet *> &get_rulesets() const {
     return this->rulesets;
   }
+#ifdef USE_FIRSTCLASS_RULE
+  const std::vector<LmnRuleSet *> &get_firstclass_rulesets() const {
+    return this->firstclass_rulesets;
+  }
+#endif
   size_t ruleset_num() const {
     return (this->get_rulesets()).size();
   }
@@ -218,7 +223,6 @@ struct LmnMembrane {
   BOOL nfreelinks(unsigned int count);
   void copy_rules(LmnMembraneRef src);
   void clearrules();
-  Vector *firstclass_rulesets();
   void delete_ruleset(LmnRulesetId del_id);
 };
 
