@@ -177,7 +177,7 @@ LmnEnv::LmnEnv() {
   this->optimize_loadbalancing = TRUE;
 
   this->opt_mode = OPT_NONE;
-
+  
   /* only jni-interactive mode */
   this->interactive = FALSE;
   this->normal_remain = FALSE;
@@ -205,6 +205,9 @@ LmnEnv::LmnEnv() {
   this->prof_no_memeq = FALSE;
 #endif
 
+  // 履歴管理用アトム(nakata)
+  this->history_management = FALSE;
+  
 #ifdef DEBUG
   this->debug_por_dep = FALSE;
   this->debug_id = FALSE;

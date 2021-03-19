@@ -78,6 +78,7 @@ static void usage(void) {
       "  -p[<0-3>] (-p=-p1)   Profiler level.\n"
       "  --use-builtin-rule   Load the rules builtin this application for "
       "arithmetic, nlmem, etc\n"
+      "  --history-management Optimize backtracking of findatom function by using atoms for history management \n"
       "  --nd                 Change the execution mode from RunTime(RT) to "
       "ModelChecker(MC)\n"
       "  --translate          Change the execution mode to Output translated C "
@@ -234,6 +235,7 @@ static void parse_options(int *optid, int argc, char *argv[]) {
                                   {"hash-depth", 1, 0, 6061},
                                   {"tree-compress", 1, 0, 6062},
                                   {"run-test", 0, 0, 6070},
+				  {"history-management", 0, 0, 6071},
                                   {"shuffle-rule",0,0,6080},
 				  {"shuffle-atom",0,0,6081},
                                   {0, 0, 0, 0}};
@@ -583,11 +585,16 @@ static void parse_options(int *optid, int argc, char *argv[]) {
     case 6070:
       lmn_env.run_test = TRUE;
       break;
+<<<<<<< HEAD
     case 6080:
       lmn_env.shuffle_rule = TRUE;
       break;
     case 6081:
       lmn_env.shuffle_atom = TRUE;
+=======
+    case 6071:
+      lmn_env.history_management = TRUE;
+>>>>>>> develop
       break;
     case 'I':
       lmn_env.load_path[lmn_env.load_path_num++] = optarg;

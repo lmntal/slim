@@ -306,6 +306,9 @@ struct LmnEnv {
   BOOL prof_no_memeq;
   // #endif
 
+  //findatom最適化オプション（変数名は仮置き）
+  BOOL history_management;
+
 #ifdef DEBUG
   BOOL debug_isomor;
   BOOL debug_delta;

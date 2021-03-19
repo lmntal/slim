@@ -130,7 +130,7 @@ void cb_react_ruleset_nd(LmnReactCxtRef &rc,
   apply_rules_in_rulesets(mem, graph_mem, rulesets, &head, &pos);
 
 #ifdef USE_FIRSTCLASS_RULE
-  Vector *fstclass_rules = rule_mem->firstclass_rulesets();
+  auto fstclass_rules = &rule_mem->get_firstclass_rulesets();
   apply_rules_in_rulesets(mem, graph_mem, fstclass_rules, &head, &pos);
 #endif
 

@@ -40,12 +40,7 @@
 #include "element/element.h"
 #include "element/lmnstring.cpp"
 #include "vm/vm.h"
-/**
- * @memberof LmnArray
- * @private
- */
-static int array_atom_type; /* special atom type */
-
+int LmnArray::array_atom_type;
 /**
  * @memberof LmnArray
  * @private
@@ -95,7 +90,7 @@ LmnArray::~LmnArray() {
  * @memberof LmnArray
  * @private
  */
-LmnArrayRef LmnArray::lmn_array_copy() {
+LmnArray::LmnArrayRef LmnArray::lmn_array_copy() {
   /* copy the descriptor and share data */
   /* ownership is tranferred to the new copy and the old copy */
   /* is supposed NOT to be used, just waiting to be freed first */
@@ -103,8 +98,8 @@ LmnArrayRef LmnArray::lmn_array_copy() {
   if (!LMN_ARRAY_OWNER(this))
     lmn_fatal("attempt to copy old array");
 
-  LmnArrayRef a = LMN_MALLOC(struct LmnArray);
-  memcpy(a, this, sizeof(struct LmnArray));
+  LmnArrayRef a = LMN_MALLOC(class LmnArray);
+  memcpy(a, this, sizeof(class LmnArray));
   /*
      LMN_SP_ATOM_SET_TYPE(a, array_atom_type);
      a->impl.size() = array->impl.size();
@@ -437,7 +432,7 @@ BOOL LmnArray::sp_cb_array_is_ground(void *data) {
  * @private
  */
 
-void init_array() {
+void LmnArray::init_array() {
   array_atom_type = lmn_sp_atom_register(
       "array", LmnArray::sp_cb_array_copy, LmnArray::sp_cb_array_free,
       LmnArray::sp_cb_array_eq, LmnArray::sp_cb_array_dump,
