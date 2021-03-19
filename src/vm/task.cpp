@@ -133,7 +133,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
 
 static void mem_oriented_loop(MemReactContext *ctx, LmnMembraneRef mem);
 
-void lmn_dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
+void Task::lmn_dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
                         LmnRuleInstr instr) {
   dmem_interpret(rc, rule, instr);
 }
@@ -149,7 +149,7 @@ namespace c17 = slim::element;
  *    4. 後始末     通常モード時
  *    5. 継続フラグ 通常モードならON、normal_remainモードならOFFにセットする
  */
-void lmn_run(Vector *start_rulesets) {
+void Task::lmn_run(Vector *start_rulesets) {
   static LmnMembraneRef mem;
   static std::unique_ptr<MemReactContext> mrc = nullptr;
 
@@ -253,7 +253,7 @@ void lmn_run(Vector *start_rulesets) {
 static void mem_oriented_loop(MemReactContext *ctx, LmnMembraneRef mem) {
   while (!ctx->memstack_isempty()) {
     LmnMembraneRef mem = ctx->memstack_peek();
-    if (!react_all_rulesets(ctx, mem)) {
+    if (!Task::react_all_rulesets(ctx, mem)) {
       /* ルールが何も適用されなければ膜スタックから先頭を取り除く */
       ctx->memstack_pop();
     }
@@ -298,7 +298,7 @@ void react_zerostep_recursive(LmnReactCxtRef rc, LmnMembraneRef cur_mem) {
 /** cur_memに存在するルールすべてに対して適用を試みる
  * @see mem_oriented_loop (task.c)
  * @see expand_inner      (nd.c) */
-BOOL react_all_rulesets(LmnReactCxtRef rc, LmnMembraneRef cur_mem) {
+BOOL Task::react_all_rulesets(LmnReactCxtRef rc, LmnMembraneRef cur_mem) {
   unsigned int i;
   auto &rulesets = cur_mem->get_rulesets(); /* 本膜のルールセットの集合 */
   BOOL ok = FALSE;
@@ -313,7 +313,7 @@ BOOL react_all_rulesets(LmnReactCxtRef rc, LmnMembraneRef cur_mem) {
     }
   }
 
-#ifdef USE_FIRSTCLASS_RULE
+#ifdef USE_FIRSTCLASS_RULE 
   for (i = 0; i < cur_mem->firstclass_rulesets.size(); i++) {
     if (react_ruleset(
             rc, cur_mem,
@@ -348,7 +348,7 @@ static inline BOOL react_ruleset(LmnReactCxtRef rc, LmnMembraneRef mem,
     if (!lmn_env.nd && lmn_env.profile_level >= 2)
       profile_rule_obj_set(rs, r);
 #endif
-    if (react_rule(rc, mem, r))
+    if (Task::react_rule(rc, mem, r))
       return true;
   }
   return false;
@@ -359,7 +359,7 @@ static inline BOOL react_ruleset(LmnReactCxtRef rc, LmnMembraneRef mem,
  *   通常実行では, 書換えに成功した場合にTRUE,
  * マッチングしなかった場合にFALSEを返す. 非決定実行では,
  * マッチングに失敗するまでバックトラックを繰り返すため常にFALSEが返る. */
-BOOL react_rule(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule) {
+BOOL Task::react_rule(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule) {
   LmnTranslated translated;
   BYTE *inst_seq;
   BOOL result;
@@ -433,7 +433,7 @@ BOOL react_rule(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule) {
 
 /* 膜memでrulesetsのルールの適用を行う.
  * 適用結果は無視する */
-void react_start_rulesets(LmnMembraneRef mem, Vector *rulesets) {
+void Task::react_start_rulesets(LmnMembraneRef mem, Vector *rulesets) {
   LmnReactCxt rc(mem, REACT_STAND_ALONE);
   int i;
 
@@ -460,7 +460,7 @@ inline static void react_initial_rulesets(LmnReactCxtRef rc,
       continue;
     }
     for (auto r : *initial_ruleset) {
-      if (react_rule(rc, mem, r)) {
+      if (Task::react_rule(rc, mem, r)) {
         reacted = TRUE;
         break;
       }
@@ -590,7 +590,7 @@ static BOOL react_ruleset_in_all_mem(LmnReactCxtRef rc, LmnRuleSetRef rs,
 /* static void print_wt(void); */
 
 /* mem != NULL ならば memにUNIFYを追加、そうでなければUNIFYは膜に所属しない */
-HashSet *insertconnectors(slim::vm::RuleContext *rc, LmnMembraneRef mem,
+HashSet *Task::insertconnectors(slim::vm::RuleContext *rc, LmnMembraneRef mem,
                           const Vector *links) {
   unsigned int i, j;
   HashSet *retset;
@@ -995,7 +995,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       links.push((LmnWord)t);
     }
 
-    auto hashset = insertconnectors(rc, NULL, &links);
+    auto hashset = Task::insertconnectors(rc, NULL, &links);
     rc->reg(seti) = {(LmnWord)hashset, 0, TT_OTHER};
 
     links.destroy();
@@ -1024,7 +1024,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     }
 
     READ_VAL(LmnInstrVar, instr, memi);
-    auto hashset = insertconnectors(rc, (LmnMembraneRef)rc->wt(memi), &links);
+    auto hashset = Task::insertconnectors(rc, (LmnMembraneRef)rc->wt(memi), &links);
     rc->reg(seti) = {(LmnWord)hashset, 0, TT_OTHER};
 
     links.destroy();
@@ -2536,8 +2536,8 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     READ_VAL(LmnInstrVar, instr, avolisti);
 
     /* リンクオブジェクトのベクタを構築 */
-    srcvec = links_from_idxs((Vector *)rc->wt(srclisti), rc);
-    avovec = links_from_idxs((Vector *)rc->wt(avolisti), rc);
+    srcvec = Task::links_from_idxs((Vector *)rc->wt(srclisti), rc);
+    avovec = Task::links_from_idxs((Vector *)rc->wt(avolisti), rc);
 
     std::unique_ptr<ProcessTbl> atoms = nullptr;
     std::unique_ptr<ProcessTbl> hlinks = nullptr;
@@ -2573,8 +2573,8 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       break;
     }
     }
-    free_links(srcvec);
-    free_links(avovec);
+    Task::free_links(srcvec);
+    Task::free_links(avovec);
 
     if (!b)
       return false;
@@ -2919,13 +2919,13 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     READ_VAL(LmnInstrVar, instr, srci);
     READ_VAL(LmnInstrVar, instr, dsti);
 
-    srcvec = links_from_idxs((Vector *)rc->wt(srci), rc);
-    dstvec = links_from_idxs((Vector *)rc->wt(dsti), rc);
+    srcvec = Task::links_from_idxs((Vector *)rc->wt(srci), rc);
+    dstvec = Task::links_from_idxs((Vector *)rc->wt(dsti), rc);
 
     ret_flag = lmn_mem_cmp_ground(srcvec, dstvec);
 
-    free_links(srcvec);
-    free_links(dstvec);
+    Task::free_links(srcvec);
+    Task::free_links(dstvec);
 
     if ((!ret_flag && INSTR_EQGROUND == op) ||
         (ret_flag && INSTR_NEQGROUND == op)) {
@@ -2946,7 +2946,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     READ_VAL(LmnInstrVar, instr, memi);
 
     /* リンクオブジェクトのベクタを構築 */
-    srcvec = links_from_idxs((Vector *)rc->wt(srclist), rc);
+    srcvec = Task::links_from_idxs((Vector *)rc->wt(srclist), rc);
 
     switch (op) {
     case INSTR_COPYHLGROUND:
@@ -3006,7 +3006,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
                           &atommap);
       break;
     }
-    free_links(srcvec);
+    Task::free_links(srcvec);
 
     /* 返り値の作成 */
     retvec = new Vector(2);
@@ -3015,7 +3015,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     rc->reg(dstlist) = {(LmnWord)retvec, LIST_AND_MAP, TT_OTHER};
 
     this->push_stackframe([=](interpreter &itr, bool result) {
-      free_links(dstlovec);
+      Task::free_links(dstlovec);
       delete retvec;
       LMN_ASSERT(result);
       return result ? command_result::Success : command_result::Failure;
@@ -3039,7 +3039,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     } else {
       memi = 0;
     }
-    srcvec = links_from_idxs((Vector *)rc->wt(listi), rc);
+    srcvec = Task::links_from_idxs((Vector *)rc->wt(listi), rc);
 
     switch (op) {
     case INSTR_REMOVEHLGROUND:
@@ -3119,7 +3119,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       break;
     }
 
-    free_links(srcvec);
+    Task::free_links(srcvec);
 
     break;
   }
@@ -4305,7 +4305,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
         links.push((LmnWord)t);
       }
 
-      rc->reg(seti) = {(LmnWord)insertconnectors(rc, NULL, &links), 0,
+      rc->reg(seti) = {(LmnWord)Task::insertconnectors(rc, NULL, &links), 0,
                        TT_OTHER};
       links.destroy();
 
@@ -4336,7 +4336,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
       READ_VAL(LmnInstrVar, instr, memi);
 
       rc->reg(seti) = {
-          (LmnWord)insertconnectors(rc, (LmnMembraneRef)rc->wt(memi), &links),
+          (LmnWord)Task::insertconnectors(rc, (LmnMembraneRef)rc->wt(memi), &links),
           0, TT_OTHER};
       links.destroy();
 
@@ -4657,12 +4657,12 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
       READ_VAL(LmnInstrVar, instr, memi);
 
       /* リンクオブジェクトのベクタを構築 */
-      srcvec = links_from_idxs((Vector *)rc->wt(srclist), rc);
+      srcvec = Task::links_from_idxs((Vector *)rc->wt(srclist), rc);
 
       dmem_root_copy_ground(RC_ND_MEM_DELTA_ROOT(rc),
                             (LmnMembraneRef)rc->wt(memi), srcvec, &dstlovec,
                             &atommap);
-      free_links(srcvec);
+      Task::free_links(srcvec);
 
       /* 返り値の作成 */
       retvec = new Vector(2);
@@ -4673,7 +4673,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
       /* 解放のための再帰。ベクタを解放するための中間語命令がない */
       dmem_interpret(rc, rule, instr);
 
-      free_links(dstlovec);
+      Task::free_links(dstlovec);
       delete retvec;
 
       return TRUE; /* COPYGROUNDはボディに出現する */
@@ -4689,7 +4689,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
         READ_VAL(LmnInstrVar, instr, memi);
       }
 
-      srcvec = links_from_idxs((Vector *)rc->wt(listi), rc);
+      srcvec = Task::links_from_idxs((Vector *)rc->wt(listi), rc);
 
       switch (op) {
       case INSTR_REMOVEGROUND:
@@ -4702,7 +4702,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
         break;
       }
 
-      free_links(srcvec);
+      Task::free_links(srcvec);
 
       break;
     }
@@ -5060,7 +5060,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
   }
 }
 
-Vector *links_from_idxs(const Vector *link_idxs, LmnReactCxtRef rc) {
+Vector *Task::links_from_idxs(const Vector *link_idxs, LmnReactCxtRef rc) {
   unsigned long i;
   Vector *vec = new Vector(16);
 
@@ -5073,7 +5073,7 @@ Vector *links_from_idxs(const Vector *link_idxs, LmnReactCxtRef rc) {
   return vec;
 }
 
-void free_links(Vector *links) {
+void Task::free_links(Vector *links) {
   unsigned long i;
 
   for (i = 0; i < links->get_num(); i++) {

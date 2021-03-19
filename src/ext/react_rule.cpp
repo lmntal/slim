@@ -54,7 +54,7 @@ void cb_react_rule(LmnReactCxtRef rc,
   auto r = rs->get_rule(0);
   MemReactContext tmp_rc(nullptr);
 
-  int reacted = react_rule(&tmp_rc, graph_mem, r);
+  int reacted = Task::react_rule(&tmp_rc, graph_mem, r);
   lmn_interned_str str = (reacted) ? lmn_intern("success") : lmn_intern("fail");
   LmnSymbolAtomRef result = lmn_mem_newatom(mem, lmn_functor_table->intern(ANONYMOUS, str, 2));
 
@@ -87,7 +87,7 @@ static void apply_rules_in_rulesets(LmnMembraneRef mem,
     for (auto r : *rs) {
       MCReactContext rc(src_graph);
       rc.keep_process_id_in_nd_mode = true;
-      react_rule(&rc, src_graph, r);
+      Task::react_rule(&rc, src_graph, r);
       auto &states = rc.expanded_states();
       int n_of_results = rc.expanded_states().size();
 

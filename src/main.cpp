@@ -708,7 +708,7 @@ static inline int load_input_files(std::vector<LmnRuleSetRef> &start_rulesets, i
 static inline void slim_exec(const std::vector<LmnRuleSetRef> &start_rulesets) {
   if (!lmn_env.nd) {
     /* プログラム実行 */
-    lmn_run(new Vector(start_rulesets));
+    Task::lmn_run(new Vector(start_rulesets));
   } else {
     /* プログラム検証 */
     AutomataRef automata;

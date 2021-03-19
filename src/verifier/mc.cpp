@@ -75,7 +75,7 @@ void run_mc(Vector *start_rulesets, AutomataRef a, Vector *psyms) {
     mem = new LmnMembrane();
   }
 
-  react_start_rulesets(mem, start_rulesets);
+  Task::react_start_rulesets(mem, start_rulesets);
   mem->activate_ancestors();
 
   do_mc(mem, a, psyms, lmn_env.core_num);
@@ -411,7 +411,7 @@ BOOL mc_expand_inner(MCReactContext *rc, LmnMembraneRef cur_mem) {
       ret_flag = TRUE;
     }
     if (cur_mem->is_active()) {
-      react_all_rulesets(rc, cur_mem);
+      Task::react_all_rulesets(rc, cur_mem);
     }
     /* 子膜からルール適用を試みることで, 本膜の子膜がstableか否かを判定できる */
     if (org_num == mc_react_cxt_expanded_num(rc)) {

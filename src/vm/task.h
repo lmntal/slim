@@ -78,21 +78,23 @@ enum {
   TT_ATOM = 1, /* symbol atom  */
   TT_MEM = 2   /* membrane */
 };
+class Task{
+  static void task_init();//呼び出し元不明
+  static void task_finalize();//呼び出し元不明. 判明したらpublicへ移動
+  static void memstack_push(LmnMembraneRef mem);//どこもmemのメンバ関数である同名関数を呼び出しているらしい？
+  void lmn_dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr);
+public:
+  static void lmn_run(Vector *rulesets);
+  static BOOL react_rule(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule);
+  static void react_start_rulesets(LmnMembraneRef mem, Vector *rulesets);
+  static BOOL react_all_rulesets(LmnReactCxtRef rc, LmnMembraneRef cur_mem);
+  static struct Vector user_system_rulesets; /* system ruleset defined by user */ //ユーザーが書く部分となるとpublicにしておかざるを得ない
+  static HashSet *insertconnectors(slim::vm::RuleContext *rc, LmnMembraneRef mem,
+                            const Vector *links);
 
-void task_init(void);
-void task_finalize(void);
-void lmn_dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr);
-void lmn_run(Vector *rulesets);
-BOOL react_rule(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule);
-void react_start_rulesets(LmnMembraneRef mem, Vector *rulesets);
-BOOL react_all_rulesets(LmnReactCxtRef rc, LmnMembraneRef cur_mem);
-void memstack_push(LmnMembraneRef mem);
-extern struct Vector user_system_rulesets; /* system ruleset defined by user */
-HashSet *insertconnectors(slim::vm::RuleContext *rc, LmnMembraneRef mem,
-                          const Vector *links);
-
-Vector *links_from_idxs(const Vector *link_idxs, LmnReactCxtRef v);
-void free_links(Vector *links);
+  static Vector *links_from_idxs(const Vector *link_idxs, LmnReactCxtRef v);
+  static void free_links(Vector *links);
+};
 
 /* @} */
 
