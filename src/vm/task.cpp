@@ -313,10 +313,10 @@ BOOL react_all_rulesets(LmnReactCxtRef rc, LmnMembraneRef cur_mem) {
   }
 
 #ifdef USE_FIRSTCLASS_RULE
-  for (i = 0; i < (cur_mem->firstclass_rulesets())->get_num(); i++) {
+  for (i = 0; i < cur_mem->firstclass_rulesets.size(); i++) {
     if (react_ruleset(
             rc, cur_mem,
-            (LmnRuleSetRef)(cur_mem->firstclass_rulesets())->get(i))) {
+            (LmnRuleSetRef)(cur_mem->firstclass_rulesets[i]))) {
       ok = TRUE;
       break;
     }
@@ -1682,7 +1682,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
 #ifdef USE_FIRSTCLASS_RULE
       if (f == LMN_COLON_MINUS_FUNCTOR) {
         lmn_rc_push_insertion(rc, (LmnSymbolAtomRef)ap,
-                              (LmnMembraneRef)wt(rc, memi));
+                              (LmnMembraneRef)rc->wt(memi));
       }
 #endif
     }

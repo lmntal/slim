@@ -107,7 +107,7 @@ struct RuleContext {
     this->work_array = cxt.work_array;
 #ifdef USE_FIRSTCLASS_RULE
     delete this->insertion_events;
-    this->insertion_events = new Vector(*from.insertion_events);
+    this->insertion_events = new Vector(*cxt.insertion_events);
 #endif
     return *this;
   }

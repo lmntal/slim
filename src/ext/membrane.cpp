@@ -41,23 +41,11 @@
 #include "vm/vm.h"
 #include "verifier/verifier.h"
 #include "set.h"
-
-void cb_mhash(LmnReactCxtRef rc,
-              LmnMembraneRef mem,
-              LmnAtomRef mem_proxy, LmnLinkAttr mem_proxy_link_attr,
-              LmnAtomRef ret_mem_proxy, LmnLinkAttr ret_mem_proxy_link_attr,
-              LmnAtomRef ret_hash_atom, LmnLinkAttr ret_hash_atom_link_attr);
-void cb_mem_equals(LmnReactCxtRef rc,
-                   LmnMembraneRef mem,
-                   LmnAtomRef mem0_proxy, LmnLinkAttr mem0_proxy_link_attr,
-                   LmnAtomRef mem1_proxy, LmnLinkAttr mem1_proxy_link_attr,
-                   LmnAtomRef ret_mem0_link, LmnLinkAttr ret_mem0_link_attr,
-                   LmnAtomRef ret_mem1_link, LmnLinkAttr ret_mem1_link_attr,
-                   LmnAtomRef res_link, LmnLinkAttr res_link_attr);
-void init_membrane(void);
+#include "membrane.h"
 
 
-void cb_mhash(LmnReactCxtRef rc,
+
+void Membrane::cb_mhash(LmnReactCxtRef rc,
               LmnMembraneRef mem,
               LmnAtomRef mem_proxy, LmnLinkAttr mem_proxy_link_attr,
               LmnAtomRef ret_mem_proxy, LmnLinkAttr ret_mem_proxy_link_attr,
@@ -78,7 +66,7 @@ void cb_mhash(LmnReactCxtRef rc,
                   mem_proxy, mem_proxy_link_attr, LMN_ATTR_GET_VALUE(mem_proxy_link_attr));
 }
 
-void cb_mem_equals(LmnReactCxtRef rc,
+void Membrane::cb_mem_equals(LmnReactCxtRef rc,
                    LmnMembraneRef mem,
                    LmnAtomRef mem0_proxy, LmnLinkAttr mem0_proxy_link_attr,
                    LmnAtomRef mem1_proxy, LmnLinkAttr mem1_proxy_link_attr,
@@ -88,7 +76,7 @@ void cb_mem_equals(LmnReactCxtRef rc,
 {
   LmnMembraneRef m0 = LMN_PROXY_GET_MEM((LmnSymbolAtomRef)((LmnSymbolAtomRef)mem0_proxy)->get_link(0));
   LmnMembraneRef m1 = LMN_PROXY_GET_MEM((LmnSymbolAtomRef)((LmnSymbolAtomRef)mem1_proxy)->get_link(0));
-  LmnFunctor judge = (mem_cmp(m0, m1) == 0) ? LMN_TRUE_FUNCTOR : LMN_FALSE_FUNCTOR;
+  LmnFunctor judge = (LmnSet::mem_cmp(m0, m1) == 0) ? LMN_TRUE_FUNCTOR : LMN_FALSE_FUNCTOR;
   LmnSymbolAtomRef result = lmn_mem_newatom(mem, judge);
 
   lmn_mem_newlink(mem,
@@ -107,7 +95,7 @@ void cb_mem_equals(LmnReactCxtRef rc,
                   LMN_ATTR_GET_VALUE(ret_mem1_link_attr));
 }
 
-void init_membrane(void)
+void Membrane::init_membrane(void)
 {
   CCallback::lmn_register_c_fun("cb_mhash", (void *)cb_mhash, 3);
   CCallback::lmn_register_c_fun("cb_mem_equals", (void *)cb_mem_equals, 5);
