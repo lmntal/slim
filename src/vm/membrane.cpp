@@ -192,6 +192,12 @@ LmnMembrane::~LmnMembrane(){
   
   env_return_id(this->mem_id());
 #ifdef USE_FIRSTCLASS_RULE
+  clear_firstclass_rulesets();
+#endif
+  delete this->atomset;
+}
+#ifdef USE_FIRSTCLASS_RULE
+void LmnMembrane::clear_firstclass_rulesets(){
   for (int i = 0; i < this->firstclass_rulesets.size(); i++) {
     auto rs = this->firstclass_rulesets[i];
     if(rs->is_copy()) {
@@ -199,10 +205,8 @@ LmnMembrane::~LmnMembrane(){
     }
   }
   this->firstclass_rulesets.clear();
-#endif
-  delete this->atomset;
 }
-
+#endif
 /* 膜mem内のアトム, 子膜のメモリを解放する.
  * 子膜が存在する場合は, その子膜に再帰する. */
 void LmnMembrane::drop() {
@@ -576,13 +580,8 @@ void LmnMembrane::move_cells(LmnMembraneRef srcmem) {
           next = a->get_next();
 
 #ifdef USE_FIRSTCLASS_RULE
-          if (a->get_functor() == LMN_COLON_MINUS_FUNCTOR) {
-            LmnRuleSetRef rs = firstclass_ruleset_lookup(a);
-            lmn_mem_remove_firstclass_ruleset(srcmem, rs);
-            lmn_mem_add_firstclass_ruleset(this, rs);
-          }
+          exec_firstclass_rewriting(srcmem, a);
 #endif
-
           if (a->get_functor() != LMN_RESUME_FUNCTOR) {
             int i, arity;
 
@@ -610,6 +609,15 @@ void LmnMembrane::move_cells(LmnMembraneRef srcmem) {
     this->data_atom_set(dst_data_atom_n + src_data_atom_n);
   }
 }
+#ifdef USE_FIRSTCLASS_RULE
+void LmnMembrane::exec_firstclass_rewriting(LmnMembraneRef srcmem, LmnSymbolAtomRef a){
+  if (a->get_functor() == LMN_COLON_MINUS_FUNCTOR) {
+    LmnRuleSetRef rs = firstclass_ruleset_lookup(a);
+    remove_firstclass_ruleset(srcmem, rs);
+    add_firstclass_ruleset(this, rs);
+  }
+}
+#endif
 
 //#define REMOVE            1
 //#define STATE(ATOM)        ((ATOM)->get_attr(2))
@@ -3481,35 +3489,33 @@ void newlink_symbol_and_something(LmnSymbolAtomRef atom0, int pos,
 }
 
 #ifdef USE_FIRSTCLASS_RULE
-void lmn_mem_add_firstclass_ruleset(LmnMembraneRef mem, LmnRuleSetRef fcr) {
+void LmnMembrane::add_firstclass_ruleset(LmnMembraneRef mem, LmnRuleSetRef fcr) {
   LMN_ASSERT(fcr);
   lmn_mem_add_ruleset_sort(&(mem->firstclass_rulesets), fcr);
 }
 #endif
 
 #ifdef USE_FIRSTCLASS_RULE
-void lmn_mem_remove_firstclass_ruleset(LmnMembraneRef mem, LmnRuleSetRef fcr) {
+void LmnMembrane::remove_firstclass_ruleset(LmnMembraneRef mem, LmnRuleSetRef fcr) {
   LmnRulesetId del_id = fcr->id;
-
   for (int i = 0; i < mem->firstclass_rulesets.size(); i++) {
     LmnRuleSetRef rs = (LmnRuleSetRef)mem->firstclass_rulesets[i];
-    if (rs->id != del_id)
-      continue;
-
-    /* move successors forward */
-    for (int j = i; j < mem->firstclass_rulesets.size() - 1; j++) {
-      LmnRuleSetRef next =
-          (LmnRuleSetRef)mem->firstclass_rulesets[j + 1];
-      mem->firstclass_rulesets[j] = next;
-    }
-
-    mem->firstclass_rulesets.resize(mem->firstclass_rulesets.size()-1);
-    return;
+    if (rs->id == del_id)
+      move_firstclass_ruleset_successors_forward(i,mem);
+      mem->firstclass_rulesets.resize(mem->firstclass_rulesets.size()-1);
+      return;
   }
 
   LMN_ASSERT(FALSE); // "attempt to delete an absent firstclass ruleset"
 }
-
+void LmnMembrane::move_firstclass_ruleset_successors_forward(int i, LmnMembraneRef mem){
+  /* move successors forward */
+  for (int j = i; j < mem->firstclass_rulesets.size() - 1; j++) {
+    LmnRuleSetRef next =
+        (LmnRuleSetRef)mem->firstclass_rulesets[j + 1];
+    mem->firstclass_rulesets[j] = next;
+  }
+}
 void LmnMembrane::delete_ruleset(LmnRulesetId del_id) {
   for (int i = 0; i < rulesets.size(); i++) {
     if (rulesets[i]->id != del_id)
@@ -3525,5 +3531,4 @@ void LmnMembrane::delete_ruleset(LmnRulesetId del_id) {
     break;
   }
 }
-
 #endif
