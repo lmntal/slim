@@ -50,6 +50,7 @@ LmnSymbolAtomRef lmn_atomlist_end(AtomListEntry *lst);
 
 struct AtomListEntry {
   LmnSymbolAtomRef tail, head;
+  LmnSymbolAtomRef shuffle_tail, shuffle_head;
   int n;
   struct SimpleHashtbl *record;
 
