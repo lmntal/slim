@@ -41,6 +41,62 @@ tap_producer = {
       }.
     }.
 
+    // Non-injective matching
+    test_case = {
+      name = "hyperlink case 3".
+
+      init = {
+        :- uniq |
+          a(!A), b(!A).
+      }.
+
+      ruleset = {
+          a(!X), b(!Y) :- ok.
+      }.
+
+      stable = {
+        ok.
+      }.
+    }.
+
+    // num guard constraint
+    test_case = {
+      name = "hyperlink case 4".
+
+      init = {
+        :- uniq |
+          a(!A), b(!A), c(!A).
+      }.
+
+      ruleset = {
+          a(!X) :- num(!X, N) | n(N).
+          n(3), b(!X), c(!X) :- ok.
+      }.
+
+      stable = {
+        ok.
+      }.
+    }.
+
+    // fusion
+    test_case = {
+      name = "hyperlink case 5".
+
+      init = {
+        :- uniq |
+          a1(!A), a2(!A), b1(!B), b2(!B).
+      }.
+
+      ruleset = {
+          a1(!X), b1(!Y) :- !X >< !Y.
+          a2(!X), b2(!X) :- ok.
+      }.
+
+      stable = {
+        ok.
+      }.
+    }.
+
     // ルールセットは等価性判定を行えないので削除
     teardown = { rules({@p}) :- . }
   }.
