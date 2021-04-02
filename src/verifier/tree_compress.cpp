@@ -311,12 +311,14 @@ TreeInc TreeDatabase::tree_find_or_put_inc_rec(TreeNodeStrRef str, int start, in
       if (found)
 	(*found) = _found;
     }else{
+      //printf("inc\n");
       ref = prev_ref;
     }
   } else {
     if(left_ref.check == false || right_ref.check == false){
       this->table_find_or_put(left_ref.elem, right_ref.elem, &ref);
     }else{
+      //printf("inc\n");
       ref = prev_ref;
     }
   }
@@ -329,6 +331,7 @@ TreeNodeID TreeDatabase::tree_find_or_put(LmnBinStrRef bs,
                             BOOL *found) {
   struct TreeNodeStr str;
   TreeNodeID ref;
+  TreeNodeID prev_ref_top1;
   int v_len_real = ((bs->len + 1) / TAG_IN_BYTE);
   str.len = v_len_real / TREE_UNIT_SIZE;
   str.extra = v_len_real % TREE_UNIT_SIZE;
@@ -340,6 +343,7 @@ TreeNodeID TreeDatabase::tree_find_or_put(LmnBinStrRef bs,
     TreeInc refinc;
     {
       std::lock_guard<std::mutex> lock(mtx);
+      prev_ref_top1 = prev_ref_top;
       int prev_v_len_real = ((prev_bs->len + 1) / TAG_IN_BYTE);
       prev_str.len = prev_v_len_real / TREE_UNIT_SIZE;
       prev_str.extra = prev_v_len_real % TREE_UNIT_SIZE;
@@ -347,7 +351,7 @@ TreeNodeID TreeDatabase::tree_find_or_put(LmnBinStrRef bs,
       if (prev_str.extra > 0)
 	prev_str.len += 1;
     }
-    refinc = this->tree_find_or_put_inc_rec(&str, 0, str.len - 1, 0, prev_str.len*TREE_UNIT_SIZE - 1, found, prev_ref_top);
+    refinc = this->tree_find_or_put_inc_rec(&str, 0, str.len - 1, 0, prev_str.len*TREE_UNIT_SIZE - 1, found, prev_ref_top1);
     ref = refinc.elem;
   }else{//初期状態のとき
     // printf("node_count: %d, extra:%d\n", str.len, str.extra);
