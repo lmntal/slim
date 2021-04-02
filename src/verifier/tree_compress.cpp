@@ -59,7 +59,7 @@ std::mutex mtx1;
 
 typedef struct TreeNodeStr *TreeNodeStrRef;
 
-LmnBinStrRef prev_bs;
+LmnBinStrRef prev_bs = NULL;
 TreeNodeID prev_ref_top = -1;
 
 struct TreeNodeStr {
@@ -285,7 +285,7 @@ TreeInc TreeDatabase::tree_find_or_put_inc_rec(TreeNodeStrRef str, int start, in
   TreeInc left_ref;
   TreeInc right_ref;
   if ((end - start + 1) <= 1) {
-    if((prev_end - prev_start + 1) <= 1) {
+    if((prev_end - prev_start +1) <= TREE_UNIT_SIZE) {
       return vector_unit_inc(str, start, end, prev_ref);
     } else {
       treeref.check = false;
@@ -294,27 +294,30 @@ TreeInc TreeDatabase::tree_find_or_put_inc_rec(TreeNodeStrRef str, int start, in
     }
   }
   split = tree_get_split_position(start, end);
-  if((prev_end - prev_start + 1) <= 1) {
+  if((prev_end - prev_start+1) <= TREE_UNIT_SIZE) {
     left_ref.check = false;
     right_ref.check = false;
     left_ref.elem = this->tree_find_or_put_rec(str, start, start + split, found);
     right_ref.elem = this->tree_find_or_put_rec(str, start + split + 1, end, found);
   } else {
-    prev_split = tree_get_split_position(prev_start, prev_end);
     TreeNodeRef prev_node = this->nodes[prev_ref & this->mask];
-    left_ref = this->tree_find_or_put_inc_rec(str, start, start + split, prev_start, prev_start + prev_split, found, prev_node->left);
-    right_ref = this->tree_find_or_put_inc_rec(str, start + split + 1, end, prev_start + prev_split + 1, prev_end, found, prev_node->right);
+    prev_split = ((prev_end - prev_start) / TREE_UNIT_SIZE)/2;
+    left_ref = this->tree_find_or_put_inc_rec(str, start, start + split, prev_start, prev_start + prev_split*TREE_UNIT_SIZE, found, prev_node->left);
+    right_ref = this->tree_find_or_put_inc_rec(str, start + split + 1, end, prev_start + (prev_split + 1)*TREE_UNIT_SIZE, prev_end, found, prev_node->right);
   }
   if ((end - start + 1) == str->len) {
     if(left_ref.check == false || right_ref.check == false){
       BOOL _found = this->table_find_or_put(left_ref.elem, right_ref.elem, &ref);
       if (found)
 	(*found) = _found;
+    }else{
+      ref = prev_ref;
     }
   } else {
     if(left_ref.check == false || right_ref.check == false){
       this->table_find_or_put(left_ref.elem, right_ref.elem, &ref);
-      prev_ref = ref;
+    }else{
+      ref = prev_ref;
     }
   }
   treeref.elem = ref;
@@ -341,10 +344,10 @@ TreeNodeID TreeDatabase::tree_find_or_put(LmnBinStrRef bs,
       prev_str.len = prev_v_len_real / TREE_UNIT_SIZE;
       prev_str.extra = prev_v_len_real % TREE_UNIT_SIZE;
       prev_str.nodes = (TreeNodeElement *)prev_bs->v;
+      if (prev_str.extra > 0)
+	prev_str.len += 1;
     }
-    if (prev_str.extra > 0)
-      prev_str.len += 1;
-    refinc = this->tree_find_or_put_inc_rec(&str, 0, str.len - 1, 0, prev_str.len-1, found, prev_ref_top);
+    refinc = this->tree_find_or_put_inc_rec(&str, 0, str.len - 1, 0, prev_str.len*TREE_UNIT_SIZE - 1, found, prev_ref_top);
     ref = refinc.elem;
   }else{//初期状態のとき
     // printf("node_count: %d, extra:%d\n", str.len, str.extra);
@@ -352,10 +355,8 @@ TreeNodeID TreeDatabase::tree_find_or_put(LmnBinStrRef bs,
   }
   {
     std::lock_guard<std::mutex> lock(mtx1);
+    prev_bs = bs;
     prev_ref_top = ref;
-    prev_bs->type = bs->type;//ここでセグフォが発生
-    prev_bs->len = bs->len;
-    prev_bs->v = bs->v;
   }
   return ref;
 }
