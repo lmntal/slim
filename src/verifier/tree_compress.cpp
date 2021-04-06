@@ -285,7 +285,7 @@ TreeInc TreeDatabase::tree_find_or_put_inc_rec(TreeNodeStrRef str, int start, in
   TreeInc left_ref;
   TreeInc right_ref;
   if ((end - start + 1) <= 1) {
-    if((prev_end - prev_start +1) <= TREE_UNIT_SIZE) {
+    if((prev_end - prev_start +1) <= 1) {
       return vector_unit_inc(str, start, end, prev_ref);
     } else {
       treeref.check = false;
@@ -294,16 +294,16 @@ TreeInc TreeDatabase::tree_find_or_put_inc_rec(TreeNodeStrRef str, int start, in
     }
   }
   split = tree_get_split_position(start, end);
-  if((prev_end - prev_start+1) <= TREE_UNIT_SIZE) {
+  if((prev_end - prev_start+1) <= 1) {
     left_ref.check = false;
     right_ref.check = false;
     left_ref.elem = this->tree_find_or_put_rec(str, start, start + split, found);
     right_ref.elem = this->tree_find_or_put_rec(str, start + split + 1, end, found);
   } else {
     TreeNodeRef prev_node = this->nodes[prev_ref & this->mask];
-    prev_split = ((prev_end - prev_start) / TREE_UNIT_SIZE)/2;
-    left_ref = this->tree_find_or_put_inc_rec(str, start, start + split, prev_start, prev_start + prev_split*TREE_UNIT_SIZE, found, prev_node->left);
-    right_ref = this->tree_find_or_put_inc_rec(str, start + split + 1, end, prev_start + (prev_split + 1)*TREE_UNIT_SIZE, prev_end, found, prev_node->right);
+    prev_split = tree_get_split_position(prev_start, prev_end);
+    left_ref = this->tree_find_or_put_inc_rec(str, start, start + split, prev_start, prev_start + prev_split, found, prev_node->left);
+    right_ref = this->tree_find_or_put_inc_rec(str, start + split + 1, end, prev_start + prev_split + 1, prev_end, found, prev_node->right);
   }
   if ((end - start + 1) == str->len) {
     if(left_ref.check == false || right_ref.check == false){
@@ -351,7 +351,7 @@ TreeNodeID TreeDatabase::tree_find_or_put(LmnBinStrRef bs,
       if (prev_str.extra > 0)
 	prev_str.len += 1;
     }
-    refinc = this->tree_find_or_put_inc_rec(&str, 0, str.len - 1, 0, prev_str.len*TREE_UNIT_SIZE - 1, found, prev_ref_top1);
+    refinc = this->tree_find_or_put_inc_rec(&str, 0, str.len - 1, 0, prev_str.len - 1, found, prev_ref_top1);
     ref = refinc.elem;
   }else{//初期状態のとき
     // printf("node_count: %d, extra:%d\n", str.len, str.extra);
