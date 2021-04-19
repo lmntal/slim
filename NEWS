@@ -1,3 +1,9 @@
+SLIM (2.5.0) -- 2021/04/19
+  * new feature
+    + add --history-management
+    + add --shuffle
+  * refactoring
+
 SLIM (2.4.0) -- 2019/07/15
   * migrate from C into C++
   * refactoring
