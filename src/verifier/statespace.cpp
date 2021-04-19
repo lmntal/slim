@@ -216,18 +216,33 @@ void StateSpace::add_direct(State *s) {
 /* 高階関数 */
 std::vector<State *> StateSpace::all_states() const {
   std::vector<State *> result;
-  if (this->mhash_table.tbl)
-    std::copy(this->mhash_table.tbl->begin(), this->mhash_table.tbl->end(),
-              std::back_inserter(result));
-  if (this->memid_table.tbl)
-    std::copy(this->memid_table.tbl->begin(), this->memid_table.tbl->end(),
-              std::back_inserter(result));
-  if (this->mhash_table.acc)
-    std::copy(this->mhash_table.acc->begin(), this->mhash_table.acc->end(),
-              std::back_inserter(result));
-  if (this->memid_table.acc)
-    std::copy(this->memid_table.acc->begin(), this->memid_table.acc->end(),
-              std::back_inserter(result));
+
+  // 何故かstd::copyを使うといくつかの状態がコピーされないのでforを使う
+  // TODO: おそらくStateTableのイテレータがおかしいので調査する
+  if (this->mhash_table.tbl) {
+    for (auto s : *mhash_table.tbl)
+      result.push_back(s);
+    // std::copy(this->mhash_table.tbl->begin(), this->mhash_table.tbl->end(),
+    //           result.begin());
+  }
+  if (this->memid_table.tbl) {
+    for (auto s : *memid_table.tbl)
+      result.push_back(s);
+    // std::copy(this->memid_table.tbl->begin(), this->memid_table.tbl->end(),
+    //           std::back_inserter(result));
+  }
+  if (this->mhash_table.acc) {
+    for (auto s : *mhash_table.acc)
+      result.push_back(s);
+    // std::copy(this->mhash_table.acc->begin(), this->mhash_table.acc->end(),
+    //           std::back_inserter(result));
+  }
+  if (this->memid_table.acc) {
+    for (auto s : *memid_table.acc)
+      result.push_back(s);
+    // std::copy(this->memid_table.acc->begin(), this->memid_table.acc->end(),
+    //           std::back_inserter(result));
+  }
   return result;
 }
 
@@ -332,8 +347,8 @@ void StateSpace::format_states() {
   /* cygwinテスト時に, ボトルネックになっていた */
   if (!this->is_formated && lmn_env.sp_dump_format != INCREMENTAL) {
     if (this->mhash_table.tbl) this->mhash_table.tbl->format_states();
-    if (this->memid_table.tbl) this->memid_table.tbl->format_states();
     if (this->mhash_table.acc) this->mhash_table.acc->format_states();
+    if (this->memid_table.tbl) this->memid_table.tbl->format_states();
     if (this->memid_table.acc) this->memid_table.acc->format_states();
     this->is_formated = TRUE;
   }

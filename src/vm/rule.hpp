@@ -46,6 +46,8 @@
 #include "membrane.h"
 #include "react_context.hpp"
 
+#include <random>
+
 typedef BOOL (*LmnTranslated)(LmnReactCxtRef, LmnMembraneRef, LmnRuleRef);
 
 /* 実行時のルールの表現。ルールの処理は中間語命令列を変換したバイナリ表
@@ -60,6 +62,7 @@ public:
   int inst_seq_len;
   LmnTranslated translated;
   lmn_interned_str name;
+  int rule_number = -1; // 履歴管理用アトムのための変数
 
   /* コストを動的に変えたい場合, このcostに一時的に値を入れておく or
    * costの計算式を入れる */
@@ -258,6 +261,14 @@ public:
 
   std::vector<LmnRule *>::const_iterator begin() const { return rules.begin(); }
   std::vector<LmnRule *>::const_iterator end() const { return rules.end(); }
+
+  //ruleの順序をシャッフルをする関数
+  void shuffle(){
+    std::random_device rd;
+    auto rng = std::default_random_engine{rd()};
+    std::shuffle(std::begin(rules),std::end(rules),rng);
+  }
+
 };
 
 /* table, mapping RuleSet ID to RuleSet */

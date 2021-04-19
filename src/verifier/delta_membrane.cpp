@@ -428,13 +428,11 @@ void MemDeltaRoot::copy_cells(struct MemDelta *d,
     /* copy name */
     new_mem->set_name(m->NAME_ID());
     /* copy rulesets */
-    for (i = 0; i < m->get_rulesets()->get_num(); i++) {
+    for (i = 0; i < m->get_rulesets().size(); i++) {
       if (d)
-        dmem_add_ruleset(d, new_mem,
-                         (LmnRuleSetRef)m->get_rulesets()->get(i));
+        dmem_add_ruleset(d, new_mem, m->get_rulesets()[i]);
       else
-        lmn_mem_add_ruleset(new_mem,
-                            (LmnRuleSetRef)m->get_rulesets()->get(i));
+        lmn_mem_add_ruleset(new_mem, m->get_rulesets()[i]);
     }
   });
 
@@ -1974,10 +1972,10 @@ static void dmem_commit(struct MemDelta *d) {
   (d->mem)->data_atom_add(d->data_atom_diff);
 
   if (d->ruleset_removed || d->new_rulesets) {
-    d->org_rulesets = new Vector(*(d->mem)->get_rulesets());
+    d->org_rulesets = new Vector(d->mem->get_rulesets());
 
     if (d->ruleset_removed) {
-      (d->mem)->get_rulesets()->clear();
+        (d->mem)->clearrules();
     }
 
     if (d->new_rulesets) {
@@ -2023,7 +2021,7 @@ static void dmem_revert(struct MemDelta *d) {
   (d->mem)->data_atom_sub(d->data_atom_diff);
 
   if (d->ruleset_removed || d->new_rulesets) {
-    (d->mem)->get_rulesets()->clear();
+    (d->mem)->clearrules();
     for (i = 0; i < d->org_rulesets->get_num(); i++) {
       lmn_mem_add_ruleset(d->mem, (LmnRuleSetRef)d->org_rulesets->get(i));
     }

@@ -66,5 +66,7 @@
 #include "conditional_ostream.hpp"
 #include "optional.hpp"
 #include "range_remove_if.hpp"
+#include "stack_trace.hpp"
+#include "life_time.hpp"
 
 #endif /* LMN_ELEMENT_H */

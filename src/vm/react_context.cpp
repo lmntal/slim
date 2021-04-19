@@ -40,7 +40,6 @@
 #include "react_context.hpp"
 
 #include "hyperlink.h"
-#include "memstack.h"
 #include "task.h"
 #include "verifier/verifier.h"
 
@@ -79,106 +78,79 @@
 //#endif
 //};
 
-BOOL RC_GET_MODE(LmnReactCxtRef cxt, BYTE mode) {
-  return (cxt->mode & mode) == mode;
-}
+void slim::vm::RuleContext::clear_hl_spc() {
+  HashIterator it;
 
-unsigned int RC_TRACE_NUM(LmnReactCxtRef cxt) { return cxt->trace_num; }
-unsigned int RC_TRACE_NUM_INC(LmnReactCxtRef cxt) { return cxt->trace_num++; }
+  if (!hl_sameproccxt)
+    return;
 
-LmnMembraneRef RC_GROOT_MEM(LmnReactCxtRef cxt) { return cxt->global_root; }
+  for (it = hashtbl_iterator(hl_sameproccxt); !hashtbliter_isend(&it);
+       hashtbliter_next(&it)) {
+    SameProcCxt *spc = (SameProcCxt *)(hashtbliter_entry(&it)->data);
+    delete spc;
+  }
 
-void RC_SET_GROOT_MEM(LmnReactCxtRef cxt, LmnMembraneRef mem) {
-  cxt->global_root = mem;
-}
-
-SimpleHashtbl *RC_HLINK_SPC(LmnReactCxtRef cxt) { return cxt->hl_sameproccxt; }
-
-void RC_SET_HLINK_SPC(LmnReactCxtRef cxt, SimpleHashtbl *spc) {
-  cxt->hl_sameproccxt = spc;
+  hashtbl_free(hl_sameproccxt);
+  hl_sameproccxt = nullptr;
 }
 
 BOOL rc_hlink_opt(LmnInstrVar atomi, LmnReactCxtRef rc) {
   /*  return hl_sameproccxtが初期化済み && atomiは同名プロセス文脈を持つアトム
    */
-  return RC_HLINK_SPC(rc) &&
-         hashtbl_contains(RC_HLINK_SPC(rc), (HashKeyType)atomi);
-}
-
-struct McReactCxtData *RC_ND_DATA(MCReactContext *cxt) {
-  return &cxt->data;
+  return rc->get_hl_sameproccxt() &&
+         hashtbl_contains(rc->get_hl_sameproccxt(), (HashKeyType)atomi);
 }
 
 void react_context_copy(LmnReactCxtRef to, LmnReactCxtRef from) { *to = *from; }
 
 /*----------------------------------------------------------------------
- * Mem React Context
- */
-
-LmnMemStack MemReactContext::MEMSTACK() { return this->memstack; }
-
-void MemReactContext::MEMSTACK_SET(LmnMemStack s) { this->memstack = s; }
-
-/*----------------------------------------------------------------------
  * ND React Context
  */
 
-McReactCxtData::McReactCxtData() {
-  succ_tbl = st_init_ptrtable();
-  roots = new Vector(32);
-  rules = new Vector(32);
-  props = new Vector(8);
-  mem_deltas = NULL;
-  mem_delta_tmp = NULL;
-  opt_mode = 0x00U;
-  org_succ_num = 0;
-  d_cur = 0;
+MCReactContext::MCReactContext(LmnMembrane *mem) : LmnReactCxt(mem, REACT_ND) {
+    if (lmn_env.enable_por_old) {
+      this->turnon_optmode(DynamicPartialOrderReduction_Naive);
+    } else if (lmn_env.enable_por) {
+      this->turnon_optmode(DynamicPartialOrderReduction);
+    }
 
-  if (lmn_env.delta_mem) {
-    mem_deltas = new Vector(32);
+    if (lmn_env.d_compress) {
+      this->turnon_optmode(BinaryStringDeltaCompress);
+    }
+
+    mem_delta_tmp = NULL;
+    opt_mode = 0x00U;
+    org_succ_num = 0;
+    d_cur = 0;
+
+    if (lmn_env.delta_mem) {
+      this->turnon_optmode(DeltaMembrane);
+    }
+
+    if (lmn_env.enable_por && !lmn_env.enable_por_old) {
+      por = DPOR_DATA();
+    }
   }
 
-  if (lmn_env.enable_por && !lmn_env.enable_por_old) {
-    por = DPOR_DATA();
-  }
-}
-
-void mc_react_cxt_add_expanded(LmnReactCxtRef cxt, LmnMembraneRef mem,
+void mc_react_cxt_add_expanded(MCReactContext *cxt, LmnMembraneRef mem,
                                LmnRuleRef rule) {
-  RC_EXPANDED(cxt)->push((vec_data_t)mem);
-  RC_EXPANDED_RULES(cxt)->push((vec_data_t)rule);
+  cxt->push_expanded_state(mem);
+  cxt->push_expanded_rule(rule);
 }
 
-void mc_react_cxt_add_mem_delta(LmnReactCxtRef cxt, struct MemDeltaRoot *d,
+void mc_react_cxt_add_mem_delta(MCReactContext *cxt, struct MemDeltaRoot *d,
                                 LmnRuleRef rule) {
-  RC_MEM_DELTAS(cxt)->push((vec_data_t)d);
-  RC_EXPANDED_RULES(cxt)->push((vec_data_t)rule);
-}
-
-LmnWord mc_react_cxt_expanded_pop(LmnReactCxtRef cxt) {
-  RC_EXPANDED_RULES(cxt)->pop();
-  if (RC_MC_USE_DMEM(cxt)) {
-    return RC_MEM_DELTAS(cxt)->pop();
-  } else {
-    return RC_EXPANDED(cxt)->pop();
-  }
-}
-
-LmnWord mc_react_cxt_expanded_get(LmnReactCxtRef cxt, unsigned int i) {
-  if (RC_MC_USE_DMEM(cxt)) {
-    return RC_MEM_DELTAS(cxt)->get(i);
-  } else {
-    return RC_EXPANDED(cxt)->get(i);
-  }
+  cxt->push_mem_delta_root(d);
+  cxt->push_expanded_rule(rule);
 }
 
 unsigned int mc_react_cxt_succ_num_org(LmnReactCxtRef cxt) {
   return RC_ND_ORG_SUCC_NUM(cxt);
 }
 
-unsigned int mc_react_cxt_expanded_num(LmnReactCxtRef cxt) {
-  return RC_MC_USE_DMEM(cxt) ? RC_MEM_DELTAS(cxt)->get_num()
-                             : RC_EXPANDED(cxt)->get_num();
+unsigned int mc_react_cxt_expanded_num(MCReactContext *cxt) {
+  return cxt->has_optmode(DeltaMembrane) ? cxt->get_mem_delta_roots().size()
+                             : cxt->expanded_states().size();
 }
 
 ///// first-class rulesets
@@ -219,7 +191,7 @@ void lmn_rc_execute_insertion_events(LmnReactCxtRef rc) {
     lmn_rc_pop_insertion(rc, &satom, &mem);
 
     LmnRuleSetRef rs = firstclass_ruleset_create(satom);
-    lmn_mem_add_firstclass_ruleset(mem, rs);
+    LmnMembrane::add_firstclass_ruleset(mem, rs);
   }
 }
 #endif

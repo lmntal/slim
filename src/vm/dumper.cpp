@@ -39,7 +39,6 @@
 #include "dumper.h"
 #include "atomlist.hpp"
 #include "ccallback.h"
-#include "memstack.h"
 #include "rule.hpp"
 #include "symbol.h"
 #include <ctype.h>
@@ -533,14 +532,14 @@ static void dump_rule(LmnPortRef port, LmnRuleSetRef rs) {
 /* for debug @seiji */
 void lmn_dump_rule(LmnPortRef port, LmnRuleSetRef rs) { dump_rule(port, rs); }
 
-static void dump_ruleset(LmnPortRef port, struct Vector *v) {
+static void dump_ruleset(LmnPortRef port, const std::vector<LmnRuleSet *> &v) {
   unsigned int i;
 
-  for (i = 0; i < v->get_num(); i++) {
+  for (i = 0; i < v.size(); i++) {
     LmnRuleSetRef rs;
     char *s;
 
-    rs = (LmnRuleSetRef)v->get(i);
+    rs = v[i];
     s = int_to_str(rs->id);
     if (lmn_env.sp_dump_format == LMN_SYNTAX) {
       if (i > 0) {
@@ -564,7 +563,7 @@ static void dump_ruleset(LmnPortRef port, struct Vector *v) {
 }
 
 /* for debug @seiji */
-void lmn_dump_ruleset(LmnPortRef port, struct Vector *v) {
+void lmn_dump_ruleset(LmnPortRef port, const std::vector<LmnRuleSet *> &v) {
   dump_ruleset(port, v);
 }
 
@@ -618,7 +617,8 @@ static void lmn_dump_cell_internal(LmnPortRef port, LmnMembraneRef mem,
               }
               /* 0 argument atom */
               else if (arity == 0) {
-                pred_atoms[P0].push((LmnWord)atom);
+		if(!atom->record_flag) 
+		  pred_atoms[P0].push((LmnWord)atom);
               }
               /* 1 argument, link to the last argument */
               else if (arity == 1 && f != LMN_NIL_FUNCTOR &&
@@ -829,11 +829,11 @@ void dump_atom_dev(LmnSymbolAtomRef atom) {
   fflush(stdout);
 }
 
-static void dump_ruleset_dev(struct Vector *v) {
+static void dump_ruleset_dev(const std::vector<LmnRuleSet *> &v) {
   unsigned int i;
   fprintf(stdout, "ruleset[");
-  for (i = 0; i < v->get_num(); i++) {
-    fprintf(stdout, "%d ", ((LmnRuleSetRef)v->get(i))->id);
+  for (i = 0; i < v.size(); i++) {
+    fprintf(stdout, "%d ", (v[i])->id);
   }
   fprintf(stdout, "]\n");
 }
@@ -1080,8 +1080,8 @@ void cb_dump_mem(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
 
   lmn_mem_newlink(mem, a0, t0, 0, a2, t2, LMN_ATTR_GET_VALUE(t2));
 
-  if (RC_GET_MODE(rc, REACT_MEM_ORIENTED)) {
-    lmn_memstack_delete(((MemReactContext *)rc)->MEMSTACK(), m);
+  if (rc->has_mode(REACT_MEM_ORIENTED)) {
+    ((MemReactContext *)rc)->memstack_remove(m);
   }
   (m->mem_parent())->delete_mem(m);
 }

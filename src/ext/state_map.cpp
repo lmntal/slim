@@ -42,17 +42,14 @@
 #include "verifier/verifier.h"
 #include "vm/vm.h"
 
-static int state_map_atom_type;
+int LmnStateMap::state_map_atom_type;
 
-struct LmnStateMap {
-  LMN_SP_ATOM_HEADER;
-  StateSpaceRef states;
-  LmnStateMap(LmnMembraneRef mem) {
-    LMN_SP_ATOM_SET_TYPE(this, state_map_atom_type);
-    this->states = new StateSpace(NULL, NULL);
-  };
-  ~LmnStateMap() { delete (this->states); };
-};
+/* constructor */
+LmnStateMap::LmnStateMap(LmnMembraneRef mem) {
+  LMN_SP_ATOM_SET_TYPE(this, state_map_atom_type);
+  this->states = new StateSpace(NULL, NULL);
+}
+LmnStateMap::~LmnStateMap() { delete (this->states); }
 
 /*----------------------------------------------------------------------
  * Callbacks
@@ -63,7 +60,7 @@ struct LmnStateMap {
  * -a0 Map
  */
 
-void cb_state_map_init(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
+void LmnStateMap::cb_state_map_init(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
                        LmnLinkAttr t0) {
   LmnStateMapRef atom = new LmnStateMap(mem);
   LmnLinkAttr attr = LMN_SP_ATOM_ATTR;
@@ -77,9 +74,9 @@ void cb_state_map_init(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
  * +a0 Map
  */
 
-void cb_state_map_free(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
+void LmnStateMap::cb_state_map_free(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
                        LmnLinkAttr t0) {
-  delete (LmnStateMapRef)a0, mem;
+  delete ((LmnStateMapRef)a0)->states, mem;
   lmn_mem_remove_data_atom(mem, (LmnDataAtomRef)a0, t0);
 }
 
@@ -90,7 +87,7 @@ void cb_state_map_free(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
  * -a2 ID
  * -a3 Map
  */
-void cb_state_map_id_find(LmnReactCxtRef rc,
+void LmnStateMap::cb_state_map_id_find(LmnReactCxtRef rc,
                           LmnMembraneRef mem,
                           LmnAtomRef a0, LmnLinkAttr t0,
                           LmnAtomRef a1, LmnLinkAttr t1,
@@ -98,7 +95,7 @@ void cb_state_map_id_find(LmnReactCxtRef rc,
                           LmnAtomRef a3, LmnLinkAttr t3)
 {
   LmnMembraneRef m = LMN_PROXY_GET_MEM((LmnSymbolAtomRef)((LmnSymbolAtomRef)a1)->get_link(0));
-  StateSpaceRef ss = ((LmnStateMapRef)a0)->states;
+  StateSpaceRef ss = ((LmnStateMap::LmnStateMapRef)a0)->states;
   LmnSymbolAtomRef out = (LmnSymbolAtomRef)a1;
   LmnSymbolAtomRef in = (LmnSymbolAtomRef)((LmnSymbolAtomRef)a1)->get_link(0);
   LmnLinkAttr in_attr = ((LmnSymbolAtomRef)a1)->get_attr(0);
@@ -108,7 +105,7 @@ void cb_state_map_id_find(LmnReactCxtRef rc,
   lmn_newlink_in_symbols(plus, 0, at, 0);
 
   lmn_mem_delete_atom(m, in, in_attr);
-  lmn_memstack_delete(((MemReactContext *)rc)->MEMSTACK(), m);
+  ((MemReactContext *)rc)->memstack_remove(m);
   mem->remove_mem(m);
 
   State *new_s = new State(m, 0, TRUE);
@@ -136,7 +133,7 @@ void cb_state_map_id_find(LmnReactCxtRef rc,
  * -a2 状態
  * -a3 Map
  */
-void cb_state_map_state_find(LmnReactCxtRef rc, LmnMembraneRef mem,
+void LmnStateMap::cb_state_map_state_find(LmnReactCxtRef rc, LmnMembraneRef mem,
                              LmnAtomRef a0, LmnLinkAttr t0, LmnAtomRef a1,
                              LmnLinkAttr t1, LmnAtomRef a2, LmnLinkAttr t2,
                              LmnAtomRef a3, LmnLinkAttr t3) {
@@ -179,19 +176,19 @@ void cb_state_map_state_find(LmnReactCxtRef rc, LmnMembraneRef mem,
  * Initialization
  */
 
-void *sp_cb_state_map_copy(void *data) { return data; }
+void *LmnStateMap::sp_cb_state_map_copy(void *data) { return data; }
 
-void sp_cb_state_map_free(void *data) {}
+void LmnStateMap::sp_cb_state_map_free(void *data) {}
 
-unsigned char sp_cb_state_map_eq(void *_p1, void *_p2) { return 0; }
+unsigned char LmnStateMap::sp_cb_state_map_eq(void *_p1, void *_p2) { return 0; }
 
-void sp_cb_state_map_dump(void *state_map, LmnPortRef port) {
+void LmnStateMap::sp_cb_state_map_dump(void *state_map, LmnPortRef port) {
   port_put_raw_s(port, "<state_map>");
 }
 
-unsigned char sp_cb_state_map_is_ground(void *data) { return 1; }
+unsigned char LmnStateMap::sp_cb_state_map_is_ground(void *data) { return 1; }
 
-void init_state_map(void) {
+void LmnStateMap::init_state_map(void) {
   state_map_atom_type = lmn_sp_atom_register(
       "state_map", sp_cb_state_map_copy, sp_cb_state_map_free,
       sp_cb_state_map_eq, sp_cb_state_map_dump, sp_cb_state_map_is_ground);

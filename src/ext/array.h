@@ -41,34 +41,27 @@
 #define LMN_ARRAY_H
 
 #include "../lmntal.h"
+#include "element/element.h"
 #include "vm/vm.h"
 
 /**
  * @ingroup  Ext
  * @struct LmnArray array.h "ext/array.h"
  */
-typedef struct LmnArray *LmnArrayRef;
-struct LmnArray {
+class LmnArray {
   LMN_SP_ATOM_HEADER;
-
-  // uint32_t size;    /* array size */
-  LmnLinkAttr type; /* element type, currently either
-                       LMN_INT_ATTR | LMN_DBL_ATTR | LMN_STRING_ATTR */
-  BOOL owner;       /* am I the owner of array data? */
-  // LmnAtomRef *data; /* array data */
-  std::vector<LmnAtomRef> *impl;
-
-private:
+  typedef class LmnArray *LmnArrayRef;
+  /**
+  * @memberof LmnArray
+  * @private
+  */
+  static int array_atom_type; /* special atom type */
   LmnArrayRef lmn_array_copy();
   LmnArray(LmnMembraneRef mem, LmnWord size, LmnAtomRef init_value,
            LmnLinkAttr init_type);
-
-public:
   LmnArray(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0, LmnLinkAttr t0,
            LmnAtomRef a1, LmnLinkAttr t1, LmnAtomRef a2, LmnLinkAttr t2);
   ~LmnArray();
-  // callbacks cannot be methods
-  void init_array();
   static void cb_array_new(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
                            LmnLinkAttr t0, LmnAtomRef a1, LmnLinkAttr t1,
                            LmnAtomRef a2, LmnLinkAttr t2);
@@ -91,10 +84,18 @@ public:
   static void sp_cb_array_dump(void *array, LmnPortRef port);
   static BOOL sp_cb_array_eq(void *_p1, void *_p2);
   static void sp_cb_array_free(void *data);
+public:
+  // callbacks cannot be methods
+  static void init_array();
+  // uint32_t size;    /* array size */
+  LmnLinkAttr type; /* element type, currently either
+                       LMN_INT_ATTR | LMN_DBL_ATTR | LMN_STRING_ATTR */
+  BOOL owner;       /* am I the owner of array data? */
+  // LmnAtomRef *data; /* array data */
+  std::vector<LmnAtomRef> *impl;
 };
 
-static void sp_cb_string_dump(void *s, LmnPortRef port);
-typedef struct LmnArray *LmnArrayRef;
+static void sp_cb_string_dump(void *s, LmnPortRef port); /* これはlmnstring.hにあるべきものでは？？？ */
 
 #define LMN_ARRAY(obj) ((LmnArrayRef)(obj))
 

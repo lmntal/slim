@@ -112,7 +112,7 @@ static struct st_hash_type type_functorhash = {(st_cmp_func)LmnFunctorTable::fun
 void LmnFunctorTable::print() {
   int i, n;
   fprintf(stdout, "next_id==%u\n", next_id);
-  n = this.size;
+  n = this->size;
   for (i = 0; i < n; i++) {
     fprintf(stdout, "entry[%2d]== %s_%d\n", i,
             lmn_id_to_name(LMN_FUNCTOR_NAME_ID(lmn_functor_table, i)), LMN_FUNCTOR_ARITY(lmn_functor_table, i));

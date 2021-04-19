@@ -39,6 +39,7 @@
 
 #include "vm/vm.h"
 
+#include <algorithm>
 
 void cb_react_rule(LmnReactCxtRef rc,
                    LmnMembraneRef mem,
@@ -49,11 +50,11 @@ void cb_react_rule(LmnReactCxtRef rc,
 {
   LmnMembraneRef rule_mem = LMN_PROXY_GET_MEM((LmnSymbolAtomRef)((LmnSymbolAtomRef)rule_mem_proxy)->get_link(0));
   LmnMembraneRef graph_mem = LMN_PROXY_GET_MEM((LmnSymbolAtomRef)((LmnSymbolAtomRef)graph_mem_proxy)->get_link(0));
-  LmnRuleSetRef rs = (LmnRuleSetRef)rule_mem->get_rulesets()->get(0);
+  LmnRuleSetRef rs = rule_mem->get_rulesets()[0];
   auto r = rs->get_rule(0);
-  MemReactContext tmp_rc;
+  MemReactContext tmp_rc(nullptr);
 
-  int reacted = react_rule(&tmp_rc, graph_mem, r);
+  int reacted = Task::react_rule(&tmp_rc, graph_mem, r);
   lmn_interned_str str = (reacted) ? lmn_intern("success") : lmn_intern("fail");
   LmnSymbolAtomRef result = lmn_mem_newatom(mem, lmn_functor_table->intern(ANONYMOUS, str, 2));
 
@@ -77,23 +78,22 @@ void cb_react_rule(LmnReactCxtRef rc,
  *
  * the reacted graphs are added to {\c pos} of the list {\c head}.
  */
+template <typename C>
 static void apply_rules_in_rulesets(LmnMembraneRef mem,
-                                    LmnMembraneRef src_graph, Vector *rulesets,
+                                    LmnMembraneRef src_graph, C *rulesets,
                                     LmnSymbolAtomRef *head, int *pos)
 {
-  for (int i = 0; i < rulesets->get_num(); i++) {
-    LmnRuleSetRef rs = (LmnRuleSetRef)rulesets->get(i);
-
+  for (auto &rs : *rulesets) {
     for (auto r : *rs) {
-      MCReactContext rc;
-      RC_SET_GROOT_MEM(&rc, src_graph);
+      MCReactContext rc(src_graph);
       rc.keep_process_id_in_nd_mode = true;
-      react_rule(&rc, src_graph, r);
-      int n_of_results = RC_EXPANDED(&rc)->get_num();
+      Task::react_rule(&rc, src_graph, r);
+      auto &states = rc.expanded_states();
+      int n_of_results = rc.expanded_states().size();
 
-      for (int k = n_of_results - 1; k >= 0; k--) {
+      std::for_each(states.rbegin(), states.rend(), [=](void *v) {
         LmnSymbolAtomRef cons = lmn_mem_newatom(mem, LMN_LIST_FUNCTOR);
-        LmnMembraneRef m = (LmnMembraneRef)RC_EXPANDED(&rc)->get(k);
+        LmnMembraneRef m = (LmnMembraneRef)v;
         LmnSymbolAtomRef in = lmn_mem_newatom(m, LMN_IN_PROXY_FUNCTOR); 
         LmnSymbolAtomRef out = lmn_mem_newatom(mem, LMN_OUT_PROXY_FUNCTOR);
         LmnSymbolAtomRef plus = lmn_mem_newatom(m, LMN_UNARY_PLUS_FUNCTOR);
@@ -104,7 +104,7 @@ static void apply_rules_in_rulesets(LmnMembraneRef mem,
         lmn_newlink_in_symbols(cons, 1, *head, *pos);
         *head = cons;
         *pos = 2;
-      }
+      });
     }
   }
 }
@@ -126,11 +126,11 @@ void cb_react_ruleset_nd(LmnReactCxtRef &rc,
   LmnSymbolAtomRef head = lmn_mem_newatom(mem, LMN_NIL_FUNCTOR);
   int pos = 0;
 
-  Vector *rulesets = rule_mem->get_rulesets();
+  auto rulesets = &rule_mem->get_rulesets();
   apply_rules_in_rulesets(mem, graph_mem, rulesets, &head, &pos);
 
 #ifdef USE_FIRSTCLASS_RULE
-  Vector *fstclass_rules = rule_mem->firstclass_rulesets();
+  auto fstclass_rules = &rule_mem->get_firstclass_rulesets();
   apply_rules_in_rulesets(mem, graph_mem, fstclass_rules, &head, &pos);
 #endif
 

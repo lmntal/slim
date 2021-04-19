@@ -78,6 +78,7 @@ static void usage(void) {
       "  -p[<0-3>] (-p=-p1)   Profiler level.\n"
       "  --use-builtin-rule   Load the rules builtin this application for "
       "arithmetic, nlmem, etc\n"
+      "  --history-management Optimize backtracking of findatom function by using atoms for history management \n"
       "  --nd                 Change the execution mode from RunTime(RT) to "
       "ModelChecker(MC)\n"
       "  --translate          Change the execution mode to Output translated C "
@@ -85,6 +86,9 @@ static void usage(void) {
       "  -t                   (RT) Show execution path\n"
       "                       (MC) Show state space\n"
       "  --hide-ruleset       Hide ruleset from result\n"
+      "  --shuffle-rule       (RT) Apply rules randomly\n"
+      "  --shuffle-atom       (RT) Choose atoms to be applied randomly\n"
+      "  --shuffle            (RT) Apply both shuffle-rule option and shuffle-atom options\n"
       "  --hl                 (RT) Allow using hyperlink system\n"
       "  --show-proxy         Show proxy atoms\n"
       "  --show-chr           Show applied history in uniq rulesets "
@@ -233,6 +237,10 @@ static void parse_options(int *optid, int argc, char *argv[]) {
                                   {"hash-depth", 1, 0, 6061},
                                   {"tree-compress", 1, 0, 6062},
                                   {"run-test", 0, 0, 6070},
+                                  {"history-management", 0, 0, 6071},
+                                  {"shuffle-rule",0,0,6080},
+                                  {"shuffle-atom",0,0,6081},
+                                  {"shuffle",0,0,6082},
                                   {0, 0, 0, 0}};
 
   while ((c = getopt_long(argc, argv, "+dvhtI:O::p::", long_options,
@@ -580,6 +588,19 @@ static void parse_options(int *optid, int argc, char *argv[]) {
     case 6070:
       lmn_env.run_test = TRUE;
       break;
+    case 6071:
+      lmn_env.history_management = TRUE;
+      break;
+    case 6080:
+      lmn_env.shuffle_rule = TRUE;
+      break;
+    case 6081:
+      lmn_env.shuffle_atom = TRUE;
+      break;
+    case 6082:
+      lmn_env.shuffle_rule = TRUE;
+      lmn_env.shuffle_atom = TRUE;
+      break;
     case 'I':
       lmn_env.load_path[lmn_env.load_path_num++] = optarg;
       break;
@@ -668,6 +689,7 @@ static inline void slim_finalize(void) {
   sym_tbl_destroy();
 
   lmn_stream_destroy();
+  slim::element::LifetimeProfiler::check_memory_leak();
 }
 
 static inline int load_input_files(std::vector<LmnRuleSetRef> &start_rulesets, int optid, int argc,
@@ -707,7 +729,7 @@ static inline int load_input_files(std::vector<LmnRuleSetRef> &start_rulesets, i
 static inline void slim_exec(const std::vector<LmnRuleSetRef> &start_rulesets) {
   if (!lmn_env.nd) {
     /* プログラム実行 */
-    lmn_run(new Vector(start_rulesets));
+    Task::lmn_run(new Vector(start_rulesets));
   } else {
     /* プログラム検証 */
     AutomataRef automata;

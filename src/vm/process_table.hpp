@@ -56,10 +56,10 @@ public:
   using value_type = T;
 
   const static key_type not_found;
-  const static value_type unused;
   static constexpr std::size_t buckets_size = 1 << 12; // heuristics
 
 private:
+  const static value_type unused;
   unsigned long n;
   unsigned long size;
   unsigned long num_buckets;
@@ -147,19 +147,6 @@ public:
 
   template <typename U> void erase(U key) { unput(key); }
 
-  template <typename U> bool get(U key, value_type *value) {
-    const auto k = slim::process_id(key);
-    if (this->contains(k)) {
-      if (value)
-        *value = (*this)[k];
-      return true;
-    } else {
-      if (value)
-        *value = unused;
-      return false;
-    }
-  }
-
   void clear() {
     this->n = 0;
     for (int i = 0; i < this->num_buckets; i++) {
@@ -190,6 +177,7 @@ public:
     std::pair<key_type, value_type> value;
 
   public:
+    iterator(const ProcessTable<value_type> *table) : table(table), bucket_idx(not_found), idx(not_found) {} 
     iterator(const ProcessTable<value_type> *table, std::size_t bucket_idx,
              std::size_t idx)
         : table(table), bucket_idx(bucket_idx), idx(idx),
@@ -214,7 +202,6 @@ public:
       }
       bucket_idx = not_found;
       idx = not_found;
-      value = std::make_pair(not_found, unused);
       return *this;
     }
 
@@ -244,7 +231,7 @@ public:
     return end();
   }
 
-  iterator end() const { return iterator(this, not_found, not_found); }
+  iterator end() const { return iterator(this); }
 
   template <typename U> iterator find(U key) const {
     const auto k = slim::process_id(key);

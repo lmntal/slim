@@ -101,6 +101,40 @@ const char *LmnSymbolAtom::str() const {
   return LMN_SYMBOL_STR(LMN_FUNCTOR_NAME_ID(lmn_functor_table, this->get_functor()));
 }
 
+/* 以下, 履歴管理用アトムの追加コード(nakata) */
+void LmnSymbolAtom::atom_swap_forward() {
+  LmnSymbolAtomRef atom_prev = this->prev;
+  LmnSymbolAtomRef atom_next = this->next;
+  LmnSymbolAtomRef atom_next_next = atom_next->next;
+
+  atom_prev->set_next(atom_next);
+  this->next = atom_next_next;
+  atom_next->set_next(this);
+
+  atom_next_next->set_prev(this);
+  atom_next->set_prev(atom_prev);
+  this->prev = atom_next;
+}
+
+void LmnSymbolAtom::swap_to_head(LmnSymbolAtomRef head) {
+  this->prev->set_next(this->next);
+  this->next->set_prev(this->prev);
+
+  this->set_prev(head);
+  this->set_next(head->next);
+
+  head->next->set_prev(this);
+  head->set_next(this);
+}
+
+void LmnSymbolAtom::remove_atom() {
+  LmnSymbolAtomRef atom_prev = this->prev;
+  LmnSymbolAtomRef atom_next = this->next;
+  this->prev->next = this->next;
+  this->next->prev = this->prev;
+}
+/* ここまで */
+
 size_t LMN_SATOM_SIZE(int arity) {
   return offsetof(struct LmnSymbolAtom, links) +
          (LMN_ATTR_WORDS(arity) + arity) * LMN_WORD_BYTES;

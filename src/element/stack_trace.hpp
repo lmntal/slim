@@ -1,8 +1,8 @@
 /*
- * memstack.c - Membrane Stack implementation
+ * stack_trace.h
  *
- *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
- *                                         <lmntal@ueda.info.waseda.ac.jp>
+ *   Copyright (c) 2018, Ueda Laboratory LMNtal Group
+ *                                          <lmntal@ueda.info.waseda.ac.jp>
  *   All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
@@ -33,33 +33,46 @@
  *   THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  *   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * $Id$
  */
 
-#ifndef LMN_MEMSTACK_H
-#define LMN_MEMSTACK_H
+#ifndef SLIM_ELEMENT_STACK_TRACE_H
+#define SLIM_ELEMENT_STACK_TRACE_H
 
-/**
- * @ingroup VM
- * @defgroup Memstack
- * @{
- */
+#include <vector>
+#include <string>
 
-typedef struct Vector *LmnMemStack;
+namespace slim {
+namespace element {
+namespace stack_trace {
 
-#include "element/element.h"
-#include "membrane.h"
+#if defined(HAVE_EXECINFO_H) && HAVE_EXECINFO_H
 
-LmnMemStack lmn_memstack_make(void);
-void lmn_memstack_free(LmnMemStack memstack);
-BOOL lmn_memstack_isempty(LmnMemStack memstack);
-void lmn_memstack_push(LmnMemStack memstack, LmnMembraneRef mem);
-LmnMembraneRef lmn_memstack_pop(LmnMemStack memstack);
-LmnMembraneRef lmn_memstack_peek(LmnMemStack memstack);
-void lmn_memstack_delete(LmnMemStack memstack, LmnMembraneRef mem);
-void lmn_memstack_reconstruct(LmnMemStack memstack, LmnMembraneRef mem);
+#include <execinfo.h>
 
-/* @} */
+static constexpr size_t size = 32;
+
+inline std::vector<std::string> backtrace() {
+	void *addrs[size];
+	auto num_traces = backtrace(addrs, size);
+	auto symbols = backtrace_symbols(addrs, num_traces);
+	std::vector<std::string> res(num_traces);
+	for (int i = 0; i < num_traces; i++) {
+		res[i] = symbols[i];
+	}
+	free(symbols);
+	return res;
+}
+
+#else
+
+inline std::vector<std::string> backtrace() {
+	return std::vector<std::string>({"can't create backtrace."});
+}
 
 #endif
+
+}
+}
+}
+
+#endif /* SLIM_ELEMENT_STACK_TRACE_H */

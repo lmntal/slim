@@ -57,6 +57,7 @@ HISTORY
 
   set.free(Set) :- class(Set, "set") |
       '$callback'('cb_set_free', Set).
+  set.free(set_empty) :- .
 
   Ret = set.insert(Set, Val) :- class(Set, "set") |
       '$callback'('cb_set_insert', Set, Val, Ret).

@@ -54,6 +54,7 @@
 #include "state_defs.h"
 #include "tree_compress.h"
 #include "vm/vm.h"
+#include "runtime_status.h"
 
 #include <memory>
 
@@ -123,7 +124,6 @@ State *state_D_ref(State *s);
 void state_D_cache(State *s, LmnBinStrRef dec);
 LmnBinStrRef state_D_fetch(State *s);
 void state_D_flush(State *s);
-void state_D_progress(State *s, LmnReactCxtRef rc);
 void state_update_cost(State *s, TransitionRef t, State *pre, Vector *new_ss,
                        BOOL f, EWLock *ewlock);
 void state_set_cost(State *s, LmnCost cost, State *pre);
@@ -135,6 +135,7 @@ void state_cost_unlock(EWLock *EWLOCK, mtx_data_t ID);
 /** ------------
  *  Transition
  */
+unsigned long transition_space(TransitionRef t);
 
 struct Transition {
   State *s; /*  8byte: 遷移先状態 */
@@ -147,10 +148,19 @@ struct Transition {
 #ifdef KWBT_OPT
   LmnCost cost; /*  8(4)byte: cost */
 #endif
+  
+  ~Transition() {
+#ifdef PROFILE
+    if (lmn_env.profile_level >= 3) {
+      profile_remove_space(PROFILE_SPACE__TRANS_OBJECT, transition_space(this));
+    }
+#endif
+    this->rule_names.destroy();
+  }
 };
 
 TransitionRef transition_make(State *s, lmn_interned_str rule_name);
-unsigned long transition_space(TransitionRef t);
+
 void transition_free(TransitionRef t);
 void transition_add_rule(TransitionRef t, lmn_interned_str rule_name,
                          LmnCost cost);
@@ -270,7 +280,7 @@ LmnBinStrRef state_D_fetch(State *s);
 void state_D_flush(State *s);
 
 /* 差分圧縮バイト列に基づく状態生成処理のfinalizeを行う. */
-void state_D_progress(State *s, LmnReactCxtRef rc);
+void state_D_progress(State *s, MCReactContext *rc);
 
 /* MT-unsafe */
 void state_set_cost(State *s, LmnCost cost, State *pre);

@@ -93,14 +93,15 @@ void tr_instr_commit_ready(LmnReactCxtRef rc, LmnRuleRef rule,
   }
 #endif
 
-  if (RC_GET_MODE(rc, REACT_PROPERTY))
+  if (rc->has_mode(REACT_PROPERTY))
   {
     return;
   }
 
-  if (RC_GET_MODE(rc, REACT_ND))
+  if (rc->has_mode(REACT_ND))
   {
-    if (RC_MC_USE_DMEM(rc))
+    auto mcrc = dynamic_cast<MCReactContext *>(rc);
+    if (mcrc->has_optmode(DeltaMembrane))
     {
       /* dmemインタプリタ(body命令)を書かないとだめだ */
       lmn_fatal("translater mode, delta-membrane execution is not supported.");
@@ -119,7 +120,7 @@ void tr_instr_commit_ready(LmnReactCxtRef rc, LmnRuleRef rule,
       }
 #endif
 
-      tmp_global_root = lmn_mem_copy_with_map(RC_GROOT_MEM(rc), &copymap);
+      tmp_global_root = lmn_mem_copy_with_map(rc->get_global_root(), &copymap);
 
       /** 変数配列および属性配列のコピー */
       auto v = LmnRegisterArray(rc->capacity());
@@ -151,7 +152,7 @@ void tr_instr_commit_ready(LmnReactCxtRef rc, LmnRuleRef rule,
         }
         else if (r->register_tt() == TT_MEM)
         {
-          if (rc->wt(i) == (LmnWord)RC_GROOT_MEM(rc))
+          if (rc->wt(i) == (LmnWord)rc->get_global_root())
           { /* グローバルルート膜 */
             r->register_set_wt((LmnWord)tmp_global_root);
           }
@@ -195,7 +196,7 @@ BOOL tr_instr_commit_finish(LmnReactCxtRef rc, LmnRuleRef rule,
                             LmnMembraneRef *ptmp_global_root,
                             LmnRegisterArray *p_v_tmp)
 {
-  if (!RC_GET_MODE(rc, REACT_ND))
+  if (!rc->has_mode(REACT_ND))
     return true;
 
   /* 処理中の変数を外から持ち込む */
@@ -205,7 +206,7 @@ BOOL tr_instr_commit_finish(LmnReactCxtRef rc, LmnRuleRef rule,
   tmp_global_root = *ptmp_global_root;
   v = std::move(*p_v_tmp);
 
-  mc_react_cxt_add_expanded(rc, tmp_global_root,
+  mc_react_cxt_add_expanded(dynamic_cast<MCReactContext *>(rc), tmp_global_root,
                             rule); /* このruleはNULLではまずい気がする */
 
   rule->undo_history();

@@ -379,23 +379,7 @@ LmnMembraneRef get_mem_linked_atom(LmnSymbolAtomRef target_atom, int link_n) {
 }
 
 void delete_ruleset(LmnMembraneRef mem, LmnRulesetId del_id) {
-  Vector *mem_rulesets = mem->get_rulesets();
-
-  for (int i = 0; i < mem_rulesets->get_num(); i++) {
-    LmnRuleSetRef rs = (LmnRuleSetRef)mem_rulesets->get(i);
-    if (rs->id != del_id)
-      continue;
-
-    /* move successors forward */
-    for (int j = i; j < mem_rulesets->get_num() - 1; j++) {
-      LmnRuleSetRef next = (LmnRuleSetRef)mem_rulesets->get(j + 1);
-      mem_rulesets->set(j, (vec_data_t)next);
-    }
-
-//    mem_rulesets->num--;
-    mem_rulesets->set_num(mem_rulesets->get_num()-1);
-    break;
-  }
+  mem->delete_ruleset(del_id);
 }
 
 st_table_t first_class_rule_tbl;

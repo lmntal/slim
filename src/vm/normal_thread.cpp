@@ -80,7 +80,7 @@ void *normal_thread(void *arg) {
           thread_data->rc->reg(thread_data->atomi) = {
               (LmnWord)atom, LMN_ATTR_MAKE_LINK(0), TT_ATOM};
           if (rc_hlink_opt(thread_data->atomi, thread_data->rc)) {
-            spc = (SameProcCxt *)hashtbl_get(RC_HLINK_SPC(thread_data->rc),
+            spc = (SameProcCxt *)hashtbl_get(thread_data->rc->get_hl_sameproccxt(),
                                              (HashKeyType)thread_data->atomi);
             if (spc->is_consistent_with((LmnSymbolAtomRef)thread_data->rc->wt(
                     thread_data->atomi))) {
@@ -131,7 +131,6 @@ void normal_parallel_init(void) {
     thread_info[i]->rc = new LmnReactCxt();
     thread_info[i]->rc->warray_set(
         LmnRegisterArray(thread_info[i]->rc->capacity()));
-    RC_SET_HLINK_SPC(thread_info[i]->rc, NULL);
     thread_info[i]->register_size = LmnReactCxt::warray_DEF_SIZE;
     thread_info[i]->id = i;
     thread_info[i]->next_atom = NULL;

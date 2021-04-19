@@ -1,9 +1,8 @@
 /*
- * zerostep.c
+ * life_time.cpp
  *
- *   Copyright (c) 2017, Ueda Laboratory LMNtal Group
- *                                         <lmntal@ueda.info.waseda.ac.jp>
- *   All rights reserved.
+ *   Copyright (c) 2018, Ueda Laboratory LMNtal Group
+ * <lmntal@ueda.info.waseda.ac.jp> All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
  *   modification, are permitted provided that the following conditions are
@@ -33,42 +32,14 @@
  *   THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  *   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * $Id$
  */
 
-#include "lmntal.h"
-#include "vm/vm.h"
+#include "life_time.hpp"
 
-/**
- * @brief 0stepルールセットを登録するためのコールバック
- *
- * @details
- *   膜の中に入っているルールセットを0stepルールセットとする。
- *   そのルールセットを親膜に移動し、元々の膜を削除する。
- *   ただし、callback命令が終わった際、'$callback'アトムがdeleteされるため、
- *   膜のメモリを解放してしまうとメモリアクセス違反が起きる。
- *   現状ではメモリを解放せず親膜からの削除だけ行う。（これはメモリリークになる）
- * @todo
- *   メモリアクセス違反が起きないように膜のメモリを解放できるような仕様にする。
- */
-void cb_zerostep(LmnReactCxtRef rc, LmnMembraneRef mem) {
-  LmnMembraneRef parent = mem->mem_parent();
-
-  /* ルールセットに0step属性をつけて親膜に移動 */
-  for (int i = 0; i < mem->ruleset_num(); i++) {
-    LmnRuleSetRef rs = lmn_mem_get_ruleset(mem, i);
-    rs->validate_zerostep();
-    lmn_mem_add_ruleset(parent, new LmnRuleSet(*rs));
-  }
-
-  if (rc->has_mode(REACT_MEM_ORIENTED)) {
-    ((MemReactContext *)rc)->memstack_remove(mem);
-  }
-  // lmn_mem_delete_mem(parent, mem); //< may cause memory error
-  parent->remove_mem(mem);
+#ifdef DEBUG
+namespace slim {
+namespace element {
+LifetimeProfiler *LifetimeProfiler::instance_ = nullptr;
 }
-
-void init_zerostep(void) {
-  CCallback::lmn_register_c_fun("zerostep", (void *)cb_zerostep, 0);
 }
+#endif

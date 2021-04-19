@@ -45,10 +45,14 @@
 
 #include "lmntal.h"
 #include "../element/vector.h"
+#include "atom.h"
+#include "rule.h"
 
 #include <map>
+#include <vector>
 
 struct LmnMembrane;
+struct LmnRuleSet;
 typedef struct LmnMembrane *LmnMembraneRef;
 typedef struct AtomListEntry **AtomSet;
 
@@ -64,9 +68,9 @@ struct LmnMembrane {
   LmnMembraneRef parent;
   LmnMembraneRef child_head;
   LmnMembraneRef prev, next;
-  struct Vector rulesets;
+  std::vector<LmnRuleSet *> rulesets;
 #ifdef USE_FIRSTCLASS_RULE
-  Vector *firstclass_rulesets;
+  std::vector<LmnRuleSet *> firstclass_rulesets;
 #endif
 
   std::map<LmnFunctor, AtomListEntry *> atom_lists() const {
@@ -99,25 +103,33 @@ struct LmnMembrane {
   void set_active(BOOL is_activated) {
     this->is_activated = is_activated;
   }
-  struct Vector *get_rulesets() {
-    return &(this->rulesets);
+  const std::vector<LmnRuleSet *> &get_rulesets() const {
+    return this->rulesets;
   }
-  int ruleset_num() {
-    return (this->get_rulesets())->get_num();
+#ifdef USE_FIRSTCLASS_RULE
+  const std::vector<LmnRuleSet *> &get_firstclass_rulesets() const {
+    return this->firstclass_rulesets;
   }
-  unsigned int symb_atom_num() {
+#endif
+#ifdef USE_FIRSTCLASS_RULE
+  void clear_firstclass_rulesets();
+#endif
+  size_t ruleset_num() const {
+    return (this->get_rulesets()).size();
+  }
+  unsigned int symb_atom_num() const {
     return this->atom_symb_num;
   }
   void symb_atom_set(unsigned int n) {
     this->atom_symb_num = n;
   }
-  unsigned int data_atom_num() {
+  unsigned int data_atom_num() const {
     return this->atom_data_num;
   }
   void data_atom_set(unsigned int n) {
     this->atom_data_num = n;
   }
-  unsigned int atom_num() {
+  unsigned int atom_num() const {
     return this->symb_atom_num() + this->data_atom_num();
   }
   BOOL natoms(unsigned int n) {
@@ -156,7 +168,7 @@ struct LmnMembrane {
   LmnMembraneRef mem_prev() {
     return this->prev;
   }
-  ProcessID mem_id() {
+  ProcessID mem_id() const {
     return this->id;
   }
   void set_id(ProcessID n) {
@@ -183,11 +195,23 @@ struct LmnMembrane {
       return NULL;
     }
   }
+  const AtomListEntry *get_atomlist(LmnFunctor f) const {
+    if ((f < this->atomset_size) && this->atomset[f]) {
+      return this->atomset[f];
+    } else {
+      return NULL;
+    }
+  }
   const char *MEM_NAME();
   void drop();
   unsigned long space();
   unsigned long root_space();
   void move_cells(LmnMembraneRef srcmem);
+#ifdef USE_FIRSTCLASS_RULE
+  //LmnSymbolAtomRefの定義がhpp側になかったのでatom.hのインクルードを追加
+  void exec_firstclass_rewriting(LmnMembraneRef srcmem, LmnSymbolAtomRef a);
+#endif
+
   void remove_proxies();
   void insert_proxies(LmnMembraneRef child_mem);
   void remove_temporary_proxies();
@@ -209,8 +233,27 @@ struct LmnMembrane {
   BOOL nfreelinks(unsigned int count);
   void copy_rules(LmnMembraneRef src);
   void clearrules();
-  Vector *firstclass_rulesets();
-  
+  void delete_ruleset(LmnRulesetId del_id);//firstclass_rule.cppのどこからも呼ばれない関数からしか呼ばれないようだがUSE_FIRSTCLASS_RULE条件でカットできないのだろうか？
+#ifdef USE_FIRSTCLASS_RULE
+/**
+ * @brief Get all of the first-class rulesets
+ *
+ * @note you shouldn't modify the returned vector.
+ */
+/**
+ * @brief Add a first-class ruleset to a membrane.
+ *
+ * @note @c fcr must not be @c NULL.
+ */
+  static void add_firstclass_ruleset(LmnMembraneRef mem, LmnRuleSetRef fcr);
+/**
+ * @brief Remove a first-class ruleset from a membrane.
+ *
+ * @note @c mem must contain @c fcr.
+ */
+  static void remove_firstclass_ruleset(LmnMembraneRef mem, LmnRuleSetRef fcr);
+  static void move_firstclass_ruleset_successors_forward(int i, LmnMembraneRef mem);
+#endif
 };
 
 

@@ -47,7 +47,7 @@ class LmnMembrane;
 #include <cstdio>
 #include <memory>
 #include <string>
-
+#include <stdexcept>
 /**
  * A dumper class for states and statespaces.
  *

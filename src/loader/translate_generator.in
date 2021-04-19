@@ -99,7 +99,7 @@ BOOL interpret_generated(LmnReactCxtRef rc,
 #insertconnectorsinnull LmnInstrVar $list
   {
     const Vector v = vec_const_temporary_from_array($1_num, $1);
-    rc->reg($0) = {(LmnWord)insertconnectors(rc, NULL, &v), 0, TT_OTHER};
+    rc->reg($0) = {(LmnWord)Task::insertconnectors(rc, NULL, &v), 0, TT_OTHER};
 
 #__echo_t
     {
@@ -120,7 +120,7 @@ BOOL interpret_generated(LmnReactCxtRef rc,
 #insertconnectors LmnInstrVar $list LmnInstrVar
   {
     const Vector v = vec_const_temporary_from_array($1_num, $1);
-    rc->reg($0) = {(LmnWord)insertconnectors(rc, (LmnMembraneRef)rc->wt($2), &v), 0, TT_OTHER};
+    rc->reg($0) = {(LmnWord)Task::insertconnectors(rc, (LmnMembraneRef)rc->wt($2), &v), 0, TT_OTHER};
 #__echo_t
     {
       char *buf_always = automalloc_sprintf("goto label_always_%p", op_address);
@@ -246,7 +246,7 @@ BOOL interpret_generated(LmnReactCxtRef rc,
   if (!((LmnMembraneRef)rc->wt($0))->nmems($1)) $f;
 
 #norules LmnInstrVar
-  if (((LmnMembraneRef)rc->wt($0))->get_rulesets()->get_num()) $f;
+  if (((LmnMembraneRef)rc->wt($0))->get_rulesets().size()) $f;
 
 #newatom LmnInstrVar LmnInstrVar $functor
 % switch(targ2_attr){
@@ -336,8 +336,8 @@ BOOL interpret_generated(LmnReactCxtRef rc,
     rc->wt($0) = (LmnWord)mp;
     rc->tt($0) = TT_MEM;
     mp->set_active(TRUE);
-    if (RC_GET_MODE(rc, REACT_MEM_ORIENTED)) {
-      lmn_memstack_push(((MemReactContext *)rc)->MEMSTACK(), mp);
+    if (rc->has_mode(REACT_MEM_ORIENTED)) {
+      ((MemReactContext *)rc)->memstack_push(mp);
     }
   }
 
@@ -361,8 +361,8 @@ BOOL interpret_generated(LmnReactCxtRef rc,
   ((LmnMembraneRef)rc->wt($0))->add_child_mem((LmnMembraneRef)rc->wt($1));
 
 #enqueuemem LmnInstrVar
-  if (RC_GET_MODE(rc, REACT_MEM_ORIENTED)) {
-    lmn_memstack_push(((MemReactContext *)rc)->MEMSTACK(), (LmnMembraneRef)rc->wt($0)); /* 通常実行時 */
+  if (rc->has_mode(REACT_MEM_ORIENTED)) {
+    ((MemReactContext *)rc)->memstack_push((LmnMembraneRef)rc->wt($0)); /* 通常実行時 */
   }
 
 #unlockmem LmnInstrVar
@@ -464,12 +464,12 @@ BOOL interpret_generated(LmnReactCxtRef rc,
     unsigned long natoms;
     BOOL b;
 
-    avovec = links_from_idxs((Vector *)rc->wt($2), rc);
-    srcvec = links_from_idxs((Vector *)rc->wt($1), rc);
+    avovec = Task::links_from_idxs((Vector *)rc->wt($2), rc);
+    srcvec = Task::links_from_idxs((Vector *)rc->wt($1), rc);
     b = lmn_mem_is_ground(srcvec, avovec, &natoms);
 
-    free_links(srcvec);
-    free_links(avovec);
+    Task::free_links(srcvec);
+    Task::free_links(avovec);
 
     if(! b) $f;
     rc->reg($0) = {natoms, LMN_INT_ATTR, TT_OTHER};
@@ -578,32 +578,32 @@ BOOL interpret_generated(LmnReactCxtRef rc,
 
 #eqground LmnInstrVar LmnInstrVar
   {
-    Vector *srcvec = links_from_idxs((Vector*)rc->wt($0), rc);
-    Vector *dstvec = links_from_idxs((Vector*)rc->wt($1), rc);
+    Vector *srcvec = Task::links_from_idxs((Vector*)rc->wt($0), rc);
+    Vector *dstvec = Task::links_from_idxs((Vector*)rc->wt($1), rc);
     BOOL same = lmn_mem_cmp_ground(srcvec, dstvec);
-    free_links(srcvec);
-    free_links(dstvec);
+    Task::free_links(srcvec);
+    Task::free_links(dstvec);
     if(! same) $f;
   }
 
 #neqground LmnInstrVar LmnInstrVar
   {
-    Vector *srcvec = links_from_idxs((Vector*)rc->wt($0), rc);
-    Vector *dstvec = links_from_idxs((Vector*)rc->wt($1), rc);
+    Vector *srcvec = Task::links_from_idxs((Vector*)rc->wt($0), rc);
+    Vector *dstvec = Task::links_from_idxs((Vector*)rc->wt($1), rc);
     BOOL same = lmn_mem_cmp_ground(srcvec, dstvec);
-    free_links(srcvec);
-    free_links(dstvec);
+    Task::free_links(srcvec);
+    Task::free_links(dstvec);
     if(same) $f;
   }
 
 #copyground LmnInstrVar LmnInstrVar LmnInstrVar
   {
-    Vector *srcvec = links_from_idxs((Vector*)rc->wt($1), rc);
+    Vector *srcvec = Task::links_from_idxs((Vector*)rc->wt($1), rc);
     Vector *dstlovec, *retvec;
     ProcessTableRef atommap;
 
     lmn_mem_copy_ground((LmnMembraneRef)rc->wt($2), srcvec, &dstlovec, &atommap);
-    free_links(srcvec);
+    Task::free_links(srcvec);
 
     /* 返り値の作成 */
     retvec = new Vector(2);
@@ -618,7 +618,7 @@ BOOL interpret_generated(LmnReactCxtRef rc,
     }
 #__format_t
   label_always_$a:
-    free_links(dstlovec);
+    Task::free_links(dstlovec);
     delete retvec;
     $s;
     lmn_fatal("translate recursive error\n");
@@ -629,16 +629,16 @@ BOOL interpret_generated(LmnReactCxtRef rc,
 
 #removeground LmnInstrVar LmnInstrVar
   {
-    Vector *srcvec = links_from_idxs((Vector*)rc->wt($0), rc);
+    Vector *srcvec = Task::links_from_idxs((Vector*)rc->wt($0), rc);
     ((LmnMembraneRef)rc->wt($1))->remove_ground(srcvec);
-    free_links(srcvec);
+    Task::free_links(srcvec);
   }
 
 #freeground LmnInstrVar
   {
-    Vector *srcvec = links_from_idxs((Vector*)rc->wt($0), rc);
+    Vector *srcvec = Task::links_from_idxs((Vector*)rc->wt($0), rc);
     lmn_mem_free_ground(srcvec);
-    free_links(srcvec);
+    Task::free_links(srcvec);
   }
 
 #stable LmnInstrVar
@@ -887,7 +887,7 @@ BOOL interpret_generated(LmnReactCxtRef rc,
   TR_INSTR_LOOKUPLINK(rc, $0, $1, $2);
 
 #clearrules LmnInstrVar
-  ((LmnMembraneRef)rc->wt($0))->get_rulesets()->clear();
+  ((LmnMembraneRef)rc->wt($0))->clearrules();
 
 #dropmem LmnInstrVar
   ((LmnMembraneRef)rc->wt($0))->drop();
