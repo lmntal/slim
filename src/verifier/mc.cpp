@@ -51,6 +51,7 @@
 #include "state.h"
 #include "state.hpp"
 #include "state_dumper.h"
+#include <iostream>
 
 /** =======================================
  *  ==== Entrance for model checking ======
@@ -60,6 +61,7 @@
 static inline void do_mc(LmnMembraneRef world_mem, AutomataRef a, Vector *psyms,
                          int thread_num);
 static void mc_dump(LmnWorkerGroup *wp);
+static void dump_scc(std::vector<State*> nodes);
 
 /* 非決定実行を行う. run_mcもMT-unsafeなので子ルーチンとしては使えない */
 void run_mc(Vector *start_rulesets, AutomataRef a, Vector *psyms) {
@@ -150,6 +152,7 @@ static void mc_dump(LmnWorkerGroup *wp) {
     if (lmn_env.trace) {
       ss->dump();
     }
+    dump_scc(ss->all_states());
 
     /* 2. 反例パス or 最終状態集合の出力 */
     auto out = ss->output();
@@ -1019,5 +1022,17 @@ const char *mc_error_msg(int error_id) {
   default:
     lmn_fatal("implementation error\n");
     return NULL;
+  }
+}
+
+static void dump_scc(std::vector<State*> nodes) {
+  std::cout << "dump_scc" << std::endl;
+  for(const auto &s: nodes) {
+    std::cout << s->get_id() << std::endl;
+  };
+  for (auto &s : nodes) {
+      std::cout << s->get_id() << "'s child" << std::endl;
+      for (int i = 0; i < s->successor_num; i++)
+        std::cout << state_format_id(state_succ_state(s, i), true) << std::endl;
   }
 }
