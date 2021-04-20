@@ -52,6 +52,10 @@
 #include "state.hpp"
 #include "state_dumper.h"
 #include <iostream>
+#include <vector>
+#include <sstream>
+#include <string>
+using namespace std;
 
 /** =======================================
  *  ==== Entrance for model checking ======
@@ -1025,14 +1029,61 @@ const char *mc_error_msg(int error_id) {
   }
 }
 
-static void dump_scc(std::vector<State*> nodes) {
+void dfs(const vector<vector<int>> &G, const int v, vector<int> &number, vector<int> &isVisited) {
+  isVisited[v] = 1;
+  for(const auto& to: G[v]) {
+    if (!isVisited[to]) dfs(G,to, number, isVisited);
+  }
+  number.push_back(v);
+}
+
+void rdfs(const vector<vector<int>> &rG, const int v, vector<int> &isVisited, vector<int> &tmp) {
+  isVisited[v] = 0;
+  for(const auto& to: rG[v]) {
+    if (isVisited[to]) rdfs(rG,to, isVisited, tmp);
+  }
+  tmp.push_back(v);
+}
+
+static void dump_scc(const std::vector<State*> nodes) {
   std::cout << "dump_scc" << std::endl;
-  for(const auto &s: nodes) {
+  vector<vector<int>> G;
+  vector<vector<int>> rG;
+  vector<int> number;
+  vector<int> isVisited;
+  vector<vector<int>> scc;
+  G.resize(nodes.size() + 1);
+  rG.resize(nodes.size() + 1);
+  isVisited.resize(nodes.size() + 1, 0);
+  
+  for(const auto &s : nodes) {
     std::cout << s->get_id() << std::endl;
   };
-  for (auto &s : nodes) {
-      std::cout << s->get_id() << "'s child" << std::endl;
-      for (int i = 0; i < s->successor_num; i++)
-        std::cout << state_format_id(state_succ_state(s, i), true) << std::endl;
+  for (const auto &s : nodes) {
+    std::cout << s->get_id() << "'s child" << std::endl;
+    for (int i = 0; i < s->successor_num; i++) {
+      const int from = s->get_id();
+      const int to = state_format_id(state_succ_state(s, i), true);
+      std::cout << to << std::endl;
+      G[from].push_back(to);
+      rG[to].push_back(from);
+    }
+  }
+
+  dfs(G, 1, number, isVisited);
+
+  for(int i = number.size() - 1; i >= 0; i--) {
+    if (isVisited[number[i]]) {
+      vector<int> tmp;
+      rdfs(rG, number[i], isVisited, tmp);
+      scc.push_back(tmp);
+    }
+  }
+
+  for(const auto& vec: scc) {
+    for(const auto& v: vec) {
+      std::cout << v << " ";
+    }
+    std::cout << std::endl;
   }
 }
