@@ -300,6 +300,7 @@ TreeInc TreeDatabase::tree_find_or_put_inc_rec(TreeNodeStrRef str, int start, in
     left_ref.elem = this->tree_find_or_put_rec(str, start, start + split, found);
     right_ref.elem = this->tree_find_or_put_rec(str, start + split + 1, end, found);
   } else {
+    //segv
     TreeNodeRef prev_node = this->nodes[prev_ref & this->mask];
     prev_split = tree_get_split_position(prev_start, prev_end);
     left_ref = this->tree_find_or_put_inc_rec(str, start, start + split, prev_start, prev_start + prev_split, found, prev_node->left);
@@ -338,7 +339,7 @@ TreeNodeID TreeDatabase::tree_find_or_put(LmnBinStrRef bs,
   str.nodes = (TreeNodeElement *)bs->v;
   if (str.extra > 0)
     str.len += 1;
-  if(prev_ref_top > -1  || prev_bs != NULL){//初期状態でないとき
+  if(prev_ref_top != -1 && prev_bs != NULL){//初期状態でないとき
     struct TreeNodeStr prev_str;
     TreeInc refinc;
     {
