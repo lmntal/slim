@@ -178,7 +178,7 @@ BOOL proposition_eval(PropositionRef prop, LmnMembraneRef mem) {
   if (!prop)
     return FALSE;
 
-  b = react_rule(&rc, mem, proposition_get_rule(prop));
+  b = Task::react_rule(&rc, mem, proposition_get_rule(prop));
 
   return b;
 }

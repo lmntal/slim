@@ -365,7 +365,7 @@ static void _run(file_ptr fp)
   if (lmn_env.nd) {
     run_mc(start_rulesets, NULL, NULL);
   } else {
-    lmn_run(start_rulesets);
+    Task::lmn_run(start_rulesets);
   }
 
   delete start_rulesets;

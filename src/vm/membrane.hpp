@@ -45,6 +45,8 @@
 
 #include "lmntal.h"
 #include "../element/vector.h"
+#include "atom.h"
+#include "rule.h"
 
 #include <map>
 #include <vector>
@@ -108,6 +110,9 @@ struct LmnMembrane {
   const std::vector<LmnRuleSet *> &get_firstclass_rulesets() const {
     return this->firstclass_rulesets;
   }
+#endif
+#ifdef USE_FIRSTCLASS_RULE
+  void clear_firstclass_rulesets();
 #endif
   size_t ruleset_num() const {
     return (this->get_rulesets()).size();
@@ -202,6 +207,11 @@ struct LmnMembrane {
   unsigned long space();
   unsigned long root_space();
   void move_cells(LmnMembraneRef srcmem);
+#ifdef USE_FIRSTCLASS_RULE
+  //LmnSymbolAtomRefの定義がhpp側になかったのでatom.hのインクルードを追加
+  void exec_firstclass_rewriting(LmnMembraneRef srcmem, LmnSymbolAtomRef a);
+#endif
+
   void remove_proxies();
   void insert_proxies(LmnMembraneRef child_mem);
   void remove_temporary_proxies();
@@ -223,7 +233,27 @@ struct LmnMembrane {
   BOOL nfreelinks(unsigned int count);
   void copy_rules(LmnMembraneRef src);
   void clearrules();
-  void delete_ruleset(LmnRulesetId del_id);
+  void delete_ruleset(LmnRulesetId del_id);//firstclass_rule.cppのどこからも呼ばれない関数からしか呼ばれないようだがUSE_FIRSTCLASS_RULE条件でカットできないのだろうか？
+#ifdef USE_FIRSTCLASS_RULE
+/**
+ * @brief Get all of the first-class rulesets
+ *
+ * @note you shouldn't modify the returned vector.
+ */
+/**
+ * @brief Add a first-class ruleset to a membrane.
+ *
+ * @note @c fcr must not be @c NULL.
+ */
+  static void add_firstclass_ruleset(LmnMembraneRef mem, LmnRuleSetRef fcr);
+/**
+ * @brief Remove a first-class ruleset from a membrane.
+ *
+ * @note @c mem must contain @c fcr.
+ */
+  static void remove_firstclass_ruleset(LmnMembraneRef mem, LmnRuleSetRef fcr);
+  static void move_firstclass_ruleset_successors_forward(int i, LmnMembraneRef mem);
+#endif
 };
 
 
