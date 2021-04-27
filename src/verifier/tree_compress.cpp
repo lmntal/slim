@@ -44,6 +44,7 @@
 #include <math.h>
 #include <mutex>
 #include <iostream>
+#include<fstream>
 using namespace std;
 std::mutex mtx;
 std::mutex mtx1;
@@ -59,7 +60,8 @@ std::mutex mtx1;
 
 typedef struct TreeNodeStr *TreeNodeStrRef;
 
-LmnBinStrRef prev_bs = NULL;
+
+int prev_bs_len = -1;
 TreeNodeID prev_ref_top = -1;
 
 struct TreeNodeStr {
@@ -300,7 +302,6 @@ TreeInc TreeDatabase::tree_find_or_put_inc_rec(TreeNodeStrRef str, int start, in
     left_ref.elem = this->tree_find_or_put_rec(str, start, start + split, found);
     right_ref.elem = this->tree_find_or_put_rec(str, start + split + 1, end, found);
   } else {
-    //segv
     TreeNodeRef prev_node = this->nodes[prev_ref & this->mask];
     prev_split = tree_get_split_position(prev_start, prev_end);
     left_ref = this->tree_find_or_put_inc_rec(str, start, start + split, prev_start, prev_start + prev_split, found, prev_node->left);
@@ -312,14 +313,14 @@ TreeInc TreeDatabase::tree_find_or_put_inc_rec(TreeNodeStrRef str, int start, in
       if (found)
 	(*found) = _found;
     }else{
-      //printf("inc\n");
+      (*found) = true;
       ref = prev_ref;
     }
   } else {
     if(left_ref.check == false || right_ref.check == false){
       this->table_find_or_put(left_ref.elem, right_ref.elem, &ref);
     }else{
-      //printf("inc\n");
+      (*found) = true;
       ref = prev_ref;
     }
   }
@@ -339,16 +340,15 @@ TreeNodeID TreeDatabase::tree_find_or_put(LmnBinStrRef bs,
   str.nodes = (TreeNodeElement *)bs->v;
   if (str.extra > 0)
     str.len += 1;
-  if(prev_ref_top != -1 && prev_bs != NULL){//初期状態でないとき
+  if(prev_ref_top != -1 && prev_bs_len != -1){//初期状態でないとき
     struct TreeNodeStr prev_str;
     TreeInc refinc;
     {
       std::lock_guard<std::mutex> lock(mtx);
       prev_ref_top1 = prev_ref_top;
-      int prev_v_len_real = ((prev_bs->len + 1) / TAG_IN_BYTE);
+      int prev_v_len_real = ((prev_bs_len + 1) / TAG_IN_BYTE);
       prev_str.len = prev_v_len_real / TREE_UNIT_SIZE;
       prev_str.extra = prev_v_len_real % TREE_UNIT_SIZE;
-      prev_str.nodes = (TreeNodeElement *)prev_bs->v;
       if (prev_str.extra > 0)
 	prev_str.len += 1;
     }
@@ -360,7 +360,7 @@ TreeNodeID TreeDatabase::tree_find_or_put(LmnBinStrRef bs,
   }
   {
     std::lock_guard<std::mutex> lock(mtx1);
-    prev_bs = bs;
+    prev_bs_len = bs->len;
     prev_ref_top = ref;
   }
   return ref;
