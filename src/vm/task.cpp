@@ -128,6 +128,8 @@ static inline void react_initial_rulesets(LmnReactCxtRef rc,
                                           LmnMembraneRef mem);
 static inline BOOL react_ruleset_in_all_mem(LmnReactCxtRef rc, LmnRuleSetRef rs,
                                             LmnMembraneRef mem);
+static inline BOOL react_start_ruleset(LmnReactCxtRef rc, LmnMembraneRef mem,
+				       LmnRuleSetRef rs);
 static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
                            LmnRuleInstr instr);
 
@@ -345,16 +347,30 @@ static inline BOOL react_ruleset(LmnReactCxtRef rc, LmnMembraneRef mem,
   
   //shuffle_ruleオプションが付いている場合はruleをシャッフル
   if(lmn_env.shuffle_rule) rs->shuffle();
-
-  for (auto r : *rs) {
+  if(rc->has_mode(REACT_ND) || rc->is_zerostep) {
+    for (auto r : *rs) {
 #ifdef PROFILE
-    if (!lmn_env.nd && lmn_env.profile_level >= 2)
-      profile_rule_obj_set(rs, r);
+      if (!lmn_env.nd && lmn_env.profile_level >= 2)
+	profile_rule_obj_set(rs, r);
 #endif
-    if (Task::react_rule(rc, mem, r))
-      return true;
+      if (Task::react_rule(rc, mem, r))
+	return true;
+    }
+    return false;
+  } else {
+    bool f = false;
+    do {
+      f = false;
+      for (auto r : *rs) {
+#ifdef PROFILE
+	if (!lmn_env.nd && lmn_env.profile_level >= 2)
+	  profile_rule_obj_set(rs, r);
+#endif
+	f = f || (Task::react_rule(rc, mem, r));
+      }
+    } while(f);
+    return f;
   }
-  return false;
 }
 
 /** 膜memに対してルールruleの適用を試みる.
@@ -441,7 +457,7 @@ void Task::react_start_rulesets(LmnMembraneRef mem, Vector *rulesets) {
   int i;
 
   for (i = 0; i < rulesets->get_num(); i++) {
-    react_ruleset(&rc, mem, (LmnRuleSetRef)rulesets->get(i));
+    react_start_ruleset(&rc, mem, (LmnRuleSetRef)rulesets->get(i));
   }
   react_initial_rulesets(&rc, mem);
   react_zerostep_recursive(&rc, mem);
@@ -450,6 +466,21 @@ void Task::react_start_rulesets(LmnMembraneRef mem, Vector *rulesets) {
   // register first-class rulesets produced by the initial process.
   lmn_rc_execute_insertion_events(&rc);
 #endif
+}
+
+static inline BOOL react_start_ruleset(LmnReactCxtRef rc, LmnMembraneRef mem,
+				       LmnRuleSetRef rs) {
+    //shuffle_ruleオプションが付いている場合はruleをシャッフル
+  if(lmn_env.shuffle_rule) rs->shuffle();
+  for (auto r : *rs) {
+#ifdef PROFILE
+    if (!lmn_env.nd && lmn_env.profile_level >= 2)
+      profile_rule_obj_set(rs, r);
+#endif
+    if (Task::react_rule(rc, mem, r))
+      return true;
+  }
+  return false;
 }
 
 inline static void react_initial_rulesets(LmnReactCxtRef rc,
