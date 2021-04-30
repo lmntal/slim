@@ -56,6 +56,7 @@ void cb_create_thread(LmnReactCxtRef rc, LmnMembraneRef mem) {
 
   for (int i = 0; i < mem->ruleset_num(); i++) {
     LmnRuleSetRef rs = lmn_mem_get_ruleset(mem, i);
+    rs->validate_para_ruleset();
     lmn_mem_add_ruleset(parent, new LmnRuleSet(*rs));
   }
 
