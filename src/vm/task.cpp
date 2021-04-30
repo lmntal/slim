@@ -359,6 +359,7 @@ static inline BOOL react_ruleset(LmnReactCxtRef rc, LmnMembraneRef mem,
     return false;
   } else {
     bool f = false;
+    bool ret = false;
     do {
       f = false;
       for (auto r : *rs) {
@@ -366,10 +367,11 @@ static inline BOOL react_ruleset(LmnReactCxtRef rc, LmnMembraneRef mem,
 	if (!lmn_env.nd && lmn_env.profile_level >= 2)
 	  profile_rule_obj_set(rs, r);
 #endif
-	f = f || (Task::react_rule(rc, mem, r));
+	f = (Task::react_rule(rc, mem, r)) || f;
+	ret = f || ret;
       }
     } while(f);
-    return f;
+    return ret;
   }
 }
 
