@@ -2450,6 +2450,8 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     READ_VAL(LmnInstrVar, instr, parenti);
 
     ((LmnMembraneRef)rc->wt(parenti))->remove_mem((LmnMembraneRef)rc->wt(memi));
+    if(!rc->has_mode(REACT_ND) and !rc->is_zerostep)
+      ((MemReactContext *)rc)->memstack_reconstruct(rc->get_global_root());
     break;
   }
   case INSTR_FREEMEM: {
