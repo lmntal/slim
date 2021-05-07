@@ -427,10 +427,25 @@ void lmn_mem_unify_symbol_atom_args(LmnSymbolAtomRef atom1, int pos1,
   ap2 = atom2->get_link(pos2);
   attr2 = atom2->get_attr(pos2);
 
-  ((LmnSymbolAtomRef)ap2)->set_link(attr2, ap1);
-  ((LmnSymbolAtomRef)ap2)->set_attr(attr2, attr1);
-  ((LmnSymbolAtomRef)ap1)->set_link(attr1, ap2);
-  ((LmnSymbolAtomRef)ap1)->set_attr(attr1, attr2);
+  if (LMN_ATTR_IS_DATA(attr1)) {
+    std::swap(ap1, ap2);
+    std::swap(attr1, attr2);
+  }
+
+  if (LMN_ATTR_IS_DATA(attr1) && LMN_ATTR_IS_DATA(attr2)) {
+    // TODO: '='アトムでつなぐ？
+    // SLIMの仕様上はここにこないはずだが……
+    // というかそれができるならlmn_mem_unify_atom_argsでいい．
+    lmn_fatal("cannot connect data atoms here.");
+  } else if (LMN_ATTR_IS_DATA(attr2)) {
+    ((LmnSymbolAtomRef)ap1)->set_link(attr1, ap2);
+    ((LmnSymbolAtomRef)ap1)->set_attr(attr1, attr2);
+  } else {
+    ((LmnSymbolAtomRef)ap2)->set_link(attr2, ap1);
+    ((LmnSymbolAtomRef)ap2)->set_attr(attr2, attr1);
+    ((LmnSymbolAtomRef)ap1)->set_link(attr1, ap2);
+    ((LmnSymbolAtomRef)ap1)->set_attr(attr1, attr2);
+  }
 }
 
 /* atom1, atom2はシンボルアトムのはず */
