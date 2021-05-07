@@ -58,16 +58,20 @@ class ByteEncoder {
   location loc;
   location cap;   /* 書き込み位置とbyte_seqのキャパシティ */
   BYTE *byte_seq; /* ルールの命令列を書き込む領域 */
-  const Rule &rule;
+  bool hasuniq;
+  lmn_interned_str name;
 
 public:
   static std::unique_ptr<LmnRule> encode_rule_ast(const Rule &rule) {
     return ByteEncoder(rule).create_rule();
   }
+  static std::unique_ptr<LmnRule> encode_rule_ast(const Subrule &rule) {
+    return ByteEncoder(rule).create_subrule();
+  }
 
 private:
   ByteEncoder(const Rule &rule)
-      : loc(0), cap(256), byte_seq(LMN_NALLOC(BYTE, cap)), rule(rule) {
+      : loc(0), cap(256), byte_seq(LMN_NALLOC(BYTE, cap)), hasuniq(rule.hasuniq) {
     /* load(rule.amatch); */
     load(rule.mmatch);
     load(rule.guard);
@@ -75,9 +79,22 @@ private:
     resolve_labels();
   }
 
+  ByteEncoder(const Subrule &rule)
+      : loc(0), cap(256), byte_seq(LMN_NALLOC(BYTE, cap)), hasuniq(false) {
+    /* load(rule.amatch); */
+    load(rule.body);
+    name = rule.name;
+    resolve_labels();
+  }
+
   std::unique_ptr<LmnRule> create_rule() {
     return std::unique_ptr<LmnRule>(
-        new LmnRule(byte_seq, cap, ANONYMOUS, rule.hasuniq));
+        new LmnRule(byte_seq, cap, ANONYMOUS, hasuniq));
+  }
+
+  std::unique_ptr<LmnRule> create_subrule() {
+    return std::unique_ptr<LmnRule>(
+        new LmnRule(byte_seq, cap, name, hasuniq, true));
   }
 
   void load(const InstBlock &ib) {

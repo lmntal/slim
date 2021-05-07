@@ -2501,6 +2501,35 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
         ((LmnSymbolAtomRef)rc->wt(atom2))->get_attr(posi), TT_ATOM};
     break;
   }
+  case INSTR_DEREFLINK: {
+    LmnInstrVar atomi, linki, pos;
+    READ_VAL(LmnInstrVar, instr, atomi);
+    READ_VAL(LmnInstrVar, instr, linki);
+    READ_VAL(LmnInstrVar, instr, pos);
+
+    auto attr = rc->at(linki);
+    if (LMN_ATTR_IS_DATA(attr)) {
+      if (pos != 0)
+        return false;
+
+      rc->reg(atomi) = {
+        rc->wt(linki),
+        attr,
+        TT_ATOM
+      };
+    } else {
+      if (rc->at(linki) != pos)
+        return false;
+
+      rc->reg(atomi) = {
+        rc->wt(linki),
+        rc->at(linki),
+        TT_ATOM
+      };
+    }
+
+    break;
+  }
   case INSTR_DEREF: {
     LmnInstrVar atom1, atom2, pos1, pos2;
     LmnByte attr;
@@ -4291,6 +4320,119 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     lmn_hyperlink_print(rc->get_global_root());
     break;
   }
+
+  // subrule instructions
+  case INSTR_SUBRULE: {
+    // printf("start subrule\n");
+    LmnInstrVar retnum;
+    READ_VAL(LmnInstrVar, instr, retnum);
+    for (int i = 0; i < retnum; i++) {
+      SKIP_VAL(LmnInstrVar, instr);
+    }
+
+    LmnInstrVar memi;
+    READ_VAL(LmnInstrVar, instr, memi);
+    lmn_interned_str name;
+    READ_VAL(lmn_interned_str, instr, name);
+
+    LmnInstrVar argnum;
+    READ_VAL(LmnInstrVar, instr, argnum);
+    auto v = LmnRegisterArray(argnum);
+    for (int i = 0; i < argnum; i++) {
+      LmnInstrVar regi;
+      READ_VAL(LmnInstrVar, instr, regi);
+      v[i] = rc->reg(regi);
+    }
+
+    auto mem = reinterpret_cast<LmnMembrane *>(rc->wt(memi));
+    LmnRule *subrule = nullptr;
+    for (auto ruleset : mem->get_rulesets()) {
+      subrule = ruleset->get_subrule(name);
+      if (!subrule)
+        continue;
+
+      break;
+    }
+
+    if (!subrule) {
+      // printf("no matching function found: %s\n", lmn_id_to_name(name));
+      return false;
+    }
+
+    // printf("call: %s\n", lmn_id_to_name(name));
+
+    LmnRuleInstr caller = instr;
+    instr = subrule->inst_seq;
+
+    // use pointer to avoid copy capture.
+    auto tmp = new std::vector<LmnRegister>(std::move(rc->work_array));
+    rc->warray_set(std::move(v));
+
+    this->push_stackframe([=](interpreter &itr, bool result) {
+      itr.rc->warray_set(std::move(*tmp));
+      delete tmp;
+      itr.instr = caller;
+      return result ? command_result::Continue : command_result::Failure;
+    });
+
+
+    break;
+  }
+  case INSTR_SUCCRETURN: {
+    // TODO:
+    LmnInstrVar retnum;
+    READ_VAL(LmnInstrVar, instr, retnum);
+    for (int i = 0; i < retnum; i++) {
+      SKIP_VAL(LmnInstrVar, instr);
+    }
+    return true;
+  }
+  case INSTR_FAILRETURN: {
+    return false;
+  }
+
+  case INSTR_ISPAIREDLINK: {
+    LmnInstrVar link1i, link2i;
+    READ_VAL(LmnInstrVar, instr, link1i);
+    READ_VAL(LmnInstrVar, instr, link2i);
+
+    if (LMN_ATTR_IS_DATA(rc->at(link1i)) || LMN_ATTR_IS_DATA(rc->at(link2i)))
+      return false;
+
+    auto atom1 = (LmnSymbolAtomRef)rc->wt(link1i);
+    auto pos1 = rc->at(link1i);
+    auto atom2 = (LmnSymbolAtomRef)rc->wt(link2i);
+    auto pos2 = rc->at(link2i);
+    
+    if (atom1->get_link(pos1) == atom2 && atom1->get_attr(pos1) == pos2 &&
+        atom2->get_link(pos2) == atom1 && atom2->get_attr(pos2) == pos1)
+      break;
+
+    return false;
+  }
+
+  case INSTR_ALLOCSET: {
+    // TODO:
+    SKIP_VAL(LmnInstrVar, instr);
+    break;
+  }
+  case INSTR_ADDTOSET: {
+    // TODO:
+    SKIP_VAL(LmnInstrVar, instr);
+    SKIP_VAL(LmnInstrVar, instr);
+    break;
+  }
+  case INSTR_MERGESET: {
+    // TODO:
+    SKIP_VAL(LmnInstrVar, instr);
+    SKIP_VAL(LmnInstrVar, instr);
+    break;
+  }
+  case INSTR_FREESET: {
+    // TODO:
+    SKIP_VAL(LmnInstrVar, instr);
+    break;
+  }
   default:
     fprintf(stderr, "interpret: Unknown operation %d\n", op);
     exit(1);
@@ -4320,6 +4462,9 @@ bool slim::vm::interpreter::run() {
       } else if (r == command_result::Failure) {
         result = false;
         this->callstack.pop_back();
+      } else if (r == command_result::Continue) {
+        this->callstack.pop_back();
+        break;
       } else if (r == command_result::Trial) {
         // ここにきた場合は違うパターンでリトライするためにcallbackをpopしない
         // (c.f. false_driven_enumerator)
