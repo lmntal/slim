@@ -47,7 +47,6 @@
 #include<fstream>
 using namespace std;
 std::mutex mtx;
-std::mutex mtx1;
 
 #define atomic_fetch_and_inc(t) __sync_fetch_and_add(t, 1)
 #define atomic_fetch_and_dec(t) __sync_fetch_and_sub(t, 1)
@@ -313,14 +312,12 @@ TreeInc TreeDatabase::tree_find_or_put_inc_rec(TreeNodeStrRef str, int start, in
       if (found)
 	(*found) = _found;
     }else{
-      (*found) = true;
       ref = prev_ref;
     }
   } else {
     if(left_ref.check == false || right_ref.check == false){
       this->table_find_or_put(left_ref.elem, right_ref.elem, &ref);
     }else{
-      (*found) = true;
       ref = prev_ref;
     }
   }
@@ -341,25 +338,28 @@ TreeNodeID TreeDatabase::tree_find_or_put(LmnBinStrRef bs,
   if (str.extra > 0)
     str.len += 1;
   if(prev_ref_top != -1 && prev_bs_len != -1){//初期状態でないとき
-    struct TreeNodeStr prev_str;
+    //struct TreeNodeStr prev_str;
     TreeInc refinc;
+    int prev_v_len_real;
+    int prev_str_len;
+    int prev_str_extra;
     {
       std::lock_guard<std::mutex> lock(mtx);
       prev_ref_top1 = prev_ref_top;
-      int prev_v_len_real = ((prev_bs_len + 1) / TAG_IN_BYTE);
-      prev_str.len = prev_v_len_real / TREE_UNIT_SIZE;
-      prev_str.extra = prev_v_len_real % TREE_UNIT_SIZE;
-      if (prev_str.extra > 0)
-	prev_str.len += 1;
+      prev_v_len_real = ((prev_bs_len + 1) / TAG_IN_BYTE);
+      prev_str_len = prev_v_len_real / TREE_UNIT_SIZE;
+      prev_str_extra = prev_v_len_real % TREE_UNIT_SIZE;
+      if (prev_str_extra > 0)
+	prev_str_len += 1;
     }
-    refinc = this->tree_find_or_put_inc_rec(&str, 0, str.len - 1, 0, prev_str.len - 1, found, prev_ref_top1);
+    refinc = this->tree_find_or_put_inc_rec(&str, 0, str.len - 1, 0, prev_str_len - 1, found, prev_ref_top1);
     ref = refinc.elem;
   }else{//初期状態のとき
     // printf("node_count: %d, extra:%d\n", str.len, str.extra);
     ref = this->tree_find_or_put_rec(&str, 0, str.len - 1, found);
   }
   {
-    std::lock_guard<std::mutex> lock(mtx1);
+    std::lock_guard<std::mutex> lock(mtx);
     prev_bs_len = bs->len;
     prev_ref_top = ref;
   }
