@@ -1,7 +1,7 @@
 /*
- * element.h
+ * check_result.hpp
  *
- *   Copyright (c) 2016, Ueda Laboratory LMNtal Group
+ *   Copyright (c) 2019, Ueda Laboratory LMNtal Group
  * <lmntal@ueda.info.waseda.ac.jp> All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
@@ -32,45 +32,39 @@
  *   THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  *   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * $Id$
  */
 
-#ifndef LMN_ELEMENT_H
-#define LMN_ELEMENT_H
+#ifndef SSC_CHECK_RESULT_HPP
+#define SSC_CHECK_RESULT_HPP
 
-/**
- * @defgroup Element
- */
+#include "state_space.hpp"
 
-#include "clock.h"
-#include "conditional_ostream.hpp"
-#include "error.h"
-#include "exception.hpp"
-#include "file_util.h"
-#include "instruction.hpp"
-#include "internal_hash.h"
-#include "life_time.hpp"
-#include "lmnstring.h"
-#include "lmntal_thread.h"
-#include "memory_pool.h"
-#include "optional.hpp"
-#include "port.h"
-#include "process_util.h"
-#include "queue.h"
-#include "range_remove_if.hpp"
-#include "re2c/buffer.hpp"
-#include "re2c/cfstream_buffer.hpp"
-#include "re2c/file_buffer.hpp"
-#include "scope.hpp"
-#include "st.h"
-#include "stack_trace.hpp"
-#include "util.h"
-#include "variant.hpp"
-#include "vector.h"
+#include <string>
+#include <unordered_map>
 
-#include "json/conv.hpp"
-#include "json/exception.hpp"
-#include "json/value.hpp"
+namespace ssc {
 
-#endif /* LMN_ELEMENT_H */
+// 等価性判定結果を格納する
+// 失敗の場合は失敗理由を示す文字列、成功の場合は同型射
+struct check_result {
+  bool succeeded;
+  std::string reason;
+  std::unordered_map<state_space::state_id_t, state_space::state_id_t> morphism;
+
+  check_result() : succeeded(true) {}
+  check_result(bool s, const std::string &r) : succeeded(s), reason(r) {}
+  check_result(bool s, const state_space_homomorphism &r)
+      : succeeded(s), morphism(r) {}
+  static check_result success(const state_space_homomorphism &reason) {
+    return check_result(true, reason);
+  }
+  static check_result fail(const std::string &reason) {
+    return check_result(false, reason);
+  }
+
+  explicit operator bool() { return succeeded; }
+};
+
+} // namespace ssc
+
+#endif /* SSC_CHECK_RESULT_HPP */

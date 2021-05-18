@@ -36,71 +36,13 @@
  * $Id: alloc.c,v 1.3 2008/09/19 05:18:17 taisuke Exp $
  */
 
+
 #include "error.h"
+
 #include "lmntal.h"
-#include "lmntal_thread.h"
-#include "memory_pool.h"
-#include "util.h"
-#include "vector.h"
-#include "vm/vm.h"
 
-/*----------------------------------------------------------------------
- * memory allocation for atom
- */
-
-static memory_pool **atom_memory_pools[128];
-
-void mpool_init() {
-  int i, core_num, arity_num;
-  arity_num = ARY_SIZEOF(atom_memory_pools);
-  core_num = lmn_env.core_num;
-  for (i = 0; i < arity_num; i++) {
-    atom_memory_pools[i] =
-        (memory_pool **)malloc(sizeof(memory_pool *) * core_num);
-    memset(atom_memory_pools[i], 0, sizeof(memory_pool *) * core_num);
-  }
-}
-
-LmnSymbolAtomRef lmn_new_atom(LmnFunctor f) {
-  LmnSymbolAtomRef ap;
-  int arity, cid;
-  arity = LMN_FUNCTOR_ARITY(lmn_functor_table, f);
-  cid = env_my_thread_id();
-
-  if (atom_memory_pools[arity][cid] == 0) {
-    atom_memory_pools[arity][cid] = memory_pool_new(LMN_SATOM_SIZE(arity));
-  }
-  ap = (LmnSymbolAtomRef)memory_pool_malloc(atom_memory_pools[arity][cid]);
-  ap->set_functor(f);
-  ap->set_id(0);
-
-  return ap;
-}
-
-void lmn_delete_atom(LmnSymbolAtomRef ap) {
-  int arity, cid;
-
-  env_return_id(ap->get_id());
-
-  arity = LMN_FUNCTOR_ARITY(lmn_functor_table, ap->get_functor());
-  cid = env_my_thread_id();
-  memory_pool_free(atom_memory_pools[arity][cid], ap);
-}
-
-void free_atom_memory_pools(void) {
-  unsigned int i, j, arity_num, core_num;
-
-  arity_num = ARY_SIZEOF(atom_memory_pools);
-  core_num = lmn_env.core_num;
-  for (i = 0; i < arity_num; i++) {
-    for (j = 0; j < core_num; j++) {
-      if (atom_memory_pools[i][j]) {
-        memory_pool_delete(atom_memory_pools[i][j]);
-      }
-    }
-    free(atom_memory_pools[i]);
-  }
-}
+#include <cstring>
+#include <cstdlib>
 
 /*----------------------------------------------------------------------
  * memory allocation for membrane
@@ -155,6 +97,8 @@ void *lmn_realloc(void *p, size_t num) {
 }
 
 void lmn_free(void *p) { free(p); }
+
+// new, delete演算子オーバーロード
 
 void* operator new(std::size_t num) {
   return lmn_malloc(num);
