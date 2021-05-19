@@ -306,12 +306,7 @@ BOOL Task::react_all_rulesets(LmnReactCxtRef rc, LmnMembraneRef cur_mem) {
 
   /* ルールセットの適用 */
   for (i = 0; i < rulesets.size(); i++) {
-    if (react_ruleset(rc, cur_mem, rulesets[i])) {
-      /* ndでは失敗するまでマッチングバックトラックしているので必ずFALSEが返ってくる
-       */
-      ok = TRUE;
-      break;
-    }
+    ok = react_ruleset(rc, cur_mem, rulesets[i]) || ok;
   }
 
 #ifdef USE_FIRSTCLASS_RULE 
