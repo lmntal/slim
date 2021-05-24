@@ -52,7 +52,10 @@
 #endif
 
 #include <algorithm>
-#include <iostream> 
+#include <iostream>
+#include <thread>
+#include <future>
+
 typedef void (*callback_0)(LmnReactCxtRef, LmnMembraneRef);
 typedef void (*callback_1)(LmnReactCxtRef, LmnMembraneRef, LmnAtomRef,
                            LmnLinkAttr);
@@ -124,6 +127,8 @@ struct Vector user_system_rulesets; /* system ruleset defined by user */
 
 static inline BOOL react_ruleset(LmnReactCxtRef rc, LmnMembraneRef mem,
                                  LmnRuleSetRef ruleset);
+static inline BOOL react_ruleset_para(LmnReactCxtRef rc, LmnMembraneRef mem,
+				      LmnRuleSetRef rs, int id);
 static inline void react_initial_rulesets(LmnReactCxtRef rc,
                                           LmnMembraneRef mem);
 static inline BOOL react_ruleset_in_all_mem(LmnReactCxtRef rc, LmnRuleSetRef rs,
@@ -303,10 +308,32 @@ BOOL Task::react_all_rulesets(LmnReactCxtRef rc, LmnMembraneRef cur_mem) {
   unsigned int i;
   auto &rulesets = cur_mem->get_rulesets(); /* 本膜のルールセットの集合 */
   BOOL ok = FALSE;
-
+  int id = 0;
   /* ルールセットの適用 */
+  std::vector<std::future<BOOL>> vf;
   for (i = 0; i < rulesets.size(); i++) {
-    ok = react_ruleset(rc, cur_mem, rulesets[i]) || ok;
+    if(rulesets[i]->is_para_ruleset()) {
+      auto copy_rc = new LmnReactCxt(*rc);
+      // lmn_dump_mem_stdout(((MemReactContext *)copy_rc)->memstack_peek());
+      // lmn_dump_mem_stdout(((MemReactContext *)rc)->memstack_peek());
+      // std::cout << ((MemReactContext *)copy_rc)->memstack_peek() << std::endl;
+      // std::cout << &((MemReactContext *)rc->memstack) << std::endl;
+      vf.push_back(std::async(react_ruleset_para, rc, cur_mem, rulesets[i], id++));
+    }
+  }
+
+
+
+  for (i = 0; i < rulesets.size(); i++) {
+    if(rc->has_mode(REACT_ND) || rc->is_zerostep) {
+      ok = react_ruleset(rc, cur_mem, rulesets[i]);
+    } else if(!rulesets[i]->is_para_ruleset()) {
+      ok = react_ruleset_para(rc, cur_mem, rulesets[i], id) || ok;
+    }
+  }
+
+  for(int i=0; i<vf.size(); i++) {
+    ok = ok || vf[i].get();
   }
 
 #ifdef USE_FIRSTCLASS_RULE 
@@ -330,16 +357,45 @@ BOOL Task::react_all_rulesets(LmnReactCxtRef rc, LmnMembraneRef cur_mem) {
 
   return ok;
 }
+thread_local int int_thread_id;
+static inline BOOL react_ruleset_para(LmnReactCxtRef rc, LmnMembraneRef mem,
+				      LmnRuleSetRef rs, int id) {
+  int_thread_id = id;
+  //shuffle_ruleオプションが付いている場合はruleをシャッフル
+  if(lmn_env.shuffle_rule) rs->shuffle();
+  if(rc->has_mode(REACT_ND) || rc->is_zerostep) {
+    for (auto r : *rs) {
+#ifdef PROFILE
+      if (!lmn_env.nd && lmn_env.profile_level >= 2)
+	profile_rule_obj_set(rs, r);
+#endif
+      if (Task::react_rule(rc, mem, r))
+	return true;
+    }
+    return false;
+  } else {
+    bool f = false;
+    bool ret = false;
+    do {
+      f = false;
+      for (auto r : *rs) {
+#ifdef PROFILE
+	if (!lmn_env.nd && lmn_env.profile_level >= 2)
+	  profile_rule_obj_set(rs, r);
+#endif
+	f = (Task::react_rule(rc, mem, r)) || f;
+	ret = f || ret;
+      }
+    } while(f);
+    return ret;
+  }
+}
 
-/** 膜memに対してルールセットrsの各ルールの適用を試みる.
- *  戻り値:
- *   通常実行では, 書換えに成功した場合にTRUE,
- * マッチングしなかった場合にFALSEを返す.
- *   非決定実行では常にFALSEを返す(マッチングに失敗するまでバックトラックする仕様).
- */
+
 static inline BOOL react_ruleset(LmnReactCxtRef rc, LmnMembraneRef mem,
                                  LmnRuleSetRef rs) {
-  
+  // printf("%s:%d\n", __FUNCTION__, __LINE__);
+  // std::cout << std::this_thread::get_id() << std::endl;
   //shuffle_ruleオプションが付いている場合はruleをシャッフル
   if(lmn_env.shuffle_rule) rs->shuffle();
   if(rc->has_mode(REACT_ND) || rc->is_zerostep) {
