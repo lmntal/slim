@@ -53,7 +53,8 @@ static memory_pool **atom_memory_pools[128];
 void mpool_init() {
   int i, core_num, arity_num;
   arity_num = ARY_SIZEOF(atom_memory_pools);
-  core_num = lmn_env.core_num;
+  //core_num = lmn_env.core_num;
+  core_num = 2;
   for (i = 0; i < arity_num; i++) {
     atom_memory_pools[i] =
         (memory_pool **)malloc(sizeof(memory_pool *) * core_num);
@@ -66,7 +67,9 @@ LmnSymbolAtomRef lmn_new_atom(LmnFunctor f) {
   int arity, cid;
   arity = LMN_FUNCTOR_ARITY(lmn_functor_table, f);
   cid = env_my_thread_id();
-
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
+  printf("thread_id = %d\n", int_thread_id);
+  cid = int_thread_id;
   if (atom_memory_pools[arity][cid] == 0) {
     atom_memory_pools[arity][cid] = memory_pool_new(LMN_SATOM_SIZE(arity));
   }
