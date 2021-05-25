@@ -161,11 +161,11 @@ void cb_react_ruleset_nd_para(LmnReactCxtRef &rc, LmnMembraneRef mem,
   LmnMembraneRef rule_mem = LMN_PROXY_GET_MEM(
       (LmnSymbolAtomRef)((LmnSymbolAtomRef)rule_mem_proxy)->get_link(0));
 
-  LmnSymbolAtomRef head = lmn_mem_newatom(mem, LMN_NIL_FUNCTOR);
-  int pos = 0;
-
-  while (((LmnSymbolAtomRef)cons)->get_functor() != LMN_NIL_FUNCTOR) {
-    LmnAtomRef out = ((LmnSymbolAtomRef)cons)->get_link(0);
+  LmnAtomRef it = cons;
+  while (((LmnSymbolAtomRef)it)->get_functor() != LMN_NIL_FUNCTOR) {
+    LmnSymbolAtomRef head = lmn_mem_newatom(mem, LMN_NIL_FUNCTOR);
+    int pos = 0;
+    LmnAtomRef out = ((LmnSymbolAtomRef)it)->get_link(0);
     LmnAtomRef in = ((LmnSymbolAtomRef)out)->get_link(0);
     LmnMembraneRef graph_mem = LMN_PROXY_GET_MEM((LmnSymbolAtomRef)in);
     // delete plus
@@ -174,7 +174,7 @@ void cb_react_ruleset_nd_para(LmnReactCxtRef &rc, LmnMembraneRef mem,
     // delte in
     lmn_mem_delete_atom(graph_mem, in, ((LmnSymbolAtomRef)out)->get_attr(0));
     // delete out
-    lmn_mem_delete_atom(mem, out, ((LmnSymbolAtomRef)cons)->get_attr(0));
+    lmn_mem_delete_atom(mem, out, ((LmnSymbolAtomRef)it)->get_attr(0));
 
     apply_rules_in_rulesets(mem, graph_mem, &rule_mem->get_rulesets(), &head,
                             &pos);
@@ -182,15 +182,15 @@ void cb_react_ruleset_nd_para(LmnReactCxtRef &rc, LmnMembraneRef mem,
     auto fstclass_rules = &rule_mem->get_firstclass_rulesets();
     apply_rules_in_rulesets(mem, graph_mem, fstclass_rules, &head, &pos);
 #endif
-    LmnAtomRef next_cons = ((LmnSymbolAtomRef)cons)->get_link(1);
-    lmn_mem_delete_atom(mem, cons, ((LmnSymbolAtomRef)next_cons)->get_attr(2));
-    cons = next_cons;
+
+    lmn_mem_newlink(mem, head, LMN_ATTR_MAKE_LINK(pos), pos, it,
+                    LMN_ATTR_MAKE_LINK(0), 0);
+    it = ((LmnSymbolAtomRef)it)->get_link(1);
     mem->remove_mem(graph_mem);
   }
-  lmn_mem_delete_atom(mem, cons, ((LmnSymbolAtomRef)cons)->get_attr(0));
 
-  lmn_mem_newlink(mem, head, LMN_ATTR_MAKE_LINK(pos), pos, react_judge_atom,
-                  react_judge_link_attr,
+  lmn_mem_newlink(mem, cons, cons_link_attr, LMN_ATTR_GET_VALUE(cons_link_attr),
+                  react_judge_atom, react_judge_link_attr,
                   LMN_ATTR_GET_VALUE(react_judge_link_attr));
 
   lmn_mem_newlink(mem, return_rule_mem_proxy, return_rule_mem_proxy_link_attr,
