@@ -41,7 +41,8 @@
 
 #include <algorithm>
 #include <iostream>
-
+// #include "vm/atom.h"
+#include "vm/functor.h"
 void cb_react_rule(
     LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef rule_mem_proxy,
     LmnLinkAttr rule_mem_proxy_link_attr, LmnAtomRef graph_mem_proxy,
@@ -149,45 +150,53 @@ void cb_react_ruleset_nd(
   lmn_mem_delete_atom(mem, graph_mem_proxy, graph_mem_proxy_link_attr);
 }
 
-void cb_react_ruleset_nd_para(
-    LmnReactCxtRef &rc, LmnMembraneRef mem, LmnAtomRef rule_mem_proxy,
-    LmnLinkAttr rule_mem_proxy_link_attr, LmnAtomRef graph_mem_proxy,
-    LmnLinkAttr graph_mem_proxy_link_attr, LmnAtomRef return_rule_mem_proxy,
-    LmnLinkAttr return_rule_mem_proxy_link_attr, LmnAtomRef react_judge_atom,
-    LmnLinkAttr react_judge_link_attr) {
+void cb_react_ruleset_nd_para(LmnReactCxtRef &rc, LmnMembraneRef mem,
+                              LmnAtomRef rule_mem_proxy,
+                              LmnLinkAttr rule_mem_proxy_link_attr,
+                              LmnAtomRef cons, LmnLinkAttr cons_link_attr,
+                              LmnAtomRef return_rule_mem_proxy,
+                              LmnLinkAttr return_rule_mem_proxy_link_attr,
+                              LmnAtomRef react_judge_atom,
+                              LmnLinkAttr react_judge_link_attr) {
   LmnMembraneRef rule_mem = LMN_PROXY_GET_MEM(
       (LmnSymbolAtomRef)((LmnSymbolAtomRef)rule_mem_proxy)->get_link(0));
-  LmnAtomRef in_mem = ((LmnSymbolAtomRef)graph_mem_proxy)->get_link(0);
-  LmnMembraneRef graph_mem = LMN_PROXY_GET_MEM((LmnSymbolAtomRef)in_mem);
-
-  lmn_mem_delete_atom(graph_mem, ((LmnSymbolAtomRef)in_mem)->get_link(1),
-                      ((LmnSymbolAtomRef)in_mem)->get_attr(1));
-  lmn_mem_delete_atom(graph_mem, in_mem,
-                      ((LmnSymbolAtomRef)graph_mem_proxy)->get_attr(0));
 
   LmnSymbolAtomRef head = lmn_mem_newatom(mem, LMN_NIL_FUNCTOR);
   int pos = 0;
 
-  auto rulesets = &rule_mem->get_rulesets();
-  apply_rules_in_rulesets(mem, graph_mem, rulesets, &head, &pos);
+  while (((LmnSymbolAtomRef)cons)->get_functor() != LMN_NIL_FUNCTOR) {
+    LmnAtomRef out = ((LmnSymbolAtomRef)cons)->get_link(0);
+    LmnAtomRef in = ((LmnSymbolAtomRef)out)->get_link(0);
+    LmnMembraneRef graph_mem = LMN_PROXY_GET_MEM((LmnSymbolAtomRef)in);
+    // delete plus
+    lmn_mem_delete_atom(graph_mem, ((LmnSymbolAtomRef)in)->get_link(1),
+                        ((LmnSymbolAtomRef)in)->get_attr(1));
+    // delte in
+    lmn_mem_delete_atom(graph_mem, in, ((LmnSymbolAtomRef)out)->get_attr(0));
+    // delete out
+    lmn_mem_delete_atom(mem, out, ((LmnSymbolAtomRef)cons)->get_attr(0));
 
+    apply_rules_in_rulesets(mem, graph_mem, &rule_mem->get_rulesets(), &head,
+                            &pos);
 #ifdef USE_FIRSTCLASS_RULE
-  auto fstclass_rules = &rule_mem->get_firstclass_rulesets();
-  apply_rules_in_rulesets(mem, graph_mem, fstclass_rules, &head, &pos);
+    auto fstclass_rules = &rule_mem->get_firstclass_rulesets();
+    apply_rules_in_rulesets(mem, graph_mem, fstclass_rules, &head, &pos);
 #endif
+    LmnAtomRef next_cons = ((LmnSymbolAtomRef)cons)->get_link(1);
+    lmn_mem_delete_atom(mem, cons, ((LmnSymbolAtomRef)next_cons)->get_attr(2));
+    cons = next_cons;
+    mem->remove_mem(graph_mem);
+  }
+  lmn_mem_delete_atom(mem, cons, ((LmnSymbolAtomRef)cons)->get_attr(0));
 
   lmn_mem_newlink(mem, head, LMN_ATTR_MAKE_LINK(pos), pos, react_judge_atom,
                   react_judge_link_attr,
                   LMN_ATTR_GET_VALUE(react_judge_link_attr));
 
-  mem->remove_mem(graph_mem);
-
   lmn_mem_newlink(mem, return_rule_mem_proxy, return_rule_mem_proxy_link_attr,
                   LMN_ATTR_GET_VALUE(return_rule_mem_proxy_link_attr),
                   rule_mem_proxy, rule_mem_proxy_link_attr,
                   LMN_ATTR_GET_VALUE(rule_mem_proxy_link_attr));
-
-  lmn_mem_delete_atom(mem, graph_mem_proxy, graph_mem_proxy_link_attr);
 }
 
 void init_react_rule(void) {
@@ -195,5 +204,5 @@ void init_react_rule(void) {
   CCallback::lmn_register_c_fun("cb_react_ruleset_nd",
                                 (void *)cb_react_ruleset_nd, 4);
   CCallback::lmn_register_c_fun("cb_react_ruleset_nd_para",
-				(void *)cb_react_ruleset_nd_para, 4);
+                                (void *)cb_react_ruleset_nd_para, 4);
 }
