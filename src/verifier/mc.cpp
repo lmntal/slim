@@ -1037,34 +1037,40 @@ void dfs(const vector<vector<int>> &G, const int v, vector<int> &number, vector<
   number.push_back(v);
 }
 
-void rdfs(const vector<vector<int>> &rG, const int v, vector<int> &isVisited, vector<int> &tmp) {
+void rdfs(const vector<vector<int>> &rG, const int v, vector<int> &isVisited, vector<int> &tmp, vector<int> &id, int counter) {
   isVisited[v] = 0;
   for(const auto& to: rG[v]) {
-    if (isVisited[to]) rdfs(rG,to, isVisited, tmp);
+    if (isVisited[to]) rdfs(rG,to, isVisited, tmp, id, counter);
   }
   tmp.push_back(v);
+//  std::cout << v << std::endl;
+  id[v] = counter;
 }
 
 static void dump_scc(const std::vector<State*> nodes) {
-  std::cout << "dump_scc" << std::endl;
+//  std::cout << "States in SCCs" << std::endl;
   vector<vector<int>> G;
   vector<vector<int>> rG;
   vector<int> number;
   vector<int> isVisited;
   vector<vector<int>> scc;
+  vector<int> id;
+  int counter = 1;
   G.resize(nodes.size() + 1);
   rG.resize(nodes.size() + 1);
   isVisited.resize(nodes.size() + 1, 0);
+  id.resize(nodes.size() + 1);
   
+  // 状態IDの取得の練習と遷移先状態の取得の練習
   for(const auto &s : nodes) {
-    std::cout << s->get_id() << std::endl;
-  };
+//    std::cout << s->get_id() << std::endl;
+  }
   for (const auto &s : nodes) {
-    std::cout << s->get_id() << "'s child" << std::endl;
+//    std::cout << s->get_id() << "'s child" << std::endl;
     for (int i = 0; i < s->successor_num; i++) {
       const int from = s->get_id();
       const int to = state_format_id(state_succ_state(s, i), true);
-      std::cout << to << std::endl;
+//      std::cout << to << std::endl;
       G[from].push_back(to);
       rG[to].push_back(from);
     }
@@ -1075,15 +1081,65 @@ static void dump_scc(const std::vector<State*> nodes) {
   for(int i = number.size() - 1; i >= 0; i--) {
     if (isVisited[number[i]]) {
       vector<int> tmp;
-      rdfs(rG, number[i], isVisited, tmp);
+      rdfs(rG, number[i], isVisited, tmp, id, counter);
       scc.push_back(tmp);
+//      for(int v: tmp) std::cout << v << " ";
+      counter++;
     }
+//    std::cout << std::endl;
   }
+//  std::cout << scc.size() << std::endl;
 
-  for(const auto& vec: scc) {
-    for(const auto& v: vec) {
-      std::cout << v << " ";
+  int i, j;
+  std::cout << "Which States is in the SCC" << std::endl;
+//  std::cout << scc[0][0] << std::endl;
+  for(i = 1; i <= scc.size(); i++) {
+    std::cout << "SCC" << i << "::";
+//    std::cout << scc[i-1].size();
+    for(j = 0; j < scc[i-1].size(); j++) {
+//      std::cout << scc[i-1].size();
+//      std::cout << "scc[" << i-1 << "][" << j << "] is "<< scc[i-1][j] << " ";
+      std::cout << scc[i-1][j] << " ";
     }
     std::cout << std::endl;
   }
+  std::cout << std::endl;
+
+/*
+  std::cout << "Which SCC the State is in" << std::endl;
+  for (int v = 1; v <= number.size(); v++) {
+    std::cout << v << "::SCC" << id[v] << std::endl;
+  }
+  std::cout << std::endl;
+*/
+
+  std::cout << "Transitions in SCC Graph" << std::endl;
+  for (const auto &s : nodes) {
+//    std::cout << s->get_id() << "'s child" << std::endl;
+    for (int i = 0; i < s->successor_num; i++) {
+      const int from = s->get_id();
+      const int to = state_format_id(state_succ_state(s, i), true);
+//      std::cout << to << std::endl;
+//      std::cout << "id[from] is" << id[from] << " id[to] is" << id[to] << std::endl;
+      if (id[from] != id[to]) {
+        // どのSCCからどのSCCへの遷移があるのかプリントする
+        std::cout << "SCC" << id[from] << "->" << "SCC" << id[to] << "(" << from << "->" << to << ")";
+        // 遷移先のノードがどのSCCに所属しているかを知る必要がある
+        std::cout << std::endl;
+      }
+    }
+  }
+  std::cout << std::endl;
+
+/*
+  for (const auto &s : nodes) {
+    for (int i = 0; i < s->successor_num; i++) {
+      const int from = s->get_id();
+      const int to = state_format_id(state_succ_state(s, i), true);
+      erase(G[from])
+      std::cout << "Arc Pruned: " << << std::endl;
+    }
+  }
+  std::cout << std::endl;
+  */
 }
