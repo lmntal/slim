@@ -327,6 +327,8 @@ struct LmnEnv {
 
   BOOL shuffle_rule;
   BOOL shuffle_atom;
+
+  BOOL normal_para;
   
   enum OutputFormat output_format;
   enum MCdumpFormat mc_dump_format;

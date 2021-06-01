@@ -224,4 +224,6 @@ LmnEnv::LmnEnv() {
   this->findatom_parallel_mode = FALSE;
   this->find_atom_parallel = FALSE;
   this->findatom_parallel_inde = FALSE;
+
+  this->normal_para = FALSE;
 }
