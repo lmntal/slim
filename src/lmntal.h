@@ -376,7 +376,7 @@ void slim_version(FILE *f);
 #endif /* HAVE_LIBPTHREAD or HAVE_WINAPI */
 
 /* setting thread library for slim */
-#ifndef HAVE_LIBPTHREAD
+#if !defined(HAVE_LIBPTHREAD) && !defined(NORMAL_PARA)
 #error "sorry, need pthread.h or implementation for other thread library "
 #
 #else /* defined (HAVE_LIBPTHREAD) */
@@ -450,8 +450,11 @@ static inline void lmn_barrier_wait(lmn_barrier_t *b) {
  * (osXの都合で実装が難しいらしい?)
  * 代わりにpthread keyによるthread local
  * storageの実装が優れているらしいの使ってみた */
-
-#if defined(HAVE_MT_LIBRARY) && defined(HAVE___THREAD)
+#ifdef NORMAL_PARA
+#define LMN_TLS_TYPE(T) thread_local T
+#define ENABLE_PARALLEL
+#
+#elif defined(HAVE_MT_LIBRARY) && defined(HAVE___THREAD)
 #define USE_TLS_KEYWORD
 #define LMN_TLS_TYPE(T) __thread T
 #define ENABLE_PARALLEL
@@ -490,7 +493,7 @@ void lmn_stream_destroy(void);
   if (lmn_id_pool)                                                             \
   lmn_id_pool->push((vec_data_t)(N))
 
-#if /**/ !defined(ENABLE_PARALLEL) || defined(USE_TLS_KEYWORD)
+#if /**/ !defined(ENABLE_PARALLEL) || defined(USE_TLS_KEYWORD) || defined(NORMAL_PARA)
 #define env_gen_state_id() (lmn_tls.state_id += lmn_tls.thread_num)
 #define env_my_thread_id() (lmn_tls.thread_id)
 #define env_set_my_thread_id(N) (lmn_tls.thread_id = (N))
