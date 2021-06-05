@@ -41,6 +41,8 @@
 
 #include <algorithm>
 #include <iostream>
+#include <thread>
+#include <mutex>
 // #include "vm/atom.h"
 #include "vm/functor.h"
 void cb_react_rule(
@@ -149,44 +151,151 @@ void cb_react_ruleset_nd(
 
   lmn_mem_delete_atom(mem, graph_mem_proxy, graph_mem_proxy_link_attr);
 }
+// template <typename C>
+std::mutex react_mtx;
+static void apply_rules_para(unsigned int id,
+                             std::vector<LmnRuleSet *> *rulesets,
+                             std::vector<LmnMembraneRef> *mems,
+                             std::vector<std::vector<LmnMembraneRef>> *ret,
+                             int begin, int end) {
+  std::lock_guard<std::mutex> lock(react_mtx);
+  if (lmn_env.normal_para) {
+    env_my_TLS_init(id);
+    lmn_thread_set_CPU_affinity(id);
+  }
+  for (int i = begin; i < end; i++) {
+    for (auto &rs : *rulesets) {
+      for (auto r : *rs) {
+        MCReactContext rc(mems->at(i));
+        rc.keep_process_id_in_nd_mode = true;
+	lmn_dump_mem_stdout(mems->at(i));
+        Task::react_rule(&rc, mems->at(i), r);
+        auto &states = rc.expanded_states();
+        int n_of_results = rc.expanded_states().size();
+        for (int j = 0; j < n_of_results; j++) {
+          ret->at(i).push_back((LmnMembraneRef)states[j]);
+        }
+      }
+    }
+  }
+  delete rulesets;
+}
 
 void cb_react_ruleset_nd_para(LmnReactCxtRef &rc, LmnMembraneRef mem,
                               LmnAtomRef rule_mem_proxy,
                               LmnLinkAttr rule_mem_proxy_link_attr,
                               LmnAtomRef cons, LmnLinkAttr cons_link_attr,
+                              LmnAtomRef n_of_list, LmnLinkAttr n_of_list_attr,
                               LmnAtomRef return_rule_mem_proxy,
                               LmnLinkAttr return_rule_mem_proxy_link_attr,
                               LmnAtomRef react_judge_atom,
                               LmnLinkAttr react_judge_link_attr) {
+  long long n = (long long)n_of_list;
+  std::cout << n << std::endl;
+  std::vector<LmnMembraneRef> mems(n);
+
+  std::vector<std::vector<LmnMembraneRef>> ret(n, std::vector<LmnMembraneRef>());
+
+  std::vector<std::thread> threads;
+
   LmnMembraneRef rule_mem = LMN_PROXY_GET_MEM(
       (LmnSymbolAtomRef)((LmnSymbolAtomRef)rule_mem_proxy)->get_link(0));
-
   LmnAtomRef it = cons;
-  while (((LmnSymbolAtomRef)it)->get_functor() != LMN_NIL_FUNCTOR) {
-    LmnSymbolAtomRef head = lmn_mem_newatom(mem, LMN_NIL_FUNCTOR);
-    int pos = 0;
-    LmnAtomRef out = ((LmnSymbolAtomRef)it)->get_link(0);
-    LmnAtomRef in = ((LmnSymbolAtomRef)out)->get_link(0);
-    LmnMembraneRef graph_mem = LMN_PROXY_GET_MEM((LmnSymbolAtomRef)in);
-    // delete plus
-    lmn_mem_delete_atom(graph_mem, ((LmnSymbolAtomRef)in)->get_link(1),
-                        ((LmnSymbolAtomRef)in)->get_attr(1));
-    // delte in
-    lmn_mem_delete_atom(graph_mem, in, ((LmnSymbolAtomRef)out)->get_attr(0));
-    // delete out
-    lmn_mem_delete_atom(mem, out, ((LmnSymbolAtomRef)it)->get_attr(0));
+  if (n > 1) {
+    // 2 para
+    for (int i = 0; i < n / 2; i++) {
+      LmnAtomRef out = ((LmnSymbolAtomRef)it)->get_link(0);
+      LmnAtomRef in = ((LmnSymbolAtomRef)out)->get_link(0);
+      LmnMembraneRef graph_mem = LMN_PROXY_GET_MEM((LmnSymbolAtomRef)in);
+      // delete plus
+      lmn_mem_delete_atom(graph_mem, ((LmnSymbolAtomRef)in)->get_link(1),
+                          ((LmnSymbolAtomRef)in)->get_attr(1));
+      // delte in
+      lmn_mem_delete_atom(graph_mem, in, ((LmnSymbolAtomRef)out)->get_attr(0));
+      // delete out
+      lmn_mem_delete_atom(mem, out, ((LmnSymbolAtomRef)it)->get_attr(0));
+      mems[i] = graph_mem;
+      it = ((LmnSymbolAtomRef)it)->get_link(1);
+    }
+    if (lmn_env.normal_para)
+      threads.push_back(std::thread(apply_rules_para, 1, new std::vector<LmnRuleSet *>(rule_mem->get_rulesets()), &mems, &ret, 0, n/2));
+    else
+      apply_rules_para(1, new std::vector<LmnRuleSet *>(rule_mem->get_rulesets()), &mems, &ret, 0, n/2);
+    for (int i = n / 2; i < n; i++) {
+      LmnAtomRef out = ((LmnSymbolAtomRef)it)->get_link(0);
+      LmnAtomRef in = ((LmnSymbolAtomRef)out)->get_link(0);
+      LmnMembraneRef graph_mem = LMN_PROXY_GET_MEM((LmnSymbolAtomRef)in);
+      // delete plus
+      lmn_mem_delete_atom(graph_mem, ((LmnSymbolAtomRef)in)->get_link(1),
+                          ((LmnSymbolAtomRef)in)->get_attr(1));
+      // delte in
+      lmn_mem_delete_atom(graph_mem, in, ((LmnSymbolAtomRef)out)->get_attr(0));
+      // delete out
+      lmn_mem_delete_atom(mem, out, ((LmnSymbolAtomRef)it)->get_attr(0));
+      mems[i] = graph_mem;
+      it = ((LmnSymbolAtomRef)it)->get_link(1);
+    }
+    if (lmn_env.normal_para)
+      threads.push_back(std::thread(apply_rules_para, 2, new std::vector<LmnRuleSet *>(rule_mem->get_rulesets()), &mems, &ret, n/2, n));
+    else
+      apply_rules_para(2, new std::vector<LmnRuleSet *>(rule_mem->get_rulesets()), &mems, &ret, n/2, n);
 
-    apply_rules_in_rulesets(mem, graph_mem, &rule_mem->get_rulesets(), &head,
-                            &pos);
+    if (lmn_env.normal_para) {
+      threads[0].join();
+      threads[1].join();
+    }
+    it = cons;
+
+    for (int i = 0; i < n; i++) {
+      LmnSymbolAtomRef head = lmn_mem_newatom(mem, LMN_NIL_FUNCTOR);
+      int pos = 0;
+
+      for (auto j = ret[i].rbegin(); j!=ret[i].rend(); j++ ) {
+	LmnSymbolAtomRef cons = lmn_mem_newatom(mem, LMN_LIST_FUNCTOR);
+	LmnMembraneRef m = (LmnMembraneRef)*j;
+	LmnSymbolAtomRef in = lmn_mem_newatom(m, LMN_IN_PROXY_FUNCTOR);
+	LmnSymbolAtomRef out = lmn_mem_newatom(mem, LMN_OUT_PROXY_FUNCTOR);
+	LmnSymbolAtomRef plus = lmn_mem_newatom(m, LMN_UNARY_PLUS_FUNCTOR);
+	mem->add_child_mem(m);
+	lmn_newlink_in_symbols(in, 0, out, 0);
+	lmn_newlink_in_symbols(in, 1, plus, 0);
+	lmn_newlink_in_symbols(out, 1, cons, 0);
+	lmn_newlink_in_symbols(cons, 1, head, pos);
+	head = cons;
+	pos = 2;
+      }
+      lmn_mem_newlink(mem, head, LMN_ATTR_MAKE_LINK(pos), pos, it,
+                      LMN_ATTR_MAKE_LINK(0), 0);
+      it = ((LmnSymbolAtomRef)it)->get_link(1);
+      mem->remove_mem(mems[i]);
+    }
+  } else {
+    while (((LmnSymbolAtomRef)it)->get_functor() != LMN_NIL_FUNCTOR) {
+      LmnSymbolAtomRef head = lmn_mem_newatom(mem, LMN_NIL_FUNCTOR);
+      int pos = 0;
+      LmnAtomRef out = ((LmnSymbolAtomRef)it)->get_link(0);
+      LmnAtomRef in = ((LmnSymbolAtomRef)out)->get_link(0);
+      LmnMembraneRef graph_mem = LMN_PROXY_GET_MEM((LmnSymbolAtomRef)in);
+      // delete plus
+      lmn_mem_delete_atom(graph_mem, ((LmnSymbolAtomRef)in)->get_link(1),
+                          ((LmnSymbolAtomRef)in)->get_attr(1));
+      // delte in
+      lmn_mem_delete_atom(graph_mem, in, ((LmnSymbolAtomRef)out)->get_attr(0));
+      // delete out
+      lmn_mem_delete_atom(mem, out, ((LmnSymbolAtomRef)it)->get_attr(0));
+
+      apply_rules_in_rulesets(mem, graph_mem, &rule_mem->get_rulesets(), &head,
+                              &pos);
 #ifdef USE_FIRSTCLASS_RULE
-    auto fstclass_rules = &rule_mem->get_firstclass_rulesets();
-    apply_rules_in_rulesets(mem, graph_mem, fstclass_rules, &head, &pos);
+      auto fstclass_rules = &rule_mem->get_firstclass_rulesets();
+      apply_rules_in_rulesets(mem, graph_mem, fstclass_rules, &head, &pos);
 #endif
 
-    lmn_mem_newlink(mem, head, LMN_ATTR_MAKE_LINK(pos), pos, it,
-                    LMN_ATTR_MAKE_LINK(0), 0);
-    it = ((LmnSymbolAtomRef)it)->get_link(1);
-    mem->remove_mem(graph_mem);
+      lmn_mem_newlink(mem, head, LMN_ATTR_MAKE_LINK(pos), pos, it,
+                      LMN_ATTR_MAKE_LINK(0), 0);
+      it = ((LmnSymbolAtomRef)it)->get_link(1);
+      mem->remove_mem(graph_mem);
+    }
   }
 
   lmn_mem_newlink(mem, cons, cons_link_attr, LMN_ATTR_GET_VALUE(cons_link_attr),
@@ -204,5 +313,5 @@ void init_react_rule(void) {
   CCallback::lmn_register_c_fun("cb_react_ruleset_nd",
                                 (void *)cb_react_ruleset_nd, 4);
   CCallback::lmn_register_c_fun("cb_react_ruleset_nd_para",
-                                (void *)cb_react_ruleset_nd_para, 4);
+                                (void *)cb_react_ruleset_nd_para, 5);
 }

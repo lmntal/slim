@@ -50,7 +50,7 @@
    */
   Ret = state_space.react_nd_set(Rule, Graph, RetRule) :- '$callback'('cb_react_ruleset_nd', Rule, Graph, RetRule, Ret).
 
-  Ret = state_space.react_nd_set_para(Rule, GraphList, RetRule) :- '$callback'('cb_react_ruleset_nd_para', Rule, GraphList, RetRule, Ret).
+  Ret = state_space.react_nd_set_para(Rule, GraphList, Num, RetRule) :- '$callback'('cb_react_ruleset_nd_para', Rule, GraphList, Num, RetRule, Ret).
 
   Ret = state_space.state_map_init :- '$callback'('cb_state_map_init', Ret).
 
