@@ -44,6 +44,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <atomic>
 
 #ifdef WITH_DMALLOC
 #include <dmalloc.h>
@@ -473,12 +474,17 @@ struct LmnTLS {
   unsigned int thread_num;
   unsigned int thread_id;
   unsigned long state_id;
+#ifndef NORMAL_PARA
   ProcessID proc_next_id;
+#endif
 };
 
 extern struct Vector *lmn_id_pool;
 extern struct LmnEnv lmn_env;
 extern LMN_TLS_TYPE(LmnTLS) lmn_tls;
+#ifdef NORMAL_PARA
+extern std::atomic<ProcessID> proc_next_id;
+#endif
 
 void env_my_TLS_init(unsigned int th_id);
 void env_my_TLS_finalize(void);
@@ -493,7 +499,20 @@ void lmn_stream_destroy(void);
   if (lmn_id_pool)                                                             \
   lmn_id_pool->push((vec_data_t)(N))
 
-#if /**/ !defined(ENABLE_PARALLEL) || defined(USE_TLS_KEYWORD) || defined(NORMAL_PARA)
+#ifdef NORMAL_PARA
+#define env_gen_state_id() (lmn_tls.state_id += lmn_tls.thread_num)
+#define env_my_thread_id() (lmn_tls.thread_id)
+#define env_set_my_thread_id(N) (lmn_tls.thread_id = (N))
+#define env_threads_num() (lmn_tls.thread_num)
+#define env_set_threads_num(N) (lmn_tls.thread_num = (N))
+#define env_reset_proc_ids() (proc_next_id.store(1U))
+#define env_set_next_id(N) (proc_next_id.store(N))
+#define env_gen_next_id()                                                      \
+  ((lmn_id_pool && lmn_id_pool->get_num() > 0) ? lmn_id_pool->pop()            \
+                                             : proc_next_id++)
+#define env_next_id() (proc_next_id.load())
+
+#elif /**/ !defined(ENABLE_PARALLEL) || defined(USE_TLS_KEYWORD)
 #define env_gen_state_id() (lmn_tls.state_id += lmn_tls.thread_num)
 #define env_my_thread_id() (lmn_tls.thread_id)
 #define env_set_my_thread_id(N) (lmn_tls.thread_id = (N))

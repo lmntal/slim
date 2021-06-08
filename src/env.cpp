@@ -46,6 +46,9 @@ struct Vector *lmn_id_pool;
 struct LmnEnv lmn_env;
 struct LmnProfiler lmn_prof;
 LMN_TLS_TYPE(LmnTLS) lmn_tls;
+#ifdef NORMAL_PARA
+std::atomic<ProcessID> proc_next_id;
+#endif
 
 //static void env_init(void);
 
@@ -64,7 +67,6 @@ static inline void lmn_TLS_init(unsigned int thread_id) {
   lmn_tls.thread_num = lmn_env.core_num;
   lmn_tls.thread_id = thread_id;
   lmn_tls.state_id = 0UL;
-  lmn_tls.proc_next_id = 1UL;
 }
 #else
 static inline void lmn_TLS_init(LmnTLS *p, unsigned int thread_id) {
