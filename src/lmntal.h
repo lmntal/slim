@@ -526,9 +526,9 @@ ProcessID env_gen_next_id();
 #define env_set_threads_num(N) (lmn_tls.thread_num = (N))
 #define env_reset_proc_ids() (lmn_tls.proc_next_id = 1U)
 #define env_set_next_id(N) (lmn_tls.proc_next_id = (N))
-// #define env_gen_next_id()                                                      \
-//   ((lmn_id_pool && lmn_id_pool->get_num() > 0) ? lmn_id_pool->pop()            \
-//                                              : lmn_tls.proc_next_id++)
+#define env_gen_next_id()                                                      \
+   ((lmn_id_pool && lmn_id_pool->get_num() > 0) ? lmn_id_pool->pop()            \
+                                              : lmn_tls.proc_next_id++)
 #define env_next_id() (lmn_tls.proc_next_id)
 #
 #elif /**/ defined(USE_TLS_PTHREAD_KEY)
