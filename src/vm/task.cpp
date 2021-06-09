@@ -165,9 +165,13 @@ void Task::lmn_run(Vector *start_rulesets) {
    * 破棄したProcessのIDを使い回す必要がある.
    * もし通常実行の並列化を考えるならばIDを再利用するためのMT-Safeな機構が必要
    */
+#ifdef NORMAL_PARA
+  lmn_id_pool = std::vector<std::stack<ProcessID>>(lmn_env.core_num, std::stack<ProcessID>());
+#else
   if (!env_proc_id_pool()) {
     env_set_proc_id_pool(new Vector(64));
   }
+#endif
 
   /* interactive: normal_cleaningフラグがONの場合は後始末 */
   if (lmn_env.normal_cleaning) {
@@ -243,9 +247,11 @@ void Task::lmn_run(Vector *start_rulesets) {
     delete mem;
     mrc = nullptr;
   }
+#ifndef NORMAL_PARA
   if (env_proc_id_pool()) {
     delete env_proc_id_pool();
   }
+#endif
 }
 
 /** 膜スタックに基づいた通常実行 */
@@ -1351,7 +1357,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
           rule->undo_history();
 
           rc->warray_set(std::move(*tmp));
-          if (!rc->keep_process_id_in_nd_mode)
+          if (!rc->keep_process_id_in_nd_mode and !lmn_env.normal_para)
             env_set_next_id(org_next_id);
           delete tmp;
           return command_result::Failure;

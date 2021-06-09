@@ -42,12 +42,14 @@
 
 #include <climits>
 
-struct Vector *lmn_id_pool;
 struct LmnEnv lmn_env;
 struct LmnProfiler lmn_prof;
 LMN_TLS_TYPE(LmnTLS) lmn_tls;
 #ifdef NORMAL_PARA
 std::atomic<ProcessID> proc_next_id;
+std::vector<std::stack<ProcessID>> lmn_id_pool;
+#else
+struct Vector *lmn_id_pool;
 #endif
 
 //static void env_init(void);
@@ -67,6 +69,21 @@ static inline void lmn_TLS_init(unsigned int thread_id) {
   lmn_tls.thread_num = lmn_env.core_num;
   lmn_tls.thread_id = thread_id;
   lmn_tls.state_id = 0UL;
+}
+
+ProcessID env_gen_next_id() {
+  if(!(lmn_id_pool[lmn_tls.thread_id].empty())) {
+    auto ret = lmn_id_pool[lmn_tls.thread_id].top();
+    lmn_id_pool[lmn_tls.thread_id].pop();
+    return ret;
+  } else {
+    return proc_next_id++;
+  }
+}
+
+void env_return_id(ProcessID n) {
+
+  lmn_id_pool[lmn_tls.thread_id].push(n);
 }
 #else
 static inline void lmn_TLS_init(LmnTLS *p, unsigned int thread_id) {
@@ -118,7 +135,9 @@ void env_my_TLS_init(unsigned int th_id) {
     lmn_TLS_set_value(lmn_tls, lmn_TLS_make(th_id));
   }
 #endif
+#ifndef NORMAL_PARA
   env_reset_proc_ids();
+#endif
 }
 
 void env_my_TLS_finalize() {
@@ -134,7 +153,9 @@ void env_my_TLS_finalize() {
 void lmn_stream_init() {
 //  lmn_env.init();
 
+#ifndef NORMAL_PARA
   lmn_id_pool = NULL;
+#endif
 
 #ifdef NORMAL_PARA
   lmn_TLS_init(LMN_PRIMARY_ID);

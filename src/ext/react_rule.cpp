@@ -158,17 +158,18 @@ static void apply_rules_para(unsigned int id,
                              std::vector<LmnMembraneRef> *mems,
                              std::vector<std::vector<LmnMembraneRef>> *ret,
                              int begin, int end) {
-  std::lock_guard<std::mutex> lock(react_mtx);
+  //std::lock_guard<std::mutex> lock(react_mtx);
   if (lmn_env.normal_para) {
     env_my_TLS_init(id);
     lmn_thread_set_CPU_affinity(id);
   }
+  // std::cout << "id: "<<id << std::endl;
+  // std::cout << "pool size "<< id <<": "<<lmn_id_pool[lmn_tls.thread_id].size() << std::endl;
   for (int i = begin; i < end; i++) {
     for (auto &rs : *rulesets) {
       for (auto r : *rs) {
         MCReactContext rc(mems->at(i));
         rc.keep_process_id_in_nd_mode = true;
-	lmn_dump_mem_stdout(mems->at(i));
         Task::react_rule(&rc, mems->at(i), r);
         auto &states = rc.expanded_states();
         int n_of_results = rc.expanded_states().size();
@@ -191,7 +192,7 @@ void cb_react_ruleset_nd_para(LmnReactCxtRef &rc, LmnMembraneRef mem,
                               LmnAtomRef react_judge_atom,
                               LmnLinkAttr react_judge_link_attr) {
   long long n = (long long)n_of_list;
-  std::cout << n << std::endl;
+  //std::cout << n << std::endl;
   std::vector<LmnMembraneRef> mems(n);
 
   std::vector<std::vector<LmnMembraneRef>> ret(n, std::vector<LmnMembraneRef>());
