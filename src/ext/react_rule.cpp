@@ -43,7 +43,7 @@
 #include <iostream>
 #include <thread>
 #include <mutex>
-// #include "vm/atom.h"
+
 #include "vm/functor.h"
 void cb_react_rule(
     LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef rule_mem_proxy,
@@ -192,7 +192,7 @@ void cb_react_ruleset_nd_para(LmnReactCxtRef &rc, LmnMembraneRef mem,
                               LmnAtomRef react_judge_atom,
                               LmnLinkAttr react_judge_link_attr) {
   long long n = (long long)n_of_list;
-  //std::cout << n << std::endl;
+
   std::vector<LmnMembraneRef> mems(n);
 
   std::vector<std::vector<LmnMembraneRef>> ret(n, std::vector<LmnMembraneRef>());
@@ -202,48 +202,42 @@ void cb_react_ruleset_nd_para(LmnReactCxtRef &rc, LmnMembraneRef mem,
   LmnMembraneRef rule_mem = LMN_PROXY_GET_MEM(
       (LmnSymbolAtomRef)((LmnSymbolAtomRef)rule_mem_proxy)->get_link(0));
   LmnAtomRef it = cons;
+  long long t_num = 0;
   if (n > 1) {
     // 2 para
-    for (int i = 0; i < n / 2; i++) {
-      LmnAtomRef out = ((LmnSymbolAtomRef)it)->get_link(0);
-      LmnAtomRef in = ((LmnSymbolAtomRef)out)->get_link(0);
-      LmnMembraneRef graph_mem = LMN_PROXY_GET_MEM((LmnSymbolAtomRef)in);
-      // delete plus
-      lmn_mem_delete_atom(graph_mem, ((LmnSymbolAtomRef)in)->get_link(1),
-                          ((LmnSymbolAtomRef)in)->get_attr(1));
-      // delte in
-      lmn_mem_delete_atom(graph_mem, in, ((LmnSymbolAtomRef)out)->get_attr(0));
-      // delete out
-      lmn_mem_delete_atom(mem, out, ((LmnSymbolAtomRef)it)->get_attr(0));
-      mems[i] = graph_mem;
-      it = ((LmnSymbolAtomRef)it)->get_link(1);
+    long long cores = ((lmn_env.core_num-1)<1)?1:(lmn_env.core_num-1);
+    long long  pat = ceil((float)n / (float)cores);
+    long long begin = 0;
+    long long end = std::min(pat, n);
+
+    while (begin != n) {
+      t_num++;
+      for (int i = begin; i < end; i++) {
+	LmnAtomRef out = ((LmnSymbolAtomRef)it)->get_link(0);
+	LmnAtomRef in = ((LmnSymbolAtomRef)out)->get_link(0);
+	LmnMembraneRef graph_mem = LMN_PROXY_GET_MEM((LmnSymbolAtomRef)in);
+	// delete plus
+	lmn_mem_delete_atom(graph_mem, ((LmnSymbolAtomRef)in)->get_link(1),
+			    ((LmnSymbolAtomRef)in)->get_attr(1));
+	// delte in
+	lmn_mem_delete_atom(graph_mem, in, ((LmnSymbolAtomRef)out)->get_attr(0));
+	// delete out
+	lmn_mem_delete_atom(mem, out, ((LmnSymbolAtomRef)it)->get_attr(0));
+	mems[i] = graph_mem;
+	it = ((LmnSymbolAtomRef)it)->get_link(1);
+      }
+      if (lmn_env.normal_para)
+	threads.push_back(std::thread(apply_rules_para, t_num, new std::vector<LmnRuleSet *>(rule_mem->get_rulesets()), &mems, &ret, begin, end));
+      else
+	apply_rules_para(t_num, new std::vector<LmnRuleSet *>(rule_mem->get_rulesets()), &mems, &ret, begin, end);
+      begin = end;
+      end = std::min(end+pat, n);
     }
-    if (lmn_env.normal_para)
-      threads.push_back(std::thread(apply_rules_para, 1, new std::vector<LmnRuleSet *>(rule_mem->get_rulesets()), &mems, &ret, 0, n/2));
-    else
-      apply_rules_para(1, new std::vector<LmnRuleSet *>(rule_mem->get_rulesets()), &mems, &ret, 0, n/2);
-    for (int i = n / 2; i < n; i++) {
-      LmnAtomRef out = ((LmnSymbolAtomRef)it)->get_link(0);
-      LmnAtomRef in = ((LmnSymbolAtomRef)out)->get_link(0);
-      LmnMembraneRef graph_mem = LMN_PROXY_GET_MEM((LmnSymbolAtomRef)in);
-      // delete plus
-      lmn_mem_delete_atom(graph_mem, ((LmnSymbolAtomRef)in)->get_link(1),
-                          ((LmnSymbolAtomRef)in)->get_attr(1));
-      // delte in
-      lmn_mem_delete_atom(graph_mem, in, ((LmnSymbolAtomRef)out)->get_attr(0));
-      // delete out
-      lmn_mem_delete_atom(mem, out, ((LmnSymbolAtomRef)it)->get_attr(0));
-      mems[i] = graph_mem;
-      it = ((LmnSymbolAtomRef)it)->get_link(1);
-    }
-    if (lmn_env.normal_para)
-      threads.push_back(std::thread(apply_rules_para, 2, new std::vector<LmnRuleSet *>(rule_mem->get_rulesets()), &mems, &ret, n/2, n));
-    else
-      apply_rules_para(2, new std::vector<LmnRuleSet *>(rule_mem->get_rulesets()), &mems, &ret, n/2, n);
 
     if (lmn_env.normal_para) {
-      threads[0].join();
-      threads[1].join();
+      for (int i=0; i<t_num; i++) {
+	threads[i].join();
+      }
     }
     it = cons;
 
