@@ -1029,12 +1029,21 @@ const char *mc_error_msg(int error_id) {
   }
 }
 
+void print_graph(const vector<vector<int>> &G) {
+  for(const auto from: G){
+    for(const auto to: from)
+      std::cout << to << " ";
+    std::cout << std::endl;
+  }
+}
+
 void dfs(const vector<vector<int>> &G, const int v, vector<int> &number, vector<int> &isVisited) {
   isVisited[v] = 1;
   for(const auto& to: G[v]) {
     if (!isVisited[to]) dfs(G,to, number, isVisited);
   }
   number.push_back(v);
+//  std::cout << v << " ";
 }
 
 void rdfs(const vector<vector<int>> &rG, const int v, vector<int> &isVisited, vector<int> &tmp, vector<int> &id, int counter) {
@@ -1069,14 +1078,17 @@ static void dump_scc(const std::vector<State*> nodes) {
 //    std::cout << s->get_id() << "'s child" << std::endl;
     for (int i = 0; i < s->successor_num; i++) {
       const int from = s->get_id();
-      const int to = state_format_id(state_succ_state(s, i), true);
+      const int to = state_format_id(state_succ_state(s, i), false);
 //      std::cout << to << std::endl;
       G[from].push_back(to);
       rG[to].push_back(from);
     }
   }
 
+  print_graph(G);
+
   dfs(G, 1, number, isVisited);
+//  std::cout << std::endl;
 
   for(int i = number.size() - 1; i >= 0; i--) {
     if (isVisited[number[i]]) {
@@ -1118,7 +1130,7 @@ static void dump_scc(const std::vector<State*> nodes) {
 //    std::cout << s->get_id() << "'s child" << std::endl;
     for (int i = 0; i < s->successor_num; i++) {
       const int from = s->get_id();
-      const int to = state_format_id(state_succ_state(s, i), true);
+      const int to = state_format_id(state_succ_state(s, i), false);
 //      std::cout << to << std::endl;
 //      std::cout << "id[from] is" << id[from] << " id[to] is" << id[to] << std::endl;
       if (id[from] != id[to]) {

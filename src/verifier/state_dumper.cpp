@@ -39,6 +39,8 @@
 
 #include "statespace.h"
 
+#include<iostream>
+
 namespace state_dumper {
 class CUI : public StateDumper {
   friend StateDumper;
