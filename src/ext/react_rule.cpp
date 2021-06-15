@@ -229,7 +229,7 @@ void cb_react_ruleset_nd_para(LmnReactCxtRef &rc, LmnMembraneRef mem,
   LmnAtomRef it = cons;
   long long t_num = 0;
   if (n > 1) {
-    auto start = get_cpu_time();
+    auto start = get_wall_time();
     // 2 para
     long long cores = ((lmn_env.core_num-1)<1)?1:(lmn_env.core_num-1);
     long long  pat = ceil((float)n / (float)cores);
@@ -265,7 +265,7 @@ void cb_react_ruleset_nd_para(LmnReactCxtRef &rc, LmnMembraneRef mem,
 	threads[i].join();
       }
     }
-    auto finish = get_cpu_time();
+    auto finish = get_wall_time();
     prr.v_time.push_back(finish-start);
     prr.v_list_size.push_back(n);
     prr.depth++;
