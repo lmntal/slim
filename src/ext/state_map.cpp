@@ -98,13 +98,17 @@ void LmnStateMap::cb_state_map_id_find(LmnReactCxtRef rc,
   StateSpaceRef ss = ((LmnStateMap::LmnStateMapRef)a0)->states;
   LmnSymbolAtomRef out = (LmnSymbolAtomRef)a1;
   LmnSymbolAtomRef in = (LmnSymbolAtomRef)((LmnSymbolAtomRef)a1)->get_link(0);
-  LmnLinkAttr in_attr = ((LmnSymbolAtomRef)a1)->get_attr(0);
+  // LmnLinkAttr in_attr = ((LmnSymbolAtomRef)a1)->get_attr(0);
+  // LmnSymbolAtomRef at = lmn_mem_newatom(m, lmn_functor_table->intern(ANONYMOUS, lmn_intern("@"), 1));
+  //LmnSymbolAtomRef plus = (LmnSymbolAtomRef)in->get_link(1);
+  lmn_mem_delete_atom(m, ((LmnSymbolAtomRef)in)->get_link(1),
+                      ((LmnSymbolAtomRef)in)->get_attr(1));
+  lmn_mem_delete_atom(m, in,
+                      ((LmnSymbolAtomRef)out)->get_attr(0));
 
-  LmnSymbolAtomRef at = lmn_mem_newatom(m, lmn_functor_table->intern(ANONYMOUS, lmn_intern("@"), 1));
-  LmnSymbolAtomRef plus = (LmnSymbolAtomRef)in->get_link(1);
-  lmn_newlink_in_symbols(plus, 0, at, 0);
+  //lmn_newlink_in_symbols(plus, 0, at, 0);
 
-  lmn_mem_delete_atom(m, in, in_attr);
+  //lmn_mem_delete_atom(m, in, in_attr);
   ((MemReactContext *)rc)->memstack_remove(m);
   mem->remove_mem(m);
 
@@ -126,6 +130,67 @@ void LmnStateMap::cb_state_map_id_find(LmnReactCxtRef rc,
   lmn_mem_delete_atom(mem, a1, t1);
 }
 
+
+/*
+ * 状態->ID
+ * +a0 Map
+ * +a1 状態のリストのリスト
+ * +a2 リストの長さ
+ * -a3 IDのリストのリスト
+ * -a4 Map
+ */
+void LmnStateMap::cb_state_map_id_find_para(LmnReactCxtRef rc,
+					    LmnMembraneRef mem,
+					    LmnAtomRef a0, LmnLinkAttr t0,
+					    LmnAtomRef a1, LmnLinkAttr t1,
+					    LmnAtomRef a2, LmnLinkAttr t2,
+					    LmnAtomRef a3, LmnLinkAttr t3,
+					    LmnAtomRef a4, LmnLinkAttr t4)
+{
+//   LmnAtomRef it = a1;
+//   StateSpaceRef ss = ((LmnStateMap::LmnStateMapRef)a0)->states;
+//   while(((LmnSymbolAtomRef)it)->get_functor() != LMN_NIL_FUNCTOR) {
+//     LmnAtomRef head = ((LmnSymbolAtomRef)it)->get_link(0);
+//     while(((LmnSymbolAtomRef)head)->get_functor() != LMN_NIL_FUNCTOR) {
+//   //     lmn_dump_mem_stdout(mem);
+//       LmnAtomRef out = ((LmnSymbolAtomRef)head)->get_link(0);
+//       LmnAtomRef in = ((LmnSymbolAtomRef)out)->get_link(0);
+//       LmnMembraneRef graph_mem = LMN_PROXY_GET_MEM((LmnSymbolAtomRef)in);
+//   //     lmn_dump_mem_stdout(graph_mem);
+
+//       //delete plus
+//       lmn_mem_delete_atom(graph_mem, ((LmnSymbolAtomRef)in)->get_link(1),
+//   			  ((LmnSymbolAtomRef)in)->get_attr(1));
+//       //delete in
+//       lmn_mem_delete_atom(graph_mem, in, ((LmnSymbolAtomRef)out)->get_attr(0));
+//       //delete out
+//       lmn_mem_delete_atom(mem, out, ((LmnSymbolAtomRef)head)->get_attr(0));
+//   //     lmn_dump_mem_stdout(mem);
+//       State *new_s = new State(graph_mem, 0, TRUE);
+//       State *succ = ss->insert(new_s);
+
+//       if (succ == new_s) { /* new state */
+//       	state_id_issue(succ);
+//       } else {
+//       	delete (new_s);
+//       }
+
+//       LmnSymbolAtomRef at = lmn_mem_newatom(mem, lmn_functor_table->intern(ANONYMOUS, lmn_intern("@"), 1));
+//       //lmn_mem_push_atom(mem, succ, LMN_INT_ATTR);
+//       lmn_mem_newlink(mem, head, ((LmnSymbolAtomRef)head)->get_attr(0), 0,
+// 		      at, at->get_attr(0), 0);
+
+//       head = ((LmnSymbolAtomRef)head)->get_link(1);
+//     }
+//     it = ((LmnSymbolAtomRef)it)->get_link(1);
+//   }
+//   lmn_mem_newlink(mem, a1, t1, LMN_ATTR_GET_VALUE(t1), a3, t3, LMN_ATTR_GET_VALUE(t3));
+
+//   lmn_mem_newlink(mem, a0, t0, LMN_ATTR_GET_VALUE(t0), a4, t4,
+//                    LMN_ATTR_GET_VALUE(t4));
+}
+
+
 /*
  * ID->状態
  * +a0 Map
@@ -141,25 +206,25 @@ void LmnStateMap::cb_state_map_state_find(LmnReactCxtRef rc, LmnMembraneRef mem,
   st_data_t entry;
 
   LmnMembraneRef new_mem = s->duplicate_membrane();
-  LmnFunctor at_functor = lmn_functor_table->intern(ANONYMOUS, lmn_intern("@"), 1);
+  //LmnFunctor at_functor = lmn_functor_table->intern(ANONYMOUS, lmn_intern("@"), 1);
 
-  AtomListEntryRef ent;
-  LmnFunctor f;
-  LmnSymbolAtomRef at_atom;
-  EACH_ATOMLIST_WITH_FUNC(new_mem, ent, f, {
-    if (f != at_functor)
-      continue;
+  // AtomListEntryRef ent;
+  // LmnFunctor f;
+  // LmnSymbolAtomRef at_atom;
+  // EACH_ATOMLIST_WITH_FUNC(new_mem, ent, f, {
+  //   if (f != at_functor)
+  //     continue;
 
-    LMN_ASSERT(ent->n == 1);
-    at_atom = atomlist_head(ent);
-  });
+  //   LMN_ASSERT(ent->n == 1);
+  //   at_atom = atomlist_head(ent);
+  // });
 
-  LmnSymbolAtomRef plus = (LmnSymbolAtomRef)at_atom->get_link(0);
-  lmn_mem_delete_atom(new_mem, at_atom, 0);
+  // LmnSymbolAtomRef plus = (LmnSymbolAtomRef)at_atom->get_link(0);
+  // lmn_mem_delete_atom(new_mem, at_atom, 0);
 
   LmnSymbolAtomRef in = lmn_mem_newatom(new_mem, LMN_IN_PROXY_FUNCTOR);
   LmnSymbolAtomRef out = lmn_mem_newatom(mem, LMN_OUT_PROXY_FUNCTOR);
-
+  LmnSymbolAtomRef plus = lmn_mem_newatom(new_mem, LMN_UNARY_PLUS_FUNCTOR);
   lmn_newlink_in_symbols(plus, 0, in, 1);
   lmn_newlink_in_symbols(in, 0, out, 0);
 
@@ -197,4 +262,6 @@ void LmnStateMap::init_state_map(void) {
   CCallback::lmn_register_c_fun("cb_state_map_id_find", (void *)cb_state_map_id_find, 4);
   CCallback::lmn_register_c_fun("cb_state_map_state_find", (void *)cb_state_map_state_find,
                      4);
+    CCallback::lmn_register_c_fun("cb_state_map_id_find_para", (void *)cb_state_map_id_find_para,
+                     5);
 }

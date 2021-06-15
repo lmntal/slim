@@ -158,13 +158,10 @@ static void apply_rules_para(unsigned int id,
                              std::vector<LmnMembraneRef> *mems,
                              std::vector<std::vector<LmnMembraneRef>> *ret,
                              int begin, int end) {
-  //std::lock_guard<std::mutex> lock(react_mtx);
   if (lmn_env.normal_para) {
     env_my_TLS_init(id);
     lmn_thread_set_CPU_affinity(id);
   }
-  // std::cout << "id: "<<id << std::endl;
-  // std::cout << "pool size "<< id <<": "<<lmn_id_pool[lmn_tls.thread_id].size() << std::endl;
   for (int i = begin; i < end; i++) {
     for (auto &rs : *rulesets) {
       for (auto r : *rs) {
