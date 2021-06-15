@@ -45,6 +45,19 @@
 #include <mutex>
 
 #include "vm/functor.h"
+struct Profile_react_rule {
+  std::vector<double> v_time;
+  std::vector<long long> v_list_size;
+  long long depth;
+  Profile_react_rule() {
+    v_time = std::vector<double>();
+    v_list_size = std::vector<long long>();
+    depth = 0;
+  };
+};
+
+Profile_react_rule prr;
+
 void cb_react_rule(
     LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef rule_mem_proxy,
     LmnLinkAttr rule_mem_proxy_link_attr, LmnAtomRef graph_mem_proxy,
@@ -179,6 +192,21 @@ static void apply_rules_para(unsigned int id,
   delete rulesets;
 }
 
+void cb_react_profile(LmnReactCxtRef &rc, LmnMembraneRef mem) {
+  double total_time = 0;
+  long long total_size = 0;
+  for(int i=0; i<prr.depth; i++) {
+    std::cout << i << ": " << prr.v_list_size[i] << "  " << prr.v_time[i] << std::endl;
+    total_time += prr.v_time[i];
+    total_size += prr.v_list_size[i];
+  }
+  std::cout << "=====TOTAL PROFILE=====" << std::endl;
+  std::cout << "DEPTH: " << prr.depth<< std::endl;
+  std::cout << "TOTAL LIST SIZE: " << total_size << std::endl;
+  std::cout << "TOTAL TIME: " << total_time << std::endl;
+}
+
+
 void cb_react_ruleset_nd_para(LmnReactCxtRef &rc, LmnMembraneRef mem,
                               LmnAtomRef rule_mem_proxy,
                               LmnLinkAttr rule_mem_proxy_link_attr,
@@ -201,6 +229,7 @@ void cb_react_ruleset_nd_para(LmnReactCxtRef &rc, LmnMembraneRef mem,
   LmnAtomRef it = cons;
   long long t_num = 0;
   if (n > 1) {
+    auto start = get_cpu_time();
     // 2 para
     long long cores = ((lmn_env.core_num-1)<1)?1:(lmn_env.core_num-1);
     long long  pat = ceil((float)n / (float)cores);
@@ -236,6 +265,10 @@ void cb_react_ruleset_nd_para(LmnReactCxtRef &rc, LmnMembraneRef mem,
 	threads[i].join();
       }
     }
+    auto finish = get_cpu_time();
+    prr.v_time.push_back(finish-start);
+    prr.v_list_size.push_back(n);
+    prr.depth++;
     it = cons;
 
     for (int i = 0; i < n; i++) {
@@ -300,10 +333,15 @@ void cb_react_ruleset_nd_para(LmnReactCxtRef &rc, LmnMembraneRef mem,
                   LMN_ATTR_GET_VALUE(rule_mem_proxy_link_attr));
 }
 
+
+
 void init_react_rule(void) {
   CCallback::lmn_register_c_fun("cb_react_rule", (void *)cb_react_rule, 4);
   CCallback::lmn_register_c_fun("cb_react_ruleset_nd",
                                 (void *)cb_react_ruleset_nd, 4);
   CCallback::lmn_register_c_fun("cb_react_ruleset_nd_para",
                                 (void *)cb_react_ruleset_nd_para, 5);
+  CCallback::lmn_register_c_fun("cb_react_profile",
+                                (void *)cb_react_profile, 0);
+
 }
