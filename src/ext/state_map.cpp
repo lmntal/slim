@@ -41,9 +41,23 @@
 #include "set.h"
 #include "verifier/verifier.h"
 #include "vm/vm.h"
+#include <iostream>
 
 int LmnStateMap::state_map_atom_type;
+struct Profile_state_map {
+  long long id_find_num;
+  long long graph_find_num;
+  double id_find_time;
+  double graph_find_time;
+  Profile_state_map() {
+    id_find_num = 0;
+    graph_find_num = 0;
+    id_find_time = 0;
+    graph_find_time = 0;
+  };
+};
 
+Profile_state_map psm;
 /* constructor */
 LmnStateMap::LmnStateMap(LmnMembraneRef mem) {
   LMN_SP_ATOM_SET_TYPE(this, state_map_atom_type);
@@ -94,6 +108,8 @@ void LmnStateMap::cb_state_map_id_find(LmnReactCxtRef rc,
                           LmnAtomRef a2, LmnLinkAttr t2,
                           LmnAtomRef a3, LmnLinkAttr t3)
 {
+  psm.id_find_num++;
+  auto start = get_wall_time();
   LmnMembraneRef m = LMN_PROXY_GET_MEM((LmnSymbolAtomRef)((LmnSymbolAtomRef)a1)->get_link(0));
   StateSpaceRef ss = ((LmnStateMap::LmnStateMapRef)a0)->states;
   LmnSymbolAtomRef out = (LmnSymbolAtomRef)a1;
@@ -128,6 +144,8 @@ void LmnStateMap::cb_state_map_id_find(LmnReactCxtRef rc,
                   LMN_ATTR_GET_VALUE(t3));
 
   lmn_mem_delete_atom(mem, a1, t1);
+  auto finish = get_wall_time();
+  psm.id_find_time += finish - start;
 }
 
 
@@ -202,6 +220,8 @@ void LmnStateMap::cb_state_map_state_find(LmnReactCxtRef rc, LmnMembraneRef mem,
                              LmnAtomRef a0, LmnLinkAttr t0, LmnAtomRef a1,
                              LmnLinkAttr t1, LmnAtomRef a2, LmnLinkAttr t2,
                              LmnAtomRef a3, LmnLinkAttr t3) {
+  psm.graph_find_num++;
+  auto start = get_wall_time();
   State *s = (State *)a1;
   st_data_t entry;
 
@@ -235,6 +255,16 @@ void LmnStateMap::cb_state_map_state_find(LmnReactCxtRef rc, LmnMembraneRef mem,
                   LMN_ATTR_GET_VALUE(t3));
 
   mem->add_child_mem(new_mem);
+  auto finish = get_wall_time();
+  psm.graph_find_time += finish - start;
+}
+
+void cb_profile_state_map(LmnReactCxtRef rc, LmnMembraneRef mem) {
+  std::cout << "----STATE MAP PROFILE----" << std::endl;
+  std::cout << "id_find total time: "  << psm.id_find_time << std::endl;
+  std::cout << "id_find total num: " << psm.id_find_num << std::endl;
+  std::cout << "graph_find total time: " << psm.graph_find_time << std::endl;
+  std::cout << "graph_find total num: " << psm.graph_find_num << std::endl;
 }
 
 /*----------------------------------------------------------------------
@@ -262,6 +292,7 @@ void LmnStateMap::init_state_map(void) {
   CCallback::lmn_register_c_fun("cb_state_map_id_find", (void *)cb_state_map_id_find, 4);
   CCallback::lmn_register_c_fun("cb_state_map_state_find", (void *)cb_state_map_state_find,
                      4);
-    CCallback::lmn_register_c_fun("cb_state_map_id_find_para", (void *)cb_state_map_id_find_para,
+  CCallback::lmn_register_c_fun("cb_state_map_id_find_para", (void *)cb_state_map_id_find_para,
                      5);
+  CCallback::lmn_register_c_fun("cb_profile_state_map", (void *)cb_profile_state_map, 0);
 }
