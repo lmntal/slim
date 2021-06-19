@@ -63,6 +63,13 @@ class LmnStateMap {
                           LmnAtomRef a1, LmnLinkAttr t1,
                           LmnAtomRef a2, LmnLinkAttr t2,
                           LmnAtomRef a3, LmnLinkAttr t3);
+  static void cb_state_map_id_find_para(LmnReactCxtRef rc,
+				   LmnMembraneRef mem,
+				   LmnAtomRef a0, LmnLinkAttr t0,
+				   LmnAtomRef a1, LmnLinkAttr t1,
+				   LmnAtomRef a2, LmnLinkAttr t2,
+				   LmnAtomRef a3, LmnLinkAttr t3,
+				   LmnAtomRef a4, LmnLinkAttr t4);
   static void cb_state_map_state_find(LmnReactCxtRef rc, LmnMembraneRef mem,
                              LmnAtomRef a0, LmnLinkAttr t0, LmnAtomRef a1,
                              LmnLinkAttr t1, LmnAtomRef a2, LmnLinkAttr t2,

@@ -42,10 +42,15 @@
 
 #include <climits>
 
-struct Vector *lmn_id_pool;
 struct LmnEnv lmn_env;
 struct LmnProfiler lmn_prof;
 LMN_TLS_TYPE(LmnTLS) lmn_tls;
+#ifdef NORMAL_PARA
+std::atomic<ProcessID> proc_next_id;
+std::vector<std::stack<ProcessID>> lmn_id_pool;
+#else
+struct Vector *lmn_id_pool;
+#endif
 
 //static void env_init(void);
 
@@ -59,14 +64,44 @@ LMN_TLS_TYPE(LmnTLS) lmn_tls;
 /* LMN_TLS部にpthread_key_tを埋め込む場合は, free関数をdestructorに渡しておく.
  */
 
+#ifdef NORMAL_PARA
+static inline void lmn_TLS_init(unsigned int thread_id) {
+  lmn_tls.thread_num = lmn_env.core_num;
+  lmn_tls.thread_id = thread_id;
+  lmn_tls.state_id = 0UL;
+}
+
+ProcessID env_gen_next_id() {
+  if(!(lmn_id_pool[lmn_tls.thread_id].empty())) {
+    auto ret = lmn_id_pool[lmn_tls.thread_id].top();
+    lmn_id_pool[lmn_tls.thread_id].pop();
+    return ret;
+  } else {
+    return proc_next_id++;
+  }
+}
+
+void env_return_id(ProcessID n) {
+
+  lmn_id_pool[lmn_tls.thread_id].push(n);
+}
+#else
 static inline void lmn_TLS_init(LmnTLS *p, unsigned int thread_id) {
   p->thread_num = lmn_env.core_num;
   p->thread_id = thread_id;
   p->state_id = 0UL;
   p->proc_next_id = 1UL;
 }
+#endif
 
 static inline void lmn_TLS_destroy(LmnTLS *p) { /* nothing now */ }
+
+#ifdef NORMAL_PARA
+static inline void lmn_TLS_make(unsigned int thread_id) {
+  lmn_TLS_init(thread_id);
+}
+
+#else
 
 static inline LmnTLS *lmn_TLS_make(unsigned int thread_id) LMN_UNUSED;
 static inline LmnTLS *lmn_TLS_make(unsigned int thread_id) {
@@ -75,6 +110,7 @@ static inline LmnTLS *lmn_TLS_make(unsigned int thread_id) {
   return p;
 }
 
+#endif
 static inline void lmn_TLS_free(LmnTLS *p) LMN_UNUSED;
 static inline void lmn_TLS_free(LmnTLS *p) {
   lmn_TLS_destroy(p);
@@ -82,7 +118,13 @@ static inline void lmn_TLS_free(LmnTLS *p) {
 }
 
 void env_my_TLS_init(unsigned int th_id) {
-#if !defined(ENABLE_PARALLEL) || defined(USE_TLS_KEYWORD)
+#ifdef NORMAL_PARA
+  if (th_id == LMN_PRIMARY_ID) {
+    env_set_my_thread_id(th_id);
+  } else {
+    lmn_TLS_init(th_id);
+  }
+#elif !defined(ENABLE_PARALLEL) || defined(USE_TLS_KEYWORD)
   if (th_id == LMN_PRIMARY_ID) {
     env_set_my_thread_id(th_id);
   } else {
@@ -93,11 +135,13 @@ void env_my_TLS_init(unsigned int th_id) {
     lmn_TLS_set_value(lmn_tls, lmn_TLS_make(th_id));
   }
 #endif
+#ifndef NORMAL_PARA
   env_reset_proc_ids();
+#endif
 }
 
 void env_my_TLS_finalize() {
-#if !defined(ENABLE_PARALLEL) || defined(USE_TLS_KEYWORD)
+#if !defined(ENABLE_PARALLEL) || defined(USE_TLS_KEYWORD) || defined(NORMAL_PARA)
   env_set_my_thread_id(LMN_PRIMARY_ID); /* resetする */
 #elif defined(USE_TLS_PTHREAD_KEY)
   if (env_my_thread_id() != LMN_PRIMARY_ID) {
@@ -109,8 +153,13 @@ void env_my_TLS_finalize() {
 void lmn_stream_init() {
 //  lmn_env.init();
 
+#ifndef NORMAL_PARA
   lmn_id_pool = NULL;
-#if !defined(ENABLE_PARALLEL) || defined(USE_TLS_KEYWORD)
+#endif
+
+#ifdef NORMAL_PARA
+  lmn_TLS_init(LMN_PRIMARY_ID);
+#elif !defined(ENABLE_PARALLEL) || defined(USE_TLS_KEYWORD)
   /* 並列処理無効の場合か, 並列処理有効かつthread local
    * storageキーワードが利用可能な場合 */
   lmn_TLS_init(&lmn_tls, LMN_PRIMARY_ID);
@@ -125,7 +174,7 @@ void lmn_stream_init() {
 }
 
 void lmn_stream_destroy() {
-#if !defined(ENABLE_PARALLEL) || defined(USE_TLS_KEYWORD)
+#if !defined(ENABLE_PARALLEL) || defined(USE_TLS_KEYWORD) || defined(NORMAL_PARA)
   lmn_TLS_destroy(&lmn_tls);
 #elif defined(USE_TLS_PTHREAD_KEY)
   lmn_TLS_free(lmn_TLS_get_value(lmn_tls));
@@ -224,4 +273,6 @@ LmnEnv::LmnEnv() {
   this->findatom_parallel_mode = FALSE;
   this->find_atom_parallel = FALSE;
   this->findatom_parallel_inde = FALSE;
+
+  this->normal_para = FALSE;
 }

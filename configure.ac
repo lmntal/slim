@@ -74,6 +74,7 @@ default_enable_gperftools=no
 default_enable_minmax=no
 default_enable_cunit=no
 default_enable_firstclass_rule=no
+default_enable_normal_para=no
 default_minimal_state=no
 default_cunit_home="/usr/local"
 
@@ -145,6 +146,11 @@ AC_ARG_ENABLE([firstclass_rule],
               [],
               [enable_firstclass_rule="$default_enable_firstclass_rule"])
 
+AC_ARG_ENABLE([normal_para],
+              [AS_HELP_STRING([--enable-normal-para]
+                              [turn on parallel for normal mode (default no)])],
+              [],
+              [enable_normal_para="$default_enable_normal_para"])
 # devel
 if test "$enable_devel" = "yes"; then
   AC_MSG_RESULT([enable devel: yes])
@@ -246,6 +252,13 @@ if test "$enable_firstclass_rule" = "yes"; then
   AC_DEFINE([USE_FIRSTCLASS_RULE], 1, [enable first class rule])
 else
   AC_MSG_RESULT([enable first-class rule: no])
+fi
+
+if test "$enable_normal_para" = "yes"; then
+  AC_MSG_RESULT([enable normal para: yes])
+  AC_DEFINE([NORMAL_PARA], 1, [enable normal para])
+else
+  AC_MSG_RESULT([enable normal para: no])
 fi
 
 AM_CONDITIONAL(ENABLE_JNI,      test "$enable_jni" = "yes")

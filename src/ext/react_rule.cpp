@@ -40,34 +40,50 @@
 #include "vm/vm.h"
 
 #include <algorithm>
+#include <iostream>
+#include <thread>
+#include <mutex>
 
-void cb_react_rule(LmnReactCxtRef rc,
-                   LmnMembraneRef mem,
-                   LmnAtomRef rule_mem_proxy, LmnLinkAttr rule_mem_proxy_link_attr,
-                   LmnAtomRef graph_mem_proxy, LmnLinkAttr graph_mem_proxy_link_attr,
-                   LmnAtomRef return_rule_mem_proxy, LmnLinkAttr return_rule_mem_proxy_link_attr,
-                   LmnAtomRef react_judge_atom, LmnLinkAttr react_judge_link_attr)
-{
-  LmnMembraneRef rule_mem = LMN_PROXY_GET_MEM((LmnSymbolAtomRef)((LmnSymbolAtomRef)rule_mem_proxy)->get_link(0));
-  LmnMembraneRef graph_mem = LMN_PROXY_GET_MEM((LmnSymbolAtomRef)((LmnSymbolAtomRef)graph_mem_proxy)->get_link(0));
+#include "vm/functor.h"
+struct Profile_react_rule {
+  std::vector<double> v_time;
+  std::vector<long long> v_list_size;
+  long long depth;
+  Profile_react_rule() {
+    v_time = std::vector<double>();
+    v_list_size = std::vector<long long>();
+    depth = 0;
+  };
+};
+
+Profile_react_rule prr;
+
+void cb_react_rule(
+    LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef rule_mem_proxy,
+    LmnLinkAttr rule_mem_proxy_link_attr, LmnAtomRef graph_mem_proxy,
+    LmnLinkAttr graph_mem_proxy_link_attr, LmnAtomRef return_rule_mem_proxy,
+    LmnLinkAttr return_rule_mem_proxy_link_attr, LmnAtomRef react_judge_atom,
+    LmnLinkAttr react_judge_link_attr) {
+  LmnMembraneRef rule_mem = LMN_PROXY_GET_MEM(
+      (LmnSymbolAtomRef)((LmnSymbolAtomRef)rule_mem_proxy)->get_link(0));
+  LmnMembraneRef graph_mem = LMN_PROXY_GET_MEM(
+      (LmnSymbolAtomRef)((LmnSymbolAtomRef)graph_mem_proxy)->get_link(0));
   LmnRuleSetRef rs = rule_mem->get_rulesets()[0];
   auto r = rs->get_rule(0);
   MemReactContext tmp_rc(nullptr);
 
   int reacted = Task::react_rule(&tmp_rc, graph_mem, r);
   lmn_interned_str str = (reacted) ? lmn_intern("success") : lmn_intern("fail");
-  LmnSymbolAtomRef result = lmn_mem_newatom(mem, lmn_functor_table->intern(ANONYMOUS, str, 2));
+  LmnSymbolAtomRef result =
+      lmn_mem_newatom(mem, lmn_functor_table->intern(ANONYMOUS, str, 2));
 
-  lmn_mem_newlink(mem,
-                  result, LMN_ATTR_MAKE_LINK(0), 0,
-                  graph_mem_proxy, graph_mem_proxy_link_attr,
+  lmn_mem_newlink(mem, result, LMN_ATTR_MAKE_LINK(0), 0, graph_mem_proxy,
+                  graph_mem_proxy_link_attr,
                   LMN_ATTR_GET_VALUE(graph_mem_proxy_link_attr));
-  lmn_mem_newlink(mem,
-                  react_judge_atom, react_judge_link_attr,
-                  LMN_ATTR_GET_VALUE(react_judge_link_attr),
-                  result, LMN_ATTR_MAKE_LINK(0), 1);
-  lmn_mem_newlink(mem,
-                  return_rule_mem_proxy, return_rule_mem_proxy_link_attr,
+  lmn_mem_newlink(mem, react_judge_atom, react_judge_link_attr,
+                  LMN_ATTR_GET_VALUE(react_judge_link_attr), result,
+                  LMN_ATTR_MAKE_LINK(0), 1);
+  lmn_mem_newlink(mem, return_rule_mem_proxy, return_rule_mem_proxy_link_attr,
                   LMN_ATTR_GET_VALUE(return_rule_mem_proxy_link_attr),
                   rule_mem_proxy, rule_mem_proxy_link_attr,
                   LMN_ATTR_GET_VALUE(rule_mem_proxy_link_attr));
@@ -81,8 +97,7 @@ void cb_react_rule(LmnReactCxtRef rc,
 template <typename C>
 static void apply_rules_in_rulesets(LmnMembraneRef mem,
                                     LmnMembraneRef src_graph, C *rulesets,
-                                    LmnSymbolAtomRef *head, int *pos)
-{
+                                    LmnSymbolAtomRef *head, int *pos) {
   for (auto &rs : *rulesets) {
     for (auto r : *rs) {
       MCReactContext rc(src_graph);
@@ -94,7 +109,7 @@ static void apply_rules_in_rulesets(LmnMembraneRef mem,
       std::for_each(states.rbegin(), states.rend(), [=](void *v) {
         LmnSymbolAtomRef cons = lmn_mem_newatom(mem, LMN_LIST_FUNCTOR);
         LmnMembraneRef m = (LmnMembraneRef)v;
-        LmnSymbolAtomRef in = lmn_mem_newatom(m, LMN_IN_PROXY_FUNCTOR); 
+        LmnSymbolAtomRef in = lmn_mem_newatom(m, LMN_IN_PROXY_FUNCTOR);
         LmnSymbolAtomRef out = lmn_mem_newatom(mem, LMN_OUT_PROXY_FUNCTOR);
         LmnSymbolAtomRef plus = lmn_mem_newatom(m, LMN_UNARY_PLUS_FUNCTOR);
         mem->add_child_mem(m);
@@ -109,19 +124,21 @@ static void apply_rules_in_rulesets(LmnMembraneRef mem,
   }
 }
 
-void cb_react_ruleset_nd(LmnReactCxtRef &rc,
-                         LmnMembraneRef mem,
-                         LmnAtomRef rule_mem_proxy, LmnLinkAttr rule_mem_proxy_link_attr,
-                         LmnAtomRef graph_mem_proxy, LmnLinkAttr graph_mem_proxy_link_attr,
-                         LmnAtomRef return_rule_mem_proxy, LmnLinkAttr return_rule_mem_proxy_link_attr,
-                         LmnAtomRef react_judge_atom, LmnLinkAttr react_judge_link_attr)
-{
-  LmnMembraneRef rule_mem = LMN_PROXY_GET_MEM((LmnSymbolAtomRef)((LmnSymbolAtomRef)rule_mem_proxy)->get_link(0));
+void cb_react_ruleset_nd(
+    LmnReactCxtRef &rc, LmnMembraneRef mem, LmnAtomRef rule_mem_proxy,
+    LmnLinkAttr rule_mem_proxy_link_attr, LmnAtomRef graph_mem_proxy,
+    LmnLinkAttr graph_mem_proxy_link_attr, LmnAtomRef return_rule_mem_proxy,
+    LmnLinkAttr return_rule_mem_proxy_link_attr, LmnAtomRef react_judge_atom,
+    LmnLinkAttr react_judge_link_attr) {
+  LmnMembraneRef rule_mem = LMN_PROXY_GET_MEM(
+      (LmnSymbolAtomRef)((LmnSymbolAtomRef)rule_mem_proxy)->get_link(0));
   LmnAtomRef in_mem = ((LmnSymbolAtomRef)graph_mem_proxy)->get_link(0);
   LmnMembraneRef graph_mem = LMN_PROXY_GET_MEM((LmnSymbolAtomRef)in_mem);
 
-  lmn_mem_delete_atom(graph_mem, ((LmnSymbolAtomRef)in_mem)->get_link(1), ((LmnSymbolAtomRef)in_mem)->get_attr(1));
-  lmn_mem_delete_atom(graph_mem, in_mem, ((LmnSymbolAtomRef)graph_mem_proxy)->get_attr(0));
+  lmn_mem_delete_atom(graph_mem, ((LmnSymbolAtomRef)in_mem)->get_link(1),
+                      ((LmnSymbolAtomRef)in_mem)->get_attr(1));
+  lmn_mem_delete_atom(graph_mem, in_mem,
+                      ((LmnSymbolAtomRef)graph_mem_proxy)->get_attr(0));
 
   LmnSymbolAtomRef head = lmn_mem_newatom(mem, LMN_NIL_FUNCTOR);
   int pos = 0;
@@ -134,25 +151,196 @@ void cb_react_ruleset_nd(LmnReactCxtRef &rc,
   apply_rules_in_rulesets(mem, graph_mem, fstclass_rules, &head, &pos);
 #endif
 
-  lmn_mem_newlink(mem, head, LMN_ATTR_MAKE_LINK(pos), pos,
-                  react_judge_atom, react_judge_link_attr,
+  lmn_mem_newlink(mem, head, LMN_ATTR_MAKE_LINK(pos), pos, react_judge_atom,
+                  react_judge_link_attr,
                   LMN_ATTR_GET_VALUE(react_judge_link_attr));
 
   mem->remove_mem(graph_mem);
 
-  lmn_mem_newlink(mem,
-                  return_rule_mem_proxy, return_rule_mem_proxy_link_attr,
+  lmn_mem_newlink(mem, return_rule_mem_proxy, return_rule_mem_proxy_link_attr,
                   LMN_ATTR_GET_VALUE(return_rule_mem_proxy_link_attr),
                   rule_mem_proxy, rule_mem_proxy_link_attr,
                   LMN_ATTR_GET_VALUE(rule_mem_proxy_link_attr));
 
-  lmn_mem_delete_atom(mem, graph_mem_proxy, graph_mem_proxy_link_attr); 
+  lmn_mem_delete_atom(mem, graph_mem_proxy, graph_mem_proxy_link_attr);
+}
+
+static void apply_rules_para(unsigned int id,
+                             std::vector<LmnRuleSet *> *rulesets,
+                             std::vector<LmnMembraneRef> *mems,
+                             std::vector<std::vector<LmnMembraneRef>> *ret,
+                             int begin, int end) {
+  if (lmn_env.normal_para) {
+    env_my_TLS_init(id);
+    lmn_thread_set_CPU_affinity(id);
+  }
+  for (int i = begin; i < end; i++) {
+    for (auto &rs : *rulesets) {
+      for (auto r : *rs) {
+        MCReactContext rc(mems->at(i));
+        rc.keep_process_id_in_nd_mode = true;
+        Task::react_rule(&rc, mems->at(i), r);
+        auto &states = rc.expanded_states();
+        int n_of_results = rc.expanded_states().size();
+        for (int j = 0; j < n_of_results; j++) {
+          ret->at(i).push_back((LmnMembraneRef)states[j]);
+        }
+      }
+    }
+  }
+  delete rulesets;
+}
+
+void cb_react_profile(LmnReactCxtRef &rc, LmnMembraneRef mem) {
+  double total_time = 0;
+  long long total_size = 0;
+  for(int i=0; i<prr.depth; i++) {
+    std::cout << i << ": " << prr.v_list_size[i] << "  " << prr.v_time[i] << std::endl;
+    total_time += prr.v_time[i];
+    total_size += prr.v_list_size[i];
+  }
+  std::cout << "=====TOTAL PROFILE=====" << std::endl;
+  std::cout << "DEPTH: " << prr.depth<< std::endl;
+  std::cout << "TOTAL LIST SIZE: " << total_size << std::endl;
+  std::cout << "TOTAL TIME: " << total_time << std::endl;
+}
+
+
+void cb_react_ruleset_nd_para(LmnReactCxtRef &rc, LmnMembraneRef mem,
+                              LmnAtomRef rule_mem_proxy,
+                              LmnLinkAttr rule_mem_proxy_link_attr,
+                              LmnAtomRef cons, LmnLinkAttr cons_link_attr,
+                              LmnAtomRef n_of_list, LmnLinkAttr n_of_list_attr,
+                              LmnAtomRef return_rule_mem_proxy,
+                              LmnLinkAttr return_rule_mem_proxy_link_attr,
+                              LmnAtomRef react_judge_atom,
+                              LmnLinkAttr react_judge_link_attr) {
+  long long n = (long long)n_of_list;
+
+  std::vector<LmnMembraneRef> mems(n);
+
+  std::vector<std::vector<LmnMembraneRef>> ret(n, std::vector<LmnMembraneRef>());
+
+  std::vector<std::thread> threads;
+
+  LmnMembraneRef rule_mem = LMN_PROXY_GET_MEM(
+      (LmnSymbolAtomRef)((LmnSymbolAtomRef)rule_mem_proxy)->get_link(0));
+  LmnAtomRef it = cons;
+  long long t_num = 0;
+  if (n > 1) {
+    auto start = get_wall_time();
+    // 2 para
+    long long cores = ((lmn_env.core_num-1)<1)?1:(lmn_env.core_num-1);
+    long long  pat = ceil((float)n / (float)cores);
+    long long begin = 0;
+    long long end = std::min(pat, n);
+
+    while (begin != n) {
+      t_num++;
+      for (int i = begin; i < end; i++) {
+	LmnAtomRef out = ((LmnSymbolAtomRef)it)->get_link(0);
+	LmnAtomRef in = ((LmnSymbolAtomRef)out)->get_link(0);
+	LmnMembraneRef graph_mem = LMN_PROXY_GET_MEM((LmnSymbolAtomRef)in);
+	// delete plus
+	lmn_mem_delete_atom(graph_mem, ((LmnSymbolAtomRef)in)->get_link(1),
+			    ((LmnSymbolAtomRef)in)->get_attr(1));
+	// delte in
+	lmn_mem_delete_atom(graph_mem, in, ((LmnSymbolAtomRef)out)->get_attr(0));
+	// delete out
+	lmn_mem_delete_atom(mem, out, ((LmnSymbolAtomRef)it)->get_attr(0));
+	mems[i] = graph_mem;
+	it = ((LmnSymbolAtomRef)it)->get_link(1);
+      }
+      if (lmn_env.normal_para)
+	threads.push_back(std::thread(apply_rules_para, t_num, new std::vector<LmnRuleSet *>(rule_mem->get_rulesets()), &mems, &ret, begin, end));
+      else
+	apply_rules_para(t_num, new std::vector<LmnRuleSet *>(rule_mem->get_rulesets()), &mems, &ret, begin, end);
+      begin = end;
+      end = std::min(end+pat, n);
+    }
+
+    if (lmn_env.normal_para) {
+      for (int i=0; i<t_num; i++) {
+	threads[i].join();
+      }
+    }
+    auto finish = get_wall_time();
+    prr.v_time.push_back(finish-start);
+    prr.v_list_size.push_back(n);
+    prr.depth++;
+    it = cons;
+
+    for (int i = 0; i < n; i++) {
+      LmnSymbolAtomRef head = lmn_mem_newatom(mem, LMN_NIL_FUNCTOR);
+      int pos = 0;
+
+      for (auto j = ret[i].rbegin(); j!=ret[i].rend(); j++ ) {
+	LmnSymbolAtomRef cons = lmn_mem_newatom(mem, LMN_LIST_FUNCTOR);
+	LmnMembraneRef m = (LmnMembraneRef)*j;
+	LmnSymbolAtomRef in = lmn_mem_newatom(m, LMN_IN_PROXY_FUNCTOR);
+	LmnSymbolAtomRef out = lmn_mem_newatom(mem, LMN_OUT_PROXY_FUNCTOR);
+	LmnSymbolAtomRef plus = lmn_mem_newatom(m, LMN_UNARY_PLUS_FUNCTOR);
+	mem->add_child_mem(m);
+	lmn_newlink_in_symbols(in, 0, out, 0);
+	lmn_newlink_in_symbols(in, 1, plus, 0);
+	lmn_newlink_in_symbols(out, 1, cons, 0);
+	lmn_newlink_in_symbols(cons, 1, head, pos);
+	head = cons;
+	pos = 2;
+      }
+      lmn_mem_newlink(mem, head, LMN_ATTR_MAKE_LINK(pos), pos, it,
+                      LMN_ATTR_MAKE_LINK(0), 0);
+      it = ((LmnSymbolAtomRef)it)->get_link(1);
+      mem->remove_mem(mems[i]);
+    }
+  } else {
+    while (((LmnSymbolAtomRef)it)->get_functor() != LMN_NIL_FUNCTOR) {
+      LmnSymbolAtomRef head = lmn_mem_newatom(mem, LMN_NIL_FUNCTOR);
+      int pos = 0;
+      LmnAtomRef out = ((LmnSymbolAtomRef)it)->get_link(0);
+      LmnAtomRef in = ((LmnSymbolAtomRef)out)->get_link(0);
+      LmnMembraneRef graph_mem = LMN_PROXY_GET_MEM((LmnSymbolAtomRef)in);
+      // delete plus
+      lmn_mem_delete_atom(graph_mem, ((LmnSymbolAtomRef)in)->get_link(1),
+                          ((LmnSymbolAtomRef)in)->get_attr(1));
+      // delte in
+      lmn_mem_delete_atom(graph_mem, in, ((LmnSymbolAtomRef)out)->get_attr(0));
+      // delete out
+      lmn_mem_delete_atom(mem, out, ((LmnSymbolAtomRef)it)->get_attr(0));
+
+      apply_rules_in_rulesets(mem, graph_mem, &rule_mem->get_rulesets(), &head,
+                              &pos);
+#ifdef USE_FIRSTCLASS_RULE
+      auto fstclass_rules = &rule_mem->get_firstclass_rulesets();
+      apply_rules_in_rulesets(mem, graph_mem, fstclass_rules, &head, &pos);
+#endif
+
+      lmn_mem_newlink(mem, head, LMN_ATTR_MAKE_LINK(pos), pos, it,
+                      LMN_ATTR_MAKE_LINK(0), 0);
+      it = ((LmnSymbolAtomRef)it)->get_link(1);
+      mem->remove_mem(graph_mem);
+    }
+  }
+
+  lmn_mem_newlink(mem, cons, cons_link_attr, LMN_ATTR_GET_VALUE(cons_link_attr),
+                  react_judge_atom, react_judge_link_attr,
+                  LMN_ATTR_GET_VALUE(react_judge_link_attr));
+
+  lmn_mem_newlink(mem, return_rule_mem_proxy, return_rule_mem_proxy_link_attr,
+                  LMN_ATTR_GET_VALUE(return_rule_mem_proxy_link_attr),
+                  rule_mem_proxy, rule_mem_proxy_link_attr,
+                  LMN_ATTR_GET_VALUE(rule_mem_proxy_link_attr));
 }
 
 
 
-void init_react_rule(void)
-{
+void init_react_rule(void) {
   CCallback::lmn_register_c_fun("cb_react_rule", (void *)cb_react_rule, 4);
-  CCallback::lmn_register_c_fun("cb_react_ruleset_nd", (void *)cb_react_ruleset_nd, 4);
+  CCallback::lmn_register_c_fun("cb_react_ruleset_nd",
+                                (void *)cb_react_ruleset_nd, 4);
+  CCallback::lmn_register_c_fun("cb_react_ruleset_nd_para",
+                                (void *)cb_react_ruleset_nd_para, 5);
+  CCallback::lmn_register_c_fun("cb_react_profile",
+                                (void *)cb_react_profile, 0);
+
 }
