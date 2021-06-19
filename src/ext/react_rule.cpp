@@ -164,8 +164,7 @@ void cb_react_ruleset_nd(
 
   lmn_mem_delete_atom(mem, graph_mem_proxy, graph_mem_proxy_link_attr);
 }
-// template <typename C>
-std::mutex react_mtx;
+
 static void apply_rules_para(unsigned int id,
                              std::vector<LmnRuleSet *> *rulesets,
                              std::vector<LmnMembraneRef> *mems,

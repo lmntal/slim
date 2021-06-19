@@ -42,6 +42,9 @@
 #include "verifier/verifier.h"
 #include "vm/vm.h"
 #include <iostream>
+#include <thread>
+#include <vector>
+#include <mutex>
 
 int LmnStateMap::state_map_atom_type;
 struct Profile_state_map {
@@ -146,6 +149,57 @@ void LmnStateMap::cb_state_map_id_find(LmnReactCxtRef rc, LmnMembraneRef mem,
   auto finish = get_wall_time();
   psm.id_find_time += finish - start;
 }
+std::mutex insert_para_mtx;
+static void insert_state_para(LmnReactCxtRef rc, LmnMembraneRef mem, unsigned int id,
+                              StateSpaceRef ss, int num, LmnAtomRef begin,
+                              std::vector<LmnMembraneRef> *vm,
+                              std::vector<LmnAtomRef> *vo,
+                              std::vector<long long> *vs) {
+  printf("%s:%d thread id = %d\n", __FUNCTION__, __LINE__, id);
+
+  // if (lmn_env.normal_para) {
+  //   env_my_TLS_init(id);
+  //   lmn_thread_set_CPU_affinity(id);
+  // }
+  std::lock_guard<std::mutex> lock(insert_para_mtx);
+  LmnAtomRef it = begin;
+  while (((LmnSymbolAtomRef)it)->get_functor() != LMN_NIL_FUNCTOR and num > 0) {
+    LmnAtomRef head = ((LmnSymbolAtomRef)it)->get_link(0);
+    while (((LmnSymbolAtomRef)head)->get_functor() != LMN_NIL_FUNCTOR) {
+      LmnAtomRef out = ((LmnSymbolAtomRef)head)->get_link(0);
+      LmnAtomRef in = ((LmnSymbolAtomRef)out)->get_link(0);
+      LmnMembraneRef graph_mem = LMN_PROXY_GET_MEM((LmnSymbolAtomRef)in);
+      // delete plus
+      lmn_mem_delete_atom(graph_mem, ((LmnSymbolAtomRef)in)->get_link(1),
+                          ((LmnSymbolAtomRef)in)->get_attr(1));
+      // delete in
+      lmn_mem_delete_atom(graph_mem, in, ((LmnSymbolAtomRef)out)->get_attr(0));
+
+      ((MemReactContext *)rc)->memstack_remove(graph_mem);
+      mem->remove_mem(graph_mem);
+
+      State *new_s = new State(graph_mem, 0, TRUE);
+      State *succ = ss->insert(new_s);
+
+      if (succ != new_s) {
+        delete (new_s);
+      }
+      lmn_mem_delete_atom(mem, out, ((LmnSymbolAtomRef)head)->get_attr(0));
+      lmn_mem_newlink(mem, head, ((LmnSymbolAtomRef)head)->get_attr(0), 0, succ,
+                      LMN_INT_ATTR, 0);
+      // vm->push_back(graph_mem);
+      // vo->push_back(out);
+      // vs->push_back((long long)succ);
+      lmn_mem_push_atom(mem, succ, LMN_INT_ATTR);
+      // delete out
+
+      head = ((LmnSymbolAtomRef)head)->get_link(1);
+    }
+    num--;
+    it = ((LmnSymbolAtomRef)it)->get_link(1);
+  }
+  printf("%s:%d thread id = %d\n", __FUNCTION__, __LINE__, id);
+}
 
 /*
  * 状態->ID
@@ -159,40 +213,108 @@ void LmnStateMap::cb_state_map_id_find_para(
     LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0, LmnLinkAttr t0,
     LmnAtomRef a1, LmnLinkAttr t1, LmnAtomRef a2, LmnLinkAttr t2, LmnAtomRef a3,
     LmnLinkAttr t3, LmnAtomRef a4, LmnLinkAttr t4) {
-  LmnAtomRef it = a1;
-  StateSpaceRef ss = ((LmnStateMap::LmnStateMapRef)a0)->states;
-  while (((LmnSymbolAtomRef)it)->get_functor() != LMN_NIL_FUNCTOR) {
-    LmnAtomRef head = ((LmnSymbolAtomRef)it)->get_link(0);
-    while (((LmnSymbolAtomRef)head)->get_functor() != LMN_NIL_FUNCTOR) {
-      LmnAtomRef out = ((LmnSymbolAtomRef)head)->get_link(0);
-      LmnAtomRef in = ((LmnSymbolAtomRef)out)->get_link(0);
-      LmnMembraneRef graph_mem = LMN_PROXY_GET_MEM((LmnSymbolAtomRef)in);
-      // delete plus
-      lmn_mem_delete_atom(graph_mem, ((LmnSymbolAtomRef)in)->get_link(1),
-                          ((LmnSymbolAtomRef)in)->get_attr(1));
-      // delete in
-      lmn_mem_delete_atom(graph_mem, in, ((LmnSymbolAtomRef)out)->get_attr(0));
-      // delete out
-      lmn_mem_delete_atom(mem, out, ((LmnSymbolAtomRef)head)->get_attr(0));
-      ((MemReactContext *)rc)->memstack_remove(graph_mem);
-      mem->remove_mem(graph_mem);
-      State *new_s = new State(graph_mem, 0, TRUE);
-      State *succ = ss->insert(new_s);
 
-      if (succ == new_s) { /* new state */
-        state_id_issue(succ);
-      } else {
-        delete (new_s);
+  long long n = (long long)a2;
+  if (n > 1 and lmn_env.normal_para
+      ) {
+    long long t_num = 0;
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
+    std::vector<std::vector<LmnMembraneRef> *> ret_mem;
+    std::vector<std::vector<LmnAtomRef> *> ret_out;
+    std::vector<std::vector<long long> *> ret_succ;
+    std::vector<std::thread> threads;
+    long long cores = ((lmn_env.core_num - 1) < 1) ? 1 : (lmn_env.core_num - 1);
+    long long pat = ceil((float)n / (float)cores);
+    long long begin = 0;
+    long long end = std::min(pat, n);
+
+    LmnAtomRef it = a1;
+    StateSpaceRef ss = ((LmnStateMap::LmnStateMapRef)a0)->states;
+    do {
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
+      t_num++;
+      std::vector<LmnMembraneRef> *ret_m = new std::vector<LmnMembraneRef>();
+      std::vector<LmnAtomRef> *ret_o = new std::vector<LmnAtomRef>();
+      std::vector<long long> *ret_s = new std::vector<long long>();
+      ret_mem.push_back(ret_m);
+      ret_out.push_back(ret_o);
+      ret_succ.push_back(ret_s);
+      if (lmn_env.normal_para)
+        threads.push_back(std::thread(insert_state_para, rc, mem, t_num, ss, pat,
+                                      it, ret_m, ret_o, ret_s));
+      else
+      insert_state_para(rc, mem, t_num, ss, pat, it, ret_m, ret_o, ret_s);
+      for (int i = 0;
+           i < pat and ((LmnSymbolAtomRef)it)->get_functor() != LMN_NIL_FUNCTOR;
+           i++) {
+        it = ((LmnSymbolAtomRef)it)->get_link(1);
       }
-
-      lmn_mem_push_atom(mem, succ, LMN_INT_ATTR);
-      lmn_mem_newlink(mem, head, ((LmnSymbolAtomRef)head)->get_attr(0), 0, succ,
-                      LMN_INT_ATTR, 0);
-
-      head = ((LmnSymbolAtomRef)head)->get_link(1);
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
+    } while (((LmnSymbolAtomRef)it)->get_functor() != LMN_NIL_FUNCTOR);
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
+    if (lmn_env.normal_para) {
+      for (int i = 0; i < t_num; i++) {
+        threads[i].join();
+      }
     }
-    it = ((LmnSymbolAtomRef)it)->get_link(1);
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
+    for (auto i = ret_mem.begin(); i != ret_mem.end(); i++) {
+      // for (auto j = (*i)->begin(); j != (*i)->end(); j++) {
+      //   ((MemReactContext *)rc)->memstack_remove(*j);
+      //   mem->remove_mem(*j);
+      // }
+      delete (*i);
+    }
+    for (auto i = ret_out.begin(); i != ret_out.end(); i++) {
+      // for (auto j = (*i)->begin(); j != (*i)->end(); j++) {
+      //   lmn_mem_delete_atom(mem, *j, 0);
+      // }
+      delete (*i);
+    }
+    for (auto i = ret_succ.begin(); i != ret_succ.end(); i++) {
+      // for (auto j = (*i)->begin(); j != (*i)->end(); j++) {
+      //   lmn_mem_push_atom(mem, (LmnAtomRef)*j, LMN_INT_ATTR);
+      // }
+      delete (*i);
+    }
+  } else {
+    LmnAtomRef it = a1;
+    StateSpaceRef ss = ((LmnStateMap::LmnStateMapRef)a0)->states;
+    while (((LmnSymbolAtomRef)it)->get_functor() != LMN_NIL_FUNCTOR) {
+      LmnAtomRef head = ((LmnSymbolAtomRef)it)->get_link(0);
+      while (((LmnSymbolAtomRef)head)->get_functor() != LMN_NIL_FUNCTOR) {
+        LmnAtomRef out = ((LmnSymbolAtomRef)head)->get_link(0);
+        LmnAtomRef in = ((LmnSymbolAtomRef)out)->get_link(0);
+        LmnMembraneRef graph_mem = LMN_PROXY_GET_MEM((LmnSymbolAtomRef)in);
+
+        // delete plus
+        lmn_mem_delete_atom(graph_mem, ((LmnSymbolAtomRef)in)->get_link(1),
+                            ((LmnSymbolAtomRef)in)->get_attr(1));
+        // delete in
+        lmn_mem_delete_atom(graph_mem, in,
+                            ((LmnSymbolAtomRef)out)->get_attr(0));
+
+        State *new_s = new State(graph_mem, 0, TRUE);
+        State *succ = ss->insert(new_s);
+
+        if (succ != new_s) {
+          delete (new_s);
+        }
+
+        // delete out
+        lmn_mem_delete_atom(mem, out, ((LmnSymbolAtomRef)head)->get_attr(0));
+        lmn_mem_newlink(mem, head, ((LmnSymbolAtomRef)head)->get_attr(0), 0,
+                        succ, LMN_INT_ATTR, 0);
+
+        lmn_mem_push_atom(mem, succ, LMN_INT_ATTR);
+        ((MemReactContext *)rc)->memstack_remove(graph_mem);
+        mem->remove_mem(graph_mem);
+        head = ((LmnSymbolAtomRef)head)->get_link(1);
+      }
+      it = ((LmnSymbolAtomRef)it)->get_link(1);
+    }
   }
+
   lmn_mem_newlink(mem, a1, t1, LMN_ATTR_GET_VALUE(t1), a3, t3,
                   LMN_ATTR_GET_VALUE(t3));
 
