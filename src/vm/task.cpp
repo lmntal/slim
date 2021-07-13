@@ -3697,6 +3697,42 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       return FALSE;
     break;
   }
+  case INSTR_FLOAT2INT: {
+    LmnInstrVar dstatom, atomi;
+    READ_VAL(LmnInstrVar, instr, dstatom);
+    READ_VAL(LmnInstrVar, instr, atomi);
+    rc->reg(dstatom) = {
+      static_cast<LmnWord>((long)lmn_get_double(rc->wt(atomi))),
+      LMN_INT_ATTR, TT_ATOM};
+    break;
+  }
+  case INSTR_INT2FLOAT: {
+    LmnInstrVar dstatom, atomi;
+    LmnAtom d;
+    READ_VAL(LmnInstrVar, instr, dstatom);
+    READ_VAL(LmnInstrVar, instr, atomi);
+    d = lmn_create_double_atom((double)rc->wt(atomi));
+    rc->reg(dstatom) = {d, LMN_DBL_ATTR, TT_ATOM};
+    break;
+  }
+  case INSTR_FLOAT2INTFUNC: {
+    LmnInstrVar dstatom, funci;
+    READ_VAL(LmnInstrVar, instr, dstatom);
+    READ_VAL(LmnInstrVar, instr, funci);
+    rc->reg(dstatom) = {
+      static_cast<LmnWord>((long)lmn_get_double(rc->wt(funci))),
+      LMN_INT_ATTR, TT_OTHER};
+    break;
+  }
+  case INSTR_INT2FLOATFUNC: {
+    LmnInstrVar dstatom, funci;
+    LmnAtom d;
+    READ_VAL(LmnInstrVar, instr, dstatom);
+    READ_VAL(LmnInstrVar, instr, funci);
+    d = lmn_create_double_atom((double)rc->wt(funci));
+    rc->reg(dstatom) = {d, LMN_DBL_ATTR, TT_OTHER};
+    break;
+  }
   case INSTR_ALLOCATOM: {
     LmnInstrVar atomi;
     LmnLinkAttr attr;
