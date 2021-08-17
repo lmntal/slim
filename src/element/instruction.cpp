@@ -256,6 +256,7 @@ const std::map<LmnInstruction, InstrSpec> instr_spec = {
     {INSTR_IAND, {"iand", {InstrVar, InstrVar, InstrVar}}},
     {INSTR_IOR, {"ior", {InstrVar, InstrVar, InstrVar}}},
     {INSTR_IXOR, {"ixor", {InstrVar, InstrVar, InstrVar}}},
+    {INSTR_ISAL, {"isal", {InstrVar, InstrVar, InstrVar}}},
 
     {INSTR_ILTFUNC, {"iltfunc", {InstrVar, InstrVar}}},
     {INSTR_ILEFUNC, {"ilefunc", {InstrVar, InstrVar}}},
