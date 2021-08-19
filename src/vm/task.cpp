@@ -3451,14 +3451,14 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
         LMN_INT_ATTR, TT_ATOM};
     break;
   }
-  case INSTR_INOT: {
-    LmnInstrVar dstatom, atomi;
-    READ_VAL(LmnInstrVar, instr, dstatom);
-    READ_VAL(LmnInstrVar, instr, atomi);
-    rc->reg(dstatom) = {static_cast<LmnWord>((~(int)rc->wt(atomi))),
-                        LMN_INT_ATTR, TT_ATOM};
-    break;
-  }
+  // case INSTR_INOT: {
+  //   LmnInstrVar dstatom, atomi;
+  //   READ_VAL(LmnInstrVar, instr, dstatom);
+  //   READ_VAL(LmnInstrVar, instr, atomi);
+  //   rc->reg(dstatom) = {static_cast<LmnWord>((~(int)rc->wt(atomi))),
+  //                       LMN_INT_ATTR, TT_ATOM};
+  //   break;
+  // }
   case INSTR_IAND: {
     LmnInstrVar dstatom, atom1, atom2;
     READ_VAL(LmnInstrVar, instr, dstatom);
@@ -3490,6 +3490,20 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
 
     rc->reg(dstatom) = {
         static_cast<LmnWord>(((long)rc->wt(atom1) ^ (long)rc->wt(atom2))),
+        LMN_INT_ATTR, TT_ATOM};
+    break;
+  }
+  case INSTR_ISAL: {
+    LmnInstrVar dstatom, atom1, atom2;
+    READ_VAL(LmnInstrVar, instr, dstatom);
+    READ_VAL(LmnInstrVar, instr, atom1);
+    READ_VAL(LmnInstrVar, instr, atom2);
+
+    // arithmetic right shift for negative atom2 (like 'ash' of Lisp)
+    long tmp1 = (long)rc->wt(atom1);
+    long tmp2 = (long)rc->wt(atom2);
+    rc->reg(dstatom) = {
+	static_cast<LmnWord>((tmp2 >= 0) ? tmp1 << tmp2 : tmp1 >> -tmp2),
         LMN_INT_ATTR, TT_ATOM};
     break;
   }
