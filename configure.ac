@@ -30,7 +30,7 @@ DX_INIT_DOXYGEN(SLIM, doc/doxygen.cfg, doc/doxygen)
 #
 
 CFLAGS="-O -std=c11 -D_XOPEN_SOURCE=700 -Wall $CFLAGS"
-CXXFLAGS="-O2 -std=c++11 -mmmx -msse $CXXFLAGS"
+CXXFLAGS="-O2 -std=c++11 $CXXFLAGS"
 
 case "$host" in
   *-*-darwin* | *-*-ios*)
