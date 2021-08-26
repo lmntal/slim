@@ -132,9 +132,10 @@ private:
 
     /* ISGROUNDとCOPYGROUNDは引数の数が3と4の場合がある。3の場合は
        第４引数として空リストを追加する */
-    if (inst.id == INSTR_ISGROUND || inst.id == INSTR_COPYGROUND 
-	&& arg_num == 3) {
-      write_forward<LmnInstrVar>(0);
+    if (inst.id == INSTR_ISGROUND || inst.id == INSTR_COPYGROUND) {
+      if (arg_num == 3) {
+	write_forward<LmnInstrVar>(0);
+      }
     }
   }
 
