@@ -2647,6 +2647,8 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       break;
     }
     case INSTR_ISGROUND: {
+      LmnInstrVar n;
+      READ_VAL(LmnInstrVar, instr, n); // temporarily discard attr arg
       b = ground_atoms(srcvec, avovec, atoms, &natoms);
       break;
     }
@@ -3080,6 +3082,8 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       break;
     }
     case INSTR_COPYGROUND:
+      LmnInstrVar n;
+      READ_VAL(LmnInstrVar, instr, n); // temporarily discard attr arg
       lmn_mem_copy_ground((LmnMembraneRef)rc->wt(memi), srcvec, &dstlovec,
                           &atommap);
       break;
