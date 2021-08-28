@@ -218,6 +218,19 @@ LMN_EXTERN void lmn_free(void *p);
  * Global data
  */
 
+/* hlground info  // extended
+ * */
+typedef struct ProcessTbl *ProcessTableRef;
+typedef struct SimpleProcessTable *SimplyProcessTableRef;
+typedef struct Hlground_Data Hlground_Data;
+struct Hlground_Data {
+  ProcessTableRef global_hlinks;  // global hlinks
+  ProcessTableRef local_atoms;    // atoms within hlground
+};
+
+// extern Hlground_Data hlground_data;
+
+
 /* 階層グラフ構造の出力形式 */
 enum OutputFormat { DEFAULT = 1, DEV, DOT, JSON };
 enum MCdumpFormat { CUI, LaViT, Dir_DOT, LMN_FSM_GRAPH, LMN_FSM_GRAPH_MEM_NODE, LMN_FSM_GRAPH_HL_NODE };

@@ -2651,10 +2651,13 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
 
       // read hyperlink attributes though they are just ignored for ISGROUND
       auto args = read_unary_atoms(rc, instr);
+      if (args.size() == 0) {
+      } else {
+	
       // READ_VAL(LmnInstrVar, instr, n); // temporarily discard attr arg
       b = ground_atoms(srcvec, avovec, atoms, &natoms);
       break;
-    }
+      }
     }
     Task::free_links(srcvec);
     Task::free_links(avovec);
@@ -2678,7 +2681,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
         });
       }
     }
-
+    }
     break;
   }
   case INSTR_UNIQ: {
@@ -3088,10 +3091,46 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       LmnInstrVar n;
 
       // read hyperlink attributes
-      auto args = read_unary_atoms(rc, instr);
+      // auto args = read_unary_atoms(rc, instr);
+
       // READ_VAL(LmnInstrVar, instr, n); // temporarily discard attr arg
-      lmn_mem_copy_ground((LmnMembraneRef)rc->wt(memi), srcvec, &dstlovec,
-                          &atommap);
+
+      READ_VAL(LmnInstrVar, instr, n);
+      if (n == 0) {         // original and ordinary ground
+	lmn_mem_copy_ground((LmnMembraneRef)rc->wt(memi), srcvec, &dstlovec,
+                            // &atommap);
+			    &atommap, NULL, NULL, NULL, NULL);  // extended
+      } else {              // extended bround
+	ProcessTableRef attr_functors;
+	Vector attr_dataAtoms;
+	Vector attr_dataAtom_attrs;
+	attr_dataAtoms.init(16);
+	attr_dataAtom_attrs.init(16);
+	attr_functors = new ProcessTbl(16);
+	LmnInstrVar i = 0, n;
+
+        for (; n--; i++) {
+          LmnLinkAttr attr;
+          READ_VAL(LmnLinkAttr, instr, attr);
+          if (LMN_ATTR_IS_DATA(attr)) {
+            LmnAtomRef at;
+            attr_dataAtom_attrs.push(attr);
+            READ_DATA_ATOM(at, attr);
+            attr_dataAtoms.push((LmnWord)at);
+          } else {
+            LmnFunctor f;
+            READ_VAL(LmnFunctor, instr, f);
+            attr_functors->proc_tbl_put(f, f);
+          }
+        }
+	lmn_mem_copy_ground((LmnMembraneRef)rc->wt(memi), srcvec, &dstlovec,
+                            // &atommap);
+			    &atommap, &hlinkmap, &attr_functors,     // extended
+			    &attr_dataAtoms, &attr_dataAtom_attrs);  // extended
+      }
+
+      
+
       break;
     }
     Task::free_links(srcvec);

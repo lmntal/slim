@@ -62,6 +62,7 @@ struct ProcessTbl : ProcessTable<LmnWord> {
   int put_new_mem(LmnMembraneRef mem, LmnWord value);
   void proc_tbl_unput(LmnWord key);
   void unput_atom(LmnSymbolAtomRef atom);
+  void unput_hlink(HyperLink *hl);  // extended
 };
 
 /**

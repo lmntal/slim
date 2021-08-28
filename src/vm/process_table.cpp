@@ -100,7 +100,7 @@ int ProcessTbl::put_new_mem(LmnMembraneRef mem, LmnWord value) {
 }
 
 /* テーブルからkeyとそれに対応した値を削除する.
- * 通常この間数ではなくunput_atom, unput_memを使用する. */
+ * 通常この関数ではなくunput_atom, unput_memを使用する. */
 void ProcessTbl::proc_tbl_unput(LmnWord key) { this->unput(key); }
 
 /* テーブルからアトムとそれに対応した値を削除する */
@@ -112,6 +112,11 @@ void ProcessTbl::unput_atom(LmnSymbolAtomRef atom) {
 void proc_tbl_unput_mem(ProcessTableRef p, LmnMembraneRef mem) {
   p->unput(mem);
 }
+
+void ProcessTbl::unput_hlink(HyperLink *hl) {  // extended
+  this->unput(hl);
+}
+
 
 /* テーブルのkeyに対応した値をvalueに設定し, 正の値を返す.
  * keyがテーブルに存在しない場合は0を返す. 通常この間数ではなくget_by_atom,
