@@ -2651,11 +2651,13 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
 
       // read hyperlink attributes though they are just ignored for ISGROUND
       auto args = read_unary_atoms(rc, instr);
+      // fprintf(stderr, "ISGROUND1, %d\n", args.size());
       if (args.size() == 0) {
+        b = ground_atoms(srcvec, avovec, atoms, &natoms);
       } else {
-	
+        // fprintf(stderr, "ISGROUND with attr not yet implementedd\n", b); 	
       // READ_VAL(LmnInstrVar, instr, n); // temporarily discard attr arg
-      b = ground_atoms(srcvec, avovec, atoms, &natoms);
+      
       break;
       }
     }

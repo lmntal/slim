@@ -2012,7 +2012,7 @@ void dfs_scope_finder(
       }
       else  
       {
-          printf("neither a regular link or a hyperlink: means an undefined link  \n");
+          // printf("neither a regular link or a hyperlink: means an undefined link  \n");
       }
     }
     else                        //current link is a regular link
