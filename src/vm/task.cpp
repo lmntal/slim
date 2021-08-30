@@ -2651,15 +2651,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
 
       // read hyperlink attributes though they are just ignored for ISGROUND
       auto args = read_unary_atoms(rc, instr);
-      // fprintf(stderr, "ISGROUND1, %d\n", args.size());
-      if (args.size() == 0) {
-        b = ground_atoms(srcvec, avovec, atoms, &natoms);
-      } else {
-        // fprintf(stderr, "ISGROUND with attr not yet implementedd\n", b); 	
-      // READ_VAL(LmnInstrVar, instr, n); // temporarily discard attr arg
-      
-      break;
-      }
+      b = ground_atoms(srcvec, avovec, atoms, &natoms);
     }
     Task::free_links(srcvec);
     Task::free_links(avovec);
@@ -3102,14 +3094,14 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
 	lmn_mem_copy_ground((LmnMembraneRef)rc->wt(memi), srcvec, &dstlovec,
                             // &atommap);
 			    &atommap, NULL, NULL, NULL, NULL);  // extended
-      } else {              // extended bround
+      } else {              // extended ground
 	ProcessTableRef attr_functors;
 	Vector attr_dataAtoms;
 	Vector attr_dataAtom_attrs;
 	attr_dataAtoms.init(16);
 	attr_dataAtom_attrs.init(16);
 	attr_functors = new ProcessTbl(16);
-	LmnInstrVar i = 0, n;
+	LmnInstrVar i = 0;
 
         for (; n--; i++) {
           LmnLinkAttr attr;
@@ -3125,13 +3117,13 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
             attr_functors->proc_tbl_put(f, f);
           }
         }
+        // fprintf(stderr, "lmn_mem_copy_ground starts\n");
 	lmn_mem_copy_ground((LmnMembraneRef)rc->wt(memi), srcvec, &dstlovec,
                             // &atommap);
 			    &atommap, &hlinkmap, &attr_functors,     // extended
 			    &attr_dataAtoms, &attr_dataAtom_attrs);  // extended
+        // fprintf(stderr, "lmn_mem_copy_ground ended\n");
       }
-
-      
 
       break;
     }

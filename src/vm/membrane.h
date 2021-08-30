@@ -59,35 +59,35 @@ typedef struct LinkObj *LinkObjRef;
 
 #include <vector>
 
-
 /*
- * Global variable
- * */
+ * extended ground
+ */
+
+// typedef struct ProcessTbl *ProcessTableRef;
+// typedef struct SimpleProcessTable *SimplyProcessTableRef;
+// typedef struct Hlground_Data Hlground_Data;
+// struct Hlground_Data {
+//   ProcessTableRef global_hlinks;  // global hlinks
+//   ProcessTableRef local_atoms;    // atoms within hlground
+// };
+//
 // Hlground_Data hlground_dat;a
-
-
-
-/*
-* extended ground
-*/
 
 void init_grounddata();
 void free_grounddata();
-void dfs_scope_finder(  ProcessTableRef *global_hlinks,
-                        ProcessTableRef *local_atoms,
-                        LinkObjRef root_link,
-                        Vector *src,
-                        Vector *avovec,
-                        ProcessTableRef *attr_functors,
-                        Vector *attr_dataAtoms,
-                        Vector *attr_dataAtom_attrs);
+void dfs_scope_finder(ProcessTableRef *global_hlinks,
+                      ProcessTableRef *local_atoms,
+                      LinkObjRef root_link,
+                      Vector *src, Vector *avovec,
+                      ProcessTableRef *attr_functors,
+                      Vector *attr_dataAtoms,
+                      Vector *attr_dataAtom_attrs);
 
 BOOL purecycle_exit(Vector *srcvec, Vector *avovec);
-BOOL cycle_exist (Vector *srcvec,
-				          Vector *avovec,
+BOOL cycle_exist (Vector *srcvec, Vector *avovec,
                   ProcessTableRef  *attr_functors,
                   Vector   *attr_dataAtoms,
-		              Vector   *attr_dataAtom_attrs);
+		  Vector   *attr_dataAtom_attrs);
 
 void get_neighbours(Vector  *avovec,
                     Vector *neighbours,
@@ -97,19 +97,15 @@ void get_neighbours(Vector  *avovec,
                     Vector   *attr_dataAtoms,
                     Vector   *attr_dataAtom_attrs);
 
-/*************************************/
-
-BOOL extended_ground_atoms( ProcessTableRef *global_hlinks,
-                            ProcessTableRef *local_atoms,
-                            Vector *srcvec,
-                            Vector *avovec,
-                            ProcessTableRef *atoms,
-                            ProcessTableRef *hlinks,
-                            ProcessTableRef *attr_functors,
-                            Vector *attr_dataAtoms,
-                            Vector *attr_dataAtom_attrs);
-
-
+BOOL extended_ground_atoms(ProcessTableRef *global_hlinks,
+                           ProcessTableRef *local_atoms,
+                           Vector *srcvec,
+                           Vector *avovec,
+                           ProcessTableRef *atoms,
+                           ProcessTableRef *hlinks,
+                           ProcessTableRef *attr_functors,
+                           Vector *attr_dataAtoms,
+                           Vector *attr_dataAtom_attrs);
 
 /** -----
  *  リンクオブジェクトの代替
@@ -150,9 +146,9 @@ BOOL lmn_mem_is_hlground(Vector *srcvec, Vector *avovec, unsigned long *natoms,
                          Vector *attr_dataAtom_attrs);
 void lmn_mem_copy_ground(LmnMembraneRef mem, Vector *srcvec,
                          Vector **ret_dstlovec, ProcessTableRef *ret_atommap,
-                           ProcessTableRef *ret_hlinkmap,
-                           ProcessTableRef *attr_functors,
-                           Vector *attr_dataAtoms, Vector *attr_dataAtom_attrs);
+                         ProcessTableRef *ret_hlinkmap,
+                         ProcessTableRef *attr_functors,
+                         Vector *attr_dataAtoms, Vector *attr_dataAtom_attrs);
 void lmn_mem_copy_hlground(LmnMembraneRef mem, Vector *srcvec,
                            Vector **ret_dstlovec, ProcessTableRef *ret_atommap,
                            ProcessTableRef *ret_hlinkmap,

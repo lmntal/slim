@@ -81,5 +81,7 @@ BOOL proc_tbl_contains(ProcessTableRef p, LmnWord key);
 BOOL proc_tbl_contains_atom(ProcessTableRef p, LmnSymbolAtomRef atom);
 BOOL proc_tbl_contains_mem(ProcessTableRef p, LmnMembraneRef mem);
 
+void proc_tbl_dump(const char* name, ProcessTableRef map);
+void proc_tbl_symbol_atom_dump(const char* name, ProcessTableRef map);
 
 #endif /* PROCESS_TABLE_H */
