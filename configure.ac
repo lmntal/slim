@@ -29,8 +29,9 @@ DX_INIT_DOXYGEN(SLIM, doc/doxygen.cfg, doc/doxygen)
 # Checks for programs.
 #
 
-CFLAGS="-O -std=c11 -D_XOPEN_SOURCE=700 -Wall $CFLAGS"
-CXXFLAGS="-O2 -std=c++11 $CXXFLAGS"
+CFLAGS="-O -std=c11 -g -fno-omit-frame-pointer -D_XOPEN_SOURCE=700 -Wall $CFLAGS"
+# CXXFLAGS="-O2 -std=c++11 -g -fsanitize=address -fno-omit-frame-pointer $CXXFLAGS"
+CXXFLAGS="-O -std=c++11 -g -fno-omit-frame-pointer $CXXFLAGS"
 
 case "$host" in
   *-*-darwin* | *-*-ios*)
