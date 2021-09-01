@@ -246,6 +246,8 @@ void Task::lmn_run(Vector *start_rulesets) {
   if (env_proc_id_pool()) {
     delete env_proc_id_pool();
   }
+
+  delete start_rulesets;  // ueda
 }
 
 /** 膜スタックに基づいた通常実行 */
@@ -3019,7 +3021,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     LmnInstrVar dstlist, srclist, memi;
     Vector *srcvec, *dstlovec, *retvec; /* 変数番号のリスト */
     ProcessTableRef atommap;
-    ProcessTableRef hlinkmap;
+    ProcessTableRef hlinkmap = NULL;  // ueda; may not be used in copyground
 
     READ_VAL(LmnInstrVar, instr, dstlist);
     READ_VAL(LmnInstrVar, instr, srclist);
@@ -3079,6 +3081,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
                             &atommap, &hlinkmap, &attr_functors,
                             &attr_dataAtoms, &attr_dataAtom_attrs);
 
+      delete attr_functors;
       break;
     }
     case INSTR_COPYGROUND:
@@ -3093,7 +3096,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       if (n == 0) {         // original and ordinary ground
 	lmn_mem_copy_ground((LmnMembraneRef)rc->wt(memi), srcvec, &dstlovec,
                             // &atommap);
-			    &atommap, NULL, NULL, NULL, NULL);  // extended
+			    &atommap, &hlinkmap, NULL, NULL, NULL);  // extended
       } else {              // extended ground
 	ProcessTableRef attr_functors;
 	Vector attr_dataAtoms;
@@ -3123,6 +3126,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
 			    &atommap, &hlinkmap, &attr_functors,     // extended
 			    &attr_dataAtoms, &attr_dataAtom_attrs);  // extended
         // fprintf(stderr, "lmn_mem_copy_ground ended\n");
+	delete attr_functors;
       }
 
       break;
@@ -3137,6 +3141,12 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
 
     this->push_stackframe([=](interpreter &itr, bool result) {
       Task::free_links(dstlovec);
+      printf("finalizing, atommap: %d\n", atommap);
+      // proc_tbl_symbol_atom_dump("atommap", atommap);
+
+      delete atommap; // ueda
+      delete hlinkmap; // ueda
+      // if (hlinkmap != NULL) delete hlinkmap; // ueda
       delete retvec;
       LMN_ASSERT(result);
       return result ? command_result::Success : command_result::Failure;
@@ -3945,7 +3955,9 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       lmn_delete_atom(copy);
     }
 
+    printf("deleting delmap: %d\n", delmap);
     delete delmap;
+    delmap = nullptr;  // ueda, quick fix
     break;
   }
   case INSTR_REMOVETOPLEVELPROXIES: {

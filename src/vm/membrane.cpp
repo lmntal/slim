@@ -178,7 +178,8 @@ LmnMembrane::~LmnMembrane(){
     if (as->record) {
       hashtbl_free(as->record);
     }
-    delete as;
+    // delete as;
+    lmn_free(as);
   }
 
   for (int i = 0; i < this->rulesets.size(); i++) {
@@ -194,7 +195,8 @@ LmnMembrane::~LmnMembrane(){
 #ifdef USE_FIRSTCLASS_RULE
   clear_firstclass_rulesets();
 #endif
-  delete this->atomset;
+  // delete this->atomset;
+  lmn_free(this->atomset);
 }
 #ifdef USE_FIRSTCLASS_RULE
 void LmnMembrane::clear_firstclass_rulesets(){
@@ -1308,7 +1310,8 @@ mem_copy_ground_sub(LmnMembraneRef mem, Vector *srcvec,
         ((LmnSymbolAtomRef)cpatom)->set_link(l->pos, 0);
       }
     }
-    (*ret_dstlovec)->push((vec_data_t)new LinkObj(cpatom, l->pos));
+    // (*ret_dstlovec)->push((vec_data_t)new LinkObj(cpatom, l->pos));
+    (*ret_dstlovec)->push((vec_data_t)LinkObj_make(cpatom, l->pos));
   }
 
   while (!stack->is_empty()) {
@@ -1381,6 +1384,9 @@ mem_copy_ground_sub(LmnMembraneRef mem, Vector *srcvec,
       // fprintf(stderr,"for iteration ends\n");  // extended
     }
     // fprintf(stderr,"  copied_atom = %s\n", LMN_FUNCTOR_STR(copied->get_functor()));
+	
+    // delete src_atom;
+    // delete copied;
   }
 
   delete stack;
@@ -1698,7 +1704,8 @@ BOOL ground_atoms(
     l_ap = l->ap;
     l_pos = l->pos;
 
-    LMN_FREE(l);
+    // LMN_FREE(l);
+    delete l;
 
     if (LMN_ATTR_IS_DATA(
             l_pos)) { /* lがデータなら行き止まり
@@ -1962,7 +1969,8 @@ void dfs_scope_finder(
   Vector *stack = new Vector(10);              //visited atoms 
   stack->push((LmnWord)LinkObj_make(root_link->ap,
                                     root_link->pos));  //push the rootlink
-
+  LMN_FREE(root_link);  // ueda
+	
   while (!stack->is_empty()) {              //dfs stack
     LinkObjRef cur_link = (LinkObjRef)stack->pop();
     LmnAtomRef m_atom = cur_link->ap;
@@ -2058,6 +2066,7 @@ void dfs_scope_finder(
 
   // proc_tbl_free(visited_hl);
   // vec_free(stack);
+  delete stack;
 }
 
 BOOL purecycle_exit(Vector *srcvec, Vector *avovec) {
@@ -2081,12 +2090,15 @@ BOOL purecycle_exit(Vector *srcvec, Vector *avovec) {
 	//printf("pure path check cur_link =%d , %d --------\n",cur_link->ap,cur_link->pos);
 	if (cur_link->ap == root->ap  && cur_link->pos ==root->pos && !m_first) {
 	    m_find= TRUE;
+	    LMN_FREE(cur_link);  // ueda
 	    break;
 	}
 	if (LMN_ATTR_IS_DATA(cur_link->pos)) {
+	  LMN_FREE(cur_link);  // ueda
 	  continue;			//only go on regular links
 	}
 	if (proc_tbl_get_by_atom(atoms, (LmnSymbolAtomRef)cur_link->ap, NULL)) {
+	  LMN_FREE(cur_link);  // ueda
 	  continue;
 	}
 
@@ -2103,20 +2115,25 @@ BOOL purecycle_exit(Vector *srcvec, Vector *avovec) {
 	  //printf("pure path check pushed_link =%d , %d --------\n",Link->ap,Link->pos);
 	  stack->push((LmnWord)Link);
 	}
+	
 	// vec_free(neighbours);
+	delete neighbours;  // ueda
 	m_first=FALSE;
-      }
+    }
 
     LMN_FREE(root);
     // proc_tbl_free(atoms);
+    delete atoms;  // ueda
 
     if (!stack) {
       while (!stack->is_empty()) {
-	LinkObjRef Link=(LinkObjRef)stack->pop();
-	LMN_FREE(Link);
+    	LinkObjRef Link=(LinkObjRef)stack->pop();
+    	LMN_FREE(Link);
       }
-      // vec_free(stack);
+      //      vec_free(stack);
     }
+    delete stack;  // ueda
+
     if (m_find) {
       break;
     }
@@ -2146,7 +2163,7 @@ BOOL cycle_exist(Vector *srcvec, Vector *avovec,
 
     while (!stack->is_empty()) {
       LinkObjRef cur_link=(LinkObjRef)stack->pop();
-      printf("cycle exist cur_link =%p, %d --------\n",cur_link->ap,cur_link->pos);
+      // printf("cycle exist cur_link =%p, %d --------\n",cur_link->ap,cur_link->pos);
 
       // we are having a ref-link with value (0,0) here, which is causing the error.
       // I guess the graph is currupted somewhere.
@@ -2184,6 +2201,8 @@ BOOL cycle_exist(Vector *srcvec, Vector *avovec,
 	stack->push((LmnWord)Link);
       }
       // vec_free(neighbours);
+      delete neighbours;  // ueda
+
       m_first=FALSE;
 
       if (m_find) {
@@ -2193,15 +2212,17 @@ BOOL cycle_exist(Vector *srcvec, Vector *avovec,
 
     if (!stack) {
       while (!stack->is_empty()) {
-	LinkObjRef Link=(LinkObjRef)stack->pop();
-	LMN_FREE(Link);
+      LinkObjRef Link=(LinkObjRef)stack->pop();
+      LMN_FREE(Link);
       }
-      // vec_free(stack);
+    // vec_free(stack);
     }
-
+    delete stack;  // ueda
     LMN_FREE(root);
     // proc_tbl_free(atoms);
     // proc_tbl_free(hlinks);
+    delete atoms;
+    delete hlinks;
 
     if (m_find) {
       break;
@@ -2290,6 +2311,7 @@ void get_neighbours(Vector *avovec,
       new_obj=LinkObj_make(((LmnSymbolAtomRef)atom)->get_link(i),
 			   ((LmnSymbolAtomRef)atom)->get_attr(i));
       neighbours->push((LmnWord)LinkObj_make(new_obj->ap,new_obj->pos));
+      lmn_free(new_obj);  // ueda, TODO: why is new_obj created?
     }
   }
 }
