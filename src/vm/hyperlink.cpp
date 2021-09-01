@@ -200,7 +200,8 @@ void lmn_hyperlink_delete(LmnSymbolAtomRef at) {
       }
     }
 
-    LMN_FREE(hl);
+    // LMN_FREE(hl);
+    delete hl;
   }
 }
 
