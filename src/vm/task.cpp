@@ -3141,7 +3141,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
 
     this->push_stackframe([=](interpreter &itr, bool result) {
       Task::free_links(dstlovec);
-      printf("finalizing, atommap: %d\n", atommap);
+      // printf("finalizing, atommap: %d\n", atommap);
       // proc_tbl_symbol_atom_dump("atommap", atommap);
 
       delete atommap; // ueda
@@ -3955,9 +3955,9 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       lmn_delete_atom(copy);
     }
 
-    printf("deleting delmap: %d\n", delmap);
-    delete delmap;
-    delmap = nullptr;  // ueda, quick fix
+    // printf("deleting delmap: %d\n", delmap);
+    // delete delmap;   -- map should be deleted by a procedure pushed by COPYGROUND
+    // delmap = nullptr;  // ueda, quick fix
     break;
   }
   case INSTR_REMOVETOPLEVELPROXIES: {
