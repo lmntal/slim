@@ -55,7 +55,8 @@ public:
 
   buffer(int fill_size, int size = 256);
   // virtual ~buffer() {}
-  ~buffer();
+  virtual ~buffer();
+  //  ~buffer();
   virtual bool is_finished() const = 0;
   virtual void update_limit(size_t free) = 0;
 
