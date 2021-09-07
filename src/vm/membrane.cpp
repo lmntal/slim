@@ -455,21 +455,61 @@ void lmn_mem_unify_atom_args(LmnMembraneRef mem, LmnSymbolAtomRef atom1,
                              int pos1, LmnSymbolAtomRef atom2, int pos2) {
   LmnAtomRef ap1, ap2;
   LmnLinkAttr attr1, attr2;
+  // LmnSymbolAtomRef a1, a2;
 
   ap1 = atom1->get_link(pos1);
   attr1 = atom1->get_attr(pos1);
   ap2 = atom2->get_link(pos2);
   attr2 = atom2->get_attr(pos2);
 
+  // fprintf(stdout,"lmn_mem_unify_atom_args, %d, %d\n", LMN_ATTR_IS_HL(attr1), LMN_ATTR_IS_HL(attr2));
+
   if (LMN_ATTR_IS_DATA(attr1) && LMN_ATTR_IS_DATA(attr2)) {
     lmn_mem_link_data_atoms(mem, ap1, attr1, ap2, attr2);
   } else if (LMN_ATTR_IS_DATA(attr1)) {
-    ((LmnSymbolAtomRef)ap2)->set_link(attr2, ap1);
-    ((LmnSymbolAtomRef)ap2)->set_attr(attr2, attr1);
+     if (LMN_ATTR_IS_HL(attr1)) {
+       // a1 = (LmnSymbolAtomRef)ap1;
+       // a2 = (LmnSymbolAtomRef)ap2;
+       // fprintf(stdout,"LMN_ATTR_IS_HL(attr1), %lu,%u,%u,%lu vs %lu,%u,%u,%u --> ",
+       //   a1->get_id(), pos1, attr1, ((LmnSymbolAtomRef)a1->get_link(0))->get_id(),
+       //   a2->get_id(), pos2, attr2, ((LmnSymbolAtomRef)a2->get_link(attr2))->get_id()); 
+       ((LmnSymbolAtomRef)ap1)->set_link(0, ap2);
+       ((LmnSymbolAtomRef)ap1)->set_attr(0, attr2);
+       ((LmnSymbolAtomRef)ap2)->set_link(attr2, ap1);
+       ((LmnSymbolAtomRef)ap2)->set_attr(attr2, LMN_HL_ATTR);
+       // a1 = (LmnSymbolAtomRef)ap1;
+       // a2 = (LmnSymbolAtomRef)ap2;
+       // fprintf(stdout,"%lu,%u,%u,%lu vs %lu,%u,%u,%u\n",
+       //   a1->get_id(), pos1, a1->get_attr(pos1), ((LmnSymbolAtomRef)a1->get_link(0))->get_id(),
+       //   a2->get_id(), pos2, a2->get_attr(pos2), ((LmnSymbolAtomRef)a2->get_link(attr2))->get_id()); 
+     } else {
+       fprintf(stdout,"LMN_ATTR_IS_DATA(attr1)\n");
+       ((LmnSymbolAtomRef)ap2)->set_link(attr2, ap1);
+       ((LmnSymbolAtomRef)ap2)->set_attr(attr2, attr1);
+     }
   } else if (LMN_ATTR_IS_DATA(attr2)) {
-    ((LmnSymbolAtomRef)ap1)->set_link(attr1, ap2);
-    ((LmnSymbolAtomRef)ap1)->set_attr(attr1, attr2);
+     if (LMN_ATTR_IS_HL(attr2)) {
+       // a1 = (LmnSymbolAtomRef)ap1;
+       // a2 = (LmnSymbolAtomRef)ap2;
+       // fprintf(stdout,"LMN_ATTR_IS_HL(attr2), %lu,%u,%u,%lu vs %lu,%u,%u,%u -->",
+       //   a1->get_id(), pos1, attr1, ((LmnSymbolAtomRef)a1->get_link(attr1))->get_id(), 
+       //   a2->get_id(), pos2, attr2, ((LmnSymbolAtomRef)a2->get_link(0))->get_id());
+       ((LmnSymbolAtomRef)ap2)->set_link(0, ap1);
+       ((LmnSymbolAtomRef)ap2)->set_attr(0, attr1);
+       ((LmnSymbolAtomRef)ap1)->set_link(attr1, ap2);
+       ((LmnSymbolAtomRef)ap1)->set_attr(attr1, LMN_HL_ATTR);
+       // a1 = (LmnSymbolAtomRef)ap1;
+       // a2 = (LmnSymbolAtomRef)ap2;
+       // fprintf(stdout,"%lu,%u,%u,%lu vs %lu,%u,%u,%u\n",
+       //   a1->get_id(), pos1, a1->get_attr(pos1), ((LmnSymbolAtomRef)a1->get_link(attr1))->get_id(), 
+       //   a2->get_id(), pos2, a2->get_attr(pos2), ((LmnSymbolAtomRef)a2->get_link(0))->get_id());
+     } else {
+       // fprintf(stdout,"LMN_ATTR_IS_DATA(attr2)\n");
+       ((LmnSymbolAtomRef)ap1)->set_link(attr1, ap2);
+       ((LmnSymbolAtomRef)ap1)->set_attr(attr1, attr2);
+     }
   } else {
+    // fprintf(stdout,"Both symbol: ");
     ((LmnSymbolAtomRef)ap2)->set_link(attr2, ap1);
     ((LmnSymbolAtomRef)ap2)->set_attr(attr2, attr1);
     ((LmnSymbolAtomRef)ap1)->set_link(attr1, ap2);
@@ -1099,6 +1139,7 @@ LinkObjRef LinkObj_make(LmnAtomRef ap, LmnLinkAttr pos) {
  * root_hlAtomのハイパーリンクにつながるアトム達をコピーする
  * root_hlAtomは探索を行うハイパーリンクのハイパーリンクアトム
  * copied_root_hlAtomはroot_hlAtomのコピー。
+ * global_hlinks はextended groundのときコピーしないhlinks
  * stackは探索待ちのシンボルアトム
  * atommapはコピー元とコピー先のアトムの対応
  * hlinkmapはコピー元とコピー先のハイパーリンクの対応
@@ -1109,7 +1150,7 @@ LinkObjRef LinkObj_make(LmnAtomRef ap, LmnLinkAttr pos) {
 static inline void
 mem_map_hlink(LmnMembraneRef mem, LmnSymbolAtomRef root_hlAtom,
               LmnSymbolAtomRef copied_root_hlAtom, Vector *stack,
-              ProcessTableRef *global_hlinks,  // extended
+              ProcessTableRef *global_hlinks,  // extended; NULL if hlground
               ProcessTableRef atommap, ProcessTableRef hlinkmap,
               ProcessTableRef *attr_functors, Vector *attr_dataAtoms,
               Vector *attr_dataAtom_attrs)
@@ -1121,35 +1162,39 @@ mem_map_hlink(LmnMembraneRef mem, LmnSymbolAtomRef root_hlAtom,
 
   BOOL flg_local_hl = TRUE;  // extended
 
-  // fprintf(stderr,"mem_map_hlink1, %d\n", (global_hlinks == NULL));  // extended
-  if (global_hlinks != NULL &&
-      proc_tbl_get_by_hlink(*global_hlinks, hl->get_root(), NULL))  // extended
+  // fprintf(stderr,"mem_map_hlink1, global_hlinks==NULL: %d\n", (global_hlinks == NULL));  // extended
+  if (global_hlinks != NULL &&                                    // extended ground
+      proc_tbl_get_by_hlink(*global_hlinks, hl->get_root(), NULL))  
     {//this hyperlink is a global hyperlink
       flg_local_hl = FALSE;
     }
 
-  // fprintf(stderr,"mem_map_hlink2, %d\n", LMN_HL_HAS_ATTR(hl));  // extended
-  if (!LMN_HL_HAS_ATTR(hl)) { //属性を持っていない場合は無条件に探索
+  // fprintf(stderr,"mem_map_hlink2, LMN_HL_HAS_ATTR(hl)=%d, flg_local_hl=%d\n",
+  // 	  LMN_HL_HAS_ATTR(hl), flg_local_hl);  // extended
+  // if (global_hlinks == NULL && !LMN_HL_HAS_ATTR(hl)) { //属性なしhlgroundは無条件に探索
+  // if (!LMN_HL_HAS_ATTR(hl)) { //属性を持っていない場合は無条件に探索
     // if (vec_num(attr_dataAtoms) == 0)  //hlground has no attribute
     //   {// matched (no attribute vs no attribute)
     // 	flg_search_hl=TRUE;
     //   }
-    flg_search_hl = TRUE;
+  //属性なしhlgroundは無条件に探索，属性なしgroundは無探索
+  if (!LMN_HL_HAS_ATTR(hl)) { 
+    flg_search_hl = (global_hlinks == NULL);
   } else {
     LmnAtomRef attrAtom = LMN_HL_ATTRATOM(hl);
     LmnLinkAttr attr = LMN_HL_ATTRATOM_ATTR(hl);
-    int i;
+    // fprintf(stderr,"mem_map_hlink2b, attrAtom=%lu, attr=%d\n", attrAtom, attr);
     if (LMN_ATTR_IS_DATA(attr)) {
-      for (i = 0; i < attr_dataAtoms->get_num(); i++) {
-        if (lmn_eq_func(attrAtom, attr, (LmnAtomRef)attr_dataAtoms->get(i),
-                        attr_dataAtom_attrs->get(i))) {
-          flg_search_hl = TRUE;
-          break;
-        } else {
-          continue;
-        }
+      if (attr_dataAtoms != NULL) { // extended ground
+	for (int i = 0; i < attr_dataAtoms->get_num(); i++) {
+	  if (lmn_eq_func(attrAtom, attr, (LmnAtomRef)attr_dataAtoms->get(i),
+			  attr_dataAtom_attrs->get(i))) {
+	    flg_search_hl = TRUE;
+	    break;
+	  }
+	}
       }
-    } else {
+    } else { // unary symbol atom attribute (currently for hlground only)
       if (proc_tbl_get(*attr_functors,
                        ((LmnSymbolAtomRef)attrAtom)->get_functor(),
                        NULL)) {
@@ -1158,7 +1203,7 @@ mem_map_hlink(LmnMembraneRef mem, LmnSymbolAtomRef root_hlAtom,
     }
   }
 
-  // fprintf(stderr,"flags: %d, %d\n", flg_search_hl, flg_local_hl);
+  // fprintf(stderr,"flags: flg_search_hl,flg_local_hl=%d,%d\n", flg_search_hl, flg_local_hl);
   if (flg_search_hl  && flg_local_hl) {  // extended
     if (!proc_tbl_get_by_hlink(
             hlinkmap, hl->get_root(),
@@ -1170,6 +1215,11 @@ mem_map_hlink(LmnMembraneRef mem, LmnSymbolAtomRef root_hlAtom,
       Vector *hl_childs = new Vector(16);
       hl->get_elements(hl_childs);
       element_num = hl_childs->get_num() - 1;
+//       fprintf(stderr,"root_hlAtom,copied_root_hlAtom: ID[%lu]/HL_ID[%lu] ID[%lu]/HL_ID[%lu], %d element(s)\n",
+//            root_hlAtom->get_id(), LMN_HL_ID(LMN_HL_ATOM_ROOT_HL(root_hlAtom)),
+// 	      copied_root_hlAtom->get_id(), LMN_HL_ID(LMN_HL_ATOM_ROOT_HL(copied_root_hlAtom)),
+// 	      element_num);
+
       for (j = 0; j < element_num;
            j++) { //ハイパーリンクにつながるすべての接続先を探索
         if (hl->mem !=
@@ -1183,6 +1233,9 @@ mem_map_hlink(LmnMembraneRef mem, LmnSymbolAtomRef root_hlAtom,
               lmn_copy_satom_with_data((hlAtom), FALSE);
           lmn_hyperlink_copy(copied_hlAtom, copied_root_hlAtom);
           lmn_mem_push_atom(mem, copied_hlAtom, LMN_HL_ATTR);
+	  // fprintf(stderr,"lmn_copy_satom_with_data(*,TRUE)_0 %s ID[%lu], %s ID[%lu]\n",
+	  // 	  hlAtom->str(), hlAtom->get_id(),
+	  // 	  copied_hlAtom->str(), copied_hlAtom->get_id());
         } else {
           LmnSymbolAtomRef linked_hlAtom =
               (LmnSymbolAtomRef)hlAtom->get_link(0);
@@ -1190,16 +1243,38 @@ mem_map_hlink(LmnMembraneRef mem, LmnSymbolAtomRef root_hlAtom,
                   atommap, linked_hlAtom,
                   &t)) { //ハイパーリンクアトム及びそれにつながるシンボルアトムをコピー
             // まずシンボルアトムをコピー
+
+	    // TODO->DONE: 次の文を１回実行するとハイパーリンクが64バイトメモリリークする // ueda
             LmnSymbolAtomRef copied_linked_hlAtom =
                 lmn_copy_satom_with_data(linked_hlAtom, TRUE);
-            LmnSymbolAtomRef copied_hlAtom =
-                (LmnSymbolAtomRef)copied_linked_hlAtom->get_link(hlAtom->get_attr(0));
+
+	    // fprintf(stderr,
+	    // 	    "lmn_copy_satom_with_data(*,TRUE)_1 %s/ID[%lu], linked_attr:%d, "
+	    // 	    "%s/ID[%lu], %s/ID[%lu]\n",
+	    // 	    hlAtom->str(), hlAtom->get_id(),
+	    // 	    hlAtom->get_attr(0),
+	    // 	    linked_hlAtom->str(),
+	    // 	    linked_hlAtom->get_id(),
+	    // 	    copied_linked_hlAtom->str(),
+	    // 	    copied_linked_hlAtom->get_id());
+	    // fprintf(stderr,"lmn_hyperlink_copied: HL_ID[%lu] from HL_ID[%lu]\n",
+	    // 	    LMN_HL_ID(lmn_hyperlink_at_to_hl(copied_hlAtom)),
+	    // 	    LMN_HL_ID(lmn_hyperlink_at_to_hl(copied_root_hlAtom)));
+
+            // LmnSymbolAtomRef copied_hlAtom =
+            //     (LmnSymbolAtomRef)copied_linked_hlAtom->get_link(hlAtom->get_attr(0));
+
             // ここではハイパーリンク構造体は未作成、lmn_hyperlink_copyで作成
-            lmn_hyperlink_copy(copied_hlAtom, copied_root_hlAtom);
+            // lmn_hyperlink_copy(copied_hlAtom, copied_root_hlAtom);  // これが余分だった (DONE)
+
             // ここで作られた copied_hlAtom
             // はあとでシンボルアトム側から逆アクセスされるはずなので ここでは
             // push しなくてよい（はず）
             //            lmn_mem_push_atom(mem, copied_hlAtom, LMN_HL_ATTR);
+	    // fprintf(stderr,"mem_push_symbol_atom: %s/ID[%lu]\n",
+	    // 	   copied_linked_hlAtom->str(),
+	    // 	    copied_linked_hlAtom->get_id());
+
             mem_push_symbol_atom(mem, copied_linked_hlAtom);
             atommap->proc_tbl_put_atom(linked_hlAtom,
                               (LmnWord)copied_linked_hlAtom);
@@ -1209,6 +1284,7 @@ mem_map_hlink(LmnMembraneRef mem, LmnSymbolAtomRef root_hlAtom,
             // そのとき、アトム側からたどったハイパーリンクはまだ atomlist
             // に登録されて いないはず。新たに atomlist に登録する必要がある。
           }
+	  // proc_tbl_symbol_atom_dump("atommap", atommap); // ueda
         }
       }
       delete hl_childs;
@@ -1217,7 +1293,7 @@ mem_map_hlink(LmnMembraneRef mem, LmnSymbolAtomRef root_hlAtom,
                           LMN_HL_ATTRATOM((HyperLink *)t),
                           LMN_HL_ATTRATOM_ATTR((HyperLink *)t));
     }
-  } else {
+  } else { // !(flg_search_hl  && flg_local_hl)
     hl->lmn_unify(lmn_hyperlink_at_to_hl(copied_root_hlAtom),
                         LMN_HL_ATTRATOM(hl), LMN_HL_ATTRATOM_ATTR(hl));
   }
@@ -1233,6 +1309,12 @@ mem_map_hlink(LmnMembraneRef mem, LmnSymbolAtomRef root_hlAtom,
  * ret_atommapはコピー元とコピー先のアトムの対応
  * ret_hlinkmapはハイパーリンクのコピー元と先であり
  * hlgroundのフラグも兼ねている */
+
+/* 以上はextended ground導入前の説明で，導入後は
+ * global_hlinkがNULLならばhlground, non-NULLならば extended を含む ground．
+ * ret_hlinkmap （task.cpp側ではhlinkmap）は常にnon-NULL．
+ * extended ground か通常の ground かは最後の三引数がNULLかどうかで判定可能 */
+
 static inline void
 mem_copy_ground_sub(LmnMembraneRef mem, Vector *srcvec, 
                     ProcessTableRef *global_hlink, // extended
@@ -1262,15 +1344,19 @@ mem_copy_ground_sub(LmnMembraneRef mem, Vector *srcvec,
 
     // for copyground debugging
     // if (LMN_ATTR_IS_DATA(l->pos)) {
-    //   fprintf(stderr,"    iter %d, copying <%ld,%d>\n", i, (long int)l->ap, l->pos);
+    //   fprintf(stderr,"***copyground iter %d, copying <%ld,%d>\n", i, (long int)l->ap, l->pos);
     // } else {
-    //   LmnFunctor f = ((LmnSymbolAtomRef)l->ap)->get_functor();
-    //   fprintf(stderr,"    iter %d, copying <%s,%d>\n",
-    // 	      i, LMN_FUNCTOR_STR(f), l->pos);
+    //   LmnSymbolAtomRef a = (LmnSymbolAtomRef)l->ap;
+    //   fprintf(stderr,"***copyground iter %d, copying <%s,%d> ID[%lu]\n",
+    // 	      i, a->str(), l->pos, a->get_id());
     // }
 
     if (LMN_ATTR_IS_DATA(l->pos)) {
+      // fprintf(stderr,"mem_copy_ground_sub, global_hlink=%p, ret_hlinkmap=%p\n", 
+      // 	      global_hlink, ret_hlinkmap);
+
       if (ret_hlinkmap != NULL &&
+      // if (global_hlink == NULL &&
           l->pos ==
               LMN_HL_ATTR) { // hlgroundならハイパーリンクの先を辿ってコピーする
         cpatom = (LmnAtomRef)lmn_hyperlink_new_with_attr(
@@ -1285,7 +1371,6 @@ mem_copy_ground_sub(LmnMembraneRef mem, Vector *srcvec,
                       attr_dataAtom_attrs);
       } else {
 
-        // fprintf(stderr,"      lmn_mem_push_atom calling\n");  // extended
         cpatom = (LmnAtomRef)lmn_copy_data_atom((LmnDataAtomRef)l->ap, l->pos);
         lmn_mem_push_atom(mem, cpatom, l->pos);
       }
@@ -1293,6 +1378,11 @@ mem_copy_ground_sub(LmnMembraneRef mem, Vector *srcvec,
       /* コピー済みでなければコピーする */
       if (!proc_tbl_get_by_atom(atommap, (LmnSymbolAtomRef)l->ap, &t)) {
         if (ret_hlinkmap != NULL) { // hlgroundなら
+	// if (global_hlink == NULL) {
+	// fprintf(stderr,"lmn_copy_satom_with_data(*,TRUE)_2\n");
+	  // fprintf(stderr,"lmn_copy_satom_with_data(*,TRUE)_2 %s ID[%lu]\n",
+	  // 	  ((LmnSymbolAtomRef)l->ap)->str(),
+	  // 	  ((LmnSymbolAtomRef)l->ap)->get_id());
           cpatom = lmn_copy_satom_with_data((LmnSymbolAtomRef)l->ap, TRUE);
         } else {
           cpatom = lmn_copy_satom_with_data((LmnSymbolAtomRef)l->ap, FALSE);
@@ -1304,6 +1394,9 @@ mem_copy_ground_sub(LmnMembraneRef mem, Vector *srcvec,
         /* 根のリンクのリンクポインタを0に設定する */
         ((LmnSymbolAtomRef)cpatom)->set_link(l->pos, 0);
         stack->push((LmnWord)l->ap);
+	// fprintf(stderr,"  and pushed to proctable and stack: ID[%lu] ID[%lu]\n",
+	// 	((LmnSymbolAtomRef)l->ap)->get_id(),
+	// 	((LmnSymbolAtomRef)cpatom)->get_id());
       } else {
         /* コピー済みの場合はスタックには追加しない */
         cpatom = (LmnAtomRef)t;
@@ -1315,45 +1408,59 @@ mem_copy_ground_sub(LmnMembraneRef mem, Vector *srcvec,
   }
 
   while (!stack->is_empty()) {
+    // fprintf(stderr,"stack dump:\n");
+    // for (int i = 0; i < stack->get_num(); i++) {
+    //   LmnSymbolAtomRef a = (LmnSymbolAtomRef)stack->get(i);
+    //   fprintf(stderr,"  %i, %s/%d ID[%lu]\n", i, a->str(), a->get_arity(), a->get_id());
+    // }
+
     LmnSymbolAtomRef src_atom, copied;
 
     src_atom = (LmnSymbolAtomRef)stack->pop();
     proc_tbl_get_by_atom(atommap, src_atom, &t);
     copied = (LmnSymbolAtomRef)t;
 
-    // fprintf(stderr,"  processing args of the atom %s/%d\n", 
-    // 	    LMN_FUNCTOR_STR(src_atom->get_functor()), src_atom->get_arity());
+    // fprintf(stderr,"  popped from stack and processing args: %s/%d ID[%lu]\n", 
+    //  	    src_atom->str(), src_atom->get_arity(), src_atom->get_id());
 
     for (i = 0; i < src_atom->get_arity(); i++) {
       LmnAtomRef next_src = src_atom->get_link(i);
       LmnLinkAttr next_attr = src_atom->get_attr(i);
 
-
-      //for copyground debugging
+      // for copyground debugging
       // if (LMN_ATTR_IS_DATA(next_attr)) {
-      // 	fprintf(stderr,"    i:<data_atom,pos> = %d <%ld,%d>\n", i, (long int)next_src, next_attr);
+      //   if (next_attr == LMN_HL_ATTR) {
+      //     HyperLink* hl = lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)next_src);
+      // 	  fprintf(stderr,"    i=%d, HL_ID[%lu]\n", i, LMN_HL_ID(hl->get_root()));
+      // 	} else {
+      // 	  fprintf(stderr,"    i=%d, <data_atom,pos>=<%ld,%d>\n", i, (long int)next_src, next_attr);
+      // 	}
       // } else {
-      // 	LmnFunctor f = ((LmnSymbolAtomRef)next_src)->get_functor();
-      // 	fprintf(stderr,"    i:<symbol_atom,pos> = %d:<%s,%d>\n",
-      // 		i, LMN_FUNCTOR_STR(f), next_attr);
+      // 	LmnSymbolAtomRef a = (LmnSymbolAtomRef)next_src;
+      // 	fprintf(stderr,"    i:<symbol_atom,pos> = %d:<%s,%d> ID[%lu]\n",
+      // 		i, a->str(), next_attr, a->get_id());
       // }
 
       /* copied->get_link(i)が0になる場合は、根に到達した場合 */
       if (LMN_ATTR_IS_DATA(next_attr)) {
-	// fprintf(stderr,"      data atom\n");  // extended
-
-        if (ret_hlinkmap != NULL &&
+        if (ret_hlinkmap != NULL &&   // TODO: always true?
+	// if (global_hlink == NULL &&
             next_attr ==
                 LMN_HL_ATTR) { // hlgroundならハイパーリンクの先を辿ってコピーする
-          // fprintf(stderr,"        mem_map_hlink calling (2)\n");  // extended
           mem_map_hlink(mem, (LmnSymbolAtomRef)next_src,
                         (LmnSymbolAtomRef)copied->get_link(i), stack,
                         global_hlink,  // extended
                         atommap, hlinkmap, attr_functors, attr_dataAtoms,
                         attr_dataAtom_attrs);
+
+	  // fprintf(stderr,"stack dump after mem_map_hlink:\n");
+	  // for (int i = 0; i < stack->get_num(); i++) {
+	  //   LmnSymbolAtomRef a = (LmnSymbolAtomRef)stack->get(i);
+	  //   fprintf(stderr,"  %i, %s/%d ID[%lu]\n", i, a->str(), a->get_arity(), a->get_id());
+	  // }
+
         } else {
-          // fprintf(stderr,"        else\n");  // extended
-          if (next_attr == LMN_HL_ATTR) {
+          if (next_attr == LMN_HL_ATTR) {    // TODO: come here???
             LmnAtomRef next_src_copied = copied->get_link(i);
             lmn_mem_push_atom(mem, next_src_copied, next_attr);
           } else {
@@ -1361,28 +1468,36 @@ mem_copy_ground_sub(LmnMembraneRef mem, Vector *srcvec,
           }
         }
       } else if (copied->get_link(i) != 0) {
-        // fprintf(stderr,"      not data atom case 1\n");  // extended
         LmnAtomRef next_copied;
         if (!proc_tbl_get_by_atom(atommap, (LmnSymbolAtomRef)next_src,
                                   &t)) { /* next_srcは未訪問 */
           if (ret_hlinkmap != NULL) {    // hlgroundなら
+	  // if (global_hlink == NULL) {
+	// fprintf(stderr,"  lmn_copy_satom_with_data(*,TRUE)_3\n");
             next_copied =
                 lmn_copy_satom_with_data((LmnSymbolAtomRef)next_src, TRUE);
           } else {
+	// fprintf(stderr,"  lmn_copy_satom_with_data(*,TRUE)_3, never comes here?\n");
             next_copied =
                 lmn_copy_satom_with_data((LmnSymbolAtomRef)next_src, FALSE);
           }
           mem_push_symbol_atom(mem, (LmnSymbolAtomRef)next_copied);
+ 	  // fprintf(stderr,"  copied: from %s ID[%lu] to %s ID[%lu]\n",
+	  // 	  ((LmnSymbolAtomRef)next_src)->str(),
+	  // 	  ((LmnSymbolAtomRef)next_src)->get_id(),
+	  // 	  ((LmnSymbolAtomRef)next_copied)->str(),
+	  // 	  ((LmnSymbolAtomRef)next_copied)->get_id());
           atommap->proc_tbl_put_atom((LmnSymbolAtomRef)next_src,
                             (LmnWord)next_copied);
           stack->push((LmnWord)next_src);
-        } else {
+	  // fprintf(stderr,"  and pushed to stack: ID[%lu]\n",
+	  // 	  ((LmnSymbolAtomRef)next_src)->get_id());
+        } else { // next_src already visited
           next_copied = (LmnAtomRef)t;
         }
         copied->set_link(i, next_copied);
       }
-      // fprintf(stderr,"for iteration ends\n");  // extended
-    }
+    } // end for
     // fprintf(stderr,"  copied_atom = %s\n", LMN_FUNCTOR_STR(copied->get_functor()));
 	
     // delete src_atom;
@@ -1390,10 +1505,12 @@ mem_copy_ground_sub(LmnMembraneRef mem, Vector *srcvec,
   }
 
   delete stack;
+  // fprintf(stderr,"returning atommap=%lu, hlinkmap=%lu\n", atommap, hlinkmap);
   *ret_atommap = atommap;
-  if (ret_hlinkmap != NULL) {
+  // if (ret_hlinkmap != NULL) {
+  //  if (global_hlink == NULL) {
     *ret_hlinkmap = hlinkmap;
-  }
+    //  }
 }
 
 void lmn_mem_copy_ground(LmnMembraneRef mem, Vector *srcvec,
@@ -1403,19 +1520,21 @@ void lmn_mem_copy_ground(LmnMembraneRef mem, Vector *srcvec,
                          Vector *attr_dataAtoms,          // extended
                          Vector *attr_dataAtom_attrs) {   // extended
 
-  // fprintf(stderr,"lmn_mem_copy_ground entered\n");  // extended
-
   ProcessTableRef global_hlinks = new ProcessTbl(64);  // extended
   ProcessTableRef local_atoms = new ProcessTbl(64);    // extended
   BOOL b;  // extended
 
-  // fprintf(stderr,"extended_ground_atoms starts\n");  // extended
+  // fprintf(stderr,"==========extended_ground_atoms starts\n");  // extended
 
+  // TODO: skip this check for ordinary ground 
+  // (where the final three args (attr_*) are NULL)
   b = extended_ground_atoms(&global_hlinks, &local_atoms,  // extended
-			    srcvec, NULL, NULL, NULL, attr_functors, 
+			    srcvec, NULL, 
+			    // NULL, NULL,
+			    attr_functors, 
 			    attr_dataAtoms, attr_dataAtom_attrs); 
 
-  // fprintf(stderr,"--------------------------------copy ground\n");  // extended
+  // fprintf(stderr,"==========copy ground\n");  // extended
 
   mem_copy_ground_sub(mem, srcvec,
 		      &global_hlinks,  // extended
@@ -1895,13 +2014,18 @@ returning:
     //*atoms = found_ground_symbol_atoms;
     //*natoms += count_of_ground_atoms;
   } else {
-    if (hlinks != NULL) {
-      delete *hlinks;
-      *hlinks = NULL;
-    }
+    // if (hlinks != NULL) {
+    //   delete *hlinks;
+    //   *hlinks = NULL;
+    // }
     delete *atoms;
     *atoms = NULL;
     *natoms = 0;
+  }
+
+  if (hlinks != NULL) { // (ueda) for memory leak
+    delete *hlinks;
+    *hlinks = NULL;
   }
 
   return result;
@@ -1914,11 +2038,11 @@ BOOL extended_ground_atoms(
     ProcessTableRef *local_atoms,
     Vector          *srcvec,     //store root link
     Vector          *avovec,     //other links of source atom
-    ProcessTableRef *atoms,      /* collects atom within hlground */
-    ProcessTableRef *hlinks,     /* collects hyperlinks local to hlground; if not NULL, searched as hlground */
-    ProcessTableRef *attr_functors,      /* groundの属性 (unary atom) used when attribute is specified */
-    Vector          *attr_dataAtoms,     /* groundの属性 (data atom) used when attribute is specified */
-    Vector          *attr_dataAtom_attrs /* groundの属性 (data atomの属性) used when attribute is specified */
+    // ProcessTableRef *atoms,      /* collects atom within hlground */
+    // ProcessTableRef *hlinks,     /* collects hyperlinks local to hlground; if not NULL, searched as hlground */
+    ProcessTableRef *attr_functors,      /* ground's attr (unary atom) used when attribute is specified */
+    Vector          *attr_dataAtoms,     /* ground's attr (data atom) used when attribute is specified */
+    Vector          *attr_dataAtom_attrs /* ground's attr (data atom's attr) used when attribute is specified */
 			    ) {
 
   BOOL result= TRUE;            //TRUE if it is hlground
@@ -1927,8 +2051,8 @@ BOOL extended_ground_atoms(
   LmnAtomRef root_ap = t_link->ap;
   LmnLinkAttr root_pos = t_link->pos;
 
-  //printf("root_ap= %d  \n",root_ap);
-  //printf("root_pos= %d  \n",root_pos);
+  // fprintf(stderr,"root_ap= %lu  \n",(long unsigned)root_ap);
+  // fprintf(stderr,"root_pos= %d  \n",root_pos);
  
   /*
     if (cycle_exist(srcvec,avovec,attr_functors,attr_dataAtoms,attr_dataAtom_attrs))
@@ -1940,15 +2064,16 @@ BOOL extended_ground_atoms(
     }
   */
 
-  //no ground if there is at least one pure path
-  if (purecycle_exit(srcvec,avovec)) {
+  // TODO: copyground が isground の後に実行される場合はこの検査は不要
+  // no ground if there is at least one pure path
+  if (purecycle_exist(srcvec,avovec)) {
     result = FALSE;
   }
 
-  if (result) { //hlground exist
+  if (result) { // extended ground exists
     dfs_scope_finder(global_hlinks, local_atoms,
 		     LinkObj_make(root_ap,root_pos),
-		     srcvec, avovec,
+		     // srcvec, avovec,
 		     attr_functors, attr_dataAtoms, attr_dataAtom_attrs);
   }
 
@@ -1959,9 +2084,9 @@ void dfs_scope_finder(
     ProcessTableRef *global_hlinks,
     ProcessTableRef *local_atoms,
     LinkObjRef root_link,
-    Vector *src,
-    Vector *avovec,
-    ProcessTableRef *attr_functors,
+    // Vector *src,
+    // Vector *avovec,
+    ProcessTableRef *attr_functors,  // TODO: allow symbol atom as attribute
     Vector *attr_dataAtoms,
     Vector *attr_dataAtom_attrs) {
     // ProcessTbl visited_hl = new ProcessTbl(10);   //visited hlinks
@@ -1971,42 +2096,38 @@ void dfs_scope_finder(
                                     root_link->pos));  //push the rootlink
   LMN_FREE(root_link);  // ueda
 	
+  // fprintf(stderr,"dfs_scope_finder entered\n");
+
   while (!stack->is_empty()) {              //dfs stack
     LinkObjRef cur_link = (LinkObjRef)stack->pop();
     LmnAtomRef m_atom = cur_link->ap;
     LmnLinkAttr m_pos = cur_link->pos;
     LMN_FREE(cur_link);                    //free current link
 
-    //printf("m_app= %d  \n",m_atom);
-    //printf("m_pos= %d  \n",m_pos);
+    // fprintf(stderr,"popped from stack: %lu %d \n", m_atom, m_pos);
 
-    if (LMN_ATTR_IS_DATA(m_pos)) {         // current link is a hyperlink
-      if (m_pos == LMN_HL_ATTR) {
+    if (LMN_ATTR_IS_DATA(m_pos)) {
+      if (m_pos == LMN_HL_ATTR) {         // current link is a hyperlink
         HyperLink * hl = lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)m_atom);  //get hyperlink 
-                                     // judge hyperlink attribute
-        BOOL flg_search_hl = FALSE;  //True is hlink attribute matches with hlground attribute
+
+        BOOL flg_search_hl = FALSE;  // True if hlink attribute matches with extended ground attribute
                                      
         if (!LMN_HL_HAS_ATTR(hl)) { //if hlink has no attribute, treat it as a global hyperlink
           (*global_hlinks)->put_new_hlink(hl->get_root(), (LmnWord)1);
-        }
-
-        if (LMN_HL_HAS_ATTR(hl)) {  //hyperlink has attribute 
+        } else {
+        // if (LMN_HL_HAS_ATTR(hl)) {  //hyperlink has attribute 
           LmnAtomRef attrAtom = LMN_HL_ATTRATOM(hl);
           LmnLinkAttr attr = LMN_HL_ATTRATOM_ATTR(hl);
 
-          //printf("hlink_app= %d  \n", attrAtom);
-          //printf("hlink_pos= %d  \n", attr);
-
-          int i;
-          for (i = 0; i < attr_dataAtoms->get_num(); i++) {
-            if (lmn_eq_func(attrAtom, attr, (LmnAtomRef)attr_dataAtoms->get(i), 
-			    (LmnLinkAttr)attr_dataAtom_attrs->get(i))) {
-              flg_search_hl = TRUE;
-              break;
-            } else {
-              continue;
-            }
-          }
+	  if (attr_dataAtoms != NULL) { // extended ground
+	    for (int i = 0; i < attr_dataAtoms->get_num(); i++) {
+	      if (lmn_eq_func(attrAtom, attr, (LmnAtomRef)attr_dataAtoms->get(i), 
+			      (LmnLinkAttr)attr_dataAtom_attrs->get(i))) {
+		flg_search_hl = TRUE;
+		break;
+	      } 
+	    }
+	  }
         }
 
         if (flg_search_hl) { // only count endpoints of hyperlinks which has the specified attribute
@@ -2023,7 +2144,7 @@ void dfs_scope_finder(
 	    LmnWord count;
 	    proc_tbl_get_by_hlink((*global_hlinks), hl->get_root(), &count);  //get counter
 	    count++ ;                                                                                
-	    //printf("count= %d  \n",count);
+	    // fprintf(stderr,"count= %ld  \n",count);
 
 	    if ( occurs == count ) {  //all endpoints are visited, means local hyperlink
 	      //remove form hashtable
@@ -2036,30 +2157,31 @@ void dfs_scope_finder(
           }
         }
       }
-      else {
-          // printf("neither a regular link or a hyperlink: means an undefined link  \n");
-      }
-    }
-    else {  //current link is a regular link
+    } else {  //current link is a regular link
       if (proc_tbl_get_by_atom((*local_atoms), (LmnSymbolAtomRef)m_atom, NULL))
-      { //not visited yet
+      { // already visited (was: not visited yet)
         continue;
       }
       //set as visited and set as an local atom
       (*local_atoms)->proc_tbl_put_atom((LmnSymbolAtomRef)m_atom, (LmnWord)m_atom);  
+      // fprintf(stderr,"registered as local atom: %s ID[%lu]\n",
+      // 	      ((LmnSymbolAtomRef)m_atom)->str(), ((LmnSymbolAtomRef)m_atom)->get_id());
 
       //keep following regular links
       int i;
       for (i = 0; i < ((LmnSymbolAtomRef)m_atom)->get_arity(); i++) {
         if (i == m_pos) {
-          if (((LmnSymbolAtomRef)m_atom)->get_arity() == 1) {
-            //pure_path=TRUE;
-            //printf(" ***    a local path is ended ***\n");
-          }
+          // if (((LmnSymbolAtomRef)m_atom)->get_arity() == 1) {
+          //   //pure_path=TRUE;
+          //   //fprintf(stderr," ***    a local path is ended ***\n");
+          // }
           continue;
         }
         stack->push((LmnWord)LinkObj_make(((LmnSymbolAtomRef)m_atom)->get_link(i),
                                           ((LmnSymbolAtomRef)m_atom)->get_attr(i)));
+	// fprintf(stderr,"pushed to stack: %lu %d \n",
+	// 	(long unsigned)((LmnSymbolAtomRef)m_atom)->get_link(i),
+	// 	((LmnSymbolAtomRef)m_atom)->get_attr(i));
       }//end for       
     }
   } //dfs while end
@@ -2069,7 +2191,8 @@ void dfs_scope_finder(
   delete stack;
 }
 
-BOOL purecycle_exit(Vector *srcvec, Vector *avovec) {
+// TODO: cycle check is not necessary but keep code just in case
+BOOL purecycle_exist(Vector *srcvec, Vector *avovec) {
 
   BOOL m_find=FALSE;
   int m = srcvec->get_num();
@@ -2087,7 +2210,7 @@ BOOL purecycle_exit(Vector *srcvec, Vector *avovec) {
     while (!stack->is_empty()) {
 	LinkObjRef cur_link=(LinkObjRef)stack->pop();
 
-	//printf("pure path check cur_link =%d , %d --------\n",cur_link->ap,cur_link->pos);
+	//fprintf(stderr,"pure path check cur_link =%d , %d --------\n",cur_link->ap,cur_link->pos);
 	if (cur_link->ap == root->ap  && cur_link->pos ==root->pos && !m_first) {
 	    m_find= TRUE;
 	    LMN_FREE(cur_link);  // ueda
@@ -2112,7 +2235,7 @@ BOOL purecycle_exit(Vector *srcvec, Vector *avovec) {
 
 	while (!neighbours->is_empty()) {
 	  LinkObjRef Link = (LinkObjRef)neighbours->pop();
-	  //printf("pure path check pushed_link =%d , %d --------\n",Link->ap,Link->pos);
+	  //fprintf(stderr,"pure path check pushed_link =%d , %d --------\n",Link->ap,Link->pos);
 	  stack->push((LmnWord)Link);
 	}
 	
@@ -2142,6 +2265,7 @@ BOOL purecycle_exit(Vector *srcvec, Vector *avovec) {
   return m_find;
 }
 
+/*
 BOOL cycle_exist(Vector *srcvec, Vector *avovec,
                  ProcessTableRef *attr_functors,
                  Vector *attr_dataAtoms,
@@ -2163,7 +2287,7 @@ BOOL cycle_exist(Vector *srcvec, Vector *avovec,
 
     while (!stack->is_empty()) {
       LinkObjRef cur_link=(LinkObjRef)stack->pop();
-      // printf("cycle exist cur_link =%p, %d --------\n",cur_link->ap,cur_link->pos);
+      // fprintf(stderr,"cycle exist cur_link =%p, %d --------\n",cur_link->ap,cur_link->pos);
 
       // we are having a ref-link with value (0,0) here, which is causing the error.
       // I guess the graph is currupted somewhere.
@@ -2171,7 +2295,7 @@ BOOL cycle_exist(Vector *srcvec, Vector *avovec,
 
       if (cur_link->ap == root->ap  && cur_link->pos ==root->pos && !m_first) {
 	m_find= TRUE;
-	//printf(" find a cycle --------\n");
+	//fprintf(stderr," find a cycle --------\n");
 	break;
       }
       if (LMN_ATTR_IS_DATA(cur_link->pos)) {
@@ -2231,6 +2355,7 @@ BOOL cycle_exist(Vector *srcvec, Vector *avovec,
 
   return m_find;
 }
+*/
 
 void get_neighbours(Vector *avovec,
                     Vector *neighbours,
@@ -2239,8 +2364,8 @@ void get_neighbours(Vector *avovec,
                     Vector *attr_dataAtoms,
                     Vector *attr_dataAtom_attrs) {
 
-  //printf("        get neighbors atom= %d  \n",atom);
-  //printf("        get neighbors pos= %d  \n",pos);
+  //fprintf(stderr,"        get neighbors atom= %d  \n",atom);
+  //fprintf(stderr,"        get neighbors pos= %d  \n",pos);
 
   if (LMN_ATTR_IS_DATA(pos)) {
     HyperLink *hl = lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)atom);
@@ -2311,7 +2436,7 @@ void get_neighbours(Vector *avovec,
       new_obj=LinkObj_make(((LmnSymbolAtomRef)atom)->get_link(i),
 			   ((LmnSymbolAtomRef)atom)->get_attr(i));
       neighbours->push((LmnWord)LinkObj_make(new_obj->ap,new_obj->pos));
-      lmn_free(new_obj);  // ueda, TODO: why is new_obj created?
+      lmn_free(new_obj);  // ueda, TODO: why is new_obj created at all?
     }
   }
 }
@@ -3962,7 +4087,6 @@ void lmn_mem_remove_atom(LmnMembraneRef mem, LmnAtomRef atom,
 }
 
 void move_atom_to_atomlist_head(LmnSymbolAtomRef a, LmnMembraneRef mem) {
-  //  move_symbol_atom_to_atomlist_head(LMN_SATOM(a), mem); // ueda
   move_symbol_atom_to_atomlist_head(a, mem);
 }
 

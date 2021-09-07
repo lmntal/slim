@@ -175,10 +175,6 @@ BOOL proc_tbl_contains_mem(ProcessTableRef p, LmnMembraneRef mem) {
 }
 
 /* process table のダンプ，デバッグ用 */
-// int proc_tbl_item_dump(LmnWord k, LmnWord v, LmnWord _arg) {
-//   fprintf(stderr,"  key=%ld, value=%ld\n", k, v);
-//   return 1;
-// }
 void proc_tbl_dump(const char* name, ProcessTableRef map) {
   fprintf(stderr,"proc_tbl %s items:\n", name);
   map->tbl_foreach([](LmnWord k, LmnWord v, LmnWord _arg) {
@@ -188,11 +184,6 @@ void proc_tbl_dump(const char* name, ProcessTableRef map) {
 }
 
 /* シンボルアトムを入れた process table のダンプ，デバッグ用 */
-// int proc_tbl_symbol_atom_item_dump(LmnWord k, LmnWord v, LmnWord _arg) {
-//   LmnFunctor f = ((LmnSymbolAtomRef)v)->get_functor();
-//   fprintf(stderr,"  key=%ld, value=%s\n", k, LMN_FUNCTOR_STR(f));
-//   return 1;
-// }
 void proc_tbl_symbol_atom_dump(const char* name, ProcessTableRef map) {
   fprintf(stderr,"proc_tbl %s items:\n", name);
   map->tbl_foreach([](LmnWord k, LmnWord v, LmnWord _arg) {

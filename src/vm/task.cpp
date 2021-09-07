@@ -2655,6 +2655,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       auto args = read_unary_atoms(rc, instr);
       b = ground_atoms(srcvec, avovec, atoms, &natoms);
     }
+    }
     Task::free_links(srcvec);
     Task::free_links(avovec);
 
@@ -2677,7 +2678,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
         });
       }
     }
-    }
+    
     break;
   }
   case INSTR_UNIQ: {
@@ -3955,9 +3956,6 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       lmn_delete_atom(copy);
     }
 
-    // printf("deleting delmap: %d\n", delmap);
-    // delete delmap;   -- map should be deleted by a procedure pushed by COPYGROUND
-    // delmap = nullptr;  // ueda, quick fix
     break;
   }
   case INSTR_REMOVETOPLEVELPROXIES: {

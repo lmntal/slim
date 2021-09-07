@@ -89,11 +89,11 @@ void integer_set(LmnReactCxtRef rc,
   for (i = 0, n = start; n <= end; i++, n++) {
     Vector *dstlovec;
     ProcessTableRef atommap;
+    ProcessTableRef hlinkmap = NULL;
     LinkObjRef l;
 
     lmn_mem_copy_ground(mem, srcvec, &dstlovec,
-                            // &atommap);
-			&atommap, NULL, NULL, NULL, NULL);  // extended
+			&atommap, &hlinkmap, NULL, NULL, NULL);  // extended
 
     l = (LinkObjRef)dstlovec->get(0);
     lmn_mem_newlink(mem, (LmnAtomRef)n, LMN_INT_ATTR, 0,
@@ -103,6 +103,7 @@ void integer_set(LmnReactCxtRef rc,
     for (int j = 0; j < dstlovec->get_num(); j++) LMN_FREE(dstlovec->get(j));
     delete dstlovec;
     delete atommap;
+    delete hlinkmap;
   }
 
   lmn_mem_delete_atom(mem, a0, t0);
