@@ -483,7 +483,7 @@ void lmn_mem_unify_atom_args(LmnMembraneRef mem, LmnSymbolAtomRef atom1,
        //   a1->get_id(), pos1, a1->get_attr(pos1), ((LmnSymbolAtomRef)a1->get_link(0))->get_id(),
        //   a2->get_id(), pos2, a2->get_attr(pos2), ((LmnSymbolAtomRef)a2->get_link(attr2))->get_id()); 
      } else {
-       fprintf(stdout,"LMN_ATTR_IS_DATA(attr1)\n");
+       // fprintf(stdout,"LMN_ATTR_IS_DATA(attr1)\n");
        ((LmnSymbolAtomRef)ap2)->set_link(attr2, ap1);
        ((LmnSymbolAtomRef)ap2)->set_attr(attr2, attr1);
      }
