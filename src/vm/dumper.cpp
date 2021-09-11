@@ -434,6 +434,17 @@ static BOOL dump_symbol_atom(LmnPortRef port, LmnSymbolAtomRef atom,
 
   if (t->done)
     return FALSE;
+  
+  // トップレベルに cons ('.') が出現した場合は，
+  // `[1,2,3|X]=X` のようにイコールアトムで繋いで [] （角括弧） を用いて出力する．
+  if (call_depth == 0 &&
+      f == LMN_LIST_FUNCTOR) { 
+    dump_list(port, atom, ht, s, 0);
+    port_put_raw_s(port, "=");
+    dump_arg(port, atom, 2, ht, s, 1);
+    return TRUE;
+  }
+
   t->done = TRUE;
 
   if (call_depth == 0 &&
