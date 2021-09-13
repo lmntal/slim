@@ -44,6 +44,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <atomic>
+#include <vector>
+#include <stack>
 
 #ifdef WITH_DMALLOC
 #include <dmalloc.h>
@@ -327,6 +330,8 @@ struct LmnEnv {
 
   BOOL shuffle_rule;
   BOOL shuffle_atom;
+
+  BOOL normal_para;
   
   enum OutputFormat output_format;
   enum MCdumpFormat mc_dump_format;
@@ -374,7 +379,7 @@ void slim_version(FILE *f);
 #endif /* HAVE_LIBPTHREAD or HAVE_WINAPI */
 
 /* setting thread library for slim */
-#ifndef HAVE_LIBPTHREAD
+#if !defined(HAVE_LIBPTHREAD) && !defined(NORMAL_PARA)
 #error "sorry, need pthread.h or implementation for other thread library "
 #
 #else /* defined (HAVE_LIBPTHREAD) */
@@ -448,8 +453,11 @@ static inline void lmn_barrier_wait(lmn_barrier_t *b) {
  * (osXの都合で実装が難しいらしい?)
  * 代わりにpthread keyによるthread local
  * storageの実装が優れているらしいの使ってみた */
-
-#if defined(HAVE_MT_LIBRARY) && defined(HAVE___THREAD)
+#ifdef NORMAL_PARA
+#define LMN_TLS_TYPE(T) thread_local T
+#define ENABLE_PARALLEL
+#
+#elif defined(HAVE_MT_LIBRARY) && defined(HAVE___THREAD)
 #define USE_TLS_KEYWORD
 #define LMN_TLS_TYPE(T) __thread T
 #define ENABLE_PARALLEL
@@ -468,12 +476,20 @@ struct LmnTLS {
   unsigned int thread_num;
   unsigned int thread_id;
   unsigned long state_id;
+#ifndef NORMAL_PARA
   ProcessID proc_next_id;
+#endif
 };
 
-extern struct Vector *lmn_id_pool;
+
 extern struct LmnEnv lmn_env;
 extern LMN_TLS_TYPE(LmnTLS) lmn_tls;
+#ifdef NORMAL_PARA
+extern std::atomic<ProcessID> proc_next_id;
+extern std::vector<std::stack<ProcessID>> lmn_id_pool;
+#else
+extern struct Vector *lmn_id_pool;
+#endif
 
 void env_my_TLS_init(unsigned int th_id);
 void env_my_TLS_finalize(void);
@@ -482,13 +498,27 @@ void lmn_stream_destroy(void);
 
 #define LMN_PRIMARY_ID (0U)
 
+#ifndef NORMAL_PARA
 #define env_proc_id_pool() (lmn_id_pool)
 #define env_set_proc_id_pool(V) (lmn_id_pool = (V))
 #define env_return_id(N)                                                       \
   if (lmn_id_pool)                                                             \
   lmn_id_pool->push((vec_data_t)(N))
+#endif
 
-#if /**/ !defined(ENABLE_PARALLEL) || defined(USE_TLS_KEYWORD)
+#ifdef NORMAL_PARA
+void env_return_id(ProcessID n);
+#define env_gen_state_id() (lmn_tls.state_id += lmn_tls.thread_num)
+#define env_my_thread_id() (lmn_tls.thread_id)
+#define env_set_my_thread_id(N) (lmn_tls.thread_id = (N))
+#define env_threads_num() (lmn_tls.thread_num)
+#define env_set_threads_num(N) (lmn_tls.thread_num = (N))
+#define env_reset_proc_ids() (proc_next_id.store(1U))
+#define env_set_next_id(N) (proc_next_id.store(N))
+ProcessID env_gen_next_id();
+#define env_next_id() (proc_next_id.load())
+
+#elif /**/ !defined(ENABLE_PARALLEL) || defined(USE_TLS_KEYWORD)
 #define env_gen_state_id() (lmn_tls.state_id += lmn_tls.thread_num)
 #define env_my_thread_id() (lmn_tls.thread_id)
 #define env_set_my_thread_id(N) (lmn_tls.thread_id = (N))
@@ -497,8 +527,8 @@ void lmn_stream_destroy(void);
 #define env_reset_proc_ids() (lmn_tls.proc_next_id = 1U)
 #define env_set_next_id(N) (lmn_tls.proc_next_id = (N))
 #define env_gen_next_id()                                                      \
-  ((lmn_id_pool && lmn_id_pool->get_num() > 0) ? lmn_id_pool->pop()            \
-                                             : lmn_tls.proc_next_id++)
+   ((lmn_id_pool && lmn_id_pool->get_num() > 0) ? lmn_id_pool->pop()            \
+                                              : lmn_tls.proc_next_id++)
 #define env_next_id() (lmn_tls.proc_next_id)
 #
 #elif /**/ defined(USE_TLS_PTHREAD_KEY)
@@ -538,10 +568,10 @@ static inline void env_set_next_id(unsigned long n) {
   p->proc_next_id = n;
 }
 #
-#define env_gen_next_id()                                                      \
-  ((lmn_id_pool && lmn_id_pool->get_num() > 0)                                   \
-       ? lmn_id_pool->pop()                                                  \
-       : ((LmnTLS *)lmn_TLS_get_value(lmn_tls))->proc_next_id++)
+// #define env_gen_next_id()                                                      \
+//   ((lmn_id_pool && lmn_id_pool->get_num() > 0)                                   \
+//        ? lmn_id_pool->pop()                                                  \
+//        : ((LmnTLS *)lmn_TLS_get_value(lmn_tls))->proc_next_id++)
 
 static inline unsigned long env_next_id() {
   LmnTLS *p = (LmnTLS *)lmn_TLS_get_value(lmn_tls);

@@ -70,6 +70,11 @@ typedef void (*callback_5)(LmnReactCxtRef, LmnMembraneRef, LmnAtomRef,
                            LmnLinkAttr, LmnAtomRef, LmnLinkAttr, LmnAtomRef,
                            LmnLinkAttr);
 
+typedef void (*callback_6)(LmnReactCxtRef, LmnMembraneRef, LmnAtomRef,
+                           LmnLinkAttr, LmnAtomRef, LmnLinkAttr, LmnAtomRef,
+                           LmnLinkAttr, LmnAtomRef, LmnLinkAttr, LmnAtomRef,
+                           LmnLinkAttr, LmnAtomRef, LmnLinkAttr);
+
 struct Vector user_system_rulesets; /* system ruleset defined by user */
 
 /**
@@ -165,9 +170,13 @@ void Task::lmn_run(Vector *start_rulesets) {
    * 破棄したProcessのIDを使い回す必要がある.
    * もし通常実行の並列化を考えるならばIDを再利用するためのMT-Safeな機構が必要
    */
+#ifdef NORMAL_PARA
+  lmn_id_pool = std::vector<std::stack<ProcessID>>(lmn_env.core_num, std::stack<ProcessID>());
+#else
   if (!env_proc_id_pool()) {
     env_set_proc_id_pool(new Vector(64));
   }
+#endif
 
   /* interactive: normal_cleaningフラグがONの場合は後始末 */
   if (lmn_env.normal_cleaning) {
@@ -243,9 +252,11 @@ void Task::lmn_run(Vector *start_rulesets) {
     delete mem;
     mrc = nullptr;
   }
+#ifndef NORMAL_PARA
   if (env_proc_id_pool()) {
     delete env_proc_id_pool();
   }
+#endif
 }
 
 /** 膜スタックに基づいた通常実行 */
@@ -1351,7 +1362,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
           rule->undo_history();
 
           rc->warray_set(std::move(*tmp));
-          if (!rc->keep_process_id_in_nd_mode)
+          if (!rc->keep_process_id_in_nd_mode and !lmn_env.normal_para)
             env_set_next_id(org_next_id);
           delete tmp;
           return command_result::Failure;
@@ -4282,6 +4293,14 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
             atom->get_attr(1), atom->get_link(2), atom->get_attr(2),
             atom->get_link(3), atom->get_attr(3), atom->get_link(4),
             atom->get_attr(4), atom->get_link(5), atom->get_attr(5));
+        break;
+      case 7:
+        ((callback_6)c->get_f())(
+            rc, (LmnMembraneRef)rc->wt(memi), atom->get_link(1),
+            atom->get_attr(1), atom->get_link(2), atom->get_attr(2),
+            atom->get_link(3), atom->get_attr(3), atom->get_link(4),
+            atom->get_attr(4), atom->get_link(5), atom->get_attr(5),
+	    atom->get_link(6), atom->get_attr(6));
         break;
       default:
         printf("EXTERNAL FUNCTION: too many arguments\n");
