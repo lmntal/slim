@@ -45,7 +45,10 @@
 #ifdef PROFILE
 #include "runtime_status.h"
 #endif
-
+#include <time.h>
+#include <mutex>
+#include <iostream>
+using namespace std;
 /** ============================
  *  Binary String Compressor
  *  ============================
@@ -377,6 +380,33 @@ TreeNodeID lmn_bscomp_tree_encode(LmnBinStrRef str) {
   LMN_ASSERT(treedb);
   LMN_ASSERT(str);
   ref = treedb->tree_find_or_put(str, &found);
+#ifdef PROFILE
+  if (lmn_env.profile_level >= 3) {
+    unsigned long old_space, dif_space;
+    post_node_count = tree_db_node_count(treedb);
+    dif_space = (post_node_count - pre_node_count) * sizeof(struct TreeNode);
+    old_space = lmn_binstr_space(str);
+
+    profile_add_space(PROFILE_SPACE__STATE_BINSTR, dif_space);
+    profile_add_space(PROFILE_SPACE__REDUCED_BINSTR, old_space - dif_space);
+    profile_finish_timer(PROFILE_TIME__TREE_COMPRESS);
+  }
+#endif
+  return ref;
+}
+TreeNodeID lmn_bscomp_tree_encode_inc(LmnBinStrRef str, int prev_len, TreeNodeID prev_ref) {
+  BOOL found;
+  TreeNodeID ref;
+#ifdef PROFILE
+  int pre_node_count = tree_db_node_count(treedb);
+  int post_node_count = 0;
+  if (lmn_env.profile_level >= 3) {
+    profile_start_timer(PROFILE_TIME__TREE_COMPRESS);
+  }
+#endif
+  LMN_ASSERT(treedb);
+  LMN_ASSERT(str);
+  ref = treedb->tree_find_or_put_inc(str, prev_len, prev_ref, &found);
 #ifdef PROFILE
   if (lmn_env.profile_level >= 3) {
     unsigned long old_space, dif_space;

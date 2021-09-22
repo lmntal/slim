@@ -92,7 +92,7 @@ void LmnStateMap::cb_state_map_id_find(LmnReactCxtRef rc,
                           LmnAtomRef a0, LmnLinkAttr t0,
                           LmnAtomRef a1, LmnLinkAttr t1,
                           LmnAtomRef a2, LmnLinkAttr t2,
-                          LmnAtomRef a3, LmnLinkAttr t3)
+				       LmnAtomRef a3, LmnLinkAttr t3,State *prev_s)
 {
   LmnMembraneRef m = LMN_PROXY_GET_MEM((LmnSymbolAtomRef)((LmnSymbolAtomRef)a1)->get_link(0));
   StateSpaceRef ss = ((LmnStateMap::LmnStateMapRef)a0)->states;
@@ -107,10 +107,9 @@ void LmnStateMap::cb_state_map_id_find(LmnReactCxtRef rc,
   lmn_mem_delete_atom(m, in, in_attr);
   ((MemReactContext *)rc)->memstack_remove(m);
   mem->remove_mem(m);
-
   State *new_s = new State(m, 0, TRUE);
-  State *succ = ss->insert(new_s);
-
+  State *succ = ss->insert(new_s, prev_s);
+  prev_s = new_s;
   if (succ == new_s) { /* new state */
     state_id_issue(succ);
   } else {

@@ -77,8 +77,8 @@ struct StateSpace : public std::conditional<slim::config::profile, MemIdHash,
   ~StateSpace();
 
   void add_memid_hash(unsigned long hash);
-  State *insert(State *s);
-  State *insert_delta(State *s, struct MemDeltaRoot *d);
+  State *insert(State *s, State *prev_s);
+  State *insert_delta(State *s, struct MemDeltaRoot *d, State *prev_s);
   void add_direct(State *s);
   void set_init_state(State *init_state);
   void format_states();

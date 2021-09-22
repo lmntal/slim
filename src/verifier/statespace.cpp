@@ -133,7 +133,7 @@ StateSpace::resize_destination(std::unique_ptr<StateTable> &def, State *ret,
  * 本関数の呼び出し側でs_memのメモリ管理を行う必要がある.
  * なお, 既にsのバイナリストリングを計算済みの場合,
  * バイナリストリングへのエンコード処理はskipするため, s_memはNULLで構わない. */
-State *StateSpace::insert(State *s) {
+State *StateSpace::insert(State *s,State *prev_s) {
   State *ret;
   unsigned long col = 0;
   unsigned long hashv = state_hash(s);
@@ -145,9 +145,9 @@ State *StateSpace::insert(State *s) {
   }
 
   if (slim::config::profile) {
-    ret = insert_dst->insert(s, &col);
+    ret = insert_dst->insert(s, prev_s, &col);
   } else {
-    ret = insert_dst->insert(s);
+    ret = insert_dst->insert(s,prev_s);
   }
 
   if (slim::config::profile && lmn_env.optimize_hash_old &&
@@ -174,7 +174,7 @@ State *StateSpace::insert(State *s) {
  * 差分オブジェクトdが刺しており(d->mem),
  *   d->memをTLSとして扱う前提が守られていれば, d->memに対する操作は全てMT-safe
  */
-State *StateSpace::insert_delta(State *s, struct MemDeltaRoot *d) {
+State *StateSpace::insert_delta(State *s, struct MemDeltaRoot *d,State *prev_s) {
   State *ret;
 
   /* d->mem (parentに対応する階層グラフ構造)を,
@@ -191,7 +191,7 @@ State *StateSpace::insert_delta(State *s, struct MemDeltaRoot *d) {
     s->calc_binstr_delta();
   }
 
-  ret = this->insert(s);
+  ret = this->insert(s,prev_s);
 
   /* X(sに対応する階層グラフ構造)をparentに対応する階層グラフ構造に戻す */
   dmem_root_revert(d);

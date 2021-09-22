@@ -302,7 +302,7 @@ StateTable::~StateTable() {
  * -- そこで, 全スレッドが同期を取るStateSpaceサイズ拡張処理の際に,
  * 冗長なバイト列を破棄する.
  */
-State *StateTable::insert(State *ins, unsigned long *col) {
+State *StateTable::insert(State *ins, State *prev_ins, unsigned long *col) {
   auto compress = ins->state_binstr();
   State *ret = nullptr;
 
@@ -326,9 +326,15 @@ State *StateTable::insert(State *ins, unsigned long *col) {
         state_set_compress_for_table(ins, compress);
         this->num_increment();
         if (tcd_get_byte_length(&ins->tcd) == 0 && lmn_env.tree_compress) {
-          TreeNodeID ref;
+          TreeNodeID ref, prev_ref;
+	  prev_ref = -1;
+	  int prev_len = -1;
           tcd_set_byte_length(&ins->tcd, ins->state_binstr()->len);
-          ref = lmn_bscomp_tree_encode(ins->state_binstr());
+	  if(prev_ins!=nullptr){
+	    tcd_get_root_ref(&prev_ins->tcd,&prev_ref);
+	    prev_len = tcd_get_byte_length(&prev_ins->tcd);
+	  }
+          ref = lmn_bscomp_tree_encode_inc(ins->state_binstr(),prev_len,prev_ref);
           tcd_set_root_ref(&ins->tcd, ref);
         }
         this->tbl[bucket] = ins;
@@ -380,9 +386,9 @@ State *StateTable::insert(State *ins, unsigned long *col) {
         /*compress = NULL;*/
 
         if (slim::config::profile)
-          ret = this->rehash_tbl_->insert(ins, col);
+          ret = this->rehash_tbl_->insert(ins, prev_ins, col);
         else
-          ret = this->rehash_tbl_->insert(ins);
+          ret = this->rehash_tbl_->insert(ins, prev_ins);
         break;
       } else if (!STATE_EQUAL(this, ins, str)) {
         /** B. memidテーブルへのlookupの場合,
@@ -438,9 +444,9 @@ State *StateTable::insert(State *ins, unsigned long *col) {
           ins->calc_mem_encode();
 
           if (slim::config::profile)
-            ret = this->rehash_tbl_->insert(ins, col);
+            ret = this->rehash_tbl_->insert(ins, prev_ins, col);
           else
-            ret = this->rehash_tbl_->insert(ins);
+            ret = this->rehash_tbl_->insert(ins, prev_ins);
 
           LMN_ASSERT(ret);
           break;
@@ -476,9 +482,15 @@ State *StateTable::insert(State *ins, unsigned long *col) {
           this->num_increment();
           state_set_compress_for_table(ins, compress);
           if (tcd_get_byte_length(&ins->tcd) == 0 && lmn_env.tree_compress) {
-            TreeNodeID ref;
+            TreeNodeID ref, prev_ref;
+	    prev_ref = -1;
+	    int prev_len = -1;
             tcd_set_byte_length(&ins->tcd, ins->state_binstr()->len);
-            ref = lmn_bscomp_tree_encode(ins->state_binstr());
+	    if(prev_ins!=nullptr){
+	      tcd_get_root_ref(&prev_ins->tcd,&prev_ref);
+	      prev_len = tcd_get_byte_length(&prev_ins->tcd);
+	    }
+            ref = lmn_bscomp_tree_encode_inc(ins->state_binstr(),prev_len,prev_ref);
             tcd_set_root_ref(&ins->tcd, ref);
           }
           str->next = ins;

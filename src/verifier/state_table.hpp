@@ -87,7 +87,7 @@ struct StateTable {
   unsigned long cap_density() const { return cap_density_; }
   unsigned long space() const;
   void resize(unsigned long);
-  State *insert(State *ins, unsigned long *col = nullptr);
+  State *insert(State *ins, State *prev_ins, unsigned long *col = nullptr);
   void add_direct(State *s);
   void format_states();
   void memid_rehash(unsigned long hash);

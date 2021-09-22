@@ -203,7 +203,7 @@ static inline void stutter_extension(State *s, LmnMembraneRef mem,
 
 /* 状態sから1stepで遷移する状態を計算し, 遷移元状態と状態空間に登録を行う
  * 遷移先状態のうち新規状態がnew_statesに積まれる */
-void mc_expand(const StateSpaceRef ss, State *s, AutomataStateRef p_s,
+void mc_expand(const StateSpaceRef ss, State *s, State *prev_s, AutomataStateRef p_s,
                MCReactContext *rc, Vector *new_ss, Vector *psyms, BOOL f) {
   LmnMembraneRef mem;
 
@@ -226,7 +226,7 @@ void mc_expand(const StateSpaceRef ss, State *s, AutomataStateRef p_s,
     dpor_start(ss, s, rc, new_ss, f);
   } else {
     /* sのサクセッサを状態空間ssに記録 */
-    mc_store_successors(ss, s, rc, new_ss, f);
+    mc_store_successors(ss, s, rc, new_ss, f, prev_s);
   }
 
   if (!s->state_mem()) {
@@ -290,7 +290,7 @@ void mc_update_cost(State *s, Vector *new_ss, EWLock *ewlock) {
  *   + 多重辺を除去する.
  *   + "新規"状態をnew_ssへ積む.　 */
 void mc_store_successors(const StateSpaceRef ss, State *s, MCReactContext *rc,
-                         Vector *new_ss, BOOL f) {
+                         Vector *new_ss, BOOL f, State *prev_s) {
   unsigned int i, succ_i;
 
   /** 状態登録 */
@@ -319,16 +319,16 @@ void mc_store_successors(const StateSpaceRef ss, State *s, MCReactContext *rc,
     /* 状態空間に状態src_succを記録 */
     if (rc->has_optmode(DeltaMembrane)) { /* --delta-mem */
       MemDeltaRoot *d = rc->get_mem_delta_roots().at(i);
-      succ = ss->insert_delta(src_succ, d);
+      succ = ss->insert_delta(src_succ, d,prev_s);
       src_succ_m = NULL;
     } else if (src_succ->is_encoded()) { /* !--delta-mem && --mem-enc */
       if (src_succ->s_is_d())
         src_succ->calc_binstr_delta();
-      succ = ss->insert(src_succ);
+      succ = ss->insert(src_succ,prev_s);
       src_succ_m = NULL;
     } else {                            /* default */
       src_succ_m = src_succ->state_mem(); /* for free mem pointed by src_succ */
-      succ = ss->insert(src_succ);
+      succ = ss->insert(src_succ,prev_s);
     }
 
     if (succ == src_succ) {

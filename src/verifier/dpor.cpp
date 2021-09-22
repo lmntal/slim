@@ -744,7 +744,7 @@ static BOOL dpor_check_cycle_proviso(StateSpaceRef ss, State *src,
 /* TODO: 時間なくて雑.. 直す */
 static void dpor_ample_set_to_succ_tbl(StateSpaceRef ss, Vector *ample_set,
                                        Vector *contextC1_set, MCReactContext *rc,
-                                       State *s, Vector *new_ss, BOOL f) {
+                                       State *s, Vector *new_ss, BOOL f,State *prev_s) {
   unsigned int i, succ_i;
   BOOL satisfied_C3;
 
@@ -781,7 +781,7 @@ static void dpor_ample_set_to_succ_tbl(StateSpaceRef ss, Vector *ample_set,
       src_t = NULL;
     }
 
-    succ = ss->insert_delta(src_succ, succ_d);
+    succ = ss->insert_delta(src_succ, succ_d,prev_s);
     if (succ == src_succ) {
       state_id_issue(succ);
       if (mc_is_dump(f))
@@ -838,7 +838,7 @@ static void dpor_ample_set_to_succ_tbl(StateSpaceRef ss, Vector *ample_set,
         src_t = NULL;
       }
 
-      succ = ss->insert_delta(src_succ, succ_d);
+      succ = ss->insert_delta(src_succ, succ_d,prev_s);
       if (succ == src_succ) {
         state_id_issue(succ);
         if (mc_is_dump(f))
@@ -913,12 +913,14 @@ static void dpor_ample_set_to_succ_tbl(StateSpaceRef ss, Vector *ample_set,
 void dpor_start(StateSpaceRef ss, State *s, MCReactContext *rc, Vector *new_s,
                 BOOL flag) {
   McDporData *d = RC_POR_DATA(rc);
-
+  State *prev_s;
   if (rc->has_optmode(DynamicPartialOrderReduction_Naive)) {
-    McPorData::mc_por.por_calc_ampleset(ss, s, rc, new_s, flag);
+    McPorData::mc_por.por_calc_ampleset(ss, s, rc, new_s, flag, prev_s);
+    prev_s = s;
     return;
   } else if (mc_react_cxt_succ_num_org(rc) <= 1 || !rc->has_optmode(DeltaMembrane)) {
-    mc_store_successors(ss, s, rc, new_s, flag);
+    mc_store_successors(ss, s, rc, new_s, flag,prev_s);
+    prev_s = s;
   } else {
     Vector v_key, v_val;
 
@@ -954,7 +956,8 @@ void dpor_start(StateSpaceRef ss, State *s, MCReactContext *rc, Vector *new_s,
 
       if (d->ample_cand->get_num() == mc_react_cxt_succ_num_org(rc)) {
         POR_DEBUG(printf("@@ ample cand == succ num\n"));
-        mc_store_successors(ss, s, rc, new_s, flag);
+        mc_store_successors(ss, s, rc, new_s, flag,prev_s);
+	prev_s = s;
       } else {
 
         unsigned int i;
@@ -964,11 +967,12 @@ void dpor_start(StateSpaceRef ss, State *s, MCReactContext *rc, Vector *new_s,
 
         if (!dpor_satisfied_C1(d, rc, &v_val)) {
           POR_DEBUG(printf("@@ found trans depended on ample set\n"));
-          mc_store_successors(ss, s, rc, new_s, flag);
+          mc_store_successors(ss, s, rc, new_s, flag,prev_s);
+	  prev_s = s;
         } else {
           POR_DEBUG(printf("@@ ample set ok\n"));
           dpor_ample_set_to_succ_tbl(ss, d->ample_cand, &v_val, rc, s, new_s,
-                                     flag);
+                                     flag,prev_s);
         }
       }
 
@@ -978,7 +982,8 @@ void dpor_start(StateSpaceRef ss, State *s, MCReactContext *rc, Vector *new_s,
       /* 独立な遷移に"indep", 依存遷移に"depends"と名前をつける */
     } else {
       unsigned int i, j;
-      mc_store_successors(ss, s, rc, new_s, flag);
+      mc_store_successors(ss, s, rc, new_s, flag,prev_s);
+      prev_s = s;
       for (i = 0; i < s->successor_num; i++) {
         State *succ;
         lmn_interned_str name = lmn_intern("ind");
@@ -1005,6 +1010,7 @@ void dpor_start(StateSpaceRef ss, State *s, MCReactContext *rc, Vector *new_s,
 void dpor_explore_redundunt_graph(StateSpaceRef ss) {
   if (reduced_stack) {
     Vector *new_ss, *search;
+    State *prev_s;
     MCReactContext rc(nullptr);
     BYTE f, org_por, org_old, org_del;
 
@@ -1032,7 +1038,8 @@ void dpor_explore_redundunt_graph(StateSpaceRef ss) {
       parent->succ_add((succ_data_t)t);
 
       s_mem = s->state_mem();
-      ret = ss->insert(s);
+      ret = ss->insert(s,prev_s);
+      prev_s = s;
       if (ret == s) {
         s->s_set_reduced();
         s_mem->free_rec();
@@ -1046,7 +1053,7 @@ void dpor_explore_redundunt_graph(StateSpaceRef ss) {
     }
 
     while (!search->is_empty()) {
-      State *s;
+      State *s, *prev_s;
       AutomataStateRef p_s;
       unsigned int i;
 
@@ -1054,8 +1061,8 @@ void dpor_explore_redundunt_graph(StateSpaceRef ss) {
       p_s = MC_GET_PROPERTY(s, ss->automata());
 
       s->s_set_reduced();
-      mc_expand(ss, s, p_s, &rc, new_ss, ss->prop_symbols(), f);
-
+      mc_expand(ss, s, prev_s, p_s, &rc, new_ss, ss->prop_symbols(), f);
+      prev_s = s;
       for (i = 0; i < s->successor_num; i++) {
         TransitionRef succ_t = transition(s, i);
         succ_t->rule_names.clear();

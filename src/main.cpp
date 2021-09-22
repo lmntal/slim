@@ -47,7 +47,10 @@
 #include <ctype.h>
 #include <getopt.h>
 #include <unistd.h>
-
+#include <iostream>
+#include <fstream>
+#include "time.h"
+using namespace std;
 /* #include "ext.h" */
 #include "verifier/runtime_status.h"
 
@@ -56,7 +59,6 @@
 #endif
 
 #include <vector>
-
 void install_builtin_extensions(void);
 void init_builtin_extensions(void); /* ext/init_exts.c */
 
@@ -811,7 +813,6 @@ int main(int argc, char *argv[]) {
       }
     }
   }
-
   slim_finalize();
   return 0;
 }

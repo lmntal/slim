@@ -134,7 +134,7 @@ void McPorData::free_por_vars() {
 }
 
 void McPorData::por_calc_ampleset(StateSpaceRef ss, State *s, MCReactContext *rc,
-                       Vector *new_s, BOOL f) {
+				  Vector *new_s, BOOL f, State *prev_s) {
   if (!this->rc) {
     this->rc = c14::make_unique<MCReactContext>(nullptr);
     this->flags = f;
@@ -146,17 +146,17 @@ void McPorData::por_calc_ampleset(StateSpaceRef ss, State *s, MCReactContext *rc
 
   if (mc_react_cxt_expanded_num(rc) <= 1) {
     /* C0: |en(s)|<=1 --> C0によりample(s)=en(s) と決定 */
-    mc_store_successors(ss, s, rc, new_s, f);
+    mc_store_successors(ss, s, rc, new_s, f,prev_s);
     return;
   }
 
   this->root = s;
-  if (ample(ss, s, rc, new_s, f)) {
+  if (ample(ss, s, rc, new_s, f, prev_s)) {
     /* C0〜C3をすべて満たすen(s)の真部分集合ample(s)が決定 */
-    push_ample_to_expanded(ss, s, rc, new_s, f);
+    push_ample_to_expanded(ss, s, rc, new_s, f, prev_s);
   } else {
     /* λ.. ample(s)=en(s) */
-    push_succstates_to_expanded(ss, s, rc, new_s, f);
+    push_succstates_to_expanded(ss, s, rc, new_s, f, prev_s);
   }
 
   mc_por.finalize_ample(f);
@@ -213,7 +213,7 @@ void McPorData::finalize_ample(BOOL org_f) {
  * ample(s)=en(s)の場合にFALSEを返す. */
 
 BOOL McPorData::ample(StateSpaceRef ss, State *s, MCReactContext *rc, Vector *new_s,
-                  BOOL org_f) {
+		      BOOL org_f, State *prev_s) {
   set_ample(s);
   set_por_expanded(s);
   st_add_direct(states, (st_data_t)s, (st_data_t)s);
@@ -285,7 +285,7 @@ BOOL McPorData::ample(StateSpaceRef ss, State *s, MCReactContext *rc, Vector *ne
    * 満足しているか否かチェックしていく．
    ******************************************************************/
   // if (!check_C1(s, ss->automata(), ss->prop_symbols())) {
-  if (!check_C3(ss, s, rc, new_s, org_f)) {
+  if (!check_C3(ss, s, rc, new_s, org_f,prev_s)) {
     /* C1〜C3をすべて満足するample(s)が決定不能のため，C0に従いen(s)を返して終了する
      */
     return FALSE;
@@ -363,12 +363,12 @@ inline State *McPorData::por_state_insert(State *succ, struct MemDeltaRoot *d) {
 inline State *McPorData::por_state_insert_statespace(StateSpaceRef ss,
                                                  TransitionRef succ_t,
                                                  State *succ_s, Vector *new_ss,
-                                                 BOOL org_f) {
+						     BOOL org_f, State *prev_s) {
   State *t;
   LmnMembraneRef succ_m;
 
   succ_m = succ_s->state_mem();
-  t = ss->insert(succ_s);
+  t = ss->insert(succ_s,prev_s);
 
   set_inserted(t);
   if (t == succ_s) {
@@ -774,7 +774,7 @@ inline BOOL McPorData::C3_cycle_proviso_satisfied(State *succ, State *t) {
  * 行き着くStateがStack上に乗っているならば偽を返す(不完全な閉路形成の禁止)
  */
 BOOL McPorData::check_C3(StateSpaceRef ss, State *s, LmnReactCxtRef rc,
-                     Vector *new_ss, BOOL f) {
+			 Vector *new_ss, BOOL f, State *prev_s) {
   unsigned int i;
 
   if (!mc_has_property(f))
@@ -794,8 +794,7 @@ BOOL McPorData::check_C3(StateSpaceRef ss, State *s, LmnReactCxtRef rc,
 
     /* POR用の状態空間ではなく,
      * 本来の状態空間に対して等価性検査をしかけ, 新規であれば追加してしまう */
-    t = por_state_insert_statespace(ss, succ_t, succ_s, new_ss, f);
-
+    t = por_state_insert_statespace(ss, succ_t, succ_s, new_ss, f, prev_s);
     if (!C3_cycle_proviso_satisfied(succ_s, t)) {
       return FALSE;
     }
@@ -998,7 +997,7 @@ int McPorData::build_ample_satisfying_lemma(st_data_t key, st_data_t val, st_dat
   return ST_CONTINUE;
 }
 
-void McPorData::push_ample_to_expanded(StateSpaceRef ss, State *s, LmnReactCxtRef rc, Vector *new_ss, BOOL f){
+void McPorData::push_ample_to_expanded(StateSpaceRef ss, State *s, LmnReactCxtRef rc, Vector *new_ss, BOOL f, State *prev_s){
   if (s->successor_num > 0) {
     std::vector<void *> tmp;
     unsigned int i;
@@ -1021,7 +1020,7 @@ void McPorData::push_ample_to_expanded(StateSpaceRef ss, State *s, LmnReactCxtRe
         /* 探索空間へ追加していない(しているがcontainsの場合) /\
          * amplesetに含める遷移 */
         if (!is_inserted(succ_s)) {
-          por_state_insert_statespace(ss, succ_t, succ_s, new_ss, f);
+          por_state_insert_statespace(ss, succ_t, succ_s, new_ss, f, prev_s);
         }
         tmp.push_back(succ_t);
       }
@@ -1040,7 +1039,7 @@ void McPorData::push_ample_to_expanded(StateSpaceRef ss, State *s, LmnReactCxtRe
  * expanded内にpushする際，ample(s)内に含まれることを表すフラグを立てる．
  * ただし，sが未展開の場合やsから直接遷移可能な状態が存在しない場合は偽を返す．
  */
-BOOL McPorData::push_succstates_to_expanded(StateSpaceRef ss, State *s, LmnReactCxtRef rc, Vector *new_ss, BOOL f) {
+BOOL McPorData::push_succstates_to_expanded(StateSpaceRef ss, State *s, LmnReactCxtRef rc, Vector *new_ss, BOOL f, State *prev_s) {
   BOOL ret = FALSE;
   if (is_por_expanded(s) && s->successor_num > 0) {
     unsigned int i;
@@ -1053,7 +1052,7 @@ BOOL McPorData::push_succstates_to_expanded(StateSpaceRef ss, State *s, LmnReact
       succ_s = transition_next_state(succ_t);
 
       if (!is_inserted(succ_s)) {
-        mc_por.por_state_insert_statespace(ss, succ_t, succ_s, new_ss, f);
+        mc_por.por_state_insert_statespace(ss, succ_t, succ_s, new_ss, f, prev_s);
       }
     }
   }

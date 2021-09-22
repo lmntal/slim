@@ -87,18 +87,18 @@ class McPorData {
 
 	void finalize_ample(BOOL arg_f);
 	State *por_state_insert(State *succ, struct MemDeltaRoot *d);
-	State *por_state_insert_statespace(StateSpaceRef ss, TransitionRef succ_t, State *succ_s, Vector *new_ss, BOOL org_f);
+	State *por_state_insert_statespace(StateSpaceRef ss, TransitionRef succ_t, State *succ_s, Vector *new_ss, BOOL org_f, State *prev_s);
 	void por_store_successors_inner(State *s, MCReactContext *rc);//doesn't touch mc_por, but someone might input that's member variable
-	BOOL ample(StateSpaceRef ss, State *s, MCReactContext *rc, Vector *new_s, BOOL org_f);
+	BOOL ample(StateSpaceRef ss, State *s, MCReactContext *rc, Vector *new_s, BOOL org_f, State *prev_s);
 	BOOL independency_check(State *s, AutomataRef a, Vector *psyms);
 	BOOL check_C1(State *s, AutomataRef a, Vector *psyms);
 	BOOL check_C2(State *s);
-	BOOL check_C3(StateSpaceRef ss, State *s, LmnReactCxtRef rc, Vector *new_ss, BOOL f);
+	BOOL check_C3(StateSpaceRef ss, State *s, LmnReactCxtRef rc, Vector *new_ss, BOOL f, State *prev_s);
 	BOOL C3_cycle_proviso_satisfied(State *suss, State *t);
 	BOOL is_independent_of_ample(TransitionRef strans);
 	BOOL push_independent_strans_to_table(unsigned long i1, unsigned long i2);
-	void push_ample_to_expanded(StateSpaceRef ss, State *s, LmnReactCxtRef rc, Vector *new_ss, BOOL f);
-	BOOL push_succstates_to_expanded(StateSpaceRef ss, State *s, LmnReactCxtRef rc, Vector *new_ss, BOOL f);
+	void push_ample_to_expanded(StateSpaceRef ss, State *s, LmnReactCxtRef rc, Vector *new_ss, BOOL f, State *prev_s);
+	BOOL push_succstates_to_expanded(StateSpaceRef ss, State *s, LmnReactCxtRef rc, Vector *new_ss, BOOL f, State *prev_s);
 	/* for debug only */
 	static int dump__strans_independency(st_data_t key, st_data_t vec, st_data_t _a);
 	void dump__ample_candidate();
@@ -109,7 +109,7 @@ public:
 	static McPorData mc_por;
 	void init_por_vars();//public
 	void free_por_vars();//public
-	void por_calc_ampleset(StateSpaceRef ss, State *s, MCReactContext *rc, Vector *new_s, BOOL flag);//public
+	void por_calc_ampleset(StateSpaceRef ss, State *s, MCReactContext *rc, Vector *new_s, BOOL flag, State *prev_s);//public
 	static int independency_vec_free(st_data_t _k, st_data_t vec, st_data_t _a);//public
 	static int destroy_tmp_state_graph(State *s, LmnWord _a);//public
 	void por_gen_successors(State *s, MCReactContext *rc, AutomataRef a, Vector *psyms);//called by only independency check

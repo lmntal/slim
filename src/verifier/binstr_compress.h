@@ -61,6 +61,7 @@ BOOL lmn_bscomp_tree_clean();
 void lmn_bscomp_tree_profile(FILE *f);
 unsigned long lmn_bscomp_tree_space();
 TreeNodeID lmn_bscomp_tree_encode(LmnBinStrRef str);
+TreeNodeID lmn_bscomp_tree_encode_inc(LmnBinStrRef str, int prev_len, TreeNodeID prev_ref);
 LmnBinStrRef lmn_bscomp_tree_decode(TreeNodeID ref, int len);
 
 /* @} */

@@ -118,14 +118,14 @@
    (!worker_use_mapndfs(w) && worker_id(w) == 0) || !worker_on_parallel(w))
 
 static inline void dfs_loop(LmnWorker *w, Vector *stack, Vector *new_states,
-                            AutomataRef a, Vector *psyms);
+			      AutomataRef a, Vector *psyms, State *prev_s);
 static inline void mapdfs_loop(LmnWorker *w, Vector *stack, Vector *new_states,
-                               AutomataRef a, Vector *psyms);
+                               AutomataRef a, Vector *psyms, State *prev_s);
 static inline void mcdfs_loop(LmnWorker *w, Vector *stack, Vector *new_states,
-                              AutomataRef a, Vector *psyms);
+                              AutomataRef a, Vector *psyms, State *prev_s);
 
 void costed_dfs_loop(LmnWorker *w, Deque *deq, Vector *new_states,
-                     AutomataRef a, Vector *psyms);
+                     AutomataRef a, Vector *psyms, State *prev_s);
 static inline LmnWord dfs_work_stealing(LmnWorker *w);
 static inline void dfs_handoff_all_task(LmnWorker *me, Vector *tasks);
 static inline void dfs_handoff_task(LmnWorker *me, LmnWord task);
@@ -305,7 +305,7 @@ static inline void mcdfs_handoff_task(LmnWorker *me, LmnWord task) {
 void mcdfs_start(LmnWorker *w) {
   LmnWorkerGroup *wp;
   struct Vector new_ss;
-  State *s;
+  State *s,*prev_s;
   StateSpaceRef ss;
 
   ss = worker_states(w);
@@ -325,7 +325,8 @@ void mcdfs_start(LmnWorker *w) {
     {
       put_stack(&DFS_WORKER_STACK(w), s);
       dfs_loop(w, &DFS_WORKER_STACK(w), &new_ss, ss->automata(),
-               ss->prop_symbols());
+               ss->prop_symbols(),prev_s);
+      prev_s = s;
     }
   } else {
     while (!wp->workers_are_exit()) {
@@ -343,7 +344,8 @@ void mcdfs_start(LmnWorker *w) {
           {
             put_stack(&DFS_WORKER_STACK(w), s);
             mcdfs_loop(w, &DFS_WORKER_STACK(w), &new_ss,
-                       ss->automata(), ss->prop_symbols());
+                       ss->automata(), ss->prop_symbols(),prev_s);
+	    prev_s = s;
             s = NULL;
             DFS_WORKER_STACK(w).clear();
           }
@@ -376,7 +378,7 @@ void dfs_start(LmnWorker *w) {
 
   LmnWorkerGroup *wp;
   struct Vector new_ss;
-  State *s;
+  State *s, *prev_s;
   StateSpaceRef ss;
 
   ss = worker_states(w);
@@ -395,12 +397,14 @@ void dfs_start(LmnWorker *w) {
       push_deq(&DFS_WORKER_DEQUE(w), s, TRUE);
       costed_dfs_loop(w, &DFS_WORKER_DEQUE(w), &new_ss, ss->automata(),
                       ss->prop_symbols());
+      prev_s = s;
     } else
 #endif
     {
       put_stack(&DFS_WORKER_STACK(w), s);
       dfs_loop(w, &DFS_WORKER_STACK(w), &new_ss, ss->automata(),
-               ss->prop_symbols());
+               ss->prop_symbols(),prev_s);
+      prev_s = s;
     }
   } else { /* Stack-Slicing */
     while (!wp->workers_are_exit()) {
@@ -439,6 +443,7 @@ void dfs_start(LmnWorker *w) {
             push_deq(&DFS_WORKER_DEQUE(w), s, TRUE);
             costed_dfs_loop(w, &DFS_WORKER_DEQUE(w), &new_ss,
                             ss->automata(), ss->prop_symbols());
+	    prev_s = s;
             s = NULL;
             &DFS_WORKER_DEQUE(w)->clear();
           } else
@@ -447,10 +452,11 @@ void dfs_start(LmnWorker *w) {
             put_stack(&DFS_WORKER_STACK(w), s);
             if (worker_use_mapndfs(w))
               mapdfs_loop(w, &DFS_WORKER_STACK(w), &new_ss,
-                          ss->automata(), ss->prop_symbols());
+                          ss->automata(), ss->prop_symbols(),prev_s);
             else
               dfs_loop(w, &DFS_WORKER_STACK(w), &new_ss,
-                       ss->automata(), ss->prop_symbols());
+                       ss->automata(), ss->prop_symbols(),prev_s);
+	    prev_s = s;
             s = NULL;
             DFS_WORKER_STACK(w).clear();
           }
@@ -477,7 +483,7 @@ void dfs_start(LmnWorker *w) {
 }
 
 static inline void dfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
-                            AutomataRef a, Vector *psyms) {
+                            AutomataRef a, Vector *psyms, State *prev_s) {
   while (!stack->is_empty()) {
     State *s;
     AutomataStateRef p_s;
@@ -508,7 +514,7 @@ static inline void dfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
     }
 
     /* サクセッサを展開 */
-    mc_expand(worker_states(w), s, p_s, worker_rc(w).get(), new_ss, psyms,
+    mc_expand(worker_states(w), s, prev_s, p_s, worker_rc(w).get(), new_ss, psyms,
               worker_flags(w));
 #ifndef MINIMAL_STATE
     s->state_set_expander_id(worker_id(w));
@@ -552,7 +558,7 @@ static inline void dfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
 
 /* MAP+NDFS : 基本的にndfs_loopと同じ。安定したら合併させます。 */
 static inline void mapdfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
-                               AutomataRef a, Vector *psyms) {
+                               AutomataRef a, Vector *psyms, State *prev_s) {
   while (!stack->is_empty()) {
     State *s;
     AutomataStateRef p_s;
@@ -583,7 +589,7 @@ static inline void mapdfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
     /* サクセッサを展開 */
     if (!s->is_expanded()) {
       w->expand++;
-      mc_expand(worker_states(w), s, p_s, worker_rc(w).get(), new_ss, psyms,
+      mc_expand(worker_states(w), s, prev_s, p_s, worker_rc(w).get(), new_ss, psyms,
                 worker_flags(w));
 #ifndef MINIMAL_STATE
       s->state_set_expander_id(worker_id(w));
@@ -636,7 +642,7 @@ static inline void mapdfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
 
 #ifndef MINIMAL_STATE
 static inline void mcdfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
-                              AutomataRef a, Vector *psyms) {
+                              AutomataRef a, Vector *psyms, State *prev_s) {
   while (!stack->is_empty()) {
     State *s;
     AutomataStateRef p_s;
@@ -708,7 +714,7 @@ static inline void mcdfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
     s->state_expand_lock();
     FINISH_LOCK();
     if (!s->is_expanded()) {
-      mc_expand(worker_states(w), s, p_s, worker_rc(w).get(), new_ss, psyms,
+      mc_expand(worker_states(w), s, prev_s, p_s, worker_rc(w).get(), new_ss, psyms,
                 worker_flags(w));
       w->expand++;
       s->state_set_expander_id(worker_id(w));
@@ -768,7 +774,7 @@ static inline void mcdfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
 /* TODO: DequeとStackが異なるだけでdfs_loopと同じ.
  *   C++ template関数として記述するなど, 保守性向上のための修正が必要 */
 void costed_dfs_loop(LmnWorker *w, Deque *deq, Vector *new_ss, AutomataRef a,
-                     Vector *psyms) {
+                     Vector *psyms, State *prev_s) {
   while (!deq->is_empty()) {
     State *s;
     AutomataStateRef p_s;
@@ -791,7 +797,7 @@ void costed_dfs_loop(LmnWorker *w, Deque *deq, Vector *new_ss, AutomataRef a,
 
     if (!s->is_expanded()) {
       /* サクセッサを展開 */
-      mc_expand(worker_states(w), s, p_s, worker_rc(w).get(), new_ss, psyms,
+      mc_expand(worker_states(w), s, prev_s, p_s, worker_rc(w).get(), new_ss, psyms,
                 worker_flags(w));
       mc_update_cost(s, new_ss, worker_group(w)->workers_get_ewlock());
     } else if (s->s_is_update()) {
@@ -861,7 +867,7 @@ typedef struct McExpandBFS {
                */
 
 static inline void bfs_loop(LmnWorker *w, Vector *new_states, AutomataRef a,
-                            Vector *psyms);
+                            Vector *psyms, State *prev_s);
 
 /* LmnWorker wにBFSのためのデータを割り当てる */
 void bfs_worker_init(LmnWorker *w) {
@@ -923,7 +929,7 @@ void bfs_start(LmnWorker *w) {
   unsigned long d, d_lim;
   Vector *new_ss;
   StateSpaceRef ss;
-
+  State *prev_s;
   ss = worker_states(w);
   wp = worker_group(w);
   d = 1;
@@ -940,7 +946,7 @@ void bfs_start(LmnWorker *w) {
     /** >>>> 逐次 >>>> */
     while (!wp->workers_are_exit()) {
       /* 1step展開 */
-      bfs_loop(w, new_ss, ss->automata(), ss->prop_symbols());
+      bfs_loop(w, new_ss, ss->automata(), ss->prop_symbols(),prev_s);
 
       if (BLEDGE_COND(w))
         bledge_start(w);
@@ -959,7 +965,7 @@ void bfs_start(LmnWorker *w) {
       if (!BFS_WORKER_Q_CUR(w)->is_empty()) {
         EXECUTE_PROFILE_START();
         worker_set_active(w);
-        bfs_loop(w, new_ss, ss->automata(), ss->prop_symbols());
+        bfs_loop(w, new_ss, ss->automata(), ss->prop_symbols(),prev_s);
         worker_set_idle(w);
 
         new_ss->clear();
@@ -979,7 +985,7 @@ void bfs_start(LmnWorker *w) {
       if (!BFS_WORKER_Q_CUR(w)->is_empty()) {
         /**/ EXECUTE_PROFILE_START();
         worker_set_active(w);
-        bfs_loop(w, new_ss, ss->automata(), ss->prop_symbols());
+        bfs_loop(w, new_ss, ss->automata(), ss->prop_symbols(),prev_s);
         worker_set_idle(w);
         new_ss->clear();
         /**/ EXECUTE_PROFILE_FINISH();
@@ -1003,7 +1009,7 @@ void bfs_start(LmnWorker *w) {
 }
 
 static inline void bfs_loop(LmnWorker *w, Vector *new_ss, AutomataRef a,
-                            Vector *psyms) {
+                            Vector *psyms, State *prev_s) {
   LmnWorkerGroup *wp = worker_group(w);
   while (!BFS_WORKER_Q_CUR(w)->is_empty()) {
                  /* # of states@current layer > 0 */
@@ -1028,9 +1034,9 @@ static inline void bfs_loop(LmnWorker *w, Vector *new_ss, AutomataRef a,
       continue;
     }
 
-    mc_expand(worker_states(w), s, p_s, worker_rc(w).get(), new_ss, psyms,
+    mc_expand(worker_states(w), s, prev_s, p_s, worker_rc(w).get(), new_ss, psyms,
               worker_flags(w));
-
+    prev_s = s;
     if (MAP_COND(w))
       map_start(w, s);
     else if (BLEDGE_COND(w))
