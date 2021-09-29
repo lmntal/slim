@@ -227,7 +227,6 @@ void mc_expand(const StateSpaceRef ss, State *s, State *prev_s, AutomataStateRef
   } else {
     /* sのサクセッサを状態空間ssに記録 */
     mc_store_successors(ss, s, rc, new_ss, f, prev_s);
-    prev_s = s;
   }
 
   if (!s->state_mem()) {
