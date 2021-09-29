@@ -326,7 +326,6 @@ void mcdfs_start(LmnWorker *w) {
       put_stack(&DFS_WORKER_STACK(w), s);
       dfs_loop(w, &DFS_WORKER_STACK(w), &new_ss, ss->automata(),
                ss->prop_symbols(),prev_s);
-      prev_s = s;
     }
   } else {
     while (!wp->workers_are_exit()) {
@@ -345,7 +344,6 @@ void mcdfs_start(LmnWorker *w) {
             put_stack(&DFS_WORKER_STACK(w), s);
             mcdfs_loop(w, &DFS_WORKER_STACK(w), &new_ss,
                        ss->automata(), ss->prop_symbols(),prev_s);
-	    prev_s = s;
             s = NULL;
             DFS_WORKER_STACK(w).clear();
           }
@@ -397,14 +395,12 @@ void dfs_start(LmnWorker *w) {
       push_deq(&DFS_WORKER_DEQUE(w), s, TRUE);
       costed_dfs_loop(w, &DFS_WORKER_DEQUE(w), &new_ss, ss->automata(),
                       ss->prop_symbols());
-      prev_s = s;
     } else
 #endif
     {
       put_stack(&DFS_WORKER_STACK(w), s);
       dfs_loop(w, &DFS_WORKER_STACK(w), &new_ss, ss->automata(),
                ss->prop_symbols(),prev_s);
-      prev_s = s;
     }
   } else { /* Stack-Slicing */
     while (!wp->workers_are_exit()) {
@@ -443,7 +439,6 @@ void dfs_start(LmnWorker *w) {
             push_deq(&DFS_WORKER_DEQUE(w), s, TRUE);
             costed_dfs_loop(w, &DFS_WORKER_DEQUE(w), &new_ss,
                             ss->automata(), ss->prop_symbols());
-	    prev_s = s;
             s = NULL;
             &DFS_WORKER_DEQUE(w)->clear();
           } else
@@ -456,7 +451,6 @@ void dfs_start(LmnWorker *w) {
             else
               dfs_loop(w, &DFS_WORKER_STACK(w), &new_ss,
                        ss->automata(), ss->prop_symbols(),prev_s);
-	    prev_s = s;
             s = NULL;
             DFS_WORKER_STACK(w).clear();
           }
@@ -1036,7 +1030,6 @@ static inline void bfs_loop(LmnWorker *w, Vector *new_ss, AutomataRef a,
 
     mc_expand(worker_states(w), s, prev_s, p_s, worker_rc(w).get(), new_ss, psyms,
               worker_flags(w));
-    prev_s = s;
     if (MAP_COND(w))
       map_start(w, s);
     else if (BLEDGE_COND(w))
