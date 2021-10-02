@@ -160,6 +160,11 @@ void cb_string_replace(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
   lmn_mem_delete_atom(mem, a2, t2);
 }
 
+/*
+ *  2021/10/02
+ *    分割文字として空文字が入力された際の挙動を、
+ *    lib/string.lmnに記載されている通り、一文字ずつ分割するように修正
+ */
 void cb_string_split(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
                       LmnLinkAttr t0, LmnAtomRef a1, LmnLinkAttr t1,
                       LmnAtomRef a2, LmnLinkAttr t2) {
@@ -169,19 +174,11 @@ void cb_string_split(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
   auto sep_len = sep_str.length();
   auto ls = std::vector<std::string>();
 
-  if(sep_len == 0) {
+  if(sep_len == 0) {          // 分割文字として空文字が入力された場合は一文字ずつ分割する
+    int i;
     auto str_len = split_str.length();
-    auto offset = std::string::size_type(0);
-    while (1) {
-      if(offset < str_len) {
-        ls.push_back(split_str.substr(offset,1));
-        offset++;
-      } else {
-        break;
-      }
-    }
-    /* ls.push_back(split_str); */
-  } else {
+    for (i = 0; i < str_len; i++) ls.push_back(split_str.substr(i,1));
+  } else {          // 分割文字が空文字以外に設定されている場合は分割文字の位置で分割する（分割文字は飛ばす）
     auto offset = std::string::size_type(0);
     while (1) {
       auto pos = split_str.find(sep_str, offset);
