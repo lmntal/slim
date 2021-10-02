@@ -170,7 +170,17 @@ void cb_string_split(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
   auto ls = std::vector<std::string>();
 
   if(sep_len == 0) {
-    ls.push_back(split_str);
+    auto str_len = split_str.length();
+    auto offset = std::string::size_type(0);
+    while (1) {
+      if(offset < str_len) {
+        ls.push_back(split_str.substr(offset,1));
+        offset++;
+      } else {
+        break;
+      }
+    }
+    /* ls.push_back(split_str); */
   } else {
     auto offset = std::string::size_type(0);
     while (1) {
