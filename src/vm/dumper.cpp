@@ -237,10 +237,12 @@ static BOOL dump_data_atom(LmnPortRef port, LmnAtomRef data, LmnLinkAttr attr) {
     char buf[18];
     port_put_raw_s(port, EXCLAMATION_NAME);
     if (lmn_env.show_hyperlink) {
-      sprintf(buf, "H%lx",
+      // sprintf(buf, "H%lx",
+      sprintf(buf, "H%lu",
               LMN_HL_ID(lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)data)));
     } else {
-      sprintf(buf, "H%lx",
+      // sprintf(buf, "H%lx",
+      sprintf(buf, "H%lu",
               LMN_HL_ID(LMN_HL_ATOM_ROOT_HL((LmnSymbolAtomRef)data)));
     }
     if (LMN_HL_HAS_ATTR(lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)data))) {
@@ -620,16 +622,22 @@ static void lmn_dump_cell_internal(LmnPortRef port, LmnMembraneRef mem,
           continue;
         EACH_ATOM(
             atom, ent, ({
+		// fprintf(stderr,"dump_cell_internal: %s/%d Addr[%p] ID[%lu]\n ",
+		// 	atom->str(), atom->get_arity(), atom, atom->get_id());
               int arity = atom->get_arity();
-              if (atom->get_functor() == LMN_RESUME_FUNCTOR)
+              if (atom->get_functor() == LMN_RESUME_FUNCTOR) {
                 continue;
+	      }
+	      // fprintf(stderr,"dump_cell_internal2:%s/%d\n", atom->str(), atom->get_arity());
               if (f == LMN_IN_PROXY_FUNCTOR || f == LMN_OUT_PROXY_FUNCTOR) {
                 pred_atoms[PROXY].push((LmnWord)atom);
               }
               /* 0 argument atom */
               else if (arity == 0) {
-		if(!atom->record_flag) 
+		if(!atom->record_flag) {
 		  pred_atoms[P0].push((LmnWord)atom);
+		  // fprintf(stderr, "pushed to P0\n");
+		}
               }
               /* 1 argument, link to the last argument */
               else if (arity == 1 && f != LMN_NIL_FUNCTOR &&
@@ -638,18 +646,38 @@ static void lmn_dump_cell_internal(LmnPortRef port, LmnMembraneRef mem,
                             ((LmnSymbolAtomRef)atom->get_link(0))->get_arity() -
                                 1)) {
                 pred_atoms[P1].push((LmnWord)atom);
+		// fprintf(stderr, "pushed to P1\n");
               }
               /* link to the last argument */
-              else if (arity > 1 &&
+              else {
+		// if文の条件が複雑なのでデバッグ用に残しておく
+		// BOOL c1 = arity > 1;  // should be true
+		// BOOL c2 = c1 && LMN_ATTR_IS_DATA(atom->get_attr(arity - 1));
+		// fprintf(stderr,"case 3: last_attr_is_data=%d, ", c2); fflush(stderr);
+		// BOOL c3 = false;
+		// if (c1 && !c2) {
+		//   int k = (int)LMN_ATTR_GET_VALUE(atom->get_attr(arity - 1));
+		//   fprintf(stderr,"last_attr=%d, ", k); fflush(stderr);
+		//   LmnSymbolAtomRef a = (LmnSymbolAtomRef)atom->get_link(arity - 1);
+		//   fprintf(stderr,"last_atom=%s/%d (%p), ", a->str(), a->get_arity(), a); fflush(stderr);
+		//   fprintf(stderr,"last_atom=%p, ", a); fflush(stderr);
+		//   int l = a->get_arity() - 1;
+		//   c3 = (k == l);
+		// }
+		if (arity > 1 &&
                        (LMN_ATTR_IS_DATA(atom->get_attr(arity - 1)) ||
                         (int)LMN_ATTR_GET_VALUE(
                             atom->get_attr(arity - 1)) ==
                             ((LmnSymbolAtomRef)atom->get_link(arity - 1))->get_arity() -
                                 1)) {
+	      // if (c1 && (c2 || c3)) {
                 pred_atoms[P2].push((LmnWord)atom);
+		// fprintf(stderr, "pushed to P2\n");
               } else {
                 pred_atoms[P3].push((LmnWord)atom);
+		// fprintf(stderr, "pushed to P3\n");
               }
+	      }
             }));
       }));
 
@@ -728,6 +756,8 @@ void lmn_dump_cell(LmnMembraneRef mem, LmnPortRef port, OutputFormat format) {
     break;
   case DEV:
     lmn_dump_mem_dev(mem);
+    lmn_dump_cell_nonewline(port, mem); // ueda
+    port_put_raw_s(port, "\n");
     break;
   case JSON:
     lmn_dump_mem_json(mem);
@@ -795,6 +825,7 @@ void dump_atom_dev(LmnSymbolAtomRef atom) {
 
   for (i = 0; i < arity; i++) {
     LmnLinkAttr attr;
+    LmnWord id2;
 
     fprintf(stdout, "   %2u: ", i);
     attr = atom->get_attr(i);
@@ -812,6 +843,13 @@ void dump_atom_dev(LmnSymbolAtomRef atom) {
       fprintf(stdout, " link[%5d, Addr:%p,    ID:%2lu], ",
               LMN_ATTR_GET_VALUE(attr), atom->get_link(i),
               ((LmnSymbolAtomRef)atom->get_link(i))->get_id());
+      // checking buddy
+      id2 = ((LmnSymbolAtomRef)
+	     ((LmnSymbolAtomRef)atom->get_link(i))->get_link(atom->get_attr(i)))->get_id();
+      fprintf(stdout,"buddy check:%2lu", id2);
+      if (id2 != atom->get_id()) {
+	fprintf(stdout," ****ILL-FORMED!!****");
+      }
     } else {
       switch (attr) {
       case LMN_INT_ATTR:
@@ -825,6 +863,13 @@ void dump_atom_dev(LmnSymbolAtomRef atom) {
         fprintf(stdout, "hlink[ !, Addr:%lu, ID:%lu], ",
                 (LmnWord)atom->get_link(i),
                 ((LmnSymbolAtomRef)atom->get_link(i))->get_id());
+        // checking buddy
+	id2 = ((LmnSymbolAtomRef)
+	       ((LmnSymbolAtomRef)atom->get_link(i))->get_link(0))->get_id();
+	fprintf(stdout,"buddy check:%2lu", id2);
+	if (id2 != atom->get_id()) {
+	  fprintf(stdout," ****ILL-FORMED!!****");
+	}
         break;
       default:
         fprintf(stdout, "unknown data type[%d], ", attr);

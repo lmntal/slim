@@ -100,7 +100,7 @@ int ProcessTbl::put_new_mem(LmnMembraneRef mem, LmnWord value) {
 }
 
 /* テーブルからkeyとそれに対応した値を削除する.
- * 通常この間数ではなくunput_atom, unput_memを使用する. */
+ * 通常この関数ではなくunput_atom, unput_memを使用する. */
 void ProcessTbl::proc_tbl_unput(LmnWord key) { this->unput(key); }
 
 /* テーブルからアトムとそれに対応した値を削除する */
@@ -112,6 +112,11 @@ void ProcessTbl::unput_atom(LmnSymbolAtomRef atom) {
 void proc_tbl_unput_mem(ProcessTableRef p, LmnMembraneRef mem) {
   p->unput(mem);
 }
+
+void ProcessTbl::unput_hlink(HyperLink *hl) {  // extended
+  this->unput(hl);
+}
+
 
 /* テーブルのkeyに対応した値をvalueに設定し, 正の値を返す.
  * keyがテーブルに存在しない場合は0を返す. 通常この間数ではなくget_by_atom,
@@ -167,4 +172,23 @@ BOOL proc_tbl_contains_atom(ProcessTableRef p, LmnSymbolAtomRef atom) {
 /* テーブルの膜memに対応する値が設定されている場合、正の値を返す. */
 BOOL proc_tbl_contains_mem(ProcessTableRef p, LmnMembraneRef mem) {
   return p->contains(mem);
+}
+
+/* process table のダンプ，デバッグ用 */
+void proc_tbl_dump(const char* name, ProcessTableRef map) {
+  fprintf(stderr,"proc_tbl %s items:\n", name);
+  map->tbl_foreach([](LmnWord k, LmnWord v, LmnWord _arg) {
+		     fprintf(stderr,"  key=%ld, value=%ld\n", k, v);
+		     return 1;
+		   }, (LmnWord)0);
+}
+
+/* シンボルアトムを入れた process table のダンプ，デバッグ用 */
+void proc_tbl_symbol_atom_dump(const char* name, ProcessTableRef map) {
+  fprintf(stderr,"proc_tbl %s items:\n", name);
+  map->tbl_foreach([](LmnWord k, LmnWord v, LmnWord _arg) {
+		     LmnFunctor f = ((LmnSymbolAtomRef)v)->get_functor();
+		     fprintf(stderr,"  key=%ld, value=%s\n", k, LMN_FUNCTOR_STR(f));
+		     return 1;
+		   }, (LmnWord)0);
 }
