@@ -87,6 +87,8 @@ void run_mc(Vector *start_rulesets, AutomataRef a, Vector *psyms) {
     mem->drop();
     delete mem;
   }
+
+  delete start_rulesets;
 }
 
 static inline void do_mc(LmnMembraneRef world_mem_org, AutomataRef a,

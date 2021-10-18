@@ -246,6 +246,8 @@ void Task::lmn_run(Vector *start_rulesets) {
   if (env_proc_id_pool()) {
     delete env_proc_id_pool();
   }
+
+  delete start_rulesets;  // ueda
 }
 
 /** 膜スタックに基づいた通常実行 */
@@ -2647,8 +2649,11 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       break;
     }
     case INSTR_ISGROUND: {
+      LmnInstrVar n;
+
+      // read hyperlink attributes though they are just ignored for ISGROUND
+      auto args = read_unary_atoms(rc, instr);
       b = ground_atoms(srcvec, avovec, atoms, &natoms);
-      break;
     }
     }
     Task::free_links(srcvec);
@@ -2673,7 +2678,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
         });
       }
     }
-
+    
     break;
   }
   case INSTR_UNIQ: {
@@ -3017,7 +3022,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     LmnInstrVar dstlist, srclist, memi;
     Vector *srcvec, *dstlovec, *retvec; /* 変数番号のリスト */
     ProcessTableRef atommap;
-    ProcessTableRef hlinkmap;
+    ProcessTableRef hlinkmap = NULL;  // ueda; may not be used in copyground
 
     READ_VAL(LmnInstrVar, instr, dstlist);
     READ_VAL(LmnInstrVar, instr, srclist);
@@ -3077,11 +3082,54 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
                             &atommap, &hlinkmap, &attr_functors,
                             &attr_dataAtoms, &attr_dataAtom_attrs);
 
+      delete attr_functors;
       break;
     }
     case INSTR_COPYGROUND:
-      lmn_mem_copy_ground((LmnMembraneRef)rc->wt(memi), srcvec, &dstlovec,
-                          &atommap);
+      LmnInstrVar n;
+
+      // read hyperlink attributes
+      // auto args = read_unary_atoms(rc, instr);
+
+      // READ_VAL(LmnInstrVar, instr, n); // temporarily discard attr arg
+
+      READ_VAL(LmnInstrVar, instr, n);
+      if (n == 0) {         // original and ordinary ground
+	lmn_mem_copy_ground((LmnMembraneRef)rc->wt(memi), srcvec, &dstlovec,
+                            // &atommap);
+			    &atommap, &hlinkmap, NULL, NULL, NULL);  // extended
+      } else {              // extended ground
+	ProcessTableRef attr_functors;
+	Vector attr_dataAtoms;
+	Vector attr_dataAtom_attrs;
+	attr_dataAtoms.init(16);
+	attr_dataAtom_attrs.init(16);
+	attr_functors = new ProcessTbl(16);
+	LmnInstrVar i = 0;
+
+        for (; n--; i++) {
+          LmnLinkAttr attr;
+          READ_VAL(LmnLinkAttr, instr, attr);
+          if (LMN_ATTR_IS_DATA(attr)) {
+            LmnAtomRef at;
+            attr_dataAtom_attrs.push(attr);
+            READ_DATA_ATOM(at, attr);
+            attr_dataAtoms.push((LmnWord)at);
+          } else {
+            LmnFunctor f;
+            READ_VAL(LmnFunctor, instr, f);
+            attr_functors->proc_tbl_put(f, f);
+          }
+        }
+        // fprintf(stderr, "lmn_mem_copy_ground starts\n");
+	lmn_mem_copy_ground((LmnMembraneRef)rc->wt(memi), srcvec, &dstlovec,
+                            // &atommap);
+			    &atommap, &hlinkmap, &attr_functors,     // extended
+			    &attr_dataAtoms, &attr_dataAtom_attrs);  // extended
+        // fprintf(stderr, "lmn_mem_copy_ground ended\n");
+	delete attr_functors;
+      }
+
       break;
     }
     Task::free_links(srcvec);
@@ -3094,6 +3142,12 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
 
     this->push_stackframe([=](interpreter &itr, bool result) {
       Task::free_links(dstlovec);
+      // printf("finalizing, atommap: %d\n", atommap);
+      // proc_tbl_symbol_atom_dump("atommap", atommap);
+
+      delete atommap; // ueda
+      delete hlinkmap; // ueda
+      // if (hlinkmap != NULL) delete hlinkmap; // ueda
       delete retvec;
       LMN_ASSERT(result);
       return result ? command_result::Success : command_result::Failure;
@@ -3902,7 +3956,6 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       lmn_delete_atom(copy);
     }
 
-    delete delmap;
     break;
   }
   case INSTR_REMOVETOPLEVELPROXIES: {
@@ -3981,6 +4034,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     case LMN_SP_ATOM_ATTR:
       if (!SP_ATOM_EQ(rc->wt(func0), rc->wt(func1)))
         return FALSE;
+      break;
     default:
       if (rc->wt(func0) != rc->wt(func1))
         return FALSE;
@@ -4014,6 +4068,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       case LMN_SP_ATOM_ATTR:
         if (SP_ATOM_EQ(rc->wt(func0), rc->wt(func1)))
           return FALSE;
+        break;
       default:
         if (rc->wt(func0) == rc->wt(func1))
           return FALSE;
