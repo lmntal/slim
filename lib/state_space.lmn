@@ -63,4 +63,7 @@
 
     Ret = state_space.statespace_construction(Rule, Graph, Map, RetRule) :- class(Map, "state_map") |
 	'$callback'('cb_statespace_construction', Rule, Graph, Map, RetRule, Ret).
+
+//    Ret = state_space.statespace_construction(Rule, Graph) :- 
+//	'$callback'('cb_statespace_construction', Rule, Graph, Ret).
 }.

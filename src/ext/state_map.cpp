@@ -190,16 +190,28 @@ void cb_statespace_construction(LmnReactCxtRef rc, LmnMembraneRef mem,
 				LmnAtomRef a1, LmnLinkAttr t1,
 				LmnAtomRef a2, LmnLinkAttr t2,
 				LmnAtomRef a3, LmnLinkAttr t3,
-				LmnAtomRef a4, LmnLinkAttr t4) {
+				LmnAtomRef a4, LmnLinkAttr t4
+				) {
   LmnMembraneRef rule_mem = LMN_PROXY_GET_MEM((LmnSymbolAtomRef)((LmnSymbolAtomRef)a0)->get_link(0));
   LmnMembraneRef graph_mem = LMN_PROXY_GET_MEM((LmnSymbolAtomRef)((LmnSymbolAtomRef)a1)->get_link(0));
+  LmnAtomRef in_mem = ((LmnSymbolAtomRef)a1)->get_link(0);
+  
+  lmn_mem_delete_atom(graph_mem, ((LmnSymbolAtomRef)in_mem)->get_link(1), ((LmnSymbolAtomRef)in_mem)->get_attr(1));
+  lmn_mem_delete_atom(graph_mem, in_mem, ((LmnSymbolAtomRef)a1)->get_attr(0));
   LmnRuleSetRef rs = rule_mem->get_rulesets()[0];
+  graph_mem->copy_rules(rule_mem);
+  //((MemReactContext *)rc)->memstack_push(graph_mem);
+  graph_mem->activate_ancestors();
+  // lmn_env.enable_parallel = TRUE;
+  lmn_env.nd = TRUE;
+  do_mc(graph_mem, NULL, NULL, 1);
+  lmn_env.nd = FALSE;
   lmn_mem_newlink(mem,
 		  a3, t3, LMN_ATTR_GET_VALUE(t3),
 		  a0, t0, LMN_ATTR_GET_VALUE(t0));
   lmn_mem_newlink(mem,
-		  a4, t4, LMN_ATTR_GET_VALUE(t4),
-		  a2, t2, LMN_ATTR_GET_VALUE(t2));
+  		  a4, t4, LMN_ATTR_GET_VALUE(t4),
+  		  a2, t2, LMN_ATTR_GET_VALUE(t2));
 
   return;
 }

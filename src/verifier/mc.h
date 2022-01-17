@@ -64,6 +64,7 @@
 #define MC_GET_PROPERTY(S, A)                                                  \
   ((A) ? A->get_state(state_property_state(S)) : DEFAULT_PROP_AUTOMATA)
 
+void do_mc(LmnMembraneRef world_mem, AutomataRef a, Vector *psyms, int thread_num);
 BOOL mc_vec_states_valid(Vector *v);
 
 void mc_print_vec_states(StateSpaceRef ss, Vector *v, State *seed);
