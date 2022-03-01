@@ -4326,9 +4326,9 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     // printf("start subrule\n");
     LmnInstrVar retnum;
     READ_VAL(LmnInstrVar, instr, retnum);
-    for (int i = 0; i < retnum; i++) {
-      SKIP_VAL(LmnInstrVar, instr);
-    }
+    // for (int i = 0; i < retnum; i++) {
+    //   SKIP_VAL(LmnInstrVar, instr);
+    // }
 
     LmnInstrVar memi;
     READ_VAL(LmnInstrVar, instr, memi);
@@ -4382,9 +4382,9 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     // TODO:
     LmnInstrVar retnum;
     READ_VAL(LmnInstrVar, instr, retnum);
-    for (int i = 0; i < retnum; i++) {
-      SKIP_VAL(LmnInstrVar, instr);
-    }
+    // for (int i = 0; i < retnum; i++) {
+    //   SKIP_VAL(LmnInstrVar, instr);
+    // }
     return true;
   }
   case INSTR_FAILRETURN: {
@@ -4683,19 +4683,19 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
           rc->at(atom1), pos1, (LmnAtomRef)rc->wt(atom2), rc->at(atom2), pos2);
       break;
     }
-    case INSTR_GETLINK: {
-      LmnInstrVar linki, atomi, posi;
-      READ_VAL(LmnInstrVar, instr, linki);
-      READ_VAL(LmnInstrVar, instr, atomi);
-      READ_VAL(LmnInstrVar, instr, posi);
+    // case INSTR_GETLINK: {
+    //   LmnInstrVar linki, atomi, posi;
+    //   READ_VAL(LmnInstrVar, instr, linki);
+    //   READ_VAL(LmnInstrVar, instr, atomi);
+    //   READ_VAL(LmnInstrVar, instr, posi);
 
-      rc->wt(linki) = (LmnWord)dmem_root_get_link(
-          RC_ND_MEM_DELTA_ROOT(rc), (LmnSymbolAtomRef)rc->wt(atomi), posi);
-      rc->at(linki) =
-          (LmnWord)((LmnSymbolAtomRef)rc->wt(atomi))->get_attr(posi);
-      rc->tt(linki) = TT_OTHER;
-      break;
-    }
+    //   rc->wt(linki) = (LmnWord)dmem_root_get_link(
+    //       RC_ND_MEM_DELTA_ROOT(rc), (LmnSymbolAtomRef)rc->wt(atomi), posi);
+    //   rc->at(linki) =
+    //       (LmnWord)((LmnSymbolAtomRef)rc->wt(atomi))->get_attr(posi);
+    //   rc->tt(linki) = TT_OTHER;
+    //   break;
+    // }
     case INSTR_UNIFY: {
       LmnInstrVar atom1, pos1, atom2, pos2, memi;
 

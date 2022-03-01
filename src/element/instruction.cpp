@@ -266,8 +266,8 @@ const std::map<LmnInstruction, InstrSpec> instr_spec = {
     {INSTR_GETCLASS, {"getclass", {InstrVar, InstrVar}}},
     {INSTR_SUBCLASS, {"subclass", {InstrVar, InstrVar}}},
 
-    {INSTR_SUBRULE, {"subrule", {InstrVarList, InstrVar, String, InstrVarList}}},
-    {INSTR_SUCCRETURN, {"succreturn", {InstrVarList}}},
+    {INSTR_SUBRULE, {"subrule", {InstrVar, InstrVar, String, InstrVarList}}},
+    {INSTR_SUCCRETURN, {"succreturn", {InstrVar}}},
     {INSTR_FAILRETURN, {"failreturn", {}}},
     {INSTR_ISPAIREDLINK, {"ispairedlink", {InstrVar, InstrVar}}},
     {INSTR_ALLOCSET, {"allocset", {InstrVar}}},
