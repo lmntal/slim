@@ -113,6 +113,8 @@ start:
     re2c:define:YYFILL:naked = 1;
 
     digit = [0-9];
+    integer = digit+;
+    exponent = [e|E][-|+]?integer;
     blank = [ \t\n\r];
 
     sstr = "'"  [^']* "'";
@@ -126,7 +128,7 @@ start:
       yylval->as<int>() = s.empty() ? 0 : stol(s);
       return parser::token::INT;
     }
-    '-'?digit+"."digit+ {
+    '-'?integer("."integer)?exponent? {
       yylval->as<double>() = stod(get_token());
       return parser::token::FLOAT;
     }
