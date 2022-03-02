@@ -114,7 +114,7 @@ start:
 
     digit = [0-9];
     integer = digit+;
-    exponent = [e|E][-|+]?integer;
+    exponent = [eE][-+]?integer;
     blank = [ \t\n\r];
 
     sstr = "'"  [^']* "'";
