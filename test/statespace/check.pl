@@ -14,12 +14,13 @@ $pwd = Cwd::getcwd();
 
 $lmntal_runtime = $pwd . "/../../src/slim";
 $count = 1;
+$options = $ENV{slim_CHECK_OPTIONS};
 
 print $count . ".." . (($#ARGV + 1) / 3) . "\n";
 for (my $i = 0; $i <= $#ARGV; $i += 3) {
 	$filename = $ARGV[$i];
 	$flags = "--nd --hl --use-Ncore=4";
-	$check_run = $lmntal_runtime . " " . $flags . " " . $filename . ".il";
+	$check_run = $lmntal_runtime . " " . $flags . " " . $options ." ". $filename . ".il";
 	$checked = `$check_run`;
 
 	$checked =~ /\(stored\)\s+=\s+(\d+)/;
