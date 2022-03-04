@@ -37,8 +37,10 @@
  */
 
 #include "symbol.h"
-#include "element/element.h"
+
 #include <stdarg.h>
+
+#include "element/element.h"
 
 static struct st_table *sym_tbl;
 static struct st_table *sym_rev_tbl;

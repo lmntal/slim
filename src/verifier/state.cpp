@@ -38,6 +38,7 @@
  */
 
 #include "state.h"
+
 #include "automata.h"
 #include "binstr_compress.h"
 #include "element/element.h"
@@ -50,10 +51,10 @@
 #ifdef KWBT_OPT
 #include <limits.h>
 #endif
-#include "state.hpp"
-
 #include <cstring>
 #include <string>
+
+#include "state.hpp"
 
 namespace c14 = slim::element;
 
@@ -72,8 +73,7 @@ void state_cost_unlock(EWLock *EWLOCK, mtx_data_t ID) {
   (EWLOCK->release_write(ID));
 }
 
-static inline LmnBinStrRef state_binstr_D_compress(LmnBinStrRef org,
-                                                   State *ref_s);
+static inline LmnBinStrRef state_binstr_D_compress(LmnBinStrRef org, State *ref_s);
 
 void tcd_set_root_ref(TreeCompressData *tcd, uint64_t ref) {
   memcpy(&tcd->root_ref, &ref, sizeof(TreeRootRef));
@@ -132,12 +132,10 @@ static int state_equals_with_compress(State *check, State *stored) {
 
   if (check->is_encoded() && stored->is_encoded()) {
     /* 膜のIDで比較 */
-    t = check->state_name == stored->state_name &&
-        binstr_compare(bs1, bs2) == 0;
+    t = check->state_name == stored->state_name && binstr_compare(bs1, bs2) == 0;
   } else if (check->state_mem() && bs2) {
     /* 同型性判定 */
-    t = check->state_name == stored->state_name &&
-        lmn_mem_equals_enc(bs2, check->state_mem());
+    t = check->state_name == stored->state_name && lmn_mem_equals_enc(bs2, check->state_mem());
   } else if (bs1 && bs2) {
     /* このブロックは基本的には例外処理なので注意.
      * PORなどでコピー状態を挿入する際に呼ばれることがある. */
@@ -162,7 +160,7 @@ static int state_equals(State *s1, State *s2) {
   }
 #endif
   return s1->state_name == s2->state_name && s1->hash == s2->hash &&
-    (s1->state_mem())->equals(s2->state_mem());
+         (s1->state_mem())->equals(s2->state_mem());
 }
 
 /**
@@ -191,15 +189,13 @@ int state_cmp_with_compress(State *s1, State *s2) {
     s1_mid = lmn_mem_encode(s1->state_mem());
     s2_mid = lmn_mem_encode(s2_mem);
 
-    org_check = (state_equals_with_compress(s1, s2) !=
-                 0); /* A. slim本来のグラフ同型成判定手続き */
-    mid_check = (binstr_compare(s1_mid, s2_mid) ==
-                 0); /* B. 互いに一意エンコードしたグラフの比較手続き */
+    org_check = (state_equals_with_compress(s1, s2) != 0); /* A. slim本来のグラフ同型成判定手続き */
+    mid_check =
+        (binstr_compare(s1_mid, s2_mid) == 0); /* B. 互いに一意エンコードしたグラフの比較手続き */
     meq_check = ((s1->state_mem())->equals(s2_mem)); /* C. 膜同士のグラフ同型性判定 */
 
     /* A, B, Cが同じ判定結果を返す場合はokだが.. */
-    if (org_check != mid_check || org_check != meq_check ||
-        mid_check != meq_check) {
+    if (org_check != mid_check || org_check != meq_check || mid_check != meq_check) {
       FILE *f;
       LmnBinStrRef s1_bs;
       BOOL sp1_check, sp2_check, sp3_check, sp4_check;
@@ -212,24 +208,48 @@ int state_cmp_with_compress(State *s1, State *s2) {
       sp3_check = (lmn_mem_equals_enc(s1_mid, s2_mem) != 0);
       sp4_check = (lmn_mem_equals_enc(s2_mid, s1->state_mem()) != 0);
       fprintf(f, "fatal error: checking graphs isomorphism was invalid\n");
-      fprintf(f, "============================================================="
-                 "=======================\n");
-      fprintf(f, "%18s | %-18s | %-18s | %-18s\n", " - ", "s1.Mem (ORG)",
-              "s1.BS (calc)", "s1.MID (calc)");
-      fprintf(f, "-------------------------------------------------------------"
-                 "-----------------------\n");
-      fprintf(f, "%-18s | %18s | %18s | %18s\n", "s2.Mem (calc)",
-              CMP_STR(sp1_check), CMP_STR(sp2_check), CMP_STR(sp3_check));
-      fprintf(f, "-------------------------------------------------------------"
-                 "-----------------------\n");
-      fprintf(f, "%-18s | %18s | %18s | %18s\n", "s2.BS (ORG)",
-              CMP_STR(org_check), "-", "-");
-      fprintf(f, "-------------------------------------------------------------"
-                 "-----------------------\n");
-      fprintf(f, "%-18s | %18s | %18s | %18s\n", "s2.MID (calc)",
-              CMP_STR(sp4_check), "-", CMP_STR(mid_check));
-      fprintf(f, "============================================================="
-                 "=======================\n");
+      fprintf(
+          f,
+          "============================================================="
+          "=======================\n");
+      fprintf(
+          f,
+          "%18s | %-18s | %-18s | %-18s\n",
+          " - ",
+          "s1.Mem (ORG)",
+          "s1.BS (calc)",
+          "s1.MID (calc)");
+      fprintf(
+          f,
+          "-------------------------------------------------------------"
+          "-----------------------\n");
+      fprintf(
+          f,
+          "%-18s | %18s | %18s | %18s\n",
+          "s2.Mem (calc)",
+          CMP_STR(sp1_check),
+          CMP_STR(sp2_check),
+          CMP_STR(sp3_check));
+      fprintf(
+          f,
+          "-------------------------------------------------------------"
+          "-----------------------\n");
+      fprintf(f, "%-18s | %18s | %18s | %18s\n", "s2.BS (ORG)", CMP_STR(org_check), "-", "-");
+      fprintf(
+          f,
+          "-------------------------------------------------------------"
+          "-----------------------\n");
+      fprintf(
+          f,
+          "%-18s | %18s | %18s | %18s\n",
+          "s2.MID (calc)",
+          CMP_STR(sp4_check),
+          "-",
+          CMP_STR(mid_check));
+      fprintf(
+          f,
+          "============================================================="
+          "=======================\n");
 
       fprintf(f, "%s\n", slim::to_string_membrane(s1->state_mem()).c_str());
 
@@ -262,17 +282,14 @@ static int state_equals_with_tree(State *check, State *stored) {
   tcd_get_root_ref(&stored->tcd, &ref);
   LMN_ASSERT(ref != 0);
   LMN_ASSERT(tcd_get_byte_length(&stored->tcd) != 0);
-  bs2 = lmn_bscomp_tree_decode((TreeNodeID)ref,
-                               tcd_get_byte_length(&stored->tcd));
+  bs2 = lmn_bscomp_tree_decode((TreeNodeID)ref, tcd_get_byte_length(&stored->tcd));
 
   if (check->is_encoded() && stored->is_encoded()) {
     /* 膜のIDで比較 */
-    t = check->state_name == stored->state_name &&
-        binstr_compare(bs1, bs2) == 0;
+    t = check->state_name == stored->state_name && binstr_compare(bs1, bs2) == 0;
   } else if (check->state_mem() && bs2) {
     /* 同型性判定 */
-    t = check->state_name == stored->state_name &&
-        lmn_mem_equals_enc(bs2, check->state_mem());
+    t = check->state_name == stored->state_name && lmn_mem_equals_enc(bs2, check->state_mem());
   } else if (bs1 && bs2) {
     /* このブロックは基本的には例外処理なので注意.
      * PORなどでコピー状態を挿入する際に呼ばれることがある. */
@@ -291,12 +308,13 @@ int state_cmp_with_tree(State *s1, State *s2) {
   return !state_equals_with_tree(s1, s2);
 }
 
-int state_cmp(State *s1, State *s2) { return !state_equals(s1, s2); }
+int state_cmp(State *s1, State *s2) {
+  return !state_equals(s1, s2);
+}
 
 /* バイナリストリングorgと状態ref_sのバイナリストリングとの差分バイナリストリングを返す.
  * orgのメモリ管理は呼出し側で行う. */
-static inline LmnBinStrRef state_binstr_D_compress(LmnBinStrRef org,
-                                                   State *ref_s) {
+static inline LmnBinStrRef state_binstr_D_compress(LmnBinStrRef org, State *ref_s) {
   LmnBinStrRef ref, dif;
 
   ref = state_D_fetch(ref_s);
@@ -313,7 +331,9 @@ static inline LmnBinStrRef state_binstr_D_compress(LmnBinStrRef org,
   return dif;
 }
 
-LmnBinStrRef state_calc_mem_dump(State *s) { return s->mem_dump(); }
+LmnBinStrRef state_calc_mem_dump(State *s) {
+  return s->mem_dump();
+}
 
 /* 状態sに対応した階層グラフ構造のバイナリストリングをzlibで圧縮して返す.
  * 状態sはread only */
@@ -365,8 +385,7 @@ void transition_free(TransitionRef t) {
   LMN_FREE(t);
 }
 
-void transition_add_rule(TransitionRef t, lmn_interned_str rule_name,
-                         LmnCost cost) {
+void transition_add_rule(TransitionRef t, lmn_interned_str rule_name, LmnCost cost) {
   if (rule_name != ANONYMOUS || !t->rule_names.contains(rule_name)) {
 #ifdef PROFILE
     if (lmn_env.profile_level >= 3) {
@@ -394,10 +413,14 @@ void transition_add_rule(TransitionRef t, lmn_interned_str rule_name,
 /* 状態sに対応する階層グラフ構造memへのアドレスを返す.
  * memがエンコードされている場合は, デコードしたオブジェクトのアドレスを返す.
  * デコードが発生した場合のメモリ管理は呼び出し側で行う. */
-LmnMembraneRef state_restore_mem(State *s) { return s->restore_membrane(); }
+LmnMembraneRef state_restore_mem(State *s) {
+  return s->restore_membrane();
+}
 
 /* 状態sに割り当てた整数IDを返す. */
-unsigned long state_id(State *s) { return s->state_id; }
+unsigned long state_id(State *s) {
+  return s->state_id;
+}
 
 /* 状態sに対して, 状態固有となる整数IDを割り当てる.
  * 即ち, 実行スレッド間で, 同じ整数IDは使用されない.
@@ -431,10 +454,14 @@ unsigned long state_format_id(State *s, BOOL is_formated) {
 
 /* 状態sに割り当てた性質オートマトン上の状態名を返す.
  * 性質オートマトンを使用していない場合は, 戻り値は0 */
-BYTE state_property_state(State *s) { return s->state_name; }
+BYTE state_property_state(State *s) {
+  return s->state_name;
+}
 
 /* 状態sに性質オートマトン上の状態名labelを割り当てる. */
-void state_set_property_state(State *s, BYTE label) { s->state_name = label; }
+void state_set_property_state(State *s, BYTE label) {
+  s->state_name = label;
+}
 
 /* 状態sに対応するハッシュ値を返す. */
 unsigned long state_hash(State *s) {
@@ -467,10 +494,14 @@ void state_unset_binstr(State *s) {
 }
 
 /* 状態sを生成した状態(親ノード)へのアドレスを返す. */
-State *state_get_parent(State *s) { return s->parent; }
+State *state_get_parent(State *s) {
+  return s->parent;
+}
 
 /* 状態sに, sを生成した状態(親ノード)へのアドレスを割り当てる. */
-void state_set_parent(State *s, State *parent) { s->parent = parent; }
+void state_set_parent(State *s, State *parent) {
+  s->parent = parent;
+}
 
 /* 状態sから遷移可能な状態数を返す. */
 
@@ -580,8 +611,13 @@ void state_set_cost(State *s, LmnCost cost, State *pre) {
 /* 状態sのcostが最適ならば更新し、状態sを遷移先更新状態にする
  * f==true: minimize
  * f==false: maximize */
-void state_update_cost(State *s, TransitionRef t, State *pre, Vector *new_ss,
-                       BOOL f, EWLock *ewlock) {
+void state_update_cost(
+    State *s,
+    TransitionRef t,
+    State *pre,
+    Vector *new_ss,
+    BOOL f,
+    EWLock *ewlock) {
   LmnCost cost;
   cost = transition_cost(t) + state_cost(pre);
   if (env_threads_num() >= 2)
@@ -597,20 +633,30 @@ void state_update_cost(State *s, TransitionRef t, State *pre, Vector *new_ss,
 }
 
 /* 遷移tに割り当てたidを返す. */
-unsigned long transition_id(TransitionRef t) { return t->id; }
+unsigned long transition_id(TransitionRef t) {
+  return t->id;
+}
 
 /* 遷移tに整数ID idを割り当てる. */
-void transition_set_id(TransitionRef t, unsigned long id) { t->id = id; }
+void transition_set_id(TransitionRef t, unsigned long id) {
+  t->id = id;
+}
 
-int transition_rule_num(TransitionRef t) { return t->rule_names.get_num(); }
+int transition_rule_num(TransitionRef t) {
+  return t->rule_names.get_num();
+}
 
 lmn_interned_str transition_rule(TransitionRef t, int idx) {
   return t->rule_names.get(idx);
 }
 
-State *transition_next_state(TransitionRef t) { return t->s; }
+State *transition_next_state(TransitionRef t) {
+  return t->s;
+}
 
-void transition_set_state(TransitionRef t, State *s) { t->s = s; }
+void transition_set_state(TransitionRef t, State *s) {
+  t->s = s;
+}
 
 TransitionRef transition(State *s, unsigned int i) {
   return (TransitionRef)(s->successors[i]);

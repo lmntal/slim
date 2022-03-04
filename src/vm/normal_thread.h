@@ -54,8 +54,8 @@ struct normal_prof {
 
 typedef struct arginfo arginfo;
 struct arginfo {
-  int id;     // thread id
-  BOOL judge; // whether react atom or not
+  int id;      // thread id
+  BOOL judge;  // whether react atom or not
   LmnInstrVar atomi;
   LmnReactCxtRef rc;
   LmnRuleRef rule;
@@ -74,7 +74,7 @@ extern pthread_t *findthread;
 extern arginfo **thread_info;
 extern int active_thread;
 extern Deque *temp;
-extern double walltime; // rule walltime
+extern double walltime;  // rule walltime
 extern double walltime_temp;
 extern BOOL normal_parallel_flag;
 extern unsigned long success_temp_check;
@@ -86,9 +86,14 @@ void *normal_thread(void *arg);
 
 void normal_parallel_init(void);
 void normal_parallel_free(void);
-void threadinfo_init(int id, LmnInstrVar atomi, LmnRuleRef rule,
-                     LmnReactCxtRef rc, LmnRuleInstr instr,
-                     AtomListEntryRef atomlist_ent, int atom_arity);
+void threadinfo_init(
+    int id,
+    LmnInstrVar atomi,
+    LmnRuleRef rule,
+    LmnReactCxtRef rc,
+    LmnRuleInstr instr,
+    AtomListEntryRef atomlist_ent,
+    int atom_arity);
 
 void op_lock(int id, int flag);
 

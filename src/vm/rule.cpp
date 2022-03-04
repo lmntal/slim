@@ -37,6 +37,7 @@
  */
 
 #include "rule.h"
+
 #include "rule.hpp"
 #include "system_ruleset.h"
 
@@ -54,7 +55,9 @@ void destroy_rules(void);
 
 /* 2つの(Vector *)rulesetsが等価であるか判定, 等価の場合に真を返す.
  * Vectorはルールセットの整数IDで整列済みであることが前提 */
-bool lmn_rulesets_equals(const std::vector<LmnRuleSetRef> &rs_v1, const std::vector<LmnRuleSetRef> &rs_v2) {
+bool lmn_rulesets_equals(
+    const std::vector<LmnRuleSetRef> &rs_v1,
+    const std::vector<LmnRuleSetRef> &rs_v2) {
   unsigned int n = rs_v1.size();
   if (rs_v1.size() != rs_v2.size())
     return false;
@@ -107,7 +110,7 @@ bool lmn_rulesets_equals(const std::vector<LmnRuleSetRef> &rs_v1, const std::vec
     }
 
     if (!is_ok) /* rs1にマッチするルールセットが存在しなかった */
-      break; /* OUTER LOOP */
+      break;    /* OUTER LOOP */
   }
 
   LMN_FREE(rs2v_matched);
@@ -124,11 +127,15 @@ static void init_system_ruleset() {
   system_ruleset = new LmnRuleSet(LmnRuleSetTable::gen_id(), 10);
 }
 
-static void destroy_system_ruleset() { delete (system_ruleset); }
+static void destroy_system_ruleset() {
+  delete (system_ruleset);
+}
 
 /* Adds rule to the system ruleset.
    ruleの解放は呼び出され側が行う */
-void lmn_add_system_rule(LmnRuleRef rule) { system_ruleset->put(rule); }
+void lmn_add_system_rule(LmnRuleRef rule) {
+  system_ruleset->put(rule);
+}
 
 /*----------------------------------------------------------------------
  * Initial RuleSet
@@ -149,7 +156,9 @@ static void destroy_initial_ruleset() {
 
 /* Adds rule to the system ruleset.
    ruleの解放は呼び出され側が行う */
-void lmn_add_initial_rule(LmnRuleRef rule) { initial_ruleset->put(rule); }
+void lmn_add_initial_rule(LmnRuleRef rule) {
+  initial_ruleset->put(rule);
+}
 
 void lmn_add_initial_system_rule(LmnRuleRef rule) {
   initial_system_ruleset->put(rule);
@@ -161,9 +170,13 @@ void lmn_add_initial_system_rule(LmnRuleRef rule) {
 
 st_table_t module_table;
 
-static void init_module_table() { module_table = st_init_numtable(); }
+static void init_module_table() {
+  module_table = st_init_numtable();
+}
 
-static void destroy_module_table() { st_free_table(module_table); }
+static void destroy_module_table() {
+  st_free_table(module_table);
+}
 
 /* Associates module_name with ruleset */
 void lmn_set_module(lmn_interned_str module_name, LmnRuleSetRef ruleset) {

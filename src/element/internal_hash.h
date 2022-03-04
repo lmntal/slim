@@ -57,7 +57,7 @@ typedef struct HashEntry {
 typedef struct SimpleHashtbl {
   struct HashEntry *tbl;
   unsigned int cap, num;
-}SimpleHashtbl;
+} SimpleHashtbl;
 
 typedef struct HashIterator {
   SimpleHashtbl *ht;
@@ -67,8 +67,7 @@ typedef struct HashIterator {
 void hashtbl_init(SimpleHashtbl *ht, unsigned int init_size);
 SimpleHashtbl *hashtbl_make(unsigned int init_size);
 HashValueType hashtbl_get(SimpleHashtbl *ht, HashKeyType key);
-HashValueType hashtbl_get_default(SimpleHashtbl *ht, HashKeyType key,
-                                  HashValueType default_value);
+HashValueType hashtbl_get_default(SimpleHashtbl *ht, HashKeyType key, HashValueType default_value);
 int hashtbl_contains(SimpleHashtbl *ht, HashKeyType key);
 void hashtbl_put(SimpleHashtbl *ht, HashKeyType key, HashValueType val);
 void hashtbl_clear(SimpleHashtbl *ht);

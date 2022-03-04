@@ -37,11 +37,14 @@
  */
 
 #include "special_atom.h"
+
 #include "symbol.h"
 
 Vector *sp_atom_callback_tbl;
 
-void sp_atom_init() { sp_atom_callback_tbl = new Vector(64); }
+void sp_atom_init() {
+  sp_atom_callback_tbl = new Vector(64);
+}
 
 void sp_atom_finalize() {
   int i;
@@ -52,8 +55,13 @@ void sp_atom_finalize() {
   delete sp_atom_callback_tbl;
 }
 
-int lmn_sp_atom_register(const char *name, f_copy f_copy, f_free f_free,
-                         f_eq f_eq, f_dump f_dump, f_is_ground f_is_ground) {
+int lmn_sp_atom_register(
+    const char *name,
+    f_copy f_copy,
+    f_free f_free,
+    f_eq f_eq,
+    f_dump f_dump,
+    f_is_ground f_is_ground) {
   struct SpecialAtomCallback *c = LMN_MALLOC(struct SpecialAtomCallback);
   c->name = lmn_intern(name), c->copy = f_copy;
   c->free = f_free;
@@ -67,8 +75,15 @@ int lmn_sp_atom_register(const char *name, f_copy f_copy, f_free f_free,
   return sp_atom_callback_tbl->get_num() - 1;
 }
 
-int lmn_sp_atom_register(const char *name, f_copy f_copy, f_free f_free,
-                         f_eq f_eq, f_dump f_dump, f_is_ground f_is_ground, f_encode encoder, f_decode decoder) {
+int lmn_sp_atom_register(
+    const char *name,
+    f_copy f_copy,
+    f_free f_free,
+    f_eq f_eq,
+    f_dump f_dump,
+    f_is_ground f_is_ground,
+    f_encode encoder,
+    f_decode decoder) {
   struct SpecialAtomCallback *c = LMN_MALLOC(struct SpecialAtomCallback);
   c->name = lmn_intern(name), c->copy = f_copy;
   c->free = f_free;

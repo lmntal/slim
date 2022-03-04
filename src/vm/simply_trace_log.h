@@ -38,7 +38,6 @@
 #ifndef SIMPLY_TRACE_LOG_H
 #define SIMPLY_TRACE_LOG_H
 
-
 #include "vm/vm.h"
 
 /** ------
@@ -63,6 +62,5 @@ BOOL simplylog_contains_mem(SimplyLog l, LmnMembraneRef mem);
 void simplylog_backtrack(SimplyLog l);
 void simplylog_set_btpoint(SimplyLog l);
 void simplylog_continue_trace(SimplyLog l);
-
 
 #endif /* SIMPLY_TRACE_LOG_H */

@@ -37,33 +37,42 @@
 
 #include "process_table.h"
 
-#include <algorithm>
 #include <limits.h>
 
+#include <algorithm>
+
 namespace slim {
-template <> ProcessID process_id<LmnWord>(LmnWord id) { return id; }
+  template<>
+  ProcessID process_id<LmnWord>(LmnWord id) {
+    return id;
+  }
 
-template <> ProcessID process_id<LmnSymbolAtomRef>(LmnSymbolAtomRef atom) {
-  return atom->get_id();
+  template<>
+  ProcessID process_id<LmnSymbolAtomRef>(LmnSymbolAtomRef atom) {
+    return atom->get_id();
+  }
+
+  template<>
+  ProcessID process_id<LmnMembraneRef>(LmnMembraneRef mem) {
+    return mem->mem_id();
+  }
+
+  template<>
+  ProcessID process_id<HyperLink *>(HyperLink *hl) {
+    return LMN_HL_ID(hl);
+  }
+}  // namespace slim
+
+void ProcessTbl::tbl_clear() {
+  this->clear();
 }
-
-template <> ProcessID process_id<LmnMembraneRef>(LmnMembraneRef mem) {
-  return mem->mem_id();
-}
-
-template <> ProcessID process_id<HyperLink *>(HyperLink *hl) {
-  return LMN_HL_ID(hl);
-}
-} // namespace slim
-
-
-
-void ProcessTbl::tbl_clear() { this->clear(); }
 int ProcessTbl::tbl_foreach(int (*func)(LmnWord key, LmnWord val, LmnWord arg), LmnWord arg) {
   this->foreach (func, arg);
   return 0;
 }
-BOOL ProcessTbl::tbl_eq(ProcessTableRef b) { return this == b; }
+BOOL ProcessTbl::tbl_eq(ProcessTableRef b) {
+  return this == b;
+}
 
 /* テーブルにkeyを追加。put_atom,put_memを使用する。 */
 void ProcessTbl::proc_tbl_put(LmnWord key, LmnWord value) {
@@ -101,7 +110,9 @@ int ProcessTbl::put_new_mem(LmnMembraneRef mem, LmnWord value) {
 
 /* テーブルからkeyとそれに対応した値を削除する.
  * 通常この関数ではなくunput_atom, unput_memを使用する. */
-void ProcessTbl::proc_tbl_unput(LmnWord key) { this->unput(key); }
+void ProcessTbl::proc_tbl_unput(LmnWord key) {
+  this->unput(key);
+}
 
 /* テーブルからアトムとそれに対応した値を削除する */
 void ProcessTbl::unput_atom(LmnSymbolAtomRef atom) {
@@ -117,7 +128,6 @@ void ProcessTbl::unput_hlink(HyperLink *hl) {  // extended
   this->unput(hl);
 }
 
-
 /* テーブルのkeyに対応した値をvalueに設定し, 正の値を返す.
  * keyがテーブルに存在しない場合は0を返す. 通常この間数ではなくget_by_atom,
  * get_by_memを使用する./ */
@@ -125,18 +135,19 @@ int proc_tbl_get(ProcessTableRef p, LmnWord key, LmnWord *value) {
   if (!p->contains(key))
     return false;
 
-  if (value) *value = (*p)[slim::process_id(key)];
+  if (value)
+    *value = (*p)[slim::process_id(key)];
   return true;
 }
 
 /* テーブルのアトムatomに対応する値をvalueに設定し, 正の値を返す.
  * テーブルにatomが存在しない場合は0を返す */
-int proc_tbl_get_by_atom(ProcessTableRef p, LmnSymbolAtomRef atom,
-                         LmnWord *value) {
+int proc_tbl_get_by_atom(ProcessTableRef p, LmnSymbolAtomRef atom, LmnWord *value) {
   if (!p->contains(atom))
     return false;
 
-  if (value) *value = (*p)[slim::process_id(atom)];
+  if (value)
+    *value = (*p)[slim::process_id(atom)];
   return true;
 }
 
@@ -146,7 +157,8 @@ int proc_tbl_get_by_mem(ProcessTableRef p, LmnMembraneRef mem, LmnWord *value) {
   if (!p->contains(mem))
     return false;
 
-  if (value) *value = (*p)[slim::process_id(mem)];
+  if (value)
+    *value = (*p)[slim::process_id(mem)];
   return true;
 }
 
@@ -156,7 +168,8 @@ int proc_tbl_get_by_hlink(ProcessTableRef p, HyperLink *hl, LmnWord *value) {
   if (!p->contains(hl))
     return false;
 
-  if (value) *value = (*p)[slim::process_id(hl)];
+  if (value)
+    *value = (*p)[slim::process_id(hl)];
   return true;
 }
 
@@ -175,20 +188,24 @@ BOOL proc_tbl_contains_mem(ProcessTableRef p, LmnMembraneRef mem) {
 }
 
 /* process table のダンプ，デバッグ用 */
-void proc_tbl_dump(const char* name, ProcessTableRef map) {
-  fprintf(stderr,"proc_tbl %s items:\n", name);
-  map->tbl_foreach([](LmnWord k, LmnWord v, LmnWord _arg) {
-		     fprintf(stderr,"  key=%ld, value=%ld\n", k, v);
-		     return 1;
-		   }, (LmnWord)0);
+void proc_tbl_dump(const char *name, ProcessTableRef map) {
+  fprintf(stderr, "proc_tbl %s items:\n", name);
+  map->tbl_foreach(
+      [](LmnWord k, LmnWord v, LmnWord _arg) {
+        fprintf(stderr, "  key=%ld, value=%ld\n", k, v);
+        return 1;
+      },
+      (LmnWord)0);
 }
 
 /* シンボルアトムを入れた process table のダンプ，デバッグ用 */
-void proc_tbl_symbol_atom_dump(const char* name, ProcessTableRef map) {
-  fprintf(stderr,"proc_tbl %s items:\n", name);
-  map->tbl_foreach([](LmnWord k, LmnWord v, LmnWord _arg) {
-		     LmnFunctor f = ((LmnSymbolAtomRef)v)->get_functor();
-		     fprintf(stderr,"  key=%ld, value=%s\n", k, LMN_FUNCTOR_STR(f));
-		     return 1;
-		   }, (LmnWord)0);
+void proc_tbl_symbol_atom_dump(const char *name, ProcessTableRef map) {
+  fprintf(stderr, "proc_tbl %s items:\n", name);
+  map->tbl_foreach(
+      [](LmnWord k, LmnWord v, LmnWord _arg) {
+        LmnFunctor f = ((LmnSymbolAtomRef)v)->get_functor();
+        fprintf(stderr, "  key=%ld, value=%s\n", k, LMN_FUNCTOR_STR(f));
+        return 1;
+      },
+      (LmnWord)0);
 }

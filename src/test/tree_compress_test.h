@@ -38,12 +38,12 @@
  */
 
 #ifndef TREE_COMPRESS_TEST_H
-#  define TREE_COMPRESS_TEST_H
+#define TREE_COMPRESS_TEST_H
 
 #include <CUnit/CUnit.h>
 
-int  test_tree_init();
-int  test_tree_clean();
+int test_tree_init();
+int test_tree_clean();
 void test_tree_001();
 void test_tree_002();
 void test_tree_003();

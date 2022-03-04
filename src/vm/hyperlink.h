@@ -72,16 +72,13 @@ struct HyperLink;
  *   idの値を見かけ上のIDとして利用している
  */
 typedef struct HyperLink {
-  LmnSymbolAtomRef
-      atom; /* 対応する'!'アトムのポインタ、atomが開放されているときはNULL */
+  LmnSymbolAtomRef atom; /* 対応する'!'アトムのポインタ、atomが開放されているときはNULL */
   LmnHlinkRank rank;
   LmnMembraneRef mem; /* atom の所属膜（findatomで使用）*/
-  unsigned long
-      id; /* 集合を一意に識別するID (主に出力とuniqの履歴生成の際に使用) */
-          //  long usrid;        /*
+  unsigned long id; /* 集合を一意に識別するID (主に出力とuniqの履歴生成の際に使用) */
+                    //  long usrid;        /*
   //  ユーザがhyperlinkのidを決められるようにするための変数（未実装）*/
-  LmnAtomRef
-      attrAtom; /* ハイパーリンクの属性として扱うアトム rootにのみ持たせる */
+  LmnAtomRef attrAtom; /* ハイパーリンクの属性として扱うアトム rootにのみ持たせる */
   LmnLinkAttr attr; /* 属性アトムの属性(0なら属性はなし) rootにのみ持たせる */
   /* 木構造による併合関係の表現 */
   struct HyperLink *parent; /* root の場合は自身のポインタ */
@@ -108,34 +105,32 @@ typedef struct HyperLink {
 
 #define LMN_HL_FUNC LMN_EXCLAMATION_FUNCTOR
 
-#define LMN_HL_RANK(HL) ((HL)->rank)
-#define LMN_HL_MEM(HL) ((HL)->mem)
-#define LMN_HL_ID(HL) ((HL)->id)
-#define LMN_HL_ATTRATOM(HL) (((HL)->get_root())->attrAtom)
+#define LMN_HL_RANK(HL)          ((HL)->rank)
+#define LMN_HL_MEM(HL)           ((HL)->mem)
+#define LMN_HL_ID(HL)            ((HL)->id)
+#define LMN_HL_ATTRATOM(HL)      (((HL)->get_root())->attrAtom)
 #define LMN_HL_ATTRATOM_ATTR(HL) (((HL)->get_root())->attr)
-#define LMN_HL_HAS_ATTR(HL)                                                    \
-  (LMN_HL_ATTRATOM_ATTR(HL->get_root()) ||                         \
-   LMN_HL_ATTRATOM(HL->get_root()))
+#define LMN_HL_HAS_ATTR(HL) \
+  (LMN_HL_ATTRATOM_ATTR(HL->get_root()) || LMN_HL_ATTRATOM(HL->get_root()))
 
-#define LMN_HL_ATOM_ROOT_HL(ATOM)                                              \
-  (lmn_hyperlink_at_to_hl(ATOM))->get_root()
-#define LMN_HL_ATOM_ROOT_ATOM(ATOM)                                            \
-  ((lmn_hyperlink_at_to_hl(ATOM))->get_root())->hl_to_at()
+#define LMN_HL_ATOM_ROOT_HL(ATOM)   (lmn_hyperlink_at_to_hl(ATOM))->get_root()
+#define LMN_HL_ATOM_ROOT_ATOM(ATOM) ((lmn_hyperlink_at_to_hl(ATOM))->get_root())->hl_to_at()
 
-#define LMN_IS_HL(ATOM) (LMN_FUNC_IS_HL((ATOM)->get_functor()))
+#define LMN_IS_HL(ATOM)      (LMN_FUNC_IS_HL((ATOM)->get_functor()))
 #define LMN_FUNC_IS_HL(FUNC) ((FUNC) == LMN_HL_FUNC)
 #define LMN_ATTR_IS_HL(ATTR) ((ATTR) == LMN_HL_ATTR)
 
-void lmn_hyperlink_make_with_attr(LmnSymbolAtomRef at, LmnAtomRef attrAtom,
-                                  LmnLinkAttr attr);
+void lmn_hyperlink_make_with_attr(LmnSymbolAtomRef at, LmnAtomRef attrAtom, LmnLinkAttr attr);
 LmnSymbolAtomRef lmn_hyperlink_new();
-LmnSymbolAtomRef lmn_hyperlink_new_with_attr(LmnAtomRef attrAtom,
-                                             LmnLinkAttr attr);
+LmnSymbolAtomRef lmn_hyperlink_new_with_attr(LmnAtomRef attrAtom, LmnLinkAttr attr);
 void lmn_hyperlink_delete(LmnSymbolAtomRef at);
 void lmn_hyperlink_copy(LmnSymbolAtomRef newatom, LmnSymbolAtomRef oriatom);
 HyperLink *lmn_hyperlink_at_to_hl(LmnSymbolAtomRef at);
-BOOL lmn_hyperlink_eq(LmnSymbolAtomRef atom1, LmnLinkAttr attr1,
-                      LmnSymbolAtomRef atom2, LmnLinkAttr attr2);
+BOOL lmn_hyperlink_eq(
+    LmnSymbolAtomRef atom1,
+    LmnLinkAttr attr1,
+    LmnSymbolAtomRef atom2,
+    LmnLinkAttr attr2);
 void lmn_hyperlink_print(LmnMembraneRef gr);
 void lmn_hyperlink_print(FILE *fp, LmnMembraneRef gr);
 
@@ -147,11 +142,17 @@ void lmn_hyperlink_print(FILE *fp, LmnMembraneRef gr);
 /* 同名型付きプロセス文脈を持つ引数ごとに生成される */
 struct ProcCxt {
   ProcCxt(int atomi, int arg, ProcCxt *original)
-      : atomi(atomi), arg(arg), start(nullptr), original_(original) {}
-  ProcCxt(int atomi, int arg)
-      : atomi(atomi), arg(arg), start(nullptr), original_(nullptr) {}
+      : atomi(atomi),
+        arg(arg),
+        start(nullptr),
+        original_(original) {
+  }
+  ProcCxt(int atomi, int arg) : atomi(atomi), arg(arg), start(nullptr), original_(nullptr) {
+  }
 
-  bool is_clone() const { return original_ && original_->atomi != atomi; }
+  bool is_clone() const {
+    return original_ && original_->atomi != atomi;
+  }
 
   bool is_argument_of(LmnSymbolAtomRef atom, int i) {
     auto linked_attr = atom->get_attr(i);
@@ -174,11 +175,13 @@ struct ProcCxt {
     start = linked_hl;
   }
 
-  ProcCxt *original() { return original_; }
+  ProcCxt *original() {
+    return original_;
+  }
 
   HyperLink *start;
 
-private:
+ private:
   int atomi;
   int arg;
   ProcCxt *original_;
@@ -186,8 +189,8 @@ private:
 
 /* 同名型付きプロセス文脈を持つアトムごとに生成される */
 struct SameProcCxt {
-
-  SameProcCxt(int length) : start_attr(0), proccxts(length) {}
+  SameProcCxt(int length) : start_attr(0), proccxts(length) {
+  }
 
   ~SameProcCxt() {
     for (auto pc : proccxts)
@@ -200,8 +203,7 @@ struct SameProcCxt {
     }
   }
 
-  void add_proccxt_if_absent(int atomi, int arg, const SameProcCxt &spc,
-                             int arg2) {
+  void add_proccxt_if_absent(int atomi, int arg, const SameProcCxt &spc, int arg2) {
     if (!proccxts[arg]) {
       proccxts[arg] = new ProcCxt(atomi, arg, spc.proccxts[arg2]);
     }

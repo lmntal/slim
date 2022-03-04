@@ -37,6 +37,7 @@
  * $Id$
  */
 #include "binstr_compress.h"
+
 #include "../third_party/zdelta-2.1/zdlib.h"
 #include "element/element.h"
 #ifdef HAVE_LIBZ
@@ -186,18 +187,12 @@ LmnBinStrRef lmn_bscomp_z_decode(const LmnBinStrRef cmp) {
 
 static inline const char *zd_ret_str(int n) {
   switch (n) {
-  case ZD_BUF_ERROR:
-    return "Buffer Error";
-  case ZD_MEM_ERROR:
-    return "Memory Error";
-  case ZD_STREAM_ERROR:
-    return "Stream Error";
-  case ZD_DATA_ERROR:
-    return "Data Error";
-  case ZD_OK:
-    return "OK";
-  default:
-    return "Unknown Error";
+    case ZD_BUF_ERROR: return "Buffer Error";
+    case ZD_MEM_ERROR: return "Memory Error";
+    case ZD_STREAM_ERROR: return "Stream Error";
+    case ZD_DATA_ERROR: return "Data Error";
+    case ZD_OK: return "OK";
+    default: return "Unknown Error";
   }
 }
 
@@ -205,8 +200,7 @@ static int zd_buf_n = 3;
 
 /* バイト列refからバイト列orgへの差分を求めて返す.
  * org, ref共にRead Only */
-LmnBinStrRef lmn_bscomp_d_encode(const LmnBinStrRef org,
-                                 const LmnBinStrRef ref) {
+LmnBinStrRef lmn_bscomp_d_encode(const LmnBinStrRef org, const LmnBinStrRef ref) {
   LmnBinStrRef dif;
   unsigned long org_8len, ref_8len, dif_8len;
   int ret, mul;
@@ -264,8 +258,7 @@ LmnBinStrRef lmn_bscomp_d_encode(const LmnBinStrRef org,
 
 /* バイト列refに対して差分difを適用してorgを復元して返す.
  * メモリは読み出し専用 */
-LmnBinStrRef lmn_bscomp_d_decode(const LmnBinStrRef ref,
-                                 const LmnBinStrRef dif) {
+LmnBinStrRef lmn_bscomp_d_decode(const LmnBinStrRef ref, const LmnBinStrRef dif) {
   LmnBinStrRef org;
   unsigned long ref_8len, dif_8len, org_8len;
   int ret, mul;
@@ -362,7 +355,9 @@ BOOL lmn_bscomp_tree_clean() {
   return FALSE;
 }
 
-unsigned long lmn_bscomp_tree_space() { return treedb->space(); }
+unsigned long lmn_bscomp_tree_space() {
+  return treedb->space();
+}
 
 TreeNodeID lmn_bscomp_tree_encode(LmnBinStrRef str) {
   BOOL found;

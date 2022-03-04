@@ -40,246 +40,293 @@
 #include "statespace.h"
 
 namespace state_dumper {
-class CUI : public StateDumper {
-  friend StateDumper;
-  using StateDumper::StateDumper;
+  class CUI : public StateDumper {
+    friend StateDumper;
+    using StateDumper::StateDumper;
 
-  MCdumpFormat dump_format() const override { return MCdumpFormat::CUI; }
-  bool need_id_foreach_trans() const override { return false; }
-  /* なぜかspaceが混ざるとlavitは読み込むことができない */
-  std::string state_separator() const override { return "::"; }
-  std::string trans_separator() const override { return ","; }
-  std::string label_begin() const override { return "("; }
-  std::string label_end() const override { return ")"; }
+    MCdumpFormat dump_format() const override {
+      return MCdumpFormat::CUI;
+    }
+    bool need_id_foreach_trans() const override {
+      return false;
+    }
+    /* なぜかspaceが混ざるとlavitは読み込むことができない */
+    std::string state_separator() const override {
+      return "::";
+    }
+    std::string trans_separator() const override {
+      return ",";
+    }
+    std::string label_begin() const override {
+      return "(";
+    }
+    std::string label_end() const override {
+      return ")";
+    }
 
-  void dump(StateSpace *ss) override;
-  void dump_state_data(State *s, unsigned long print_id,
-                       StateSpace *owner) override;
-  void print_state_label(State *s, StateSpace *owner) override;
-};
+    void dump(StateSpace *ss) override;
+    void dump_state_data(State *s, unsigned long print_id, StateSpace *owner) override;
+    void print_state_label(State *s, StateSpace *owner) override;
+  };
 
-class LaViT : public StateDumper {
-  friend StateDumper;
-  using StateDumper::StateDumper;
-  MCdumpFormat dump_format() const override { return MCdumpFormat::LaViT; }
-  bool need_id_foreach_trans() const override { return false; }
-  /* なぜかspaceが混ざるとlavitは読み込むことができない */
-  std::string state_separator() const override { return "::"; }
-  std::string trans_separator() const override { return ","; }
-  std::string label_begin() const override { return "("; }
-  std::string label_end() const override { return ")"; }
+  class LaViT : public StateDumper {
+    friend StateDumper;
+    using StateDumper::StateDumper;
+    MCdumpFormat dump_format() const override {
+      return MCdumpFormat::LaViT;
+    }
+    bool need_id_foreach_trans() const override {
+      return false;
+    }
+    /* なぜかspaceが混ざるとlavitは読み込むことができない */
+    std::string state_separator() const override {
+      return "::";
+    }
+    std::string trans_separator() const override {
+      return ",";
+    }
+    std::string label_begin() const override {
+      return "(";
+    }
+    std::string label_end() const override {
+      return ")";
+    }
 
-  void dump(StateSpace *ss) override;
-  void dump_state_data(State *s, unsigned long print_id,
-                       StateSpace *owner) override;
-  void print_state_label(State *s, StateSpace *owner) override;
-  void print_mem(LmnMembrane *mem) override;
-};
+    void dump(StateSpace *ss) override;
+    void dump_state_data(State *s, unsigned long print_id, StateSpace *owner) override;
+    void print_state_label(State *s, StateSpace *owner) override;
+    void print_mem(LmnMembrane *mem) override;
+  };
 
-class Dir_DOT : public StateDumper {
-  friend StateDumper;
-  using StateDumper::StateDumper;
-  MCdumpFormat dump_format() const override { return MCdumpFormat::Dir_DOT; }
-  bool need_id_foreach_trans() const override { return true; }
-  std::string state_separator() const override { return " -> "; }
-  std::string trans_separator() const override { return ""; }
-  std::string label_begin() const override { return " [ label = \""; }
-  std::string label_end() const override { return "\" ];"; }
+  class Dir_DOT : public StateDumper {
+    friend StateDumper;
+    using StateDumper::StateDumper;
+    MCdumpFormat dump_format() const override {
+      return MCdumpFormat::Dir_DOT;
+    }
+    bool need_id_foreach_trans() const override {
+      return true;
+    }
+    std::string state_separator() const override {
+      return " -> ";
+    }
+    std::string trans_separator() const override {
+      return "";
+    }
+    std::string label_begin() const override {
+      return " [ label = \"";
+    }
+    std::string label_end() const override {
+      return "\" ];";
+    }
 
-  void dump(StateSpace *ss) override;
-  void dump_state_data(State *s, unsigned long print_id,
-                       StateSpace *owner) override;
-  void print_state_label(State *s, StateSpace *owner) override;
-};
+    void dump(StateSpace *ss) override;
+    void dump_state_data(State *s, unsigned long print_id, StateSpace *owner) override;
+    void print_state_label(State *s, StateSpace *owner) override;
+  };
 
-class LMN_FSM_GRAPH_MEM_NODE : public StateDumper {
-  friend StateDumper;
-  using StateDumper::StateDumper;
-  MCdumpFormat dump_format() const override {
-    return MCdumpFormat::LMN_FSM_GRAPH_MEM_NODE;
-  }
-  bool need_id_foreach_trans() const override { return true; }
-  std::string state_separator() const override { return ""; }
-  std::string trans_separator() const override { return ""; }
-  std::string label_begin() const override { return ""; }
-  std::string label_end() const override { return ""; }
+  class LMN_FSM_GRAPH_MEM_NODE : public StateDumper {
+    friend StateDumper;
+    using StateDumper::StateDumper;
+    MCdumpFormat dump_format() const override {
+      return MCdumpFormat::LMN_FSM_GRAPH_MEM_NODE;
+    }
+    bool need_id_foreach_trans() const override {
+      return true;
+    }
+    std::string state_separator() const override {
+      return "";
+    }
+    std::string trans_separator() const override {
+      return "";
+    }
+    std::string label_begin() const override {
+      return "";
+    }
+    std::string label_end() const override {
+      return "";
+    }
 
-  void dump(StateSpace *ss) override;
-  virtual void dump(State *s) {}
-};
+    void dump(StateSpace *ss) override;
+    virtual void dump(State *s) {
+    }
+  };
 
-class LMN_FSM_GRAPH : public LMN_FSM_GRAPH_MEM_NODE {
-  friend StateDumper;
-  using LMN_FSM_GRAPH_MEM_NODE::LMN_FSM_GRAPH_MEM_NODE;
-  void dump(State *s) override;
-};
+  class LMN_FSM_GRAPH : public LMN_FSM_GRAPH_MEM_NODE {
+    friend StateDumper;
+    using LMN_FSM_GRAPH_MEM_NODE::LMN_FSM_GRAPH_MEM_NODE;
+    void dump(State *s) override;
+  };
 
-class LMN_FSM_GRAPH_HL_NODE : public StateDumper {
-  friend StateDumper;
-  using StateDumper::StateDumper;
-  MCdumpFormat dump_format() const override {
-    return MCdumpFormat::LMN_FSM_GRAPH_HL_NODE;
-  }
-  bool need_id_foreach_trans() const override { return true; }
-  std::string state_separator() const override { return ""; }
-  std::string trans_separator() const override { return ""; }
-  std::string label_begin() const override { return ""; }
-  std::string label_end() const override { return ""; }
+  class LMN_FSM_GRAPH_HL_NODE : public StateDumper {
+    friend StateDumper;
+    using StateDumper::StateDumper;
+    MCdumpFormat dump_format() const override {
+      return MCdumpFormat::LMN_FSM_GRAPH_HL_NODE;
+    }
+    bool need_id_foreach_trans() const override {
+      return true;
+    }
+    std::string state_separator() const override {
+      return "";
+    }
+    std::string trans_separator() const override {
+      return "";
+    }
+    std::string label_begin() const override {
+      return "";
+    }
+    std::string label_end() const override {
+      return "";
+    }
 
-  void dump(StateSpace *ss) override;
-};
-} // namespace state_dumper
+    void dump(StateSpace *ss) override;
+  };
+}  // namespace state_dumper
 
 StateDumper *StateDumper::from_env_ptr(FILE *fp) {
   switch (lmn_env.mc_dump_format) {
-  case MCdumpFormat::CUI:
-    return new state_dumper::CUI(fp);
-  case MCdumpFormat::LaViT:
-    return new state_dumper::LaViT(fp);
-  case MCdumpFormat::Dir_DOT:
-    return new state_dumper::Dir_DOT(fp);
-  case MCdumpFormat::LMN_FSM_GRAPH:
-    return new state_dumper::LMN_FSM_GRAPH(fp);
-  case MCdumpFormat::LMN_FSM_GRAPH_MEM_NODE:
-    return new state_dumper::LMN_FSM_GRAPH_MEM_NODE(fp);
-  case MCdumpFormat::LMN_FSM_GRAPH_HL_NODE:
-    return new state_dumper::LMN_FSM_GRAPH_HL_NODE(fp);
-  default:
-    throw std::runtime_error("invalid mc dump format.");
+    case MCdumpFormat::CUI: return new state_dumper::CUI(fp);
+    case MCdumpFormat::LaViT: return new state_dumper::LaViT(fp);
+    case MCdumpFormat::Dir_DOT: return new state_dumper::Dir_DOT(fp);
+    case MCdumpFormat::LMN_FSM_GRAPH: return new state_dumper::LMN_FSM_GRAPH(fp);
+    case MCdumpFormat::LMN_FSM_GRAPH_MEM_NODE: return new state_dumper::LMN_FSM_GRAPH_MEM_NODE(fp);
+    case MCdumpFormat::LMN_FSM_GRAPH_HL_NODE: return new state_dumper::LMN_FSM_GRAPH_HL_NODE(fp);
+    default: throw std::runtime_error("invalid mc dump format.");
   }
 }
 
 namespace state_dumper {
-void CUI::dump(StateSpace *ss) {
-  auto states = ss->all_states();
-  if (lmn_env.sp_dump_format != INCREMENTAL) {
-    fprintf(_fp, "States\n");
+  void CUI::dump(StateSpace *ss) {
+    auto states = ss->all_states();
+    if (lmn_env.sp_dump_format != INCREMENTAL) {
+      fprintf(_fp, "States\n");
+      for (auto &s : states)
+        this->StateDumper::dump(s, ss);
+    }
+    fprintf(_fp, "\n");
+    fprintf(_fp, "Transitions\n");
+    fprintf(_fp, "init:%lu\n", state_format_id(ss->initial_state(), ss->is_formatted()));
     for (auto &s : states)
-      this->StateDumper::dump(s, ss);
-  }
-  fprintf(_fp, "\n");
-  fprintf(_fp, "Transitions\n");
-  fprintf(_fp, "init:%lu\n",
-          state_format_id(ss->initial_state(), ss->is_formatted()));
-  for (auto &s : states)
-    this->state_print_transition(s, ss);
-  fprintf(_fp, "\n");
-}
-
-void Dir_DOT::dump(StateSpace *ss) {
-  fprintf(_fp, "digraph StateTransition {\n");
-  fprintf(_fp, "  node [shape = circle];\n");
-  fprintf(_fp, "  %lu [style=filled, color = \"#ADD8E6\", shape = Msquare];\n",
-          state_format_id(ss->initial_state(), ss->is_formatted()));
-  auto states = ss->all_states();
-  for (auto &s : states)
-    this->StateDumper::dump(s, ss);
-  for (auto &s : states)
-    this->state_print_transition(s, ss);
-  for (auto &s : states)
-    this->state_print_label(s, ss);
-  fprintf(_fp, "}\n");
-}
-
-void LaViT::dump(StateSpace *ss) {
-  auto states = ss->all_states();
-  if (lmn_env.sp_dump_format != INCREMENTAL) {
-    fprintf(_fp, "States\n");
-    for (auto &s : states)
-      this->StateDumper::dump(s, ss);
-  }
-  fprintf(_fp, "\n");
-  fprintf(_fp, "Transitions\n");
-  fprintf(_fp, "init:%lu\n",
-          state_format_id(ss->initial_state(), ss->is_formatted()));
-  for (auto &s : states)
-    this->state_print_transition(s, ss);
-  fprintf(_fp, "\n");
-
-  if (ss->has_property()) {
-    fprintf(_fp, "Labels\n");
-    for (auto &s : states)
-      this->state_print_label(s, ss);
+      this->state_print_transition(s, ss);
     fprintf(_fp, "\n");
   }
-}
 
-void LMN_FSM_GRAPH_MEM_NODE::dump(StateSpace *ss) {
-  auto states = ss->all_states();
-  auto predecessor = ss->predecessor();
+  void Dir_DOT::dump(StateSpace *ss) {
+    fprintf(_fp, "digraph StateTransition {\n");
+    fprintf(_fp, "  node [shape = circle];\n");
+    fprintf(
+        _fp,
+        "  %lu [style=filled, color = \"#ADD8E6\", shape = Msquare];\n",
+        state_format_id(ss->initial_state(), ss->is_formatted()));
+    auto states = ss->all_states();
+    for (auto &s : states)
+      this->StateDumper::dump(s, ss);
+    for (auto &s : states)
+      this->state_print_transition(s, ss);
+    for (auto &s : states)
+      this->state_print_label(s, ss);
+    fprintf(_fp, "}\n");
+  }
 
-  auto formatted = ss ? ss->is_formatted() : FALSE;
-  for (auto &s : states) {
-    if (s->is_dummy() && !s->is_encoded())
-      continue;
-
-    auto src_id = state_format_id(s, formatted);
-    fprintf(_fp, "{");
-
-    dump(s);
-
-    if (s->successors) {
-      for (int i = 0; i < s->successor_num; i++) {
-        auto dst_id = state_format_id(state_succ_state(s, i), formatted);
-        if (i > 0)
-          fprintf(_fp, ",");
-        fprintf(_fp, "+L%lu_%lu", src_id, dst_id);
-      }
+  void LaViT::dump(StateSpace *ss) {
+    auto states = ss->all_states();
+    if (lmn_env.sp_dump_format != INCREMENTAL) {
+      fprintf(_fp, "States\n");
+      for (auto &s : states)
+        this->StateDumper::dump(s, ss);
     }
+    fprintf(_fp, "\n");
+    fprintf(_fp, "Transitions\n");
+    fprintf(_fp, "init:%lu\n", state_format_id(ss->initial_state(), ss->is_formatted()));
+    for (auto &s : states)
+      this->state_print_transition(s, ss);
+    fprintf(_fp, "\n");
 
-    auto &ps = predecessor[s];
+    if (ss->has_property()) {
+      fprintf(_fp, "Labels\n");
+      for (auto &s : states)
+        this->state_print_label(s, ss);
+      fprintf(_fp, "\n");
+    }
+  }
 
-    if (s->successors && s->successor_num > 0 && !ps.empty())
-      fprintf(_fp, ",");
+  void LMN_FSM_GRAPH_MEM_NODE::dump(StateSpace *ss) {
+    auto states = ss->all_states();
+    auto predecessor = ss->predecessor();
 
-    for (int i = 0; i < ps.size(); i++) {
-      auto dst_id = state_format_id(ps[i], formatted);
-      if (i > 0)
+    auto formatted = ss ? ss->is_formatted() : FALSE;
+    for (auto &s : states) {
+      if (s->is_dummy() && !s->is_encoded())
+        continue;
+
+      auto src_id = state_format_id(s, formatted);
+      fprintf(_fp, "{");
+
+      dump(s);
+
+      if (s->successors) {
+        for (int i = 0; i < s->successor_num; i++) {
+          auto dst_id = state_format_id(state_succ_state(s, i), formatted);
+          if (i > 0)
+            fprintf(_fp, ",");
+          fprintf(_fp, "+L%lu_%lu", src_id, dst_id);
+        }
+      }
+
+      auto &ps = predecessor[s];
+
+      if (s->successors && s->successor_num > 0 && !ps.empty())
         fprintf(_fp, ",");
-      fprintf(_fp, "-L%lu_%lu", dst_id, src_id);
-    }
 
-    fprintf(_fp, "}.\n");
-  }
-  fprintf(_fp, "\n");
-}
-
-void LMN_FSM_GRAPH::dump(State *s) {
-  auto org_next_id = env_next_id();
-  auto mem = s->restore_membrane_inner(FALSE);
-  env_set_next_id(org_next_id);
-
-  print_mem(mem);
-  fprintf(_fp, ". ");
-
-  if (s->is_binstr_user()) {
-    mem->free_rec();
-  }
-}
-
-void LMN_FSM_GRAPH_HL_NODE::dump(StateSpace *ss) {
-  auto states = ss->all_states();
-  auto formatted = ss ? ss->is_formatted() : FALSE;
-  for (auto &s : states) {
-    if (s->is_dummy() && !s->is_encoded())
-      continue;
-
-    auto src_id = state_format_id(s, formatted);
-
-    if (s->successors) {
-      for (int i = 0; i < s->successor_num; i++) {
-        auto dst_id = state_format_id(state_succ_state(s, i), formatted);
+      for (int i = 0; i < ps.size(); i++) {
+        auto dst_id = state_format_id(ps[i], formatted);
         if (i > 0)
           fprintf(_fp, ",");
-        fprintf(_fp, "to(!H%lu,!H%lu)", src_id, dst_id);
+        fprintf(_fp, "-L%lu_%lu", dst_id, src_id);
       }
-      if (s->successor_num > 0 && s != states.back())
-        fprintf(_fp, ",\n");
+
+      fprintf(_fp, "}.\n");
+    }
+    fprintf(_fp, "\n");
+  }
+
+  void LMN_FSM_GRAPH::dump(State *s) {
+    auto org_next_id = env_next_id();
+    auto mem = s->restore_membrane_inner(FALSE);
+    env_set_next_id(org_next_id);
+
+    print_mem(mem);
+    fprintf(_fp, ". ");
+
+    if (s->is_binstr_user()) {
+      mem->free_rec();
     }
   }
-  fprintf(_fp, ".\n");
-}
-} // namespace state_dumper
+
+  void LMN_FSM_GRAPH_HL_NODE::dump(StateSpace *ss) {
+    auto states = ss->all_states();
+    auto formatted = ss ? ss->is_formatted() : FALSE;
+    for (auto &s : states) {
+      if (s->is_dummy() && !s->is_encoded())
+        continue;
+
+      auto src_id = state_format_id(s, formatted);
+
+      if (s->successors) {
+        for (int i = 0; i < s->successor_num; i++) {
+          auto dst_id = state_format_id(state_succ_state(s, i), formatted);
+          if (i > 0)
+            fprintf(_fp, ",");
+          fprintf(_fp, "to(!H%lu,!H%lu)", src_id, dst_id);
+        }
+        if (s->successor_num > 0 && s != states.back())
+          fprintf(_fp, ",\n");
+      }
+    }
+    fprintf(_fp, ".\n");
+  }
+}  // namespace state_dumper
 
 /** Printer
  * ownerはNULLでもok */
@@ -333,15 +380,13 @@ void StateDumper::state_print_transition(State *s, const StateSpace *_owner) {
   auto owner = (StateSpaceRef)_owner;
   auto formated = owner ? owner->is_formatted() : FALSE;
   if (!need_id_foreach_trans()) {
-    fprintf(_fp, "%lu%s", state_format_id(s, formated),
-            state_separator().c_str());
+    fprintf(_fp, "%lu%s", state_format_id(s, formated), state_separator().c_str());
   }
 
   if (s->successors) {
     for (int i = 0; i < s->successor_num; i++) { /* dump dst state's IDs */
       if (need_id_foreach_trans()) {
-        fprintf(_fp, "%lu%s", state_format_id(s, formated),
-                state_separator().c_str());
+        fprintf(_fp, "%lu%s", state_format_id(s, formated), state_separator().c_str());
       } else if (i > 0) {
         fprintf(_fp, "%s", trans_separator().c_str());
       }
@@ -373,55 +418,48 @@ void StateDumper::state_print_transition(State *s, const StateSpace *_owner) {
 }
 
 namespace state_dumper {
-void CUI::dump_state_data(State *s, unsigned long print_id, StateSpace *owner) {
-  BOOL has_property = owner && owner->has_property();
-  fprintf(_fp, "%lu::", print_id);
+  void CUI::dump_state_data(State *s, unsigned long print_id, StateSpace *owner) {
+    BOOL has_property = owner && owner->has_property();
+    fprintf(_fp, "%lu::", print_id);
 #ifdef KWBT_OPT
-  fprintf(_fp, "%lu::", cost);
+    fprintf(_fp, "%lu::", cost);
 #endif
-  fprintf(_fp, "%s",
-          has_property ? owner->automata()->state_name(state_property_state(s))
-                       : "");
-  state_print_mem(s);
-}
-
-void CUI::print_state_label(State *s, StateSpace *owner) {
-  /* 状態のグローバルルート膜の膜名としてdump済 */
-}
-
-void LaViT::dump_state_data(State *s, unsigned long print_id,
-                            StateSpace *owner) {
-  fprintf(_fp, "%lu::", print_id);
-  state_print_mem(s);
-}
-
-void LaViT::print_state_label(State *s, StateSpace *owner) {
-  auto a = owner->automata();
-  fprintf(_fp, "%lu::", state_format_id(s, owner->is_formatted()));
-  fprintf(_fp, "%s\n", a->state_name(state_property_state(s)));
-}
-
-void LaViT::print_mem(LmnMembrane *mem) {
-  fprintf(_fp, "%s\n", slim::to_string(mem).c_str());
-}
-
-void Dir_DOT::dump_state_data(State *s, unsigned long print_id,
-                              StateSpace *owner) {
-  if (s->successor_num == 0) {
-    fprintf(_fp,
-            "  %lu [style=filled, fillcolor = \"#C71585\", shape = Msquare];\n",
-            print_id);
+    fprintf(_fp, "%s", has_property ? owner->automata()->state_name(state_property_state(s)) : "");
+    state_print_mem(s);
   }
-}
 
-void Dir_DOT::print_state_label(State *s, StateSpace *owner) {
-  auto a = owner->automata();
-  if (state_is_accept(a, s) || state_is_end(a, s)) {
-    fprintf(_fp, "  %lu [peripheries = 2]\n",
-            state_format_id(s, owner->is_formatted()));
+  void CUI::print_state_label(State *s, StateSpace *owner) {
+    /* 状態のグローバルルート膜の膜名としてdump済 */
   }
-}
-} // namespace state_dumper
+
+  void LaViT::dump_state_data(State *s, unsigned long print_id, StateSpace *owner) {
+    fprintf(_fp, "%lu::", print_id);
+    state_print_mem(s);
+  }
+
+  void LaViT::print_state_label(State *s, StateSpace *owner) {
+    auto a = owner->automata();
+    fprintf(_fp, "%lu::", state_format_id(s, owner->is_formatted()));
+    fprintf(_fp, "%s\n", a->state_name(state_property_state(s)));
+  }
+
+  void LaViT::print_mem(LmnMembrane *mem) {
+    fprintf(_fp, "%s\n", slim::to_string(mem).c_str());
+  }
+
+  void Dir_DOT::dump_state_data(State *s, unsigned long print_id, StateSpace *owner) {
+    if (s->successor_num == 0) {
+      fprintf(_fp, "  %lu [style=filled, fillcolor = \"#C71585\", shape = Msquare];\n", print_id);
+    }
+  }
+
+  void Dir_DOT::print_state_label(State *s, StateSpace *owner) {
+    auto a = owner->automata();
+    if (state_is_accept(a, s) || state_is_end(a, s)) {
+      fprintf(_fp, "  %lu [peripheries = 2]\n", state_format_id(s, owner->is_formatted()));
+    }
+  }
+}  // namespace state_dumper
 
 void StateDumper::state_print_label(State *s, const StateSpace *_owner) {
   auto owner = (StateSpaceRef)_owner;

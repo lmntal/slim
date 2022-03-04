@@ -39,11 +39,12 @@
 #ifndef LMNTAL_H
 #define LMNTAL_H
 
-#include "config.h"
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "config.h"
 
 #ifdef WITH_DMALLOC
 #include <dmalloc.h>
@@ -97,8 +98,8 @@ typedef uintptr_t LmnWord;
 typedef unsigned char BYTE, LmnByte;
 
 #define LMN_WORD_BYTES SIZEOF_LONG
-#define LMN_WORD_BITS (SIZEOF_LONG * 8)
-#define LMN_WORD(X) ((LmnWord)(X))
+#define LMN_WORD_BITS  (SIZEOF_LONG * 8)
+#define LMN_WORD(X)    ((LmnWord)(X))
 
 typedef LmnWord LmnAtom;
 typedef void *LmnSAtom;
@@ -115,8 +116,8 @@ typedef LmnWord LmnCost;
 /* uint16_t is not defined if there is no 2Byte data type */
 typedef uint16_t LmnFunctor;
 #define LMN_FUNCTOR_BYTES (sizeof(LmnFunctor))
-#define LMN_FUNCTOR_BITS (LMN_FUNCTOR_BYTES * 8)
-#define LMN_FUNCTOR(X) ((LmnFunctor)((X)))
+#define LMN_FUNCTOR_BITS  (LMN_FUNCTOR_BYTES * 8)
+#define LMN_FUNCTOR(X)    ((LmnFunctor)((X)))
 
 /* this type must be enough to represent arity */
 typedef uint8_t LmnArity;
@@ -156,8 +157,10 @@ typedef long long __int64;
 struct LmnSPAtomHeader {
   LmnByte type;
 
-  LmnSPAtomHeader() {}
-  LmnSPAtomHeader(LmnByte type) : type(type) {}
+  LmnSPAtomHeader() {
+  }
+  LmnSPAtomHeader(LmnByte type) : type(type) {
+  }
 };
 
 /* スペシャルアトムは構造体の最初の要素としてに必ずこのヘッダを含めなけ
@@ -199,12 +202,11 @@ LMN_EXTERN void *lmn_malloc(size_t num);
 LMN_EXTERN void *lmn_realloc(void *p, size_t num);
 LMN_EXTERN void lmn_free(void *p);
 
-#define LMN_NALLOC(TYPE, NUM) ((TYPE *)lmn_malloc(sizeof(TYPE) * (NUM)))
-#define LMN_CALLOC(TYPE, NUM) ((TYPE *)lmn_calloc((NUM), sizeof(TYPE)))
-#define LMN_MALLOC(TYPE) ((TYPE *)lmn_malloc(sizeof(TYPE)))
-#define LMN_REALLOC(TYPE, P, NUM)                                              \
-  ((TYPE *)lmn_realloc((P), (NUM) * sizeof(TYPE)))
-#define LMN_FREE(P) (lmn_free((void *)(P)))
+#define LMN_NALLOC(TYPE, NUM)     ((TYPE *)lmn_malloc(sizeof(TYPE) * (NUM)))
+#define LMN_CALLOC(TYPE, NUM)     ((TYPE *)lmn_calloc((NUM), sizeof(TYPE)))
+#define LMN_MALLOC(TYPE)          ((TYPE *)lmn_malloc(sizeof(TYPE)))
+#define LMN_REALLOC(TYPE, P, NUM) ((TYPE *)lmn_realloc((P), (NUM) * sizeof(TYPE)))
+#define LMN_FREE(P)               (lmn_free((void *)(P)))
 
 /* Assertion */
 #ifdef DEBUG
@@ -220,7 +222,14 @@ LMN_EXTERN void lmn_free(void *p);
 
 /* 階層グラフ構造の出力形式 */
 enum OutputFormat { DEFAULT = 1, DEV, DOT, JSON };
-enum MCdumpFormat { CUI, LaViT, Dir_DOT, LMN_FSM_GRAPH, LMN_FSM_GRAPH_MEM_NODE, LMN_FSM_GRAPH_HL_NODE };
+enum MCdumpFormat {
+  CUI,
+  LaViT,
+  Dir_DOT,
+  LMN_FSM_GRAPH,
+  LMN_FSM_GRAPH_MEM_NODE,
+  LMN_FSM_GRAPH_HL_NODE
+};
 enum SPdumpFormat { SP_NONE, INCREMENTAL, LMN_SYNTAX };
 
 /* 最適化実行 */
@@ -306,7 +315,7 @@ struct LmnEnv {
   BOOL prof_no_memeq;
   // #endif
 
-  //findatom最適化オプション（変数名は仮置き）
+  // findatom最適化オプション（変数名は仮置き）
   BOOL history_management;
 
 #ifdef DEBUG
@@ -327,7 +336,7 @@ struct LmnEnv {
 
   BOOL shuffle_rule;
   BOOL shuffle_atom;
-  
+
   enum OutputFormat output_format;
   enum MCdumpFormat mc_dump_format;
   enum SPdumpFormat sp_dump_format;
@@ -339,7 +348,7 @@ struct LmnEnv {
   char *propositional_symbol; /* file for propositional symbol definitions */
   char *ltl_exp;
 
-//member methods
+  // member methods
   LmnEnv();
 };
 
@@ -354,7 +363,7 @@ void slim_version(FILE *f);
 #include <omp.h>
 #define ENABLE_OMP
 #define lmn_OMP_set_thread_num(N) omp_set_num_threads(N)
-#define lmn_OMP_get_my_id() omp_get_thread_num()
+#define lmn_OMP_get_my_id()       omp_get_thread_num()
 #else
 #define lmn_OMP_set_thread_num(N)
 #define lmn_OMP_get_my_id() (0U)
@@ -396,24 +405,23 @@ struct LmnBarrier {
 };
 #
 #endif /* HAVE_PTHREAD_BARRIER */
-#define lmn_thread_create(Pth, Pfunc, Parg)                                    \
+#define lmn_thread_create(Pth, Pfunc, Parg) \
   pthread_create(Pth, NULL, (void *(*)(void *))Pfunc, (void *)Parg)
-#define lmn_thread_join(Th) pthread_join(Th, NULL)
-#define lmn_mutex_init(Pm) pthread_mutex_init(Pm, NULL)
-#define lmn_mutex_init_onthefly(Pm)                                            \
-  (Pm) = (pthread_mutex_t)PTHREAD_MUTEX_INITIALIZER
-#define lmn_mutex_destroy(Pm) pthread_mutex_destroy(Pm)
-#define lmn_mutex_lock(Pm) pthread_mutex_lock(Pm)
-#define lmn_mutex_unlock(Pm) pthread_mutex_unlock(Pm)
-#define lmn_TLS_key_init(Pk) pthread_key_create(Pk, NULL)
-#define lmn_TLS_key_destroy(K) pthread_key_delete(K)
-#define lmn_TLS_set_value(K, Pval) pthread_setspecific(K, Pval)
-#define lmn_TLS_get_value(K) pthread_getspecific(K)
+#define lmn_thread_join(Th)         pthread_join(Th, NULL)
+#define lmn_mutex_init(Pm)          pthread_mutex_init(Pm, NULL)
+#define lmn_mutex_init_onthefly(Pm) (Pm) = (pthread_mutex_t)PTHREAD_MUTEX_INITIALIZER
+#define lmn_mutex_destroy(Pm)       pthread_mutex_destroy(Pm)
+#define lmn_mutex_lock(Pm)          pthread_mutex_lock(Pm)
+#define lmn_mutex_unlock(Pm)        pthread_mutex_unlock(Pm)
+#define lmn_TLS_key_init(Pk)        pthread_key_create(Pk, NULL)
+#define lmn_TLS_key_destroy(K)      pthread_key_delete(K)
+#define lmn_TLS_set_value(K, Pval)  pthread_setspecific(K, Pval)
+#define lmn_TLS_get_value(K)        pthread_getspecific(K)
 #
 #ifdef HAVE_PTHREAD_BARRIER
 #define lmn_barrier_init(Pm, Num) pthread_barrier_init(Pm, NULL, Num)
-#define lmn_barrier_destroy(Pm) pthread_barrier_destroy(Pm)
-#define lmn_barrier_wait(Pm) pthread_barrier_wait(Pm)
+#define lmn_barrier_destroy(Pm)   pthread_barrier_destroy(Pm)
+#define lmn_barrier_wait(Pm)      pthread_barrier_wait(Pm)
 #else
 static inline void lmn_barrier_init(lmn_barrier_t *b, unsigned int num) {
   b->thread_num = num;
@@ -482,23 +490,22 @@ void lmn_stream_destroy(void);
 
 #define LMN_PRIMARY_ID (0U)
 
-#define env_proc_id_pool() (lmn_id_pool)
+#define env_proc_id_pool()      (lmn_id_pool)
 #define env_set_proc_id_pool(V) (lmn_id_pool = (V))
-#define env_return_id(N)                                                       \
-  if (lmn_id_pool)                                                             \
+#define env_return_id(N) \
+  if (lmn_id_pool)       \
   lmn_id_pool->push((vec_data_t)(N))
 
 #if /**/ !defined(ENABLE_PARALLEL) || defined(USE_TLS_KEYWORD)
-#define env_gen_state_id() (lmn_tls.state_id += lmn_tls.thread_num)
-#define env_my_thread_id() (lmn_tls.thread_id)
+#define env_gen_state_id()      (lmn_tls.state_id += lmn_tls.thread_num)
+#define env_my_thread_id()      (lmn_tls.thread_id)
 #define env_set_my_thread_id(N) (lmn_tls.thread_id = (N))
-#define env_threads_num() (lmn_tls.thread_num)
-#define env_set_threads_num(N) (lmn_tls.thread_num = (N))
-#define env_reset_proc_ids() (lmn_tls.proc_next_id = 1U)
-#define env_set_next_id(N) (lmn_tls.proc_next_id = (N))
-#define env_gen_next_id()                                                      \
-  ((lmn_id_pool && lmn_id_pool->get_num() > 0) ? lmn_id_pool->pop()            \
-                                             : lmn_tls.proc_next_id++)
+#define env_threads_num()       (lmn_tls.thread_num)
+#define env_set_threads_num(N)  (lmn_tls.thread_num = (N))
+#define env_reset_proc_ids()    (lmn_tls.proc_next_id = 1U)
+#define env_set_next_id(N)      (lmn_tls.proc_next_id = (N))
+#define env_gen_next_id() \
+  ((lmn_id_pool && lmn_id_pool->get_num() > 0) ? lmn_id_pool->pop() : lmn_tls.proc_next_id++)
 #define env_next_id() (lmn_tls.proc_next_id)
 #
 #elif /**/ defined(USE_TLS_PTHREAD_KEY)
@@ -538,9 +545,9 @@ static inline void env_set_next_id(unsigned long n) {
   p->proc_next_id = n;
 }
 #
-#define env_gen_next_id()                                                      \
-  ((lmn_id_pool && lmn_id_pool->get_num() > 0)                                   \
-       ? lmn_id_pool->pop()                                                  \
+#define env_gen_next_id()                      \
+  ((lmn_id_pool && lmn_id_pool->get_num() > 0) \
+       ? lmn_id_pool->pop()                    \
        : ((LmnTLS *)lmn_TLS_get_value(lmn_tls))->proc_next_id++)
 
 static inline unsigned long env_next_id() {
@@ -551,13 +558,13 @@ static inline unsigned long env_next_id() {
 #endif
 
 namespace slim {
-namespace config {
+  namespace config {
 #ifdef PROFILE
-static constexpr bool profile = true;
+    static constexpr bool profile = true;
 #else
-static constexpr bool profile = false;
+    static constexpr bool profile = false;
 #endif
-} // namespace config
-} // namespace slim
+  }  // namespace config
+}  // namespace slim
 
 #endif /* LMNTAL_H */

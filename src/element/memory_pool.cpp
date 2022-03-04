@@ -37,6 +37,7 @@
  */
 
 #include "memory_pool.h"
+
 #include "lmntal.h"
 
 #define REF_CAST(T, X) (*(T *)&(X))
@@ -44,8 +45,7 @@
 /* each element must be bigger than void*, so align everything in sizeof(void*)
  * !! */
 /* after alignment, X byte object needs ALIGNED_SIZE(X) byte. */
-#define ALIGNED_SIZE(X)                                                        \
-  (((X + sizeof(void *) - 1) / sizeof(void *)) * sizeof(void *))
+#define ALIGNED_SIZE(X) (((X + sizeof(void *) - 1) / sizeof(void *)) * sizeof(void *))
 
 memory_pool *memory_pool_new(int s) {
   memory_pool *res = LMN_MALLOC(memory_pool);
@@ -71,8 +71,7 @@ void *memory_pool_malloc(memory_pool *p) {
     /* fprintf(stderr, "no more free space, so allocate new block\n"); */
 
     /* top of block is used as pointer to head of next block */
-    rawblock = (char *)lmn_malloc(ALIGNED_SIZE(sizeof(void *)) +
-                                  p->sizeof_element * blocksize);
+    rawblock = (char *)lmn_malloc(ALIGNED_SIZE(sizeof(void *)) + p->sizeof_element * blocksize);
     *(void **)rawblock = p->block_head;
     p->block_head = rawblock;
 
@@ -83,8 +82,7 @@ void *memory_pool_malloc(memory_pool *p) {
 
     for (i = 0; i < (blocksize - 1); i++) {
       /* top of each empty elements is used as pointer to next empty element */
-      REF_CAST(void *, rawblock[p->sizeof_element * i]) =
-          &rawblock[p->sizeof_element * (i + 1)];
+      REF_CAST(void *, rawblock[p->sizeof_element * i]) = &rawblock[p->sizeof_element * (i + 1)];
     }
     REF_CAST(void *, rawblock[p->sizeof_element * (blocksize - 1)]) = 0;
   }

@@ -76,7 +76,7 @@ enum ESC_CODE {
 };
 
 #define __ESC_START__ "\x1b["
-#define __ESC_END__ "m"
+#define __ESC_END__   "m"
 
 static inline void esc_code_clear() {
   printf("%s%s", __ESC_START__, __ESC_END__);
@@ -103,38 +103,44 @@ static inline void esc_code_add_f(FILE *f, int code) {
 /* See http://isthe.com/chongo/tech/comp/fnv/ */
 
 namespace fnv {
-template <size_t size = SIZEOF_LONG> constexpr unsigned long prime();
+  template<size_t size = SIZEOF_LONG>
+  constexpr unsigned long prime();
 
-template <> constexpr unsigned long prime<4>() {
-  return 16777619UL;
-};
-template <> constexpr unsigned long prime<8>() {
-  return 1099511628211UL;
-};
+  template<>
+  constexpr unsigned long prime<4>() {
+    return 16777619UL;
+  };
+  template<>
+  constexpr unsigned long prime<8>() {
+    return 1099511628211UL;
+  };
 
-template <size_t size = SIZEOF_LONG> constexpr unsigned long basis();
-template <> constexpr unsigned long basis<4>() {
-  return 2166136261UL;
-}
-template <> constexpr unsigned long basis<8>() {
-  return 14695981039346656037UL;
-}
-
-inline unsigned long hash(const unsigned char *str, long i) {
-  /*
-   * FNV-1a hash each octet in the buffer
-   */
-  auto hval = fnv::basis();
-  while (--i >= 0) {
-    /* xor the bottom with the current octet */
-    hval ^= (unsigned int)str[i];
-    /* multiply by the FNV magic prime mod 2^32 or 2^64 */
-    hval *= fnv::prime();
+  template<size_t size = SIZEOF_LONG>
+  constexpr unsigned long basis();
+  template<>
+  constexpr unsigned long basis<4>() {
+    return 2166136261UL;
+  }
+  template<>
+  constexpr unsigned long basis<8>() {
+    return 14695981039346656037UL;
   }
 
-  return hval;
-}
-} // namespace fnv
+  inline unsigned long hash(const unsigned char *str, long i) {
+    /*
+     * FNV-1a hash each octet in the buffer
+     */
+    auto hval = fnv::basis();
+    while (--i >= 0) {
+      /* xor the bottom with the current octet */
+      hval ^= (unsigned int)str[i];
+      /* multiply by the FNV magic prime mod 2^32 or 2^64 */
+      hval *= fnv::prime();
+    }
+
+    return hval;
+  }
+}  // namespace fnv
 
 static inline unsigned long lmn_byte_hash(const unsigned char *str, long i) {
   return fnv::hash(str, i);
@@ -143,8 +149,8 @@ static inline unsigned long lmn_byte_hash(const unsigned char *str, long i) {
 /* 正: a ＞ b
  * ０: a = b
  * 負: a ＜ b */
-static inline int lmn_byte_cmp(const unsigned char *a, long alen,
-                               const unsigned char *b, long blen) {
+static inline int
+lmn_byte_cmp(const unsigned char *a, long alen, const unsigned char *b, long blen) {
   if (alen != blen) {
     return alen - blen;
   } else {
@@ -179,46 +185,57 @@ static inline unsigned long round2up(unsigned long n) {
 #include <memory>
 
 namespace slim {
-namespace element {
-template <class T> class raw_pointer_iterator {
-  T *p;
+  namespace element {
+    template<class T>
+    class raw_pointer_iterator {
+      T *p;
 
-public:
-  using iterator_category = std::input_iterator_tag;
-  using value_type = T;
-  using difference_type = std::ptrdiff_t;
-  using pointer = T *;
-  using reference = T &;
+     public:
+      using iterator_category = std::input_iterator_tag;
+      using value_type = T;
+      using difference_type = std::ptrdiff_t;
+      using pointer = T *;
+      using reference = T &;
 
-  raw_pointer_iterator(T *ptr) : p(ptr) {}
-  raw_pointer_iterator(const raw_pointer_iterator<T> &it) : p(it.p) {}
-  raw_pointer_iterator &operator=(const raw_pointer_iterator<T> &it) {
-    p = it.p;
-  }
-  ~raw_pointer_iterator() noexcept = default;
+      raw_pointer_iterator(T *ptr) : p(ptr) {
+      }
+      raw_pointer_iterator(const raw_pointer_iterator<T> &it) : p(it.p) {
+      }
+      raw_pointer_iterator &operator=(const raw_pointer_iterator<T> &it) {
+        p = it.p;
+      }
+      ~raw_pointer_iterator() noexcept = default;
 
-  reference operator*() const { return *p; }
-  pointer operator->() const { return p; }
-  raw_pointer_iterator<T> &operator++() {
-    p++;
-    return *this;
-  }
-  raw_pointer_iterator<T> operator++(int i) {
-    auto it = *this;
-    ++(*this);
-    return it;
-  }
+      reference operator*() const {
+        return *p;
+      }
+      pointer operator->() const {
+        return p;
+      }
+      raw_pointer_iterator<T> &operator++() {
+        p++;
+        return *this;
+      }
+      raw_pointer_iterator<T> operator++(int i) {
+        auto it = *this;
+        ++(*this);
+        return it;
+      }
 
-  bool operator!=(const raw_pointer_iterator<T> &a) { return !(*this == a); }
-  bool operator==(const raw_pointer_iterator<T> &a) { return p == a.p; }
-};
+      bool operator!=(const raw_pointer_iterator<T> &a) {
+        return !(*this == a);
+      }
+      bool operator==(const raw_pointer_iterator<T> &a) {
+        return p == a.p;
+      }
+    };
 
-template <class T, class... Args>
-std::unique_ptr<T> make_unique(Args &&... args) {
-  return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
-}
-} // namespace element
-} // namespace slim
+    template<class T, class... Args>
+    std::unique_ptr<T> make_unique(Args &&...args) {
+      return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
+    }
+  }  // namespace element
+}  // namespace slim
 
 /* @} */
 

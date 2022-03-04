@@ -37,15 +37,14 @@
 
 #include "state_table.hpp"
 
+#include <algorithm>
+#include <mutex>
+
 #include "state.h"
 #include "state.hpp"
 
-#include <mutex>
-#include <algorithm>
-
-#define STATE_EQUAL(Tbl, Check, Stored)                                        \
-  (state_hash(Check) == state_hash(Stored) &&                                  \
-   ((Tbl)->type->compare)(Check, Stored))
+#define STATE_EQUAL(Tbl, Check, Stored) \
+  (state_hash(Check) == state_hash(Stored) && ((Tbl)->type->compare)(Check, Stored))
 
 /* 既に計算済のバイナリストリングbsを状態sに登録する.
  * statetable_{insert/add_direct}内の排他制御ブロック内で呼び出す. */
@@ -58,7 +57,7 @@ static void state_set_compress_for_table(State *s, LmnBinStr *bs) {
 static inline bool statetable_cmp_state_id_gr_f(const State *p1, const State *p2) {
   if (p1 && p2)
     return p1->get_id() < p2->get_id();
-  
+
   return p1;
 }
 
@@ -88,23 +87,21 @@ LmnBinStrRef StateTable::compress_state(State *s, LmnBinStrRef bs) {
 
 /** Global Vars
  */
-struct statespace_type type_state_compress_z = {state_cmp_with_compress,
-                                                state_calc_mem_dump_with_z};
+struct statespace_type type_state_compress_z = { state_cmp_with_compress,
+                                                 state_calc_mem_dump_with_z };
 
-struct statespace_type type_state_compress = {state_cmp_with_compress,
-                                              state_calc_mem_dump};
+struct statespace_type type_state_compress = { state_cmp_with_compress, state_calc_mem_dump };
 
-struct statespace_type type_state_tree_compress = {
-    state_cmp_with_tree, state_calc_mem_dump_with_tree};
+struct statespace_type type_state_tree_compress = { state_cmp_with_tree,
+                                                    state_calc_mem_dump_with_tree };
 
-struct statespace_type type_state_default = {state_cmp, state_calc_mem_dummy};
+struct statespace_type type_state_default = { state_cmp, state_calc_mem_dummy };
 
 /* Table of prime numbers 2^n+a, 2<=n<=30. */
-static constexpr unsigned long primes[] = {8192 + 27,       131072 + 29,
-                                           1048576 + 7,     4194304 + 15,
-                                           16777216 + 43,   67108864 + 15,
-                                           268435456 + 3,   536870912 + 11,
-                                           1073741824 + 85, 0};
+static constexpr unsigned long primes[] = {
+  8192 + 27,     131072 + 29,   1048576 + 7,    4194304 + 15,    16777216 + 43,
+  67108864 + 15, 268435456 + 3, 536870912 + 11, 1073741824 + 85, 0
+};
 
 static inline unsigned long table_new_size(unsigned long old_size) {
   for (auto p : primes) {
@@ -123,8 +120,8 @@ void StateTable::resize(unsigned long old_cap) {
   }
 
   if (this->cap() == old_cap) {
-    slim::element::ewmutex mutex(slim::element::ewmutex::exclusive_enter,
-                                 this->lock, env_my_thread_id());
+    slim::element::ewmutex mutex(
+        slim::element::ewmutex::exclusive_enter, this->lock, env_my_thread_id());
     std::lock_guard<slim::element::ewmutex> lk(mutex);
     if (this->cap() == old_cap) {
       auto new_cap = table_new_size(old_cap);
@@ -163,8 +160,8 @@ void StateTable::resize(unsigned long old_cap) {
 
 unsigned long StateTable::space() const {
   return sizeof(struct StateTable) + num.capacity() * sizeof(unsigned long) +
-         num_dummy_.capacity() * sizeof(unsigned long) +
-         (cap_ * sizeof(State *)) + lmn_ewlock_space(lock);
+         num_dummy_.capacity() * sizeof(unsigned long) + (cap_ * sizeof(State *)) +
+         lmn_ewlock_space(lock);
 }
 
 /* CAUTION: MT-Unsafe */
@@ -188,9 +185,12 @@ void StateTable::memid_rehash(unsigned long hash) {
   }
 }
 
-StateTable::StateTable(int thread_num, unsigned long size,
-                       StateTable *rehash_tbl) :
-  thread_num(thread_num), use_rehasher_(false), rehash_tbl_(rehash_tbl), num(thread_num, 0), num_dummy_(thread_num, 0) {
+StateTable::StateTable(int thread_num, unsigned long size, StateTable *rehash_tbl)
+    : thread_num(thread_num),
+      use_rehasher_(false),
+      rehash_tbl_(rehash_tbl),
+      num(thread_num, 0),
+      num_dummy_(thread_num, 0) {
   if (lmn_env.enable_compress_mem) {
     if (lmn_env.z_compress) {
       this->type = &type_state_compress_z;
@@ -207,9 +207,7 @@ StateTable::StateTable(int thread_num, unsigned long size,
   this->tbl = std::vector<State *>(size, nullptr);
   this->cap_ = size;
   this->cap_density_ = size / thread_num;
-  this->lock = (this->thread_num > 1)
-                   ? new EWLock(this->thread_num, DEFAULT_WLOCK_NUM)
-                   : nullptr;
+  this->lock = (this->thread_num > 1) ? new EWLock(this->thread_num, DEFAULT_WLOCK_NUM) : nullptr;
 }
 
 StateTable::~StateTable() {
@@ -306,8 +304,7 @@ State *StateTable::insert(State *ins, unsigned long *col) {
   auto compress = ins->state_binstr();
   State *ret = nullptr;
 
-  slim::element::ewmutex outer_mutex(slim::element::ewmutex::enter, this->lock,
-                                     env_my_thread_id());
+  slim::element::ewmutex outer_mutex(slim::element::ewmutex::enter, this->lock, env_my_thread_id());
   std::lock_guard<slim::element::ewmutex> lk(outer_mutex);
 
   auto hash = state_hash(ins);
@@ -319,8 +316,7 @@ State *StateTable::insert(State *ins, unsigned long *col) {
     /* strがNULL --> 即ち未使用バケットの場合 */
     compress = this->compress_state(ins, compress);
     if (!this->tbl[bucket]) {
-      slim::element::ewmutex mutex(slim::element::ewmutex::write, this->lock,
-                                   bucket);
+      slim::element::ewmutex mutex(slim::element::ewmutex::write, this->lock, bucket);
       std::lock_guard<slim::element::ewmutex> lk(mutex);
       if (!this->tbl[bucket]) {
         state_set_compress_for_table(ins, compress);
@@ -357,13 +353,11 @@ State *StateTable::insert(State *ins, unsigned long *col) {
       if (lmn_env.hash_compaction) {
         /* rehashテーブル側に登録されたデータ(オリジナル側のデータ:parentを返す)
          */
-        ret = (str->is_dummy() && str->is_encoded()) ? state_get_parent(str)
-                                                     : str;
+        ret = (str->is_dummy() && str->is_encoded()) ? state_get_parent(str) : str;
         break;
       }
 
-      if (this->use_rehasher() && str->is_dummy() && !str->is_encoded() &&
-          !lmn_env.tree_compress) {
+      if (this->use_rehasher() && str->is_dummy() && !str->is_encoded() && !lmn_env.tree_compress) {
         /* A. オリジナルテーブルにおいて, dummy状態が比較対象
          * 　 --> memidテーブル側の探索へ切り替える.
          *    (オリジナルテーブルのdummy状態のバイト列は任意のタイミングで破棄されるため,
@@ -468,8 +462,7 @@ State *StateTable::insert(State *ins, unsigned long *col) {
      */
     if (!str->next) { /* リスト末尾の場合 */
       compress = this->compress_state(ins, compress);
-      slim::element::ewmutex mutex(slim::element::ewmutex::write, this->lock,
-                                   bucket);
+      slim::element::ewmutex mutex(slim::element::ewmutex::write, this->lock, bucket);
       if (!str->next) {
         std::lock_guard<slim::element::ewmutex> lk(mutex);
         if (!str->next) {
@@ -508,8 +501,7 @@ State *StateTable::insert(State *ins, unsigned long *col) {
 
 /* 重複検査なしに状態sを状態表stに登録する */
 void StateTable::add_direct(State *s) {
-  slim::element::ewmutex outer_mutex(slim::element::ewmutex::enter, this->lock,
-                                     env_my_thread_id());
+  slim::element::ewmutex outer_mutex(slim::element::ewmutex::enter, this->lock, env_my_thread_id());
   std::lock_guard<slim::element::ewmutex> lk(outer_mutex);
 
   auto compress = s->state_binstr();
@@ -518,11 +510,10 @@ void StateTable::add_direct(State *s) {
   auto ptr = this->tbl[bucket];
   if (!ptr) {
     compress = this->compress_state(s, compress);
-    slim::element::ewmutex mutex(slim::element::ewmutex::write, this->lock,
-                                 bucket);
+    slim::element::ewmutex mutex(slim::element::ewmutex::write, this->lock, bucket);
     std::lock_guard<slim::element::ewmutex> lk(mutex);
     if (!this->tbl[bucket]) {
-    	/* add to the tail of an empty bucket */
+      /* add to the tail of an empty bucket */
       state_set_compress_for_table(s, compress);
       this->num_increment();
       if (tcd_get_byte_length(&s->tcd) == 0 && lmn_env.tree_compress) {
@@ -541,10 +532,9 @@ void StateTable::add_direct(State *s) {
   while (true) {
     if (!ptr->next) { /* リスト末尾の場合 */
       compress = this->compress_state(s, compress);
-      slim::element::ewmutex mutex(slim::element::ewmutex::write, this->lock,
-                                   bucket);
+      slim::element::ewmutex mutex(slim::element::ewmutex::write, this->lock, bucket);
       std::lock_guard<slim::element::ewmutex> lk(mutex);
-      
+
       if (!ptr->next) {
         this->num_increment();
         state_set_compress_for_table(s, compress);

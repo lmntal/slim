@@ -38,13 +38,11 @@
 #ifndef PROCESS_TABLE_H
 #define PROCESS_TABLE_H
 
-
 #include "element/element.h"
 
 typedef struct ProcessTbl *ProcessTableRef;
 
 #include "hyperlink.h"
-
 #include "process_table.hpp"
 
 struct ProcessTbl : ProcessTable<LmnWord> {
@@ -69,19 +67,16 @@ struct ProcessTbl : ProcessTable<LmnWord> {
  * Function ProtoTypes
  */
 
-
 void proc_tbl_unput_mem(ProcessTableRef p, LmnMembraneRef mem);
 int proc_tbl_get(ProcessTableRef p, LmnWord key, LmnWord *value);
-int proc_tbl_get_by_atom(ProcessTableRef p, LmnSymbolAtomRef atom,
-                         LmnWord *value);
+int proc_tbl_get_by_atom(ProcessTableRef p, LmnSymbolAtomRef atom, LmnWord *value);
 int proc_tbl_get_by_mem(ProcessTableRef p, LmnMembraneRef mem, LmnWord *value);
-int proc_tbl_get_by_hlink(ProcessTableRef p, struct HyperLink *hl,
-                          LmnWord *value);
+int proc_tbl_get_by_hlink(ProcessTableRef p, struct HyperLink *hl, LmnWord *value);
 BOOL proc_tbl_contains(ProcessTableRef p, LmnWord key);
 BOOL proc_tbl_contains_atom(ProcessTableRef p, LmnSymbolAtomRef atom);
 BOOL proc_tbl_contains_mem(ProcessTableRef p, LmnMembraneRef mem);
 
-void proc_tbl_dump(const char* name, ProcessTableRef map);
-void proc_tbl_symbol_atom_dump(const char* name, ProcessTableRef map);
+void proc_tbl_dump(const char *name, ProcessTableRef map);
+void proc_tbl_symbol_atom_dump(const char *name, ProcessTableRef map);
 
 #endif /* PROCESS_TABLE_H */

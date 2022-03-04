@@ -45,32 +45,32 @@
  * @{
  */
 
+#include <functional>
+#include <vector>
+
 #include "element/element.h"
 #include "lmntal.h"
 #include "membrane.h"
 #include "react_context.hpp"
-
-#include <functional>
-#include <vector>
 
 /* 中間命令で出現するデータ構造
  * LINK_LIST    リンクオブジェクトのリスト
  * LIST_AND_MAP 第１要素がリンクオブジェクトのリストで第２要素がマップ
  * MAP          マップ
  */
-#define LINK_LIST 1
+#define LINK_LIST    1
 #define LIST_AND_MAP 2
-#define MAP 3
+#define MAP          3
 
-#define SWAP(T, X, Y)                                                          \
-  do {                                                                         \
-    T t = (X);                                                                 \
-    (X) = (Y);                                                                 \
-    (Y) = t;                                                                   \
+#define SWAP(T, X, Y) \
+  do {                \
+    T t = (X);        \
+    (X) = (Y);        \
+    (Y) = t;          \
   } while (0)
-#define READ_VAL(T, I, X) ((X) = *(T *)(I), I += sizeof(T))
+#define READ_VAL(T, I, X)    ((X) = *(T *)(I), I += sizeof(T))
 #define REWRITE_VAL(T, I, X) (I -= sizeof(T), *(T *)(I) = (X))
-#define SKIP_VAL(T, I) I += sizeof(T)
+#define SKIP_VAL(T, I)       I += sizeof(T)
 
 /* 属性配列ttに使用するタグ */
 enum {
@@ -78,19 +78,22 @@ enum {
   TT_ATOM = 1, /* symbol atom  */
   TT_MEM = 2   /* membrane */
 };
-class Task{
-  static void task_init();//呼び出し元不明
-  static void task_finalize();//呼び出し元不明. 判明したらpublicへ移動
-  static void memstack_push(LmnMembraneRef mem);//どこもmemのメンバ関数である同名関数を呼び出しているらしい？
+class Task {
+  static void task_init();      //呼び出し元不明
+  static void task_finalize();  //呼び出し元不明. 判明したらpublicへ移動
+  static void memstack_push(
+      LmnMembraneRef mem);  //どこもmemのメンバ関数である同名関数を呼び出しているらしい？
   void lmn_dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr);
-public:
+
+ public:
   static void lmn_run(Vector *rulesets);
   static BOOL react_rule(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule);
   static void react_start_rulesets(LmnMembraneRef mem, Vector *rulesets);
   static BOOL react_all_rulesets(LmnReactCxtRef rc, LmnMembraneRef cur_mem);
-  static struct Vector user_system_rulesets; /* system ruleset defined by user */ //ユーザーが書く部分となるとpublicにしておかざるを得ない
-  static HashSet *insertconnectors(slim::vm::RuleContext *rc, LmnMembraneRef mem,
-                            const Vector *links);
+  static struct Vector user_system_rulesets;
+  /* system ruleset defined by user */  //ユーザーが書く部分となるとpublicにしておかざるを得ない
+  static HashSet *
+  insertconnectors(slim::vm::RuleContext *rc, LmnMembraneRef mem, const Vector *links);
 
   static Vector *links_from_idxs(const Vector *link_idxs, LmnReactCxtRef v);
   static void free_links(Vector *links);

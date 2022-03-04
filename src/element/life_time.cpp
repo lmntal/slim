@@ -38,8 +38,8 @@
 
 #ifdef DEBUG
 namespace slim {
-namespace element {
-LifetimeProfiler *LifetimeProfiler::instance_ = nullptr;
-}
-}
+  namespace element {
+    LifetimeProfiler *LifetimeProfiler::instance_ = nullptr;
+  }
+}  // namespace slim
 #endif

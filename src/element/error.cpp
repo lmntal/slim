@@ -37,9 +37,11 @@
  */
 
 #include "error.h"
-#include "lmntal.h"
+
 #include <stdarg.h>
 #include <stdlib.h>
+
+#include "lmntal.h"
 
 void do_lmn_fatal(const char *file, int line, const char *msg) {
   fprintf(stderr, "%s(%d) %s\n", file, line, msg);

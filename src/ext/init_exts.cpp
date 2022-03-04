@@ -53,8 +53,7 @@ void init_react_rule(void);
 void init_zerostep(void);
 void init_builtin_extensions(void);
 
-void init_builtin_extensions(void)
-{
+void init_builtin_extensions(void) {
   init_integer();
   init_float();
   init_nlmem();

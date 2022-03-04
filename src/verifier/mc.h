@@ -53,32 +53,47 @@
 #include "vm/vm.h"
 
 #ifdef DEBUG
-#define MC_DEBUG(Pr)                                                           \
-  if (lmn_env.debug_mc) {                                                      \
-    Pr;                                                                        \
+#define MC_DEBUG(Pr)      \
+  if (lmn_env.debug_mc) { \
+    Pr;                   \
   }
 #else
 #define MC_DEBUG(Pr)
 #endif
 
-#define MC_GET_PROPERTY(S, A)                                                  \
-  ((A) ? A->get_state(state_property_state(S)) : DEFAULT_PROP_AUTOMATA)
+#define MC_GET_PROPERTY(S, A) ((A) ? A->get_state(state_property_state(S)) : DEFAULT_PROP_AUTOMATA)
 
 BOOL mc_vec_states_valid(Vector *v);
 
 void mc_print_vec_states(StateSpaceRef ss, Vector *v, State *seed);
-void mc_expand(const StateSpaceRef states, State *state,
-               AutomataStateRef property_automata_state, MCReactContext *rc,
-               Vector *new_s, Vector *psyms, BOOL flag);
+void mc_expand(
+    const StateSpaceRef states,
+    State *state,
+    AutomataStateRef property_automata_state,
+    MCReactContext *rc,
+    Vector *new_s,
+    Vector *psyms,
+    BOOL flag);
 void mc_update_cost(State *s, Vector *new_ss, EWLock *ewlock);
-void mc_gen_successors_with_property(State *s, LmnMembraneRef mem,
-                                     AutomataStateRef prop_atm_s,
-                                     MCReactContext *rc, Vector *psyms,
-                                     BOOL flags);
-void mc_gen_successors(State *src, LmnMembraneRef mem, BYTE prop_labels,
-                       MCReactContext *rc, BOOL flags);
-void mc_store_successors(const StateSpaceRef ss, State *s, MCReactContext *rc,
-                         Vector *new_ss, BOOL f);
+void mc_gen_successors_with_property(
+    State *s,
+    LmnMembraneRef mem,
+    AutomataStateRef prop_atm_s,
+    MCReactContext *rc,
+    Vector *psyms,
+    BOOL flags);
+void mc_gen_successors(
+    State *src,
+    LmnMembraneRef mem,
+    BYTE prop_labels,
+    MCReactContext *rc,
+    BOOL flags);
+void mc_store_successors(
+    const StateSpaceRef ss,
+    State *s,
+    MCReactContext *rc,
+    Vector *new_ss,
+    BOOL f);
 BOOL mc_expand_inner(MCReactContext *rc, LmnMembraneRef cur_mem);
 
 void run_mc(Vector *start_rulesets, AutomataRef a, Vector *psyms);

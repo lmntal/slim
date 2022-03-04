@@ -45,6 +45,7 @@
 #endif
 
 #include "lmntal_thread.h"
+
 #include "error.h"
 #include "util.h"
 #if defined(HAVE_SCHED_H) && defined(HAVE_SYSCALL_H)
@@ -70,7 +71,9 @@ void lmn_thread_set_CPU_affinity(unsigned long n) {
 }
 
 #ifdef HAVE_SCHED_H
-void thread_yield_CPU() { sched_yield(); }
+void thread_yield_CPU() {
+  sched_yield();
+}
 #endif
 
 /** ----------------------------------

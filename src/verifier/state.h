@@ -46,17 +46,17 @@
  * @{
  */
 
+#include <memory>
+
 #include "automata.h"
 #include "binstr_compress.h"
 #include "element/element.h"
 #include "lmntal.h"
 #include "mem_encode.h"
+#include "runtime_status.h"
 #include "state_defs.h"
 #include "tree_compress.h"
 #include "vm/vm.h"
-#include "runtime_status.h"
-
-#include <memory>
 
 /** ------------
  *  State
@@ -92,7 +92,7 @@ struct State;
 #define STATE_CYAN_MASK (0x01U)
 
 /*　不必要な場合に使用する状態ID/遷移ID/性質オートマトン */
-#define DEFAULT_STATE_ID 0
+#define DEFAULT_STATE_ID      0
 #define DEFAULT_TRANSITION_ID 0
 #define DEFAULT_PROP_AUTOMATA NULL
 
@@ -124,8 +124,13 @@ State *state_D_ref(State *s);
 void state_D_cache(State *s, LmnBinStrRef dec);
 LmnBinStrRef state_D_fetch(State *s);
 void state_D_flush(State *s);
-void state_update_cost(State *s, TransitionRef t, State *pre, Vector *new_ss,
-                       BOOL f, EWLock *ewlock);
+void state_update_cost(
+    State *s,
+    TransitionRef t,
+    State *pre,
+    Vector *new_ss,
+    BOOL f,
+    EWLock *ewlock);
 void state_set_cost(State *s, LmnCost cost, State *pre);
 
 LmnCost state_cost(State *S);
@@ -138,17 +143,16 @@ void state_cost_unlock(EWLock *EWLOCK, mtx_data_t ID);
 unsigned long transition_space(TransitionRef t);
 
 struct Transition {
-  State *s; /*  8byte: 遷移先状態 */
-  unsigned long
-      id; /*  8byte: State graph(=\=
-             Automata)上の各遷移に付与されるグローバルなID．
-                     ある2本の遷移が同一のものと判断される場合はこのIDの値も等しくなる．
-           */
+  State *s;          /*  8byte: 遷移先状態 */
+  unsigned long id;  /*  8byte: State graph(=\=
+                        Automata)上の各遷移に付与されるグローバルなID．
+                                ある2本の遷移が同一のものと判断される場合はこのIDの値も等しくなる．
+                      */
   Vector rule_names; /* 24byte: ルール名 複数あるのは多重辺(porなしの場合)*/
 #ifdef KWBT_OPT
   LmnCost cost; /*  8(4)byte: cost */
 #endif
-  
+
   ~Transition() {
 #ifdef PROFILE
     if (lmn_env.profile_level >= 3) {
@@ -162,8 +166,7 @@ struct Transition {
 TransitionRef transition_make(State *s, lmn_interned_str rule_name);
 
 void transition_free(TransitionRef t);
-void transition_add_rule(TransitionRef t, lmn_interned_str rule_name,
-                         LmnCost cost);
+void transition_add_rule(TransitionRef t, lmn_interned_str rule_name, LmnCost cost);
 
 unsigned long transition_id(TransitionRef t);
 void transition_set_id(TransitionRef t, unsigned long x);
@@ -288,8 +291,13 @@ void state_set_cost(State *s, LmnCost cost, State *pre);
 /* 状態sのcostが最適ならば更新し、状態sを遷移先更新状態にする
  * f==true: minimize
  * f==false: maximize */
-void state_update_cost(State *s, TransitionRef t, State *pre, Vector *new_ss,
-                       BOOL f, EWLock *ewlock);
+void state_update_cost(
+    State *s,
+    TransitionRef t,
+    State *pre,
+    Vector *new_ss,
+    BOOL f,
+    EWLock *ewlock);
 
 /* 遷移tに割り当てたidを返す. */
 unsigned long transition_id(TransitionRef t);

@@ -45,12 +45,12 @@
  * @{
  */
 
-#include "syntax.hpp"
-#include "vm/vm.h"
-
+#include <cstdio>
 #include <memory>
 #include <string>
-#include <cstdio>
+
+#include "syntax.hpp"
+#include "vm/vm.h"
 
 LmnRuleSetRef load(std::unique_ptr<FILE, decltype(&fclose)> in);
 std::unique_ptr<LmnRule> load_rule(const Rule &rule);

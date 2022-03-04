@@ -55,8 +55,7 @@ void mpool_init() {
   arity_num = ARY_SIZEOF(atom_memory_pools);
   core_num = lmn_env.core_num;
   for (i = 0; i < arity_num; i++) {
-    atom_memory_pools[i] =
-        (memory_pool **)malloc(sizeof(memory_pool *) * core_num);
+    atom_memory_pools[i] = (memory_pool **)malloc(sizeof(memory_pool *) * core_num);
     memset(atom_memory_pools[i], 0, sizeof(memory_pool *) * core_num);
   }
 }
@@ -154,29 +153,30 @@ void *lmn_realloc(void *p, size_t num) {
   return result;
 }
 
-void lmn_free(void *p) { free(p); }
+void lmn_free(void *p) {
+  free(p);
+}
 
-void* operator new(std::size_t num) {
+void *operator new(std::size_t num) {
   return lmn_malloc(num);
 }
 
-void* operator new[](std::size_t num) {
+void *operator new[](std::size_t num) {
   return lmn_malloc(num);
 }
 
-void operator delete(void* p) noexcept {
+void operator delete(void *p) noexcept {
   lmn_free(p);
 }
 
-void operator delete[](void* p) noexcept {
+void operator delete[](void *p) noexcept {
   lmn_free(p);
 }
 
-void operator delete(void* p, std::size_t num) noexcept {
+void operator delete(void *p, std::size_t num) noexcept {
   lmn_free(p);
 }
 
-void operator delete[](void* p, std::size_t num) noexcept {
+void operator delete[](void *p, std::size_t num) noexcept {
   lmn_free(p);
 }
-

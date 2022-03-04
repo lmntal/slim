@@ -78,10 +78,7 @@ struct Queue {
   void unlock(BOOL is_enq);
   void clear();
   unsigned long entry_num();
-
 };
-
-
 
 /* single dequeue(reader), single enqueue(writer) */
 #define LMN_Q_SRSW 0
@@ -115,15 +112,15 @@ struct Deque {
   void push_tail(LmnWord keyp);
   LmnWord pop_head();
   LmnWord pop_tail();
-  LmnWord peek_head()const;
-  LmnWord peek_tail()const;
-  LmnWord get(unsigned int i)const;
+  LmnWord peek_head() const;
+  LmnWord peek_tail() const;
+  LmnWord get(unsigned int i) const;
   void clear();
   void destroy();
   unsigned long space();
   unsigned long space_inner();
   void print();
-  BOOL contains(LmnWord keyp)const;
+  BOOL contains(LmnWord keyp) const;
   Deque *copy();
 };
 /* @} */

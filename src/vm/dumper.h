@@ -45,13 +45,13 @@
  * @{
  */
 
+#include <ostream>
+#include <string>
+
 #include "element/element.h"
 #include "lmntal.h"
 #include "membrane.h"
 #include "rule.h"
-
-#include <ostream>
-#include <string>
 
 /**
  * @brief initialize dumper module.
@@ -104,8 +104,7 @@ LMN_EXTERN void lmn_dump_ruleset(LmnPortRef port, const std::vector<LmnRuleSet *
 /**
  * @brief print an atom and its connected ones.
  */
-LMN_EXTERN void lmn_dump_atom(LmnPortRef port, LmnAtomRef atom,
-                              LmnLinkAttr attr);
+LMN_EXTERN void lmn_dump_atom(LmnPortRef port, LmnAtomRef atom, LmnLinkAttr attr);
 
 /**
  * @brief print an escaped string.
@@ -115,26 +114,24 @@ void dump_escaped(LmnPortRef port, const char *s);
 extern char char_to_escape_char[];
 
 namespace slim {
-namespace format {
-std::ostream &env(std::ostream &os);
-std::ostream &lmntal(std::ostream &os);
-std::ostream &verbal(std::ostream &os);
-std::ostream &dot(std::ostream &os);
-std::ostream &json(std::ostream &os);
-} // namespace format
+  namespace format {
+    std::ostream &env(std::ostream &os);
+    std::ostream &lmntal(std::ostream &os);
+    std::ostream &verbal(std::ostream &os);
+    std::ostream &dot(std::ostream &os);
+    std::ostream &json(std::ostream &os);
+  }  // namespace format
 
-std::string to_string(const LmnMembrane *mem);
-static inline std::string to_string_membrane(const LmnMembrane *mem) {
-  return (lmn_env.output_format == OutputFormat::DEFAULT)
-             ? ("{" + to_string(mem) + "}")
-             : to_string(mem);
-}
+  std::string to_string(const LmnMembrane *mem);
+  static inline std::string to_string_membrane(const LmnMembrane *mem) {
+    return (lmn_env.output_format == OutputFormat::DEFAULT) ? ("{" + to_string(mem) + "}")
+                                                            : to_string(mem);
+  }
 
-void dump_mem(std::ostream &os, const LmnMembrane *mem);
-} // namespace slim
+  void dump_mem(std::ostream &os, const LmnMembrane *mem);
+}  // namespace slim
 
-static inline std::ostream &operator<<(std::ostream &os,
-                                       const LmnMembrane &mem) {
+static inline std::ostream &operator<<(std::ostream &os, const LmnMembrane &mem) {
   slim::dump_mem(os, &mem);
   return os;
 }

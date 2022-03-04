@@ -113,34 +113,35 @@ struct AutomataTransition {
 };
 
 struct AutomataSCC {
-private:
+ private:
   unsigned int id;
   BYTE type;
   static unsigned int unsafe_id_counter;
-public:
+
+ public:
   AutomataSCC();
   ~AutomataSCC();
   const char *get_name();
-/** CAUTION: MT-Unsafe */
-  void issue_id(){
-  	id = unsafe_id_counter++;
-	//Is it checked by test cases? by sumiya
+  /** CAUTION: MT-Unsafe */
+  void issue_id() {
+    id = unsafe_id_counter++;
+    // Is it checked by test cases? by sumiya
   }
-  unsigned int get_id(){
-  	return id;
+  unsigned int get_id() {
+    return id;
   }
-  BYTE get_type(){
-  	return type;
+  BYTE get_type() {
+    return type;
   }
-  void set_type(BYTE t){
-  	type = t;
+  void set_type(BYTE t) {
+    type = t;
   }
 };
 
 enum SCC_ACCEPTING_TYPE {
   SCC_TYPE_UNKNOWN = 0U,
-  SCC_TYPE_FULLY = 1U, /* 構成するサイクルが全て受理サイクル */
-  SCC_TYPE_PARTIALLY = 2U, /* 構成するサイクルが非受理サイクルも含む */
+  SCC_TYPE_FULLY = 1U,      /* 構成するサイクルが全て受理サイクル */
+  SCC_TYPE_PARTIALLY = 2U,  /* 構成するサイクルが非受理サイクルも含む */
   SCC_TYPE_NON_ACCEPT = 3U, /* 受理サイクルを含まない */
 };
 

@@ -44,31 +44,35 @@
 #ifndef LMN_STATESPACE_H
 #define LMN_STATESPACE_H
 
-#include "../lmntal.h"
-#include "element/element.h"
-
-#include "state.hpp"
-
 #include <memory>
 #include <set>
 
+#include "../lmntal.h"
+#include "element/element.h"
+#include "state.hpp"
+
 struct MemIdHashSkeleton {
-  void add_hash(unsigned long hash) {}
-  bool contains_hash(unsigned long hash) { return false; }
+  void add_hash(unsigned long hash) {
+  }
+  bool contains_hash(unsigned long hash) {
+    return false;
+  }
 };
 
 struct MemIdHash {
   std::set<unsigned long> memid_hashes;
 
-  void add_hash(unsigned long hash) { memid_hashes.insert(hash); }
+  void add_hash(unsigned long hash) {
+    memid_hashes.insert(hash);
+  }
   /* hashが膜のIDを計算しているハッシュならば真、そうでなければ偽を返す */
   bool contains_hash(unsigned long hash) {
     return memid_hashes.find(hash) != memid_hashes.end();
   }
 };
 
-struct StateSpace : public std::conditional<slim::config::profile, MemIdHash,
-                                            MemIdHashSkeleton>::type {
+struct StateSpace
+    : public std::conditional<slim::config::profile, MemIdHash, MemIdHashSkeleton>::type {
   /* 膜の同型性判定にこの回数以上失敗すると膜のエンコードを行う */
   static constexpr unsigned int MEM_EQ_FAIL_THRESHOLD = 2U;
 
@@ -87,19 +91,37 @@ struct StateSpace : public std::conditional<slim::config::profile, MemIdHash,
   unsigned long num_raw() const;
   unsigned long dummy_num() const;
   unsigned long num_of_ends() const;
-  State *initial_state() { return init_state; }
+  State *initial_state() {
+    return init_state;
+  }
   void mark_as_end(State *);
 
-  StateTable &accept_tbl() { return *mhash_table.acc; }
-  StateTable &accept_memid_tbl() { return *memid_table.acc; }
+  StateTable &accept_tbl() {
+    return *mhash_table.acc;
+  }
+  StateTable &accept_memid_tbl() {
+    return *memid_table.acc;
+  }
 
-  bool use_memenc() const { return using_memenc; }
-  bool is_formatted() const { return this->is_formated; }
-  bool has_property() const { return this->property_automata; }
-  AutomataRef automata() { return this->property_automata; }
-  Vector *prop_symbols() { return this->propsyms; }
+  bool use_memenc() const {
+    return using_memenc;
+  }
+  bool is_formatted() const {
+    return this->is_formated;
+  }
+  bool has_property() const {
+    return this->property_automata;
+  }
+  AutomataRef automata() {
+    return this->property_automata;
+  }
+  Vector *prop_symbols() {
+    return this->propsyms;
+  }
 
-  FILE *output() { return out; }
+  FILE *output() {
+    return out;
+  }
   void dump();
   void dump_ends() const;
 
@@ -115,7 +137,7 @@ struct StateSpace : public std::conditional<slim::config::profile, MemIdHash,
     return predecessor;
   }
 
-private:
+ private:
   bool using_memenc;
   bool is_formated; /* ハッシュ表の並びを崩した整列を行った場合に真 */
   /* 2bytes alignment */
@@ -144,7 +166,8 @@ private:
   std::vector<std::vector<State *>> end_states; /* 最終状態の集合 */
 
   std::unique_ptr<StateTable> &insert_destination(State *s, unsigned long hashv);
-  std::unique_ptr<StateTable> &resize_destination(std::unique_ptr<StateTable> &def, State *ret, State *s);
+  std::unique_ptr<StateTable>
+      &resize_destination(std::unique_ptr<StateTable> &def, State *ret, State *s);
 };
 
 #endif

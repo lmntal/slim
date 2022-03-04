@@ -44,12 +44,14 @@
  */
 
 #include "internal_hash.h"
-#include "../config.h"
-#include "util.h"
+
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "../config.h"
+#include "util.h"
 
 /* Hashtable
  *
@@ -63,7 +65,7 @@
  */
 
 #define LOAD_FACTOR 0.75
-#define K 2654435761UL
+#define K           2654435761UL
 /* maximum capacity */
 #define MAX_CAP 0x80000000UL
 /* 別に最大容量を制限する必要はないが、制限をしない場合は,
@@ -71,10 +73,10 @@
    畳み込む必要がある */
 
 #if SIZEOF_LONG == 4
-#define EMPTY_KEY 0xffffffffUL
+#define EMPTY_KEY   0xffffffffUL
 #define DELETED_KEY 0xfffffffeUL
 #elif SIZEOF_LONG == 8
-#define EMPTY_KEY 0xffffffffffffffffUL
+#define EMPTY_KEY   0xffffffffffffffffUL
 #define DELETED_KEY 0xfffffffffffffffeUL
 #endif
 
@@ -96,7 +98,9 @@ SimpleHashtbl *hashtbl_make(unsigned int init_size) {
   return ht;
 }
 
-void hashtbl_destroy(SimpleHashtbl *ht) { LMN_FREE(ht->tbl); }
+void hashtbl_destroy(SimpleHashtbl *ht) {
+  LMN_FREE(ht->tbl);
+}
 void hashtbl_free(SimpleHashtbl *ht) {
   hashtbl_destroy(ht);
   LMN_FREE(ht);
@@ -106,8 +110,7 @@ HashValueType hashtbl_get(SimpleHashtbl *ht, HashKeyType key) {
   return hashtbl_get_p(ht, key)->data;
 }
 
-HashValueType hashtbl_get_default(SimpleHashtbl *ht, HashKeyType key,
-                                  HashValueType default_value) {
+HashValueType hashtbl_get_default(SimpleHashtbl *ht, HashKeyType key, HashValueType default_value) {
   HashEntry *e = hashtbl_get_p(ht, key);
   if (e->key == EMPTY_KEY)
     return default_value;
@@ -271,7 +274,7 @@ void hashsetiter_next(HashSetIterator *it) {
     ;
 }
 
-HashKeyType * HashSet::get_p(HashKeyType key, unsigned long dummykey) {
+HashKeyType *HashSet::get_p(HashKeyType key, unsigned long dummykey) {
   HashKeyType probe;
   HashKeyType increment = (key | 1) & (this->cap - 1);
 

@@ -61,7 +61,7 @@
 #define LMN_SP_ATOM(atom) ((struct LmnSPAtomHeader *)(atom))
 
 /* アトムのタイプのID */
-#define LMN_SP_ATOM_TYPE(X) (LMN_SP_ATOM(X)->type)
+#define LMN_SP_ATOM_TYPE(X)          (LMN_SP_ATOM(X)->type)
 #define LMN_SP_ATOM_SET_TYPE(obj, t) (LMN_SP_ATOM((obj))->type = (t))
 
 typedef void *(*f_copy)(void *);
@@ -87,29 +87,36 @@ void sp_atom_init(void);
 void sp_atom_finalize(void);
 
 /* 新しいスペシャルアトムのタイプを登録する。登録されたタイプのIDを返す */
-int lmn_sp_atom_register(const char *name, /* move owner */
-                         f_copy f_copy, f_free f_free, f_eq f_eq, f_dump f_dump,
-                         f_is_ground f_is_ground);
-int lmn_sp_atom_register(const char *name, /* move owner */
-                         f_copy f_copy, f_free f_free, f_eq f_eq, f_dump f_dump,
-                         f_is_ground f_is_ground, f_encode encoder, f_decode decoder);
+int lmn_sp_atom_register(
+    const char *name, /* move owner */
+    f_copy f_copy,
+    f_free f_free,
+    f_eq f_eq,
+    f_dump f_dump,
+    f_is_ground f_is_ground);
+int lmn_sp_atom_register(
+    const char *name, /* move owner */
+    f_copy f_copy,
+    f_free f_free,
+    f_eq f_eq,
+    f_dump f_dump,
+    f_is_ground f_is_ground,
+    f_encode encoder,
+    f_decode decoder);
 
 struct SpecialAtomCallback *sp_atom_get_callback(int id);
 
 #define SP_ATOM_NAME(ATOM) (sp_atom_get_callback(LMN_SP_ATOM_TYPE(ATOM))->name)
-#define SP_ATOM_COPY(ATOM)                                                     \
-  (sp_atom_get_callback(LMN_SP_ATOM_TYPE(ATOM))->copy((void *)(ATOM)))
+#define SP_ATOM_COPY(ATOM) (sp_atom_get_callback(LMN_SP_ATOM_TYPE(ATOM))->copy((void *)(ATOM)))
 
-#define SP_ATOM_FREE(ATOM)                                                     \
-  (sp_atom_get_callback(LMN_SP_ATOM_TYPE(ATOM))->free((void *)(ATOM)))
-#define SP_ATOM_DUMP(ATOM, PORT)                                               \
+#define SP_ATOM_FREE(ATOM) (sp_atom_get_callback(LMN_SP_ATOM_TYPE(ATOM))->free((void *)(ATOM)))
+#define SP_ATOM_DUMP(ATOM, PORT) \
   (sp_atom_get_callback(LMN_SP_ATOM_TYPE(ATOM))->dump((void *)(ATOM), (PORT)))
-#define SP_ATOM_IS_GROUND(ATOM)                                                \
+#define SP_ATOM_IS_GROUND(ATOM) \
   (sp_atom_get_callback(LMN_SP_ATOM_TYPE(ATOM))->is_ground((void *)(ATOM)))
-#define SP_ATOM_EQ(ATOM1, ATOM2)                                               \
-  (LMN_SP_ATOM_TYPE(ATOM1) == LMN_SP_ATOM_TYPE(ATOM2) &&                       \
-   sp_atom_get_callback(LMN_SP_ATOM_TYPE(ATOM1))                               \
-       ->eq((void *)(ATOM1), (void *)(ATOM2)))
+#define SP_ATOM_EQ(ATOM1, ATOM2)                         \
+  (LMN_SP_ATOM_TYPE(ATOM1) == LMN_SP_ATOM_TYPE(ATOM2) && \
+   sp_atom_get_callback(LMN_SP_ATOM_TYPE(ATOM1))->eq((void *)(ATOM1), (void *)(ATOM2)))
 static inline f_encode sp_atom_encoder(void *atom) {
   return sp_atom_get_callback(LMN_SP_ATOM_TYPE(atom))->encode;
 }

@@ -73,18 +73,19 @@ enum PROFILE_SPACE {
 };
 
 enum PROFILE_TIME {
-  PROFILE_TIME__ACTIVE_FOR_IDLE_PROF = 0, /* アイドルCPU時間を計測するためのトータルアクティブCPU時間
-                                             (並列処理用) */
-  PROFILE_TIME__STATE_HASH_MEM,           /* 膜のハッシュ関数 */
-  PROFILE_TIME__STATE_HASH_MID,           /* 膜のIDのハッシュ関数 */
+  PROFILE_TIME__ACTIVE_FOR_IDLE_PROF =
+      0, /* アイドルCPU時間を計測するためのトータルアクティブCPU時間
+            (並列処理用) */
+  PROFILE_TIME__STATE_HASH_MEM,    /* 膜のハッシュ関数 */
+  PROFILE_TIME__STATE_HASH_MID,    /* 膜のIDのハッシュ関数 */
   PROFILE_TIME__STATE_COMPARE_MEQ, /* グラフ同型性判定による状態の等価性判定 */
   PROFILE_TIME__STATE_COMPARE_MID, /* 膜のID比較による状態の等価性判定 */
-  PROFILE_TIME__STATE_COPY,           /* 膜の複製(INSTR_COMMITを除く) */
+  PROFILE_TIME__STATE_COPY,        /* 膜の複製(INSTR_COMMITを除く) */
   PROFILE_TIME__STATE_COPY_IN_COMMIT, /* 膜の複製(INSTR_COMMIT命令内部) */
-  PROFILE_TIME__TRANS_RULE, /* ルール適用 (INSTR_COMMIT命令を*含む*) */
-  PROFILE_TIME__MENC_DUMP, /* 膜からバイナリストリングへのエンコード */
-  PROFILE_TIME__MENC_RESTORE, /* バイナリストリングから膜への復元 */
-  PROFILE_TIME__MENC_CANONICAL, /* 膜に対して一意なIDへのエンコード */
+  PROFILE_TIME__TRANS_RULE,           /* ルール適用 (INSTR_COMMIT命令を*含む*) */
+  PROFILE_TIME__MENC_DUMP,       /* 膜からバイナリストリングへのエンコード */
+  PROFILE_TIME__MENC_RESTORE,    /* バイナリストリングから膜への復元 */
+  PROFILE_TIME__MENC_CANONICAL,  /* 膜に対して一意なIDへのエンコード */
   PROFILE_TIME__DMEM_COMMIT,     /* 差分情報の適用 */
   PROFILE_TIME__DMEM_REVERT,     /* 差分情報適用の取り消し */
   PROFILE_TIME__CYCLE_EXPLORE,   /* 受理サイクル探索 */
@@ -104,12 +105,12 @@ enum PROFILE_HTABLE_COUNT {
   PROFILE_COUNT__HASH_CONFLICT_ENTRY = 0, /* 衝突したエントリ数 */
   PROFILE_COUNT__HASH_CONFLICT_HASHV,     /* エントリが衝突し,
                                              更にハッシュ値が衝突した回数 */
-  PROFILE_COUNT__HASH_RESIZE_TRIAL,   /* テーブル拡張の試行回数 */
-  PROFILE_COUNT__HASH_RESIZE_APPLY,   /* テーブル拡張の適用回数 */
-  PROFILE_COUNT__HASH_FAIL_TO_INSERT, /* 並列時,
-                                         競合によってエントリの追加に失敗した回数
-                                       */
-  PCOUNT_TAIL,                        /* dummy */
+  PROFILE_COUNT__HASH_RESIZE_TRIAL,       /* テーブル拡張の試行回数 */
+  PROFILE_COUNT__HASH_RESIZE_APPLY,       /* テーブル拡張の適用回数 */
+  PROFILE_COUNT__HASH_FAIL_TO_INSERT,     /* 並列時,
+                                             競合によってエントリの追加に失敗した回数
+                                           */
+  PCOUNT_TAIL,                            /* dummy */
 };
 
 struct PeakCounter {
@@ -129,18 +130,15 @@ struct TimeProfiler {
 };
 
 struct MCProfiler2 {
-  unsigned long invalid_end_num, accept_num, transition_num, mhash_num,
-      rehashed_num, midhash_num;
-  unsigned long statespace_space, transition_space, state_space, binstr_space,
-      membrane_space;
+  unsigned long invalid_end_num, accept_num, transition_num, mhash_num, rehashed_num, midhash_num;
+  unsigned long statespace_space, transition_space, state_space, binstr_space, membrane_space;
   st_table_t hashes;
 };
 
 struct MCProfiler3 {
-  TimeProfiler times[PTIME_TAIL];     /* 処理毎の所用時間の調査 */
-  MemoryProfiler spaces[PSPACE_TAIL]; /* メモリ使用量の調査 */
-  unsigned long
-      counters[PCOUNT_TAIL]; /* カウンタ群, 主に状態管理票の調査に使う */
+  TimeProfiler times[PTIME_TAIL];      /* 処理毎の所用時間の調査 */
+  MemoryProfiler spaces[PSPACE_TAIL];  /* メモリ使用量の調査 */
+  unsigned long counters[PCOUNT_TAIL]; /* カウンタ群, 主に状態管理票の調査に使う */
 };
 
 struct LmnProfiler {
@@ -210,20 +208,20 @@ void time_profiler_start(TimeProfiler *p);
 void time_profiler_finish(TimeProfiler *p);
 
 #ifdef PROFILE
-#define profile_backtrack()                                                    \
-  if (lmn_prof.cur && !lmn_env.findatom_parallel_mode)                         \
+#define profile_backtrack()                            \
+  if (lmn_prof.cur && !lmn_env.findatom_parallel_mode) \
   (ruleprofiler_incr_backtrack(lmn_prof.cur))
-#define profile_backtrack_add(NUM)                                             \
-  if (lmn_prof.cur)                                                            \
+#define profile_backtrack_add(NUM) \
+  if (lmn_prof.cur)                \
   (ruleprofiler_add_backtrack(lmn_prof.cur, NUM))
-#define profile_start_trial()                                                  \
-  if (lmn_prof.cur)                                                            \
+#define profile_start_trial() \
+  if (lmn_prof.cur)           \
   time_profiler_start(ruleprofiler_trial(lmn_prof.cur))
-#define profile_finish_trial()                                                 \
-  if (lmn_prof.cur)                                                            \
+#define profile_finish_trial() \
+  if (lmn_prof.cur)            \
   time_profiler_finish(ruleprofiler_trial(lmn_prof.cur))
-#define profile_apply()                                                        \
-  if (lmn_prof.cur)                                                            \
+#define profile_apply() \
+  if (lmn_prof.cur)     \
   (ruleprofiler_incr_apply(lmn_prof.cur))
 #else
 #define profile_backtrack()

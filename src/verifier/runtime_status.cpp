@@ -37,10 +37,11 @@
  * $Id$
  */
 #include "runtime_status.h"
+
 #include "state.h"
-#include "vm/vm.h"
 #include "state.hpp"
 #include "statespace.h"
+#include "vm/vm.h"
 
 struct RuleProfiler {
   LmnRulesetId ref_rs_id;
@@ -50,12 +51,18 @@ struct RuleProfiler {
   LmnRuleRef src;
 };
 
-void ruleprofiler_incr_backtrack(struct RuleProfiler *p) { p->backtrack++; }
+void ruleprofiler_incr_backtrack(struct RuleProfiler *p) {
+  p->backtrack++;
+}
 void ruleprofiler_add_backtrack(struct RuleProfiler *p, int num) {
   p->backtrack += num;
 }
-void ruleprofiler_incr_apply(struct RuleProfiler *p) { p->apply++; }
-TimeProfiler *ruleprofiler_trial(struct RuleProfiler *p) { return &p->trial; }
+void ruleprofiler_incr_apply(struct RuleProfiler *p) {
+  p->apply++;
+}
+TimeProfiler *ruleprofiler_trial(struct RuleProfiler *p) {
+  return &p->trial;
+}
 
 static void mc_profiler2_init(MCProfiler2 *p);
 static void mc_profiler2_destroy(MCProfiler2 *p);
@@ -219,21 +226,24 @@ static inline void time_profiler_init(TimeProfiler *p) {
   p->tmp_start = 0;
 }
 
-static inline void time_profiler_destroy(TimeProfiler *p) {}
+static inline void time_profiler_destroy(TimeProfiler *p) {
+}
 
 static inline void memory_profiler_init(MemoryProfiler *p) {
   peak_counter_init(&p->num);
   peak_counter_init(&p->space);
 }
 
-static inline void memory_profiler_destroy(MemoryProfiler *c) {}
+static inline void memory_profiler_destroy(MemoryProfiler *c) {
+}
 
 static inline void peak_counter_init(PeakCounter *p) {
   p->cur = 0;
   p->peak = 0;
 }
 
-static inline void peak_counter_destroy(PeakCounter *p) {}
+static inline void peak_counter_destroy(PeakCounter *p) {
+}
 
 void lmn_profiler_init(unsigned int nthreads) {
   unsigned int i;
@@ -292,8 +302,7 @@ void lmn_profiler_finalize() {
   }
 
   if (lmn_prof.prules) {
-    st_foreach(lmn_prof.prules, (st_iter_func)rule_profiler_free_f,
-               (st_data_t)0);
+    st_foreach(lmn_prof.prules, (st_iter_func)rule_profiler_free_f, (st_data_t)0);
     st_free_table(lmn_prof.prules);
   }
 }
@@ -423,9 +432,8 @@ void profile_statespace(LmnWorkerGroup *wp) {
   lmn_prof.state_num_end = worker_states(w)->num_raw();
 
   if (lmn_env.profile_level >= 3 && lmn_env.tree_compress) {
-    profile_add_space(PROFILE_SPACE__STATE_BINSTR,
-                      (2 << lmn_env.tree_compress_table_size) *
-                          sizeof(TreeNodeRef));
+    profile_add_space(
+        PROFILE_SPACE__STATE_BINSTR, (2 << lmn_env.tree_compress_table_size) * sizeof(TreeNodeRef));
     profile_add_space(PROFILE_SPACE__STATE_BINSTR, sizeof(struct TreeDatabase));
     profile_total_space_update(worker_states(w));
   }
@@ -539,13 +547,23 @@ static void dump_execution_stat(FILE *f) {
   debug = "OFF";
 #endif
 
-  fprintf(f, "\n== %-20s ====================================\n",
-          lmn_env.nd ? "Verification Mode" : "Simulation Mode");
+  fprintf(
+      f,
+      "\n== %-20s ====================================\n",
+      lmn_env.nd ? "Verification Mode" : "Simulation Mode");
   fprintf(f, "%-9s: ", "SYSTEM");
   slim_version(f);
   fprintf(f, "---------:--------------------------------------------------\n");
-  fprintf(f, "%-9s: %-8s=%6s  %-8s=%6s  %-8s=%6s\n", "CONFIGURE", "profile",
-          profile, "timeopt", timeopt, "tcmalloc", tcmalloc);
+  fprintf(
+      f,
+      "%-9s: %-8s=%6s  %-8s=%6s  %-8s=%6s\n",
+      "CONFIGURE",
+      "profile",
+      profile,
+      "timeopt",
+      timeopt,
+      "tcmalloc",
+      tcmalloc);
   fprintf(f, "%-9s: %-8s=%6s\n", "", "debug", debug);
   if (lmn_env.nd) {
     const char *strategy, *expr, *heuristic;
@@ -585,27 +603,49 @@ static void dump_execution_stat(FILE *f) {
       }
     }
 
-    fprintf(f,
-            "---------:--------------------------------------------------\n");
-    fprintf(f, "%-9s: %-9s=%5u  %-8s=%6s  %-8s=%6s\n", "PALLAREL", "workers",
-            lmn_prof.thread_num, "strtgy", strategy, "loadBal.",
-            lmn_env.optimize_loadbalancing ? "OPT" : "ORG");
-    fprintf(f, "%-9s: %-9s=%5s  %-8s=%6s  %-8s=%6s\n", "GENERATOR", "mem2bs",
-            lmn_env.enable_compress_mem ? "ON" : "OFF", "compact",
-            lmn_env.enable_compress_mem ? "AUTO" : "OFF", "rehashr",
-            lmn_env.optimize_hash ? "ON" : "OFF");
-    fprintf(f, "%-9s: %-9s=%5s  %-8s=%6s  %-8s=%6s\n", "", "mem2id",
-            lmn_env.mem_enc ? "ON" : "OFF", "mdelta",
-            lmn_env.delta_mem ? "ON" : "OFF", "p.o.r.",
-            lmn_env.enable_por ? "ON" : "OFF");
-    fprintf(f, "%-9s: %-9s=%5s  %-8s=%6s  %-8s=%5s\n", "", "bsZcomp.",
-            lmn_env.z_compress ? "ON" : "OFF", "bsDcomp.",
-            lmn_env.d_compress ? "ON" : "OFF", "hashcomp.",
-            lmn_env.hash_compaction ? "ON" : "OFF");
-    fprintf(f, "%-9s: %-8s=%5s\n", "", "treecomp.",
-            lmn_env.tree_compress ? "ON" : "OFF");
-    fprintf(f, "%-9s: %-9s=%5s  %-8s=%6s\n", "EXPLORER", "strtgy", expr,
-            "heurstc", heuristic);
+    fprintf(f, "---------:--------------------------------------------------\n");
+    fprintf(
+        f,
+        "%-9s: %-9s=%5u  %-8s=%6s  %-8s=%6s\n",
+        "PALLAREL",
+        "workers",
+        lmn_prof.thread_num,
+        "strtgy",
+        strategy,
+        "loadBal.",
+        lmn_env.optimize_loadbalancing ? "OPT" : "ORG");
+    fprintf(
+        f,
+        "%-9s: %-9s=%5s  %-8s=%6s  %-8s=%6s\n",
+        "GENERATOR",
+        "mem2bs",
+        lmn_env.enable_compress_mem ? "ON" : "OFF",
+        "compact",
+        lmn_env.enable_compress_mem ? "AUTO" : "OFF",
+        "rehashr",
+        lmn_env.optimize_hash ? "ON" : "OFF");
+    fprintf(
+        f,
+        "%-9s: %-9s=%5s  %-8s=%6s  %-8s=%6s\n",
+        "",
+        "mem2id",
+        lmn_env.mem_enc ? "ON" : "OFF",
+        "mdelta",
+        lmn_env.delta_mem ? "ON" : "OFF",
+        "p.o.r.",
+        lmn_env.enable_por ? "ON" : "OFF");
+    fprintf(
+        f,
+        "%-9s: %-9s=%5s  %-8s=%6s  %-8s=%5s\n",
+        "",
+        "bsZcomp.",
+        lmn_env.z_compress ? "ON" : "OFF",
+        "bsDcomp.",
+        lmn_env.d_compress ? "ON" : "OFF",
+        "hashcomp.",
+        lmn_env.hash_compaction ? "ON" : "OFF");
+    fprintf(f, "%-9s: %-8s=%5s\n", "", "treecomp.", lmn_env.tree_compress ? "ON" : "OFF");
+    fprintf(f, "%-9s: %-9s=%5s  %-8s=%6s\n", "EXPLORER", "strtgy", expr, "heurstc", heuristic);
   }
   fprintf(f, "============================================================\n");
   fprintf(f, "\n");
@@ -620,23 +660,21 @@ void dump_profile_data(FILE *f) {
 
   tmp_total_cpu_time_main = 0.0;
   for (i = 0; i < lmn_prof.thread_num; i++) {
-    tmp_total_cpu_time_main += lmn_prof.end_cpu_time_main[i] -
-                               lmn_prof.start_cpu_time_main[i] +
+    tmp_total_cpu_time_main += lmn_prof.end_cpu_time_main[i] - lmn_prof.start_cpu_time_main[i] +
                                lmn_prof.thread_cpu_time_main[i];
   }
   tmp_total_cpu_time_main = tmp_total_cpu_time_main / lmn_prof.thread_num;
   tmp_total_cpu_time = lmn_prof.end_cpu_time - lmn_prof.start_cpu_time;
   tmp_total_wall_time = lmn_prof.end_wall_time - lmn_prof.start_wall_time;
-  tmp_total_wall_time_main =
-      lmn_prof.end_wall_time_main - lmn_prof.start_wall_time_main;
+  tmp_total_wall_time_main = lmn_prof.end_wall_time_main - lmn_prof.start_wall_time_main;
 
   if (lmn_prof.lv2) {
     tmp_total_mem =
         (double)(lmn_prof.lv2->state_space + lmn_prof.lv2->transition_space +
                  lmn_prof.lv2->binstr_space + lmn_prof.lv2->membrane_space +
                  lmn_prof.lv2->statespace_space);
-    total_hash_num = lmn_prof.lv2->mhash_num + lmn_prof.lv2->midhash_num -
-                     lmn_prof.lv2->rehashed_num;
+    total_hash_num =
+        lmn_prof.lv2->mhash_num + lmn_prof.lv2->midhash_num - lmn_prof.lv2->rehashed_num;
   } else {
     tmp_total_mem = 0;
     total_hash_num = 0;
@@ -645,30 +683,39 @@ void dump_profile_data(FILE *f) {
   if (lmn_env.benchmark) { /* データ収集用 */
     if (lmn_env.ltl) {
       fprintf(
-          f, "%lf\t%lf\t%lf\t%lu\t%lu\t%lu\t%lu\t%lf\t%lf\t%lf\t%lf\t%lf\t%s\n",
-          tmp_total_wall_time, tmp_total_wall_time_main,
-          tmp_total_cpu_time_main, lmn_prof.state_num_stored,
-          lmn_prof.lv2->transition_num, lmn_prof.state_num_end, total_hash_num,
+          f,
+          "%lf\t%lf\t%lf\t%lu\t%lu\t%lu\t%lu\t%lf\t%lf\t%lf\t%lf\t%lf\t%s\n",
+          tmp_total_wall_time,
+          tmp_total_wall_time_main,
+          tmp_total_cpu_time_main,
+          lmn_prof.state_num_stored,
+          lmn_prof.lv2->transition_num,
+          lmn_prof.state_num_end,
+          total_hash_num,
           tmp_total_mem / 1024 / 1024,
           (double)lmn_prof.lv2->state_space / 1024 / 1024,
-          lmn_env.enable_compress_mem
-              ? (double)lmn_prof.lv2->binstr_space / 1024 / 1024
-              : (double)lmn_prof.lv2->membrane_space / 1024 / 1024,
+          lmn_env.enable_compress_mem ? (double)lmn_prof.lv2->binstr_space / 1024 / 1024
+                                      : (double)lmn_prof.lv2->membrane_space / 1024 / 1024,
           (double)lmn_prof.lv2->transition_space / 1024 / 1024,
           (double)lmn_prof.lv2->statespace_space / 1024 / 1024,
           lmn_prof.found_err ? "FOUND" : "NOT FOUND");
     } else {
-      fprintf(f, "%lf\t%lf\t%lf\t%lu\t%lu\t%lu\t%lu\t%lf\t%lf\t%lf\t%lf\t%lf\n",
-              tmp_total_wall_time, tmp_total_wall_time_main,
-              tmp_total_cpu_time_main, lmn_prof.state_num_stored,
-              lmn_prof.lv2->transition_num, lmn_prof.state_num_end,
-              total_hash_num, tmp_total_mem / 1024 / 1024,
-              (double)lmn_prof.lv2->state_space / 1024 / 1024,
-              lmn_env.enable_compress_mem
-                  ? (double)lmn_prof.lv2->binstr_space / 1024 / 1024
-                  : (double)lmn_prof.lv2->membrane_space / 1024 / 1024,
-              (double)lmn_prof.lv2->transition_space / 1024 / 1024,
-              (double)lmn_prof.lv2->statespace_space / 1024 / 1024);
+      fprintf(
+          f,
+          "%lf\t%lf\t%lf\t%lu\t%lu\t%lu\t%lu\t%lf\t%lf\t%lf\t%lf\t%lf\n",
+          tmp_total_wall_time,
+          tmp_total_wall_time_main,
+          tmp_total_cpu_time_main,
+          lmn_prof.state_num_stored,
+          lmn_prof.lv2->transition_num,
+          lmn_prof.state_num_end,
+          total_hash_num,
+          tmp_total_mem / 1024 / 1024,
+          (double)lmn_prof.lv2->state_space / 1024 / 1024,
+          lmn_env.enable_compress_mem ? (double)lmn_prof.lv2->binstr_space / 1024 / 1024
+                                      : (double)lmn_prof.lv2->membrane_space / 1024 / 1024,
+          (double)lmn_prof.lv2->transition_space / 1024 / 1024,
+          (double)lmn_prof.lv2->statespace_space / 1024 / 1024);
     }
     return;
   }
@@ -678,31 +725,25 @@ void dump_profile_data(FILE *f) {
       dump_execution_stat(f);
     }
 
-    fprintf(f,
-            "\n== Static Profiler Report ==================================\n");
-    fprintf(f, "%-20s%8s  : %15.2lf\n", "Wall Time (sec)", "Total",
-            tmp_total_wall_time);
+    fprintf(f, "\n== Static Profiler Report ==================================\n");
+    fprintf(f, "%-20s%8s  : %15.2lf\n", "Wall Time (sec)", "Total", tmp_total_wall_time);
     fprintf(f, "%-20s%8s  : %15.2lf\n", " ", " Exec", tmp_total_wall_time_main);
-    fprintf(f,
-            "------------------------------------------------------------\n");
+    fprintf(f, "------------------------------------------------------------\n");
 
     if (!lmn_env.nd && lmn_env.enable_parallel) {
-      fprintf(f, "%-20s%8s  : %15.2lf\n", "CPU Usage (sec)", "Main",
-              tmp_total_cpu_time);
+      fprintf(f, "%-20s%8s  : %15.2lf\n", "CPU Usage (sec)", "Main", tmp_total_cpu_time);
       if (lmn_prof.thread_num == 1) {
         // child_thread == 1
-        fprintf(f, "%-20s%8s  : %15.2lf\n", " ", "Sub",
-                lmn_prof.thread_cpu_time_main[0]);
+        fprintf(f, "%-20s%8s  : %15.2lf\n", " ", "Sub", lmn_prof.thread_cpu_time_main[0]);
       } else {
         // child_thread > 1
 #ifdef HAVE_LIBRT
         // fprintf(f, "%-18s%10s  : %15.2lf\n", " ", "Exec Avg.",
         // tmp_total_cpu_time_main);
-        fprintf(f, "%-18s%10s  : %15s\n", " ", "---------",
-                "--------------------------");
+        fprintf(f, "%-18s%10s  : %15s\n", " ", "---------", "--------------------------");
         for (i = 0; i < lmn_prof.thread_num; i++) {
-          fprintf(f, "%-12s%13s%3u  : %15.2lf\n", " ", "Thread", i,
-                  lmn_prof.thread_cpu_time_main[i]);
+          fprintf(
+              f, "%-12s%13s%3u  : %15.2lf\n", " ", "Thread", i, lmn_prof.thread_cpu_time_main[i]);
         }
 #else
         // fprintf(f, "%-18s%10s  : %15.2lf\n", "CPU Usage (sec)", "Exec Avg."
@@ -710,30 +751,33 @@ void dump_profile_data(FILE *f) {
 #endif
       }
     } else if (lmn_prof.thread_num == 1) {
-      fprintf(f, "%-20s%8s  : %15.2lf\n", "CPU Usage (sec)", "Total",
-              tmp_total_cpu_time);
-      fprintf(f, "%-20s%8s  : %15.2lf\n", " ", " Exec",
-              tmp_total_cpu_time_main);
+      fprintf(f, "%-20s%8s  : %15.2lf\n", "CPU Usage (sec)", "Total", tmp_total_cpu_time);
+      fprintf(f, "%-20s%8s  : %15.2lf\n", " ", " Exec", tmp_total_cpu_time_main);
     } else {
 #ifdef HAVE_LIBRT
-      fprintf(f, "%-18s%10s  : %15.2lf\n", "CPU Usage (sec)", "Exec Avg.",
-              tmp_total_cpu_time_main);
-      fprintf(f, "%-18s%10s  : %15s\n", " ", "---------",
-              "-------------------");
+      fprintf(f, "%-18s%10s  : %15.2lf\n", "CPU Usage (sec)", "Exec Avg.", tmp_total_cpu_time_main);
+      fprintf(f, "%-18s%10s  : %15s\n", " ", "---------", "-------------------");
       for (i = 0; i < lmn_prof.thread_num; i++) {
-        fprintf(f, "%-12s%13s%3u  : %15.2lf\n", " ", "Thread", i,
-                lmn_prof.end_cpu_time_main[i] -
-                    lmn_prof.start_cpu_time_main[i]);
+        fprintf(
+            f,
+            "%-12s%13s%3u  : %15.2lf\n",
+            " ",
+            "Thread",
+            i,
+            lmn_prof.end_cpu_time_main[i] - lmn_prof.start_cpu_time_main[i]);
       }
 #else
-      fprintf(f, "%-18s%10s  : %15.2lf\n", "CPU Usage (sec)", "Exec Avg.",
-              tmp_total_cpu_time_main / lmn_prof.thread_num);
+      fprintf(
+          f,
+          "%-18s%10s  : %15.2lf\n",
+          "CPU Usage (sec)",
+          "Exec Avg.",
+          tmp_total_cpu_time_main / lmn_prof.thread_num);
 #endif
     }
 
     if (!lmn_env.nd) {
-      fprintf(f,
-              "============================================================\n");
+      fprintf(f, "============================================================\n");
       if (lmn_env.profile_level >= 2) {
         RuleProfiler *r_total, *r_others;
         struct Vector v;
@@ -746,11 +790,16 @@ void dump_profile_data(FILE *f) {
         st_get_entries_value(lmn_prof.prules, &v);
         v.sort(comp_prule_id_greater_f);
 
+        fprintf(f, "\n== On-The-Fly Analyzer Report ==============================\n");
         fprintf(
             f,
-            "\n== On-The-Fly Analyzer Report ==============================\n");
-        fprintf(f, "%4s %8s : %9s %9s %9s %12s", "[id]", "[name]", "[# Tr.]",
-                "[# Ap.]", "[# Ba.]", "[CPU U.(usec)]\n");
+            "%4s %8s : %9s %9s %9s %12s",
+            "[id]",
+            "[name]",
+            "[# Tr.]",
+            "[# Ap.]",
+            "[# Ba.]",
+            "[CPU U.(usec)]\n");
 
         for (i = 0; i < v.get_num(); i++) {
           RuleProfiler *rp = (RuleProfiler *)v.get(i);
@@ -762,10 +811,15 @@ void dump_profile_data(FILE *f) {
               r_others->backtrack += rp->backtrack;
             } else {
               /* 一応ナノセックまで取得できるが, 精度は環境依存 */
-              fprintf(f, "@%-3d %8.8s : %9lu %9lu %9lu %13.1lf\n",
-                      rp->ref_rs_id, lmn_id_to_name(rp->src->name),
-                      rp->trial.called_num, rp->apply, rp->backtrack,
-                      rp->trial.total_time / 1e-6);
+              fprintf(
+                  f,
+                  "@%-3d %8.8s : %9lu %9lu %9lu %13.1lf\n",
+                  rp->ref_rs_id,
+                  lmn_id_to_name(rp->src->name),
+                  rp->trial.called_num,
+                  rp->apply,
+                  rp->backtrack,
+                  rp->trial.total_time / 1e-6);
             }
             r_total->apply += rp->apply;
             r_total->backtrack += rp->backtrack;
@@ -773,107 +827,122 @@ void dump_profile_data(FILE *f) {
             r_total->trial.total_time += rp->trial.total_time;
           }
         }
-        fprintf(f, "%4s %8s : %9lu %9lu %9lu %13.1lf\n", " - ", "OTHERS",
-                r_others->trial.called_num, 0UL, r_others->backtrack,
-                r_others->trial.total_time / 1e-6);
         fprintf(
             f,
-            "------------------------------------------------------------\n");
-        fprintf(f, "%4s %8s : %9lu %9lu %9lu %13.1lf\n", " - ", "Total",
-                r_total->trial.called_num, r_total->apply, r_total->backtrack,
-                r_total->trial.total_time / 1e-6);
+            "%4s %8s : %9lu %9lu %9lu %13.1lf\n",
+            " - ",
+            "OTHERS",
+            r_others->trial.called_num,
+            0UL,
+            r_others->backtrack,
+            r_others->trial.total_time / 1e-6);
+        fprintf(f, "------------------------------------------------------------\n");
+        fprintf(
+            f,
+            "%4s %8s : %9lu %9lu %9lu %13.1lf\n",
+            " - ",
+            "Total",
+            r_total->trial.called_num,
+            r_total->apply,
+            r_total->backtrack,
+            r_total->trial.total_time / 1e-6);
 
         v.destroy();
         rule_profiler_free(r_others);
-        fprintf(
-            f,
-            "============================================================\n");
+        fprintf(f, "============================================================\n");
       }
     } else if (lmn_env.profile_level < 2) {
-      fprintf(f,
-              "------------------------------------------------------------\n");
-      fprintf(f, "%-20s%8s  : %15lu\n", "# of States", "Stored",
-              lmn_prof.state_num_stored);
-      fprintf(f, "%-18s%10s  : %15lu\n", " ", "Terminates",
-              lmn_prof.state_num_end);
+      fprintf(f, "------------------------------------------------------------\n");
+      fprintf(f, "%-20s%8s  : %15lu\n", "# of States", "Stored", lmn_prof.state_num_stored);
+      fprintf(f, "%-18s%10s  : %15lu\n", " ", "Terminates", lmn_prof.state_num_end);
       if (lmn_prof.has_property) {
-        fprintf(f, "%-1s%27s  : %15s\n", " ", "Accepting Cycle / Error",
-                lmn_prof.found_err ? "FOUND" : "NOT FOUND");
+        fprintf(
+            f,
+            "%-1s%27s  : %15s\n",
+            " ",
+            "Accepting Cycle / Error",
+            lmn_prof.found_err ? "FOUND" : "NOT FOUND");
       }
-      fprintf(f,
-              "============================================================\n");
+      fprintf(f, "============================================================\n");
     } else {
-      fprintf(f,
-              "------------------------------------------------------------\n");
-      fprintf(f, "%-20s%8s  : %15lu\n", "# of States", "Stored",
-              lmn_prof.state_num_stored);
-      fprintf(f, "%-18s%10s  : %15lu\n", " ", "Successors",
-              lmn_prof.lv2->transition_num);
-      fprintf(f, "%-18s%10s  : %15lu\n", " ", "Terminates",
-              lmn_prof.state_num_end);
+      fprintf(f, "------------------------------------------------------------\n");
+      fprintf(f, "%-20s%8s  : %15lu\n", "# of States", "Stored", lmn_prof.state_num_stored);
+      fprintf(f, "%-18s%10s  : %15lu\n", " ", "Successors", lmn_prof.lv2->transition_num);
+      fprintf(f, "%-18s%10s  : %15lu\n", " ", "Terminates", lmn_prof.state_num_end);
       if (lmn_prof.has_property) {
-        fprintf(f, "%-10s%18s  : %15lu\n", " ", "Accepted",
-                lmn_prof.lv2->accept_num);
-        fprintf(f, "%-10s%18s  : %15lu\n", " ", "Invalid Ends",
-                lmn_prof.lv2->invalid_end_num);
-        fprintf(f, "%-10s%18s  : %15s\n", " ", "Accepting Cycle",
-                lmn_prof.found_err ? "FOUND" : "NOT FOUND");
+        fprintf(f, "%-10s%18s  : %15lu\n", " ", "Accepted", lmn_prof.lv2->accept_num);
+        fprintf(f, "%-10s%18s  : %15lu\n", " ", "Invalid Ends", lmn_prof.lv2->invalid_end_num);
+        fprintf(
+            f,
+            "%-10s%18s  : %15s\n",
+            " ",
+            "Accepting Cycle",
+            lmn_prof.found_err ? "FOUND" : "NOT FOUND");
       }
-      fprintf(f,
-              "------------------------------------------------------------\n");
-      fprintf(f, "%-20s%8s  : %15lu\n", "# of Hash Values", "Total",
-              total_hash_num);
-      fprintf(f, "%-6s%22s  : %15lu\n", " ", "Default -  M_Hash",
-              lmn_prof.lv2->mhash_num);
-      fprintf(f, "%-6s%22s  : %15lu\n", " ", "ReHashed -  M_Hash",
-              lmn_prof.lv2->rehashed_num);
-      fprintf(f, "%-6s%22s  : %15lu\n", " ", "Optimized - BS_Hash",
-              lmn_prof.lv2->midhash_num);
-      fprintf(f,
-              "------------------------------------------------------------\n");
-      fprintf(f, "%-16s%12s    %12s %12s\n", "Memory Usage ", "",
-              "[Amount(MB)]", "[Per State(B)]");
-      fprintf(f, "%-10s%18s  : %12.2lf %12.2lf\n", " ", "Total",
-              tmp_total_mem / 1024 / 1024,
-              tmp_total_mem / lmn_prof.state_num_stored);
-      fprintf(f, "%-10s%18s  : %12.2lf %12.2lf\n", " ", "State Descriptors",
-              (double)lmn_prof.lv2->state_space / 1024 / 1024,
-              (double)lmn_prof.lv2->state_space / lmn_prof.state_num_stored);
+      fprintf(f, "------------------------------------------------------------\n");
+      fprintf(f, "%-20s%8s  : %15lu\n", "# of Hash Values", "Total", total_hash_num);
+      fprintf(f, "%-6s%22s  : %15lu\n", " ", "Default -  M_Hash", lmn_prof.lv2->mhash_num);
+      fprintf(f, "%-6s%22s  : %15lu\n", " ", "ReHashed -  M_Hash", lmn_prof.lv2->rehashed_num);
+      fprintf(f, "%-6s%22s  : %15lu\n", " ", "Optimized - BS_Hash", lmn_prof.lv2->midhash_num);
+      fprintf(f, "------------------------------------------------------------\n");
+      fprintf(f, "%-16s%12s    %12s %12s\n", "Memory Usage ", "", "[Amount(MB)]", "[Per State(B)]");
+      fprintf(
+          f,
+          "%-10s%18s  : %12.2lf %12.2lf\n",
+          " ",
+          "Total",
+          tmp_total_mem / 1024 / 1024,
+          tmp_total_mem / lmn_prof.state_num_stored);
+      fprintf(
+          f,
+          "%-10s%18s  : %12.2lf %12.2lf\n",
+          " ",
+          "State Descriptors",
+          (double)lmn_prof.lv2->state_space / 1024 / 1024,
+          (double)lmn_prof.lv2->state_space / lmn_prof.state_num_stored);
       if (lmn_env.enable_compress_mem) {
-        fprintf(f, "%-10s%18s  : %12.2lf %12.2lf\n", " ", "Binary Strings",
-                (double)lmn_prof.lv2->binstr_space / 1024 / 1024,
-                (double)lmn_prof.lv2->binstr_space / lmn_prof.state_num_stored);
+        fprintf(
+            f,
+            "%-10s%18s  : %12.2lf %12.2lf\n",
+            " ",
+            "Binary Strings",
+            (double)lmn_prof.lv2->binstr_space / 1024 / 1024,
+            (double)lmn_prof.lv2->binstr_space / lmn_prof.state_num_stored);
       } else {
-        fprintf(f, "%-10s%18s  : %12.2lf %12.2lf\n", " ", "State Membranes",
-                (double)lmn_prof.lv2->membrane_space / 1024 / 1024,
-                (double)lmn_prof.lv2->membrane_space /
-                    lmn_prof.state_num_stored);
+        fprintf(
+            f,
+            "%-10s%18s  : %12.2lf %12.2lf\n",
+            " ",
+            "State Membranes",
+            (double)lmn_prof.lv2->membrane_space / 1024 / 1024,
+            (double)lmn_prof.lv2->membrane_space / lmn_prof.state_num_stored);
       }
-      fprintf(f, "%-10s%18s  : %12.2lf %12.2lf\n", " ", "Transitions",
-              (double)lmn_prof.lv2->transition_space / 1024 / 1024,
-              (double)lmn_prof.lv2->transition_space /
-                  lmn_prof.state_num_stored);
-      fprintf(f, "%-10s%18s  : %12.2lf %12.2lf\n", " ", "StateSpace",
-              (double)lmn_prof.lv2->statespace_space / 1024 / 1024,
-              (double)lmn_prof.lv2->statespace_space /
-                  lmn_prof.state_num_stored);
-      fprintf(f,
-              "============================================================\n");
+      fprintf(
+          f,
+          "%-10s%18s  : %12.2lf %12.2lf\n",
+          " ",
+          "Transitions",
+          (double)lmn_prof.lv2->transition_space / 1024 / 1024,
+          (double)lmn_prof.lv2->transition_space / lmn_prof.state_num_stored);
+      fprintf(
+          f,
+          "%-10s%18s  : %12.2lf %12.2lf\n",
+          " ",
+          "StateSpace",
+          (double)lmn_prof.lv2->statespace_space / 1024 / 1024,
+          (double)lmn_prof.lv2->statespace_space / lmn_prof.state_num_stored);
+      fprintf(f, "============================================================\n");
 
       if (lmn_env.profile_level >= 3) {
         MCProfiler3 total;
         double total_time;
 
-        for (i = 0; i < lmn_prof.thread_num;
-             i++) { /* 計測したactive時間をidle時間へ変換 */
+        for (i = 0; i < lmn_prof.thread_num; i++) { /* 計測したactive時間をidle時間へ変換 */
           lmn_prof.lv3[i].times[PROFILE_TIME__ACTIVE_FOR_IDLE_PROF].total_time =
               lmn_prof.thread_num == 1
                   ? 0
-                  : lmn_prof.end_cpu_time_main[i] -
-                        lmn_prof.start_cpu_time_main[i] -
-                        lmn_prof.lv3[i]
-                            .times[PROFILE_TIME__ACTIVE_FOR_IDLE_PROF]
-                            .total_time;
+                  : lmn_prof.end_cpu_time_main[i] - lmn_prof.start_cpu_time_main[i] -
+                        lmn_prof.lv3[i].times[PROFILE_TIME__ACTIVE_FOR_IDLE_PROF].total_time;
           /* startからfinishまで回したCPU時間から指定したactiveブロックに費やしたCPU時間を引けばidle時間になる.
            * (一見冗長に見えるが, spin-waitが費やしたCPU時間を除くことができる.)
            */
@@ -886,75 +955,68 @@ void dump_profile_data(FILE *f) {
         total.times[PROFILE_TIME__TRANS_RULE].total_time -=
             total.times[PROFILE_TIME__STATE_COPY_IN_COMMIT].total_time;
 
-        fprintf(
-            f,
-            "\n== On-The-Fly Analyzer Report ==============================\n");
-        fprintf(
-            f,
-            "-- Time Performance ----------------------------------------\n");
+        fprintf(f, "\n== On-The-Fly Analyzer Report ==============================\n");
+        fprintf(f, "-- Time Performance ----------------------------------------\n");
         fprintf(f, "%-24s %10s%10s%8s\n", "", "[calls]", "[total]", "[%]");
         for (i = 0; i < ARY_SIZEOF(total.times); i++) {
           total_time += total.times[i].total_time;
-          fprintf(f, "%-24s:%10lu%10.2lf%8.1lf\n", profile_time_id_to_name(i),
-                  total.times[i].called_num, total.times[i].total_time,
-                  100.0 * total.times[i].total_time / tmp_total_cpu_time_main);
+          fprintf(
+              f,
+              "%-24s:%10lu%10.2lf%8.1lf\n",
+              profile_time_id_to_name(i),
+              total.times[i].called_num,
+              total.times[i].total_time,
+              100.0 * total.times[i].total_time / tmp_total_cpu_time_main);
         }
-        fprintf(f, "%-24s:%10s%10.2lf%8.1lf\n", "other", "",
-                (tmp_total_cpu_time_main - total_time),
-                (double)(tmp_total_cpu_time_main - total_time) /
-                    tmp_total_cpu_time_main * 100.0);
         fprintf(
             f,
-            "------------------------------------------------------------\n");
-        fprintf(f, "%-24s:%10s%10.2lf%8.1lf\n",
-                lmn_prof.thread_num > 2 ? "CPU Usage AVG. (sec)"
-                                        : "CPU Usage (sec)",
-                "", tmp_total_cpu_time_main, 100.0);
+            "%-24s:%10s%10.2lf%8.1lf\n",
+            "other",
+            "",
+            (tmp_total_cpu_time_main - total_time),
+            (double)(tmp_total_cpu_time_main - total_time) / tmp_total_cpu_time_main * 100.0);
+        fprintf(f, "------------------------------------------------------------\n");
         fprintf(
             f,
-            "------------------------------------------------------------\n");
+            "%-24s:%10s%10.2lf%8.1lf\n",
+            lmn_prof.thread_num > 2 ? "CPU Usage AVG. (sec)" : "CPU Usage (sec)",
+            "",
+            tmp_total_cpu_time_main,
+            100.0);
+        fprintf(f, "------------------------------------------------------------\n");
         fprintf(f, "\n");
-        fprintf(
-            f,
-            "-- Memory Performance --------------------------------------\n");
-        fprintf(f, "%-24s  %10s %10s %10s\n", " ", "[Fin.(MB)]", "[Peak(MB)]",
-                "[Peak Num]");
+        fprintf(f, "-- Memory Performance --------------------------------------\n");
+        fprintf(f, "%-24s  %10s %10s %10s\n", " ", "[Fin.(MB)]", "[Peak(MB)]", "[Peak Num]");
         for (i = 0; i < ARY_SIZEOF(total.spaces); i++) {
           if (lmn_prof.thread_num >= 2) {
-            fprintf(f, "%-24s: %10.2lf\n", profile_space_id_to_name(i),
-                    (double)total.spaces[i].space.cur / 1024 / 1024);
+            fprintf(
+                f,
+                "%-24s: %10.2lf\n",
+                profile_space_id_to_name(i),
+                (double)total.spaces[i].space.cur / 1024 / 1024);
           } else {
-            fprintf(f, "%-24s: %10.2lf %10.2lf %10lu\n",
-                    profile_space_id_to_name(i),
-                    (double)total.spaces[i].space.cur / 1024 / 1024,
-                    (double)total.spaces[i].space.peak / 1024 / 1024,
-                    total.spaces[i].num.peak);
+            fprintf(
+                f,
+                "%-24s: %10.2lf %10.2lf %10lu\n",
+                profile_space_id_to_name(i),
+                (double)total.spaces[i].space.cur / 1024 / 1024,
+                (double)total.spaces[i].space.peak / 1024 / 1024,
+                total.spaces[i].num.peak);
           }
         }
-        fprintf(
-            f,
-            "------------------------------------------------------------\n");
+        fprintf(f, "------------------------------------------------------------\n");
         fprintf(f, "\n");
         if (lmn_env.tree_compress) {
-          fprintf(
-              f,
-              "-- Tree Compressin Info ------------------------------------\n");
+          fprintf(f, "-- Tree Compressin Info ------------------------------------\n");
           lmn_bscomp_tree_profile(f);
-          fprintf(
-              f,
-              "------------------------------------------------------------\n");
+          fprintf(f, "------------------------------------------------------------\n");
           fprintf(f, "\n");
         }
-        fprintf(
-            f,
-            "-- State Management System (Open Hashing) ------------------\n");
+        fprintf(f, "-- State Management System (Open Hashing) ------------------\n");
         for (i = 0; i < ARY_SIZEOF(total.counters); i++) {
-          fprintf(f, "%-24s:%10lu\n", profile_counter_id_to_name(i),
-                  total.counters[i]);
+          fprintf(f, "%-24s:%10lu\n", profile_counter_id_to_name(i), total.counters[i]);
         }
-        fprintf(
-            f,
-            "============================================================\n");
+        fprintf(f, "============================================================\n");
       }
     }
   }
@@ -963,78 +1025,30 @@ void dump_profile_data(FILE *f) {
 static const char *profile_time_id_to_name(int type) {
   const char *ret;
   switch (type) {
-  case PROFILE_TIME__ACTIVE_FOR_IDLE_PROF:
-    ret = "idle";
-    break;
-  case PROFILE_TIME__STATE_HASH_MEM:
-    ret = "state mhash";
-    break;
-  case PROFILE_TIME__STATE_HASH_MID:
-    ret = "state binstr hash";
-    break;
-  case PROFILE_TIME__STATE_COMPARE_MEQ:
-    ret = "state mem compare";
-    break;
-  case PROFILE_TIME__STATE_COMPARE_MID:
-    ret = "state binstr compare";
-    break;
-  case PROFILE_TIME__STATE_COPY:
-    ret = "state copy";
-    break;
-  case PROFILE_TIME__STATE_COPY_IN_COMMIT:
-    ret = "state copy  (in COMMIT)";
-    break;
-  case PROFILE_TIME__TRANS_RULE:
-    ret = "expand rule (ex COMMIT)";
-    break;
-  case PROFILE_TIME__MENC_DUMP:
-    ret = "menc dump";
-    break;
-  case PROFILE_TIME__MENC_RESTORE:
-    ret = "menc restore";
-    break;
-  case PROFILE_TIME__MENC_CANONICAL:
-    ret = "menc canonical";
-    break;
-  case PROFILE_TIME__DMEM_COMMIT:
-    ret = "dmem commit";
-    break;
-  case PROFILE_TIME__DMEM_REVERT:
-    ret = "dmem revert";
-    break;
-  case PROFILE_TIME__CYCLE_EXPLORE:
-    ret = "cycle explore";
-    break;
-  case PROFILE_TIME__Z_COMPRESS:
-    ret = "z compress";
-    break;
-  case PROFILE_TIME__Z_UNCOMPRESS:
-    ret = "z uncompress";
-    break;
-  case PROFILE_TIME__D_COMPRESS:
-    ret = "d compress";
-    break;
-  case PROFILE_TIME__D_UNCOMPRESS:
-    ret = "d uncompress";
-    break;
-  case PROFILE_TIME__TREE_COMPRESS:
-    ret = "tree compress";
-    break;
-  case PROFILE_TIME__TREE_UNCOMPRESS:
-    ret = "tree uncompress";
-    break;
-  case PROFILE_TIME__COST_UPDATE:
-    ret = "cost update";
-    break;
-  case PROFILE_TIME__LOCK:
-    ret = "lock";
-    break;
-  case PROFILE_TIME__REPAIR:
-    ret = "repair phase";
-    break;
-  default:
-    ret = "unknown";
-    break;
+    case PROFILE_TIME__ACTIVE_FOR_IDLE_PROF: ret = "idle"; break;
+    case PROFILE_TIME__STATE_HASH_MEM: ret = "state mhash"; break;
+    case PROFILE_TIME__STATE_HASH_MID: ret = "state binstr hash"; break;
+    case PROFILE_TIME__STATE_COMPARE_MEQ: ret = "state mem compare"; break;
+    case PROFILE_TIME__STATE_COMPARE_MID: ret = "state binstr compare"; break;
+    case PROFILE_TIME__STATE_COPY: ret = "state copy"; break;
+    case PROFILE_TIME__STATE_COPY_IN_COMMIT: ret = "state copy  (in COMMIT)"; break;
+    case PROFILE_TIME__TRANS_RULE: ret = "expand rule (ex COMMIT)"; break;
+    case PROFILE_TIME__MENC_DUMP: ret = "menc dump"; break;
+    case PROFILE_TIME__MENC_RESTORE: ret = "menc restore"; break;
+    case PROFILE_TIME__MENC_CANONICAL: ret = "menc canonical"; break;
+    case PROFILE_TIME__DMEM_COMMIT: ret = "dmem commit"; break;
+    case PROFILE_TIME__DMEM_REVERT: ret = "dmem revert"; break;
+    case PROFILE_TIME__CYCLE_EXPLORE: ret = "cycle explore"; break;
+    case PROFILE_TIME__Z_COMPRESS: ret = "z compress"; break;
+    case PROFILE_TIME__Z_UNCOMPRESS: ret = "z uncompress"; break;
+    case PROFILE_TIME__D_COMPRESS: ret = "d compress"; break;
+    case PROFILE_TIME__D_UNCOMPRESS: ret = "d uncompress"; break;
+    case PROFILE_TIME__TREE_COMPRESS: ret = "tree compress"; break;
+    case PROFILE_TIME__TREE_UNCOMPRESS: ret = "tree uncompress"; break;
+    case PROFILE_TIME__COST_UPDATE: ret = "cost update"; break;
+    case PROFILE_TIME__LOCK: ret = "lock"; break;
+    case PROFILE_TIME__REPAIR: ret = "repair phase"; break;
+    default: ret = "unknown"; break;
   }
   return ret;
 }
@@ -1042,24 +1056,12 @@ static const char *profile_time_id_to_name(int type) {
 static const char *profile_counter_id_to_name(int type) {
   const char *ret;
   switch (type) {
-  case PROFILE_COUNT__HASH_CONFLICT_ENTRY:
-    ret = "conflict hash entry";
-    break;
-  case PROFILE_COUNT__HASH_CONFLICT_HASHV:
-    ret = "conflict hash value";
-    break;
-  case PROFILE_COUNT__HASH_RESIZE_TRIAL:
-    ret = "trial tbl resize";
-    break;
-  case PROFILE_COUNT__HASH_RESIZE_APPLY:
-    ret = "apply tbl resize";
-    break;
-  case PROFILE_COUNT__HASH_FAIL_TO_INSERT:
-    ret = "fail to insert tbl";
-    break;
-  default:
-    ret = "unknown";
-    break;
+    case PROFILE_COUNT__HASH_CONFLICT_ENTRY: ret = "conflict hash entry"; break;
+    case PROFILE_COUNT__HASH_CONFLICT_HASHV: ret = "conflict hash value"; break;
+    case PROFILE_COUNT__HASH_RESIZE_TRIAL: ret = "trial tbl resize"; break;
+    case PROFILE_COUNT__HASH_RESIZE_APPLY: ret = "apply tbl resize"; break;
+    case PROFILE_COUNT__HASH_FAIL_TO_INSERT: ret = "fail to insert tbl"; break;
+    default: ret = "unknown"; break;
   }
   return ret;
 }
@@ -1067,33 +1069,15 @@ static const char *profile_counter_id_to_name(int type) {
 static const char *profile_space_id_to_name(int type) {
   const char *ret;
   switch (type) {
-  case PROFILE_SPACE__TOTAL:
-    ret = "total";
-    break;
-  case PROFILE_SPACE__STATE_BINSTR:
-    ret = "state binstr";
-    break;
-  case PROFILE_SPACE__STATE_OBJECT:
-    ret = "state object";
-    break;
-  case PROFILE_SPACE__TRANS_OBJECT:
-    ret = "trans object";
-    break;
-  case PROFILE_SPACE__STATE_MEMBRANE:
-    ret = "state membrane";
-    break;
-  case PROFILE_SPACE__OPEN_LIST:
-    ret = "open list";
-    break;
-  case PROFILE_SPACE__REDUCED_MEMSET:
-    ret = "reduced State Mem";
-    break;
-  case PROFILE_SPACE__REDUCED_BINSTR:
-    ret = "reduced State BinStr";
-    break;
-  default:
-    ret = "unknown";
-    break;
+    case PROFILE_SPACE__TOTAL: ret = "total"; break;
+    case PROFILE_SPACE__STATE_BINSTR: ret = "state binstr"; break;
+    case PROFILE_SPACE__STATE_OBJECT: ret = "state object"; break;
+    case PROFILE_SPACE__TRANS_OBJECT: ret = "trans object"; break;
+    case PROFILE_SPACE__STATE_MEMBRANE: ret = "state membrane"; break;
+    case PROFILE_SPACE__OPEN_LIST: ret = "open list"; break;
+    case PROFILE_SPACE__REDUCED_MEMSET: ret = "reduced State Mem"; break;
+    case PROFILE_SPACE__REDUCED_BINSTR: ret = "reduced State BinStr"; break;
+    default: ret = "unknown"; break;
   }
   return ret;
 }

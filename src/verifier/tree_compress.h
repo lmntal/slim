@@ -69,12 +69,11 @@ struct TreeDatabase {
   uint64_t node_count;
   size_t mask;
   void clear();
-  TreeNodeElement tree_find_or_put_rec(TreeNodeStr* str, int start, int end, BOOL *found);
+  TreeNodeElement tree_find_or_put_rec(TreeNodeStr *str, int start, int end, BOOL *found);
   TreeNodeID tree_find_or_put(LmnBinStrRef bs, BOOL *found);
-  BOOL table_find_or_put(TreeNodeElement left,
-                       TreeNodeElement right, TreeNodeID *ref);
+  BOOL table_find_or_put(TreeNodeElement left, TreeNodeElement right, TreeNodeID *ref);
   LmnBinStrRef get(TreeNodeID ref, int len);
-  void get_rec(TreeNodeElement elem, int start, int end, TreeNodeStr* dst);
+  void get_rec(TreeNodeElement elem, int start, int end, TreeNodeStr *dst);
   uint64_t space(void);
 };
 
@@ -83,7 +82,7 @@ struct TreeNode {
   TreeNodeElement right;
 };
 
-#define tree_db_node_count(db) (db->node_count)
+#define tree_db_node_count(db)   (db->node_count)
 #define tree_db_string_count(db) (db->string_count)
 
 /* @} */

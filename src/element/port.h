@@ -100,8 +100,7 @@ LmnPortRef lmn_make_output_string_port();
 /* 出力文字列ポートに書き込まれた文字列のコピー返す。 */
 LmnStringRef lmn_port_output_string(LmnPortRef ostr_port);
 
-LmnPortRef lmn_make_port(LmnPortDirection dir, LmnPortType type,
-                         const char *name);
+LmnPortRef lmn_make_port(LmnPortDirection dir, LmnPortType type, const char *name);
 void lmn_port_free(LmnPortRef port);
 void lmn_port_close(LmnPortRef port);
 BOOL lmn_port_closed(LmnPortRef port_atom);

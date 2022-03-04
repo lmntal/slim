@@ -45,10 +45,10 @@
  * @{
  */
 
-#include "../lmntal.h"
 #include <vector>
-#include "util.h"
 
+#include "../lmntal.h"
+#include "util.h"
 
 typedef struct Vector *PVector;
 typedef LmnWord vec_data_t;
@@ -56,15 +56,17 @@ typedef LmnWord vec_data_t;
 class Vector {
   LmnWord *tbl;
   unsigned int num, cap;
-public:
+
+ public:
   Vector();
   Vector(unsigned int init_size);
-  template <class T> Vector(const std::vector<T> &v);
+  template<class T>
+  Vector(const std::vector<T> &v);
   Vector(const Vector &vec);
   ~Vector();
   void init(unsigned int init_size);
   void extend();
-  unsigned int get_num() const{
+  unsigned int get_num() const {
     return this->num;
   }
   void set_num(unsigned int n);
@@ -75,7 +77,7 @@ public:
   void push(LmnWord keyp);
   void reduce();
   LmnWord pop();
-  //pop Nth element
+  // pop Nth element
   LmnWord pop_n(unsigned int n);
   LmnWord peek() const;
   void set(unsigned int index, LmnWord keyp);
@@ -85,7 +87,7 @@ public:
     return (this->tbl[index]);
   }
   LmnWord last() const;
-/* pop all elements from vec */
+  /* pop all elements from vec */
   void clear();
   void destroy();
   unsigned long space_inner() const;
@@ -95,26 +97,27 @@ public:
   void sort(int (*compare)(const void *, const void *));
 };
 
-template <class T> Vector::Vector(const std::vector<T> &v){
-  static_assert(std::is_scalar<T>::value && sizeof(T) <= sizeof(LmnWord),
-              "vector elements must be scalars.");
+template<class T>
+Vector::Vector(const std::vector<T> &v) {
+  static_assert(
+      std::is_scalar<T>::value && sizeof(T) <= sizeof(LmnWord), "vector elements must be scalars.");
   LMN_ASSERT(v.size() > 0);
   this->init(v.size());
   memcpy(this->tbl, v.data(), sizeof(T) * v.size());
   this->num = v.size();
 }
 
-//namespace slim {
-//namespace element {
-//template <class T> std::vector<T> make_vector(Vector *v) {
-//  if (!v)
-//    return std::vector<T>();
-//  return std::vector<T>(
-//      raw_pointer_iterator<T>(reinterpret_cast<T *>(v->tbl)),
-//      raw_pointer_iterator<T>(reinterpret_cast<T *>(v->tbl + v->num)));
-//}
-//}
-//}
+// namespace slim {
+// namespace element {
+// template <class T> std::vector<T> make_vector(Vector *v) {
+//   if (!v)
+//     return std::vector<T>();
+//   return std::vector<T>(
+//       raw_pointer_iterator<T>(reinterpret_cast<T *>(v->tbl)),
+//       raw_pointer_iterator<T>(reinterpret_cast<T *>(v->tbl + v->num)));
+// }
+// }
+// }
 
 /* @} */
 

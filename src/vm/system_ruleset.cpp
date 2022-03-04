@@ -47,8 +47,7 @@
 /* prototypes */
 
 /* delete out proxies connected each other */
-static BOOL delete_redundant_outproxies(LmnReactCxtRef rc, LmnMembraneRef mem,
-                                        LmnRuleRef rule) {
+static BOOL delete_redundant_outproxies(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule) {
   AtomListEntryRef ent;
   LmnSymbolAtomRef o0;
 
@@ -95,8 +94,7 @@ static BOOL delete_redundant_outproxies(LmnReactCxtRef rc, LmnMembraneRef mem,
 }
 
 /* delete in proxies connected each other */
-static BOOL delete_redundant_inproxies(LmnReactCxtRef rc, LmnMembraneRef mem,
-                                       LmnRuleRef rule) {
+static BOOL delete_redundant_inproxies(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule) {
   AtomListEntryRef ent;
   LmnSymbolAtomRef o0;
 
@@ -116,8 +114,7 @@ static BOOL delete_redundant_inproxies(LmnReactCxtRef rc, LmnMembraneRef mem,
                 return FALSE;
               i1 = (LmnSymbolAtomRef)i0->get_link(1);
               if (i1->get_functor() == LMN_IN_PROXY_FUNCTOR) {
-                LmnSymbolAtomRef o1 =
-                    (LmnSymbolAtomRef)i1->get_link(0);
+                LmnSymbolAtomRef o1 = (LmnSymbolAtomRef)i1->get_link(0);
                 ent->remove(o0);
                 ent->remove(o1);
                 lmn_delete_atom(o0);

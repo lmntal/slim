@@ -38,10 +38,12 @@
  */
 
 #include "jni_lmntal.h"
-#include "loader/loader.h"
-#include "vm/vm.h"
-#include "verifier/verifier.h"
+
 #include <ctype.h>
+
+#include "loader/loader.h"
+#include "verifier/verifier.h"
+#include "vm/vm.h"
 
 #define JNI_CYGPATH                "/usr/bin/cygpath"
 #define JNI_LMNTAL_JAR_REL_PATH    "/bin/lmntal.jar"
@@ -57,8 +59,7 @@ static JavaVM *jvm;
 #endif
 
 #ifdef __CYGWIN__
-char* run_cygpath(const char* option, const char* arg)
-{
+char *run_cygpath(const char *option, const char *arg) {
   int size;
   char *cmd, *result, buf[128];
   FILE *fp;
@@ -70,8 +71,8 @@ char* run_cygpath(const char* option, const char* arg)
   } else {
     size = 128;
     result = LMN_CALLOC(char, size);
-    while((fgets(buf, 128, fp)) != NULL){
-      size+=128;
+    while ((fgets(buf, 128, fp)) != NULL) {
+      size += 128;
       result = LMN_REALLOC(char, result, size);
       strcat(result, buf);
     }
@@ -83,8 +84,7 @@ char* run_cygpath(const char* option, const char* arg)
 #endif
 
 #ifdef HAVE_JNI_H
-static void jni_load_context_lmntal()
-{
+static void jni_load_context_lmntal() {
   // TODO: マクロ関数をいくつか用意してもっとスマートに記述できないだろうか
   /**
    * 標準入出力操作系
@@ -94,12 +94,14 @@ static void jni_load_context_lmntal()
     return;
   }
 
-  if (NULL == (jc_lmntal.m_System_setOut = (*env)->GetStaticMethodID(env, jc_lmntal.c_System, "setOut", "(Ljava/io/PrintStream;)V"))) {
+  if (NULL == (jc_lmntal.m_System_setOut = (*env)->GetStaticMethodID(
+                   env, jc_lmntal.c_System, "setOut", "(Ljava/io/PrintStream;)V"))) {
     (*env)->FatalError(env, "GetStaticMethodID : System.setOut(Ljava/io/PrintStream;)V");
     return;
   }
 
-  if (NULL == (jc_lmntal.f_System_out = (*env)->GetStaticFieldID(env, jc_lmntal.c_System, "out", "Ljava/io/PrintStream;"))) {
+  if (NULL == (jc_lmntal.f_System_out = (*env)->GetStaticFieldID(
+                   env, jc_lmntal.c_System, "out", "Ljava/io/PrintStream;"))) {
     (*env)->FatalError(env, "GetStaticFieldID : System.out");
     return;
   }
@@ -109,27 +111,32 @@ static void jni_load_context_lmntal()
     return;
   }
 
-  if (NULL == (jc_lmntal.m_PrintStream_constructor = (*env)->GetMethodID(env, jc_lmntal.c_PrintStream, "<init>", "(Ljava/io/OutputStream;)V"))) {
+  if (NULL == (jc_lmntal.m_PrintStream_constructor = (*env)->GetMethodID(
+                   env, jc_lmntal.c_PrintStream, "<init>", "(Ljava/io/OutputStream;)V"))) {
     (*env)->FatalError(env, "GetStaticMethodID : PrintStream.PrintStream()");
     return;
   }
 
-  if (NULL == (jc_lmntal.c_ByteArrayOutputStream = (*env)->FindClass(env, "Ljava/io/ByteArrayOutputStream;"))) {
+  if (NULL == (jc_lmntal.c_ByteArrayOutputStream =
+                   (*env)->FindClass(env, "Ljava/io/ByteArrayOutputStream;"))) {
     (*env)->FatalError(env, "FindClass : java.io.ByteArrayOutputStream");
     return;
   }
 
-  if (NULL == (jc_lmntal.m_ByteArrayOutputStream_constructor = (*env)->GetMethodID(env, jc_lmntal.c_ByteArrayOutputStream, "<init>", "()V"))) {
+  if (NULL == (jc_lmntal.m_ByteArrayOutputStream_constructor =
+                   (*env)->GetMethodID(env, jc_lmntal.c_ByteArrayOutputStream, "<init>", "()V"))) {
     (*env)->FatalError(env, "GetStaticMethodID : ByteArrayOutputStream.ByteArrayOutputStream()");
     return;
   }
 
-  if (NULL == (jc_lmntal.m_ByteArrayOutputStream_toString = (*env)->GetMethodID(env, jc_lmntal.c_ByteArrayOutputStream, "toString", "()Ljava/lang/String;"))) {
+  if (NULL == (jc_lmntal.m_ByteArrayOutputStream_toString = (*env)->GetMethodID(
+                   env, jc_lmntal.c_ByteArrayOutputStream, "toString", "()Ljava/lang/String;"))) {
     (*env)->FatalError(env, "GetStaticMethodID : ByteArrayOutputStream.toString()");
     return;
   }
 
-  if (NULL == (jc_lmntal.m_ByteArrayOutputStream_reset = (*env)->GetMethodID(env, jc_lmntal.c_ByteArrayOutputStream, "reset", "()V"))) {
+  if (NULL == (jc_lmntal.m_ByteArrayOutputStream_reset =
+                   (*env)->GetMethodID(env, jc_lmntal.c_ByteArrayOutputStream, "reset", "()V"))) {
     (*env)->FatalError(env, "GetStaticMethodID : ByteArrayOutputStream.reset()");
     return;
   }
@@ -142,37 +149,44 @@ static void jni_load_context_lmntal()
     return;
   }
 
-  if (NULL == (jc_lmntal.f_Env_slimcode = (*env)->GetStaticFieldID(env, jc_lmntal.c_Env, "slimcode", "Z"))) {
+  if (NULL == (jc_lmntal.f_Env_slimcode =
+                   (*env)->GetStaticFieldID(env, jc_lmntal.c_Env, "slimcode", "Z"))) {
     (*env)->FatalError(env, "GetStaticFieldID : Env.slimcode");
     return;
   }
 
-  if (NULL == (jc_lmntal.f_Env_compileonly = (*env)->GetStaticFieldID(env, jc_lmntal.c_Env, "compileonly", "Z"))) {
+  if (NULL == (jc_lmntal.f_Env_compileonly =
+                   (*env)->GetStaticFieldID(env, jc_lmntal.c_Env, "compileonly", "Z"))) {
     (*env)->FatalError(env, "GetStaticFieldID : Env.compileonly");
     return;
   }
 
-  if (NULL == (jc_lmntal.f_Env_fInterpret = (*env)->GetStaticFieldID(env, jc_lmntal.c_Env, "fInterpret", "Z"))) {
+  if (NULL == (jc_lmntal.f_Env_fInterpret =
+                   (*env)->GetStaticFieldID(env, jc_lmntal.c_Env, "fInterpret", "Z"))) {
     (*env)->FatalError(env, "GetStaticFieldID : Env.fInterpret");
     return;
   }
 
-  if (NULL == (jc_lmntal.f_Env_findatom2 = (*env)->GetStaticFieldID(env, jc_lmntal.c_Env, "findatom2", "Z"))) {
+  if (NULL == (jc_lmntal.f_Env_findatom2 =
+                   (*env)->GetStaticFieldID(env, jc_lmntal.c_Env, "findatom2", "Z"))) {
     (*env)->FatalError(env, "GetStaticFieldID : Env.findatom2");
     return;
   }
 
-  if (NULL == (jc_lmntal.f_Env_fGUI = (*env)->GetStaticFieldID(env, jc_lmntal.c_Env, "fGUI", "Z"))) {
+  if (NULL ==
+      (jc_lmntal.f_Env_fGUI = (*env)->GetStaticFieldID(env, jc_lmntal.c_Env, "fGUI", "Z"))) {
     (*env)->FatalError(env, "GetStaticFieldID : Env.fGUI");
     return;
   }
 
-  if (NULL == (jc_lmntal.f_Env_shuffle = (*env)->GetStaticFieldID(env, jc_lmntal.c_Env, "shuffle", "I"))) {
+  if (NULL ==
+      (jc_lmntal.f_Env_shuffle = (*env)->GetStaticFieldID(env, jc_lmntal.c_Env, "shuffle", "I"))) {
     (*env)->FatalError(env, "GetStaticFieldID : Env.shuffle");
     return;
   }
 
-  if (NULL == (jc_lmntal.f_Env_nErrors = (*env)->GetStaticFieldID(env, jc_lmntal.c_Env, "nErrors", "I"))) {
+  if (NULL ==
+      (jc_lmntal.f_Env_nErrors = (*env)->GetStaticFieldID(env, jc_lmntal.c_Env, "nErrors", "I"))) {
     (*env)->FatalError(env, "GetStaticFieldID : Env.nErrors");
     return;
   }
@@ -185,7 +199,8 @@ static void jni_load_context_lmntal()
     return;
   }
 
-  if (NULL == (jc_lmntal.m_FrontEnd_run = (*env)->GetStaticMethodID(env, jc_lmntal.c_FrontEnd, "run", "(Ljava/io/Reader;)V"))) {
+  if (NULL == (jc_lmntal.m_FrontEnd_run = (*env)->GetStaticMethodID(
+                   env, jc_lmntal.c_FrontEnd, "run", "(Ljava/io/Reader;)V"))) {
     (*env)->FatalError(env, "GetStaticMethodID : FrontEnd.run(Ljava/io/Reader;)V");
     return;
   }
@@ -195,15 +210,15 @@ static void jni_load_context_lmntal()
     return;
   }
 
-  if (NULL == (jc_lmntal.m_StringReader_constructor = (*env)->GetMethodID(env, jc_lmntal.c_StringReader, "<init>", "(Ljava/lang/String;)V"))) {
+  if (NULL == (jc_lmntal.m_StringReader_constructor = (*env)->GetMethodID(
+                   env, jc_lmntal.c_StringReader, "<init>", "(Ljava/lang/String;)V"))) {
     (*env)->FatalError(env, "GetStaticMethodID : StringReader.StringReader(java.lang.String)");
     return;
   }
 }
 #endif
 
-static BOOL jni_initialize_lmntal()
-{
+static BOOL jni_initialize_lmntal() {
 #ifdef HAVE_JNI_H
   JavaVMInitArgs vm_args;
   JavaVMOption options[4];
@@ -257,21 +272,22 @@ static BOOL jni_initialize_lmntal()
   /**
    * JavaVMを初期化、起動する
    */
-  JNI_CreateJavaVM(&jvm, (void **) &env, (void *) &vm_args);
+  JNI_CreateJavaVM(&jvm, (void **)&env, (void *)&vm_args);
 
   LMN_FREE(options[1].optionString);
   LMN_FREE(options[0].optionString);
 
   jni_load_context_lmntal();
 
-
   /**
    * JavaVMの標準入出力を付け替える
    * @see http://blog.goo.ne.jp/xmldtp/e/05e8acb765b41d8a5da238386c8161b6
    */
   jc_lmntal.oldOut = (*env)->GetStaticObjectField(env, jc_lmntal.c_System, jc_lmntal.f_System_out);
-  jc_lmntal.byteArray = (*env)->NewObject(env, jc_lmntal.c_ByteArrayOutputStream, jc_lmntal.m_ByteArrayOutputStream_constructor);
-  jobject newOut = (*env)->NewObject(env, jc_lmntal.c_PrintStream, jc_lmntal.m_PrintStream_constructor, jc_lmntal.byteArray);
+  jc_lmntal.byteArray = (*env)->NewObject(
+      env, jc_lmntal.c_ByteArrayOutputStream, jc_lmntal.m_ByteArrayOutputStream_constructor);
+  jobject newOut = (*env)->NewObject(
+      env, jc_lmntal.c_PrintStream, jc_lmntal.m_PrintStream_constructor, jc_lmntal.byteArray);
   (*env)->CallStaticVoidMethod(env, jc_lmntal.c_System, jc_lmntal.m_System_setOut, newOut);
 
   /**
@@ -295,13 +311,13 @@ static BOOL jni_initialize_lmntal()
   return TRUE;
 }
 
-static void jni_finalize_lmntal()
-{
+static void jni_finalize_lmntal() {
 #ifdef USE_JNI
   /**
    * JavaVMの標準入出力をもとに戻す
    */
-  (*env)->CallStaticVoidMethod(env, jc_lmntal.c_System, jc_lmntal.m_System_setOut, jc_lmntal.oldOut);
+  (*env)->CallStaticVoidMethod(
+      env, jc_lmntal.c_System, jc_lmntal.m_System_setOut, jc_lmntal.oldOut);
 
   /**
    * JavaVMの解放
@@ -310,21 +326,26 @@ static void jni_finalize_lmntal()
 #endif
 }
 
-static BOOL jni_lmntal_compile(char **result, const char *code)
-{
+static BOOL jni_lmntal_compile(char **result, const char *code) {
 #ifdef USE_JNI
   /**
    * ■lmntal処理系を実行する
    */
-  jstring line = (*env)->NewStringUTF(env, code); // lmntalコードのString型
-  jobject stringReader = (*env)->NewObject(env, jc_lmntal.c_StringReader, jc_lmntal.m_StringReader_constructor, line); // String to StringReader
-  (*env)->CallStaticObjectMethod(env, jc_lmntal.c_FrontEnd, jc_lmntal.m_FrontEnd_run, stringReader); // run
+  jstring line = (*env)->NewStringUTF(env, code);  // lmntalコードのString型
+  jobject stringReader = (*env)->NewObject(
+      env,
+      jc_lmntal.c_StringReader,
+      jc_lmntal.m_StringReader_constructor,
+      line);  // String to StringReader
+  (*env)->CallStaticObjectMethod(
+      env, jc_lmntal.c_FrontEnd, jc_lmntal.m_FrontEnd_run, stringReader);  // run
 
   /* get compiled slimcode from pseudo output */
-  jstring slimcode = (*env)->CallObjectMethod(env, jc_lmntal.byteArray, jc_lmntal.m_ByteArrayOutputStream_toString);
+  jstring slimcode = (*env)->CallObjectMethod(
+      env, jc_lmntal.byteArray, jc_lmntal.m_ByteArrayOutputStream_toString);
   (*env)->CallObjectMethod(env, jc_lmntal.byteArray, jc_lmntal.m_ByteArrayOutputStream_reset);
   const char *r = (*env)->GetStringUTFChars(env, slimcode, NULL);
-  *result = (char*)LMN_CALLOC(char, strlen(r)+1);
+  *result = (char *)LMN_CALLOC(char, strlen(r) + 1);
   strcpy(*result, r);
   (*env)->ReleaseStringUTFChars(env, slimcode, r);
 
@@ -346,8 +367,7 @@ static BOOL jni_lmntal_compile(char **result, const char *code)
 
 using file_ptr = std::unique_ptr<FILE, decltype(&fclose)>;
 
-static void _run(file_ptr fp)
-{
+static void _run(file_ptr fp) {
   Vector *start_rulesets;
   LmnRuleSetRef t;
 
@@ -357,7 +377,7 @@ static void _run(file_ptr fp)
   start_rulesets->push((vec_data_t)t);
 
   /* まともな入力ファイルが無ければ抜ける */
-  if(start_rulesets->is_empty()){
+  if (start_rulesets->is_empty()) {
     fprintf(stderr, "bad script.\n");
     return;
   }
@@ -371,8 +391,7 @@ static void _run(file_ptr fp)
   delete start_rulesets;
 }
 
-static void show_help()
-{
+static void show_help() {
   printf("Commands:\n");
   printf("  :nd            - Set nondeterministic execution mode ON, print all execution paths\n");
   printf("  :nd_result     - Set nondeterministic execution mode ON, print only deadlock paths\n");
@@ -387,15 +406,14 @@ static void show_help()
   printf("  :notrace       - Set trace mode OFF\n");
   printf("  :showproxy     - Show proxy atoms\n");
   printf("  :hideproxy     - Hide proxy atoms\n");
-  //printf("  :O[0-3]        - Set optimize level\n");
+  // printf("  :O[0-3]        - Set optimize level\n");
   printf("  :s[0-3]        - Set shuffle level\n");
   printf("  :h             - help\n");
   printf("  :q             - quit\n");
   printf("\n");
 }
 
-void run_jni_interactive()
-{
+void run_jni_interactive() {
   BOOL is_processing = TRUE;
   char line[1024];
   char *result = NULL;
@@ -415,7 +433,8 @@ void run_jni_interactive()
       line[strlen(line) - 1] = '\0';
     } else {
       /* 入力ストリームをクリアする */
-      while(getchar() != '\r');
+      while (getchar() != '\r')
+        ;
     }
 
     // TODO: showrulesオプション
@@ -426,7 +445,6 @@ void run_jni_interactive()
         /* 終了 */
         is_processing = FALSE;
         printf("halt...\n");
-
       } else if (line[1] == 'h' && strlen(line) == 2) {
         /* ヘルプ表示 */
         show_help();
@@ -445,10 +463,10 @@ void run_jni_interactive()
         if (isdigit(line[2])) {
           int s = line[2] - '0';
           jc_lmntal.shuffle_level = s <= JNI_ENV_SHUFFLE_MAX ? s : JNI_ENV_SHUFFLE_MAX;
-          (*env)->SetStaticIntField(env, jc_lmntal.c_Env, jc_lmntal.f_Env_shuffle, jc_lmntal.shuffle_level);
+          (*env)->SetStaticIntField(
+              env, jc_lmntal.c_Env, jc_lmntal.f_Env_shuffle, jc_lmntal.shuffle_level);
           printf("set optimize level %d \n", jc_lmntal.shuffle_level);
         }
-
       } else if (strcmp(&line[1], "gui") == 0) {
         /* guiモードON */
         /* guiモードでも、fInterpret=TRUE */
@@ -457,38 +475,32 @@ void run_jni_interactive()
         (*env)->SetStaticBooleanField(env, jc_lmntal.c_Env, jc_lmntal.f_Env_compileonly, JNI_FALSE);
         (*env)->SetStaticBooleanField(env, jc_lmntal.c_Env, jc_lmntal.f_Env_fGUI, JNI_TRUE);
         printf("gui mode on\n");
-
       } else if (strcmp(&line[1], "nogui") == 0) {
         /* guiモードOFF */
         (*env)->SetStaticBooleanField(env, jc_lmntal.c_Env, jc_lmntal.f_Env_slimcode, JNI_TRUE);
         (*env)->SetStaticBooleanField(env, jc_lmntal.c_Env, jc_lmntal.f_Env_compileonly, JNI_TRUE);
         (*env)->SetStaticBooleanField(env, jc_lmntal.c_Env, jc_lmntal.f_Env_fGUI, JNI_FALSE);
         printf("gui mode off\n");
-
       } else if (strcmp(&line[1], "nd") == 0) {
         /* ndモード、全実行パス表示 */
         lmn_env.nd = TRUE;
         printf("nd mode on\n");
-
       } else if (strcmp(&line[1], "nd_result") == 0) {
         /* ndモード、デッドロックパスのみ表示 */
         lmn_env.nd = TRUE;
         lmn_env.nd_result = TRUE;
         printf("nd_result mode on\n");
-
       } else if (strcmp(&line[1], "nd_dump") == 0) {
         /* ndモード、全状態逐次表示 */
         lmn_env.nd = TRUE;
         lmn_env.nd_dump = TRUE;
         printf("nd_dump mode on\n");
-
       } else if (strcmp(&line[1], "nond") == 0) {
         /* ndモード全解除 */
         lmn_env.nd = FALSE;
         lmn_env.nd_dump = FALSE;
         lmn_env.nd_result = FALSE;
         printf("nd(nd_dump,nd_result) mode off\n");
-
       } else if (strcmp(&line[1], "clear") == 0) {
         if (lmn_env.nd) {
           if (lmn_env.nd_remain) {
@@ -507,7 +519,6 @@ void run_jni_interactive()
             printf("can't clear atoms in normal(=not remain) mode (normal)\n");
           }
         }
-
       } else if (strcmp(&line[1], "remain") == 0) {
         /* remainモードON */
         if (lmn_env.nd) {
@@ -517,7 +528,6 @@ void run_jni_interactive()
           lmn_env.normal_remain = TRUE;
           printf("remain mode on (normal)\n");
         }
-
       } else if (strcmp(&line[1], "noremain") == 0) {
         /* remainモードON */
         if (lmn_env.nd) {
@@ -534,31 +544,29 @@ void run_jni_interactive()
         /* traceモードON */
         lmn_env.trace = TRUE;
         printf("trace mode on\n");
-
       } else if (strcmp(&line[1], "notrace") == 0) {
         /* traceモードOFF */
         lmn_env.trace = FALSE;
         printf("trace mode off\n");
-
       } else if (strcmp(&line[1], "showproxy") == 0) {
         /* プロキシ表示ON */
         lmn_env.show_proxy = TRUE;
         printf("show_proxy mode on\n");
-
       } else if (strcmp(&line[1], "hideproxy") == 0) {
         /* プロキシ表示OFF */
         lmn_env.show_proxy = FALSE;
         printf("show_proxy mode off\n");
       } else {
-        printf("unknown command: %s\n",line);
+        printf("unknown command: %s\n", line);
       }
     } else if (jni_lmntal_compile(&result, line)) {
-      auto tmpfp = file_ptr(tmpfile(), fclose); /* il_parserはFILE*しか受け取らない(?)ので、一時ファイルで対応する */
+      auto tmpfp = file_ptr(
+          tmpfile(), fclose); /* il_parserはFILE*しか受け取らない(?)ので、一時ファイルで対応する */
       if (tmpfp == NULL) {
-        is_processing = FALSE; // 終了
+        is_processing = FALSE;  // 終了
       } else {
         fprintf(tmpfp.get(), "%s", result);
-        rewind(tmpfp.get()); // ポインタを先頭に
+        rewind(tmpfp.get());  // ポインタを先頭に
         _run(std::move(tmpfp));
       }
 

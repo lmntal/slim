@@ -40,15 +40,17 @@
 /** @author Masato Gocho
  *  utilities for parallel/concurrent execution */
 #include "mc_worker.h"
+
+#include <limits.h>
+
 #include "mc.h"
 #include "mc_explorer.h"
 #include "mc_generator.h"
 #include "runtime_status.h"
 #include "state.h"
 #include "state.hpp"
-#include "statespace.h"
 #include "state_dumper.h"
-#include <limits.h>
+#include "statespace.h"
 
 namespace c14 = slim::element;
 
@@ -111,7 +113,9 @@ LmnWorker *lmn_worker_make(StateSpaceRef ss, unsigned long id, BOOL flags) {
   return w;
 }
 
-void lmn_worker_free(LmnWorker *w) { delete (w); }
+void lmn_worker_free(LmnWorker *w) {
+  delete (w);
+}
 
 /* Verification start */
 static void lmn_worker_start(void *arg) {
@@ -163,17 +167,18 @@ static void worker_TLS_init(unsigned int inc_id) {
   lmn_thread_set_CPU_affinity(inc_id);
 }
 
-static void worker_TLS_finalize() { env_my_TLS_finalize(); }
+static void worker_TLS_finalize() {
+  env_my_TLS_finalize();
+}
 
 /** -----------------------------------------------------------
  *  Worker Group
  */
-LmnWorkerGroup::LmnWorkerGroup(){
+LmnWorkerGroup::LmnWorkerGroup() {
   workers = NULL;
   ewlock = NULL;
 }
-LmnWorkerGroup::LmnWorkerGroup(AutomataRef a, Vector *psyms, int thread_num){
-
+LmnWorkerGroup::LmnWorkerGroup(AutomataRef a, Vector *psyms, int thread_num) {
   BOOL flags;
   /* worker pool の構築と初期設定 */
   workers_unset_terminated();
@@ -204,7 +209,7 @@ LmnWorkerGroup::LmnWorkerGroup(AutomataRef a, Vector *psyms, int thread_num){
   workers_gen(workers_get_entried_num(), a, psyms, flags);
   ring_alignment();
 }
-LmnWorkerGroup::~LmnWorkerGroup(){
+LmnWorkerGroup::~LmnWorkerGroup() {
 #ifndef OPT_WORKERS_SYNC
   lmn_barrier_destroy(workers_synchronizer());
 #endif
@@ -215,156 +220,156 @@ LmnWorkerGroup::~LmnWorkerGroup(){
   }
 }
 
-LmnWorkerGroup::LmnWorkerGroup(const LmnWorkerGroup &lwg){
-  //copy soshi
+LmnWorkerGroup::LmnWorkerGroup(const LmnWorkerGroup &lwg) {
+  // copy soshi
 }
 
-volatile BOOL LmnWorkerGroup::workers_are_exit(){
+volatile BOOL LmnWorkerGroup::workers_are_exit() {
   return mc_exit;
 }
 
-void LmnWorkerGroup::workers_set_exit(){
+void LmnWorkerGroup::workers_set_exit() {
   mc_exit = TRUE;
 }
 
-void LmnWorkerGroup::workers_unset_exit(){
+void LmnWorkerGroup::workers_unset_exit() {
   mc_exit = FALSE;
 }
 
-BOOL LmnWorkerGroup::workers_have_error(){
+BOOL LmnWorkerGroup::workers_have_error() {
   return error_exist;
 }
 
-void LmnWorkerGroup::workers_found_error(){
+void LmnWorkerGroup::workers_found_error() {
   error_exist = TRUE;
 }
 
-void LmnWorkerGroup::workers_unfound_error(){
+void LmnWorkerGroup::workers_unfound_error() {
   error_exist = FALSE;
 }
 
-BOOL LmnWorkerGroup::workers_get_do_palgorithm(){
+BOOL LmnWorkerGroup::workers_get_do_palgorithm() {
   return do_para_algo;
 }
 
-void LmnWorkerGroup::workers_set_do_palgorithm(){
+void LmnWorkerGroup::workers_set_do_palgorithm() {
   do_para_algo = TRUE;
 }
 
-void LmnWorkerGroup::workers_unset_do_palgorithm(){
+void LmnWorkerGroup::workers_unset_do_palgorithm() {
   do_para_algo = FALSE;
 }
 
-State *LmnWorkerGroup::workers_get_opt_end_state(){
+State *LmnWorkerGroup::workers_get_opt_end_state() {
   return opt_end_state;
 }
 
-void LmnWorkerGroup::workers_set_opt_end_state(State *s){
+void LmnWorkerGroup::workers_set_opt_end_state(State *s) {
   opt_end_state = s;
 }
 
-EWLock *LmnWorkerGroup::workers_get_ewlock(){
+EWLock *LmnWorkerGroup::workers_get_ewlock() {
   return ewlock;
 }
 
-void LmnWorkerGroup::workers_set_ewlock(EWLock *e){
+void LmnWorkerGroup::workers_set_ewlock(EWLock *e) {
   ewlock = e;
 }
 
-void LmnWorkerGroup::workers_opt_end_lock(){
+void LmnWorkerGroup::workers_opt_end_lock() {
   ewlock_acquire_enter(ewlock, 0U);
 }
 
-void LmnWorkerGroup::workers_opt_end_unlock(){
+void LmnWorkerGroup::workers_opt_end_unlock() {
   ewlock_release_enter(ewlock, 0U);
 }
 
-void LmnWorkerGroup::workers_state_lock(mtx_data_t id){
+void LmnWorkerGroup::workers_state_lock(mtx_data_t id) {
   ewlock_acquire_write(ewlock, id);
 }
 
-void LmnWorkerGroup::workers_state_unlock(mtx_data_t id){
+void LmnWorkerGroup::workers_state_unlock(mtx_data_t id) {
   ewlock_release_write(ewlock, id);
 }
 
-BOOL LmnWorkerGroup::workers_are_terminated(){
+BOOL LmnWorkerGroup::workers_are_terminated() {
   return terminated;
 }
 
-void LmnWorkerGroup::workers_set_terminated(){
+void LmnWorkerGroup::workers_set_terminated() {
   terminated = TRUE;
 }
 
-void LmnWorkerGroup::workers_unset_terminated(){
+void LmnWorkerGroup::workers_unset_terminated() {
   terminated = FALSE;
 }
 
-volatile BOOL LmnWorkerGroup::workers_are_stop(){
+volatile BOOL LmnWorkerGroup::workers_are_stop() {
   return stop;
 }
 
-void LmnWorkerGroup::workers_set_stop(){
+void LmnWorkerGroup::workers_set_stop() {
   stop = TRUE;
 }
 
-void LmnWorkerGroup::workers_unset_stop(){
+void LmnWorkerGroup::workers_unset_stop() {
   stop = FALSE;
 }
 
-BOOL LmnWorkerGroup::workers_are_do_search(){
+BOOL LmnWorkerGroup::workers_are_do_search() {
   return do_search;
 }
 
-void LmnWorkerGroup::workers_set_do_search(){
+void LmnWorkerGroup::workers_set_do_search() {
   do_search = TRUE;
 }
 
-void LmnWorkerGroup::workers_unset_do_search(){
+void LmnWorkerGroup::workers_unset_do_search() {
   do_search = FALSE;
 }
 
-BOOL LmnWorkerGroup::workers_are_do_exhaustive(){
+BOOL LmnWorkerGroup::workers_are_do_exhaustive() {
   return do_exhaustive;
 }
 
-void LmnWorkerGroup::workers_set_do_exhaustive(){
+void LmnWorkerGroup::workers_set_do_exhaustive() {
   do_exhaustive = TRUE;
 }
 
-void LmnWorkerGroup::workers_unset_do_exhaustive(){
+void LmnWorkerGroup::workers_unset_do_exhaustive() {
   do_exhaustive = FALSE;
 }
 
-unsigned int LmnWorkerGroup::workers_get_entried_num(){
+unsigned int LmnWorkerGroup::workers_get_entried_num() {
   return worker_num;
 }
 
-void LmnWorkerGroup::workers_set_entried_num(unsigned int i){
+void LmnWorkerGroup::workers_set_entried_num(unsigned int i) {
   worker_num = i;
 }
-#ifdef OPT_WORKERS_SYNC 
-volatile unsigned int LmnWorkerGroup::workers_synchronizer(){
+#ifdef OPT_WORKERS_SYNC
+volatile unsigned int LmnWorkerGroup::workers_synchronizer() {
   return synchronizer;
 }
 
-void LmnWorkerGroup::workers_set_synchronizer(unsigned int i){
+void LmnWorkerGroup::workers_set_synchronizer(unsigned int i) {
   synchronizer = i;
 }
 #else
-lmn_barrier_t *LmnWorkerGroup::workers_synchronizer(){
+lmn_barrier_t *LmnWorkerGroup::workers_synchronizer() {
   return &synchronizer;
 }
 
-void LmnWorkerGroup::workers_set_synchronizer(lmn_barrier_t t){
+void LmnWorkerGroup::workers_set_synchronizer(lmn_barrier_t t) {
   synchronizer = t;
 }
 #endif
 
-LmnWorker *LmnWorkerGroup::workers_get_entry(unsigned int i){
+LmnWorker *LmnWorkerGroup::workers_get_entry(unsigned int i) {
   return workers[i];
 }
 
-void LmnWorkerGroup::workers_set_entry(unsigned int i, LmnWorker *w){
+void LmnWorkerGroup::workers_set_entry(unsigned int i, LmnWorker *w) {
   workers[i] = w;
 }
 
@@ -391,7 +396,11 @@ void LmnWorkerGroup::workers_free(unsigned int worker_num) {
   LMN_FREE(workers);
 }
 
-void LmnWorkerGroup::workers_gen(unsigned int worker_num, AutomataRef a, Vector *psyms, BOOL flags) {
+void LmnWorkerGroup::workers_gen(
+    unsigned int worker_num,
+    AutomataRef a,
+    Vector *psyms,
+    BOOL flags) {
   unsigned int i;
   workers = LMN_NALLOC(LmnWorker *, worker_num);
   for (i = 0; i < worker_num; i++) {
@@ -399,15 +408,13 @@ void LmnWorkerGroup::workers_gen(unsigned int worker_num, AutomataRef a, Vector 
     StateSpaceRef states;
 
     if (i == 0) {
-      states = worker_num > 1
-                   ? new StateSpace(worker_num, a, psyms)
-                   : new StateSpace(a, psyms);
+      states = worker_num > 1 ? new StateSpace(worker_num, a, psyms) : new StateSpace(a, psyms);
     } else {
       states = worker_states(get_worker(0));
     }
 
     w = lmn_worker_make(states, i, flags);
-    workers_set_entry(i,w);
+    workers_set_entry(i, w);
     w->group = this;
 
     if (workers_are_do_search()) {
@@ -421,15 +428,12 @@ void LmnWorkerGroup::workers_gen(unsigned int worker_num, AutomataRef a, Vector 
   }
 }
 
-
-
-
 /* 実行時オプションが増えたため,
  * Worker起動以前のこの時点で,
  * 組み合わせをサポートしていないオプションの整合性を取るなどを行う.
  * 実際に使用するオプションフラグを, lmn_env構造体からworker構造体にコピーする.
- */ 
-BOOL LmnWorkerGroup::flags_init(AutomataRef property_a) {// this should be in LmnEnv class
+ */
+BOOL LmnWorkerGroup::flags_init(AutomataRef property_a) {  // this should be in LmnEnv class
   BOOL flags = 0x00U;
 
   /* === 1. 出力フォーマット === */
@@ -453,14 +457,14 @@ BOOL LmnWorkerGroup::flags_init(AutomataRef property_a) {// this should be in Lm
   if (lmn_env.core_num >= 2) {
     if (lmn_env.sp_dump_format == INCREMENTAL) {
 #ifndef DEBUG
-      lmn_fatal("unsupported combination incremental state dumper & "
-                "parallelization.");
+      lmn_fatal(
+          "unsupported combination incremental state dumper & "
+          "parallelization.");
 #endif
     }
 #ifdef PROFILE
     if (lmn_env.optimize_hash_old) {
-      lmn_fatal(
-          "unsupported combination optimized hash (old) & parallelization.");
+      lmn_fatal("unsupported combination optimized hash (old) & parallelization.");
     }
 #endif
   }
@@ -552,26 +556,24 @@ BOOL LmnWorkerGroup::flags_init(AutomataRef property_a) {// this should be in Lm
     }
 
     if (lmn_env.delta_mem || lmn_env.mem_enc || !lmn_env.enable_compress_mem) {
-      lmn_fatal("under constructions: delta/canonical membrane methods for "
-                "hyper graph model");
+      lmn_fatal(
+          "under constructions: delta/canonical membrane methods for "
+          "hyper graph model");
     }
   }
 
   return flags;
 }
 
-
-
 /* スレッドの起動 (MT-unsafe) */
-void LmnWorkerGroup::launch_lmn_workers(){
+void LmnWorkerGroup::launch_lmn_workers() {
   unsigned long i, core_num;
 
   core_num = workers_get_entried_num();
   for (i = 0; i < core_num; i++) { /** start */
     if (i == LMN_PRIMARY_ID)
       continue;
-    lmn_thread_create(&worker_pid(get_worker(i)), lmn_worker_start,
-                      get_worker(i));
+    lmn_thread_create(&worker_pid(get_worker(i)), lmn_worker_start, get_worker(i));
   }
   if (lmn_env.profile_level >= 1)
     profile_start_exec();
@@ -584,16 +586,16 @@ void LmnWorkerGroup::launch_lmn_workers(){
     if (i == LMN_PRIMARY_ID)
       continue;
     lmn_thread_join(worker_pid(get_worker(i)));
-  }	
+  }
 }
 
-#define TERMINATION_CONDITION(W)                                               \
-  (worker_is_idle(W) && worker_is_white(W) && worker_check(w))
+#define TERMINATION_CONDITION(W) (worker_is_idle(W) && worker_is_white(W) && worker_check(w))
 
 /* 全てのWorkerオブジェクトが実行を停止している場合に真を返す. */
 BOOL lmn_workers_termination_detection_for_rings(LmnWorker *root) {
-  //when someone calls this function, the group which root is included is unknown
-  //so this function should be a LmnWorker member method. But after finding the group, LmnWorkerGroup should handle.
+  // when someone calls this function, the group which root is included is unknown
+  // so this function should be a LmnWorker member method. But after finding the group,
+  // LmnWorkerGroup should handle.
   /** 概要:
    *  LmnWorkerは論理的に輪を形成しており, フラグチェックを輪に沿って実施する.
    *  is_activeかどうかをチェックする他にis_stealer, is_whiteもチェックする.
@@ -612,10 +614,10 @@ BOOL lmn_workers_termination_detection_for_rings(LmnWorker *root) {
    * Worker(id==LMN_PRIMARY_ID)が判定した検知結果をグローバル変数に書込む.
    * 他のWorkerはグローバル変数に書き込まれた終了フラグを読み出す. */
   return worker_group(root)->termination_detection(worker_id(root));
-  //this is all.
+  // this is all.
 }
 
-BOOL LmnWorkerGroup::termination_detection(int id){
+BOOL LmnWorkerGroup::termination_detection(int id) {
   if (id == LMN_PRIMARY_ID && !workers_are_terminated()) {
     int i, n;
     BOOL ret;
@@ -650,9 +652,9 @@ void lmn_workers_synchronization(LmnWorker *me, void (*func)(LmnWorker *w)) {
   worker_group(me)->lmn_workers_synchronization(worker_id(me), (*func));
 }
 
-void LmnWorkerGroup::lmn_workers_synchronization(unsigned long id, void (*func)(LmnWorker *w)){
+void LmnWorkerGroup::lmn_workers_synchronization(unsigned long id, void (*func)(LmnWorker *w)) {
   lmn_barrier_wait(workers_synchronizer());
-  if(id == LMN_PRIMARY_ID && func){
+  if (id == LMN_PRIMARY_ID && func) {
     (*func)(get_worker(id));
   }
   lmn_barrier_wait(workers_synchronizer());
@@ -666,18 +668,18 @@ LmnWorker *LmnWorkerGroup::workers_get_my_worker() {
 }
 
 /* WorkerPoolのid番目のLmnWorkerオブジェクトを返す */
-LmnWorker *LmnWorkerGroup::get_worker(unsigned long id){
+LmnWorker *LmnWorkerGroup::get_worker(unsigned long id) {
   if (id >= workers_get_entried_num()) {
     return NULL;
   } else {
     return workers_get_entry(id);
-  }  
+  }
 }
 
-void LmnWorkerGroup::ring_alignment(){
-  unsigned int i,n;
+void LmnWorkerGroup::ring_alignment() {
+  unsigned int i, n;
   n = workers_get_entried_num();
-  for(i = 0; i < n; i++){
+  for (i = 0; i < n; i++) {
     get_worker(i)->next = get_worker((i + 1) % n);
   }
 }
@@ -710,8 +712,7 @@ static void worker_set_env(LmnWorker *w) {
     } else if (lmn_env.enable_mcndfs) {
       mcndfs_env_set(w);
 #endif
-    } else if (lmn_env.enable_bledge || worker_use_lsync(w) ||
-               worker_on_mc_bfs(w)) {
+    } else if (lmn_env.enable_bledge || worker_use_lsync(w) || worker_on_mc_bfs(w)) {
       bledge_env_set(w);
     }
 
@@ -737,9 +738,9 @@ static void worker_set_env(LmnWorker *w) {
   }
 }
 
-LmnCost LmnWorkerGroup::opt_cost(){
+LmnCost LmnWorkerGroup::opt_cost() {
   State *opt = workers_get_opt_end_state();
-  if(!opt){
+  if (!opt) {
     return lmn_env.opt_mode == OPT_MINIMIZE ? ULONG_MAX : 0;
   } else {
     return state_cost(opt);
@@ -749,13 +750,12 @@ LmnCost LmnWorkerGroup::opt_cost(){
 /* 最適コストを可能ならば更新する
  * f==true: minimize
  * f==false: maximize */
-void LmnWorkerGroup::update_opt_cost(State *new_s, BOOL f){
-  if(env_threads_num() >= 2)
+void LmnWorkerGroup::update_opt_cost(State *new_s, BOOL f) {
+  if (env_threads_num() >= 2)
     workers_opt_end_lock();
-  if((f && opt_cost() > state_cost(new_s)) ||
-    (!f && opt_cost() < state_cost(new_s))){
+  if ((f && opt_cost() > state_cost(new_s)) || (!f && opt_cost() < state_cost(new_s))) {
     workers_set_opt_end_state(new_s);
   }
-  if(env_threads_num() >= 2)
+  if (env_threads_num() >= 2)
     workers_opt_end_unlock();
 }

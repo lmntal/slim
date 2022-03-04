@@ -48,20 +48,19 @@
 #include "delta_membrane.h"
 #include "mem_encode/lmn_binstr.hpp"
 
-
 #define BS_COMP_Z (0x01U)
 #define BS_COMP_D (0x01U << 1)
 
-#define is_comp_z(BS) (((BS)->type) & BS_COMP_Z)
-#define set_comp_z(BS) (((BS)->type) |= BS_COMP_Z)
+#define is_comp_z(BS)    (((BS)->type) & BS_COMP_Z)
+#define set_comp_z(BS)   (((BS)->type) |= BS_COMP_Z)
 #define unset_comp_z(BS) (((BS)->type) &= ~(BS_COMP_Z))
-#define is_comp_d(BS) (((BS)->type) & BS_COMP_D)
-#define set_comp_d(BS) (((BS)->type) |= BS_COMP_D)
+#define is_comp_d(BS)    (((BS)->type) & BS_COMP_D)
+#define set_comp_d(BS)   (((BS)->type) |= BS_COMP_D)
 #define unset_comp_d(BS) (((BS)->type) &= ~(BS_COMP_D))
 
-#define TAG_BIT_SIZE 4
+#define TAG_BIT_SIZE      4
 #define TAG_DATA_TYPE_BIT 2
-#define TAG_IN_BYTE 2
+#define TAG_IN_BYTE       2
 
 #define lmn_binstr_byte_size(bs) ((bs->len + 1) / TAG_IN_BYTE)
 
@@ -81,7 +80,7 @@ LmnMembraneRef lmn_binstr_decode(const LmnBinStrRef bs);
 BOOL lmn_mem_equals_enc(LmnBinStrRef bs, LmnMembraneRef mem);
 
 void lmn_binstr_free(LmnBinStrRef p);
-//void lmn_binstr_dump(const LmnBinStrRef bs);
+// void lmn_binstr_dump(const LmnBinStrRef bs);
 unsigned long lmn_binstr_space(struct LmnBinStr *bs);
 LmnBinStrRef lmn_mem_to_binstr(LmnMembraneRef mem);
 LmnBinStrRef lmn_mem_to_binstr_delta(struct MemDeltaRoot *d);

@@ -36,15 +36,8 @@
  * $Id: load.c,v 1.13 2008/10/17 08:40:50 sasaki Exp $
  */
 
-#include <map>
-
-#include "arch.h"
-#include "element/element.h"
-#include "ffi/lmntal_system_adapter.h"
-#include "lmntal.h"
 #include "load.h"
-#include "so.h"
-#include "vm/vm.h"
+
 #include <ctype.h>
 #include <dirent.h>
 #include <dlfcn.h>
@@ -52,20 +45,29 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
+
+#include <map>
+
+#include "arch.h"
+#include "element/element.h"
+#include "ffi/lmntal_system_adapter.h"
+#include "lmntal.h"
+#include "so.h"
+#include "vm/vm.h"
 /* prototypes */
 
 void build_cmd(char *buf, char *file_name);
+
+#include <algorithm>
+#include <map>
+#include <set>
+#include <string>
 
 #include "byte_encoder.hpp"
 #include "exception.hpp"
 #include "il_lexer.hpp"
 #include "il_parser.hpp"
 #include "syntax.hpp"
-
-#include <algorithm>
-#include <map>
-#include <string>
-#include <set>
 
 using loader_error = slim::loader::exception;
 
@@ -155,7 +157,9 @@ static LmnRuleSetRef load_il(const IL &il) {
 }
 
 /* soから試しに呼び出す関数 */
-void helloworld(const char *s) { fprintf(stdout, "hello %s world!\n", s); }
+void helloworld(const char *s) {
+  fprintf(stdout, "hello %s world!\n", s);
+}
 
 LmnRuleSetRef load_and_setting_trans_maindata(struct trans_maindata *maindata) {
   LmnRuleSetRef ret = 0; /* ワーニング抑制 */
@@ -174,9 +178,8 @@ LmnRuleSetRef load_and_setting_trans_maindata(struct trans_maindata *maindata) {
       maindata->functor_exchange[i] = i;
     } else {
       /* シンボルは変換を忘れないように */
-      LmnFunctor gid =
-          lmn_functor_table->intern(maindata->symbol_exchange[ent.module],
-                             maindata->symbol_exchange[ent.name], ent.arity);
+      LmnFunctor gid = lmn_functor_table->intern(
+          maindata->symbol_exchange[ent.module], maindata->symbol_exchange[ent.name], ent.arity);
       maindata->functor_exchange[i] = gid;
     }
   }
@@ -184,25 +187,21 @@ LmnRuleSetRef load_and_setting_trans_maindata(struct trans_maindata *maindata) {
   /* ルールセット0番は数合わせ */
   /* システムルールセット読み込み */
   for (auto &rule : maindata->ruleset_table[1]) {
-    lmn_add_system_rule(new LmnRule(
-        rule.function, maindata->symbol_exchange[rule.name]));
+    lmn_add_system_rule(new LmnRule(rule.function, maindata->symbol_exchange[rule.name]));
   }
 
   /* ルールセット2番はinitial ruleset */
   for (auto &rule : maindata->ruleset_table[2]) {
-    lmn_add_initial_rule(new LmnRule(
-        rule.function, maindata->symbol_exchange[rule.name]));
+    lmn_add_initial_rule(new LmnRule(rule.function, maindata->symbol_exchange[rule.name]));
   }
 
   /* ルールセット3番はinitial system ruleset */
   for (auto &rule : maindata->ruleset_table[3]) {
-    lmn_add_initial_system_rule(new LmnRule(
-        rule.function, maindata->symbol_exchange[rule.name]));
+    lmn_add_initial_system_rule(new LmnRule(rule.function, maindata->symbol_exchange[rule.name]));
   }
 
   /* ルールセットを読み込み+変換テーブルを設定 */
-  for (int i = FIRST_ID_OF_NORMAL_RULESET; i < maindata->count_of_ruleset;
-       i++) {
+  for (int i = FIRST_ID_OF_NORMAL_RULESET; i < maindata->count_of_ruleset; i++) {
     auto &tr = maindata->ruleset_table[i];
     auto gid = LmnRuleSetTable::gen_id();
     auto rs = new LmnRuleSet(gid, tr.size);
@@ -222,8 +221,9 @@ LmnRuleSetRef load_and_setting_trans_maindata(struct trans_maindata *maindata) {
   /* モジュール読込み */
   for (int i = 0; i < maindata->count_of_module; i++) {
     auto &mo = maindata->module_table[i];
-    lmn_set_module(maindata->symbol_exchange[mo.name],
-                   LmnRuleSetTable::at(maindata->ruleset_exchange[mo.ruleset]));
+    lmn_set_module(
+        maindata->symbol_exchange[mo.name],
+        LmnRuleSetTable::at(maindata->ruleset_exchange[mo.ruleset]));
   }
 
   return ret;
@@ -241,8 +241,7 @@ LmnRuleSetRef load_compiled_il(const std::string &filename, void *sohandle) {
   auto init_f = (void (*)())dlsym(sohandle, init_str.c_str());
 
   if (!init_f)
-    throw loader_error(std::string("init function \"") + init_str +
-                       "\" not found in " + filename);
+    throw loader_error(std::string("init function \"") + init_str + "\" not found in " + filename);
 
   /* 初期化関数を呼び出し */
   (*init_f)();
@@ -252,8 +251,8 @@ LmnRuleSetRef load_compiled_il(const std::string &filename, void *sohandle) {
   auto maindata = (trans_maindata *)dlsym(sohandle, maindata_str.c_str());
 
   if (!maindata)
-    throw loader_error(std::string("maindata \"") + maindata_str +
-                       " not found in " + basename + ".");
+    throw loader_error(
+        std::string("maindata \"") + maindata_str + " not found in " + basename + ".");
 
   /* 読み込みと変換テーブルの設定 */
   return load_and_setting_trans_maindata(maindata);
@@ -285,7 +284,8 @@ LmnRuleSetRef load(const std::string &file_path) {
 }
 
 static std::vector<void *> opened_so_files;
-void init_so_handles() {}
+void init_so_handles() {
+}
 
 void finalize_so_handles() {
   for (auto v : opened_so_files)
@@ -301,8 +301,7 @@ namespace fs = slim::element::filesystem;
 LmnRuleSetRef load_so_file(const std::string &file_name) {
   auto sohandle = dlopen(file_name.c_str(), RTLD_LAZY);
   if (!sohandle)
-    throw loader_error(std::string("Failed to open ") + file_name + " (" +
-                       dlerror() + ")");
+    throw loader_error(std::string("Failed to open ") + file_name + " (" + dlerror() + ")");
 
   dlerror();
   opened_so_files.push_back(sohandle);
@@ -317,8 +316,7 @@ LmnRuleSetRef load_lmn_file(const std::string &file_name) {
 
   if (fs::exists(std::string(lmntal_home)))
     throw loader_error(
-        std::string("Failed to run lmntal compiler (lmntal don't exist at ") +
-        lmntal_home + ")");
+        std::string("Failed to run lmntal compiler (lmntal don't exist at ") + lmntal_home + ")");
 
   return load(lmntal_compile_file(file_name.c_str()));
 }
@@ -330,7 +328,7 @@ LmnRuleSetRef load_lmn_file(const std::string &file_name) {
 
 LmnRuleSetRef load_file(const std::string &file_name) {
   fs::path filepath(file_name);
-  
+
   if (filepath.extension().string() == "so")
     return load_so_file(file_name);
 
@@ -340,11 +338,10 @@ LmnRuleSetRef load_file(const std::string &file_name) {
   return load(file_name);
 }
 
-static std::string extension_table[] = {"", "lmn", "il", "so"};
+static std::string extension_table[] = { "", "lmn", "il", "so" };
 static int file_type(const fs::path &filename) {
   auto ext = filename.extension().string();
-  auto i =
-      std::find(std::begin(extension_table), std::end(extension_table), ext);
+  auto i = std::find(std::begin(extension_table), std::end(extension_table), ext);
   if (i == std::end(extension_table))
     return 0;
   return i - std::begin(extension_table);
@@ -384,8 +381,7 @@ void load_il_files(const char *path_string) {
       auto file = path / basename.replace_extension(extension);
       load_file(file.string());
     }
-  }
-  catch (const fs::filesystem_error &e) {
+  } catch (const fs::filesystem_error &e) {
     fprintf(stderr, "%s\n", e.what());
   }
 }
@@ -407,6 +403,7 @@ std::string create_formatted_basename(const std::string &filepath) {
   auto begin = (sep == std::string::npos) ? filepath.begin() : (filepath.begin() + sep + 1);
   auto end = std::find(begin, filepath.end(), '.'); /* ファイル名最初の.を探す ないと困る */
   std::string basename(begin, end + 1);
-  std::replace_if(basename.begin(), basename.end(), [](char &c) { return !(isalpha(c) || isdigit(c)); }, 'O');
+  std::replace_if(
+      basename.begin(), basename.end(), [](char &c) { return !(isalpha(c) || isdigit(c)); }, 'O');
   return basename;
 }

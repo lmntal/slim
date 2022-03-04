@@ -44,13 +44,14 @@
  * @{
  */
 
-#include "../lmntal.h"
-#include "element/element.h"
-#include "vm/vm.h"
 #include <limits.h>
 
 #include <unordered_map>
 #include <vector>
+
+#include "../lmntal.h"
+#include "element/element.h"
+#include "vm/vm.h"
 
 #define VISITLOG_INIT_N (1)
 
@@ -59,7 +60,7 @@
 #endif
 
 #ifndef PROC_TBL_BUCKETS_SIZE
-#define PROC_TBL_BUCKETS_SIZE (1 << 12) // heuristics
+#define PROC_TBL_BUCKETS_SIZE (1 << 12)  // heuristics
 #endif
 
 /*----------------------------------------------------------------------
@@ -80,7 +81,7 @@ typedef struct Checkpoint *CheckpointRef;
 struct Checkpoint {
   int n_data_atom;
   Vector elements;
-  Checkpoint():n_data_atom(0) {
+  Checkpoint() : n_data_atom(0) {
     this->elements.init(PROC_TBL_DEFAULT_SIZE);
   }
 
@@ -91,21 +92,24 @@ struct Checkpoint {
 
 /* 訪問済みのアトムや膜の記録 */
 struct VisitLog {
-private:
+ private:
   std::unordered_map<ProcessID, int> tbl; /* プロセスIDをkeyにした訪問表 */
   int ref_n, /* バイト列から読み出したプロセスに再訪問が発生した場合のための参照番号割当カウンタ
               */
-      element_num;    /* 訪問したプロセス数のカウンタ */
+      element_num; /* 訪問したプロセス数のカウンタ */
   std::vector<Checkpoint *> checkpoints;
 
-public:
-  VisitLog() : ref_n(0),element_num(0){}
-  ~VisitLog(){
+ public:
+  VisitLog() : ref_n(0), element_num(0) {
+  }
+  ~VisitLog() {
     for (auto p : checkpoints)
       delete p;
   }
 
-  void init() { this->init_with_size(0); }
+  void init() {
+    this->init_with_size(0);
+  }
   void init_with_size(unsigned long tbl_size) {
     /*   printf("size = %lu\n", tbl_size); */
     this->ref_n = VISITLOG_INIT_N;
@@ -133,14 +137,14 @@ public:
     this->element_num -= checkpoint->n_data_atom;
     return checkpoint;
   }
-  
+
   /* もっとも最近のチェックポイントを消し、ログの状態をチェックポイントが設定された時点にもどす */
   void revert_checkpoint() {
     delete this->pop_checkpoint();
   }
   /* ログの状態はそのままに、もっとも最近に設定したチェックポイントを消す */
   void commit_checkpoint() {
-    struct Checkpoint *last =this->checkpoints.back();
+    struct Checkpoint *last = this->checkpoints.back();
     this->checkpoints.pop_back();
 
     if (!this->checkpoints.empty()) {
@@ -169,7 +173,7 @@ public:
   int put(LmnWord p) {
     if (this->tbl.find(p) != this->tbl.end())
       return 0;
-    
+
     this->tbl[p] = this->ref_n++;
     if (!this->checkpoints.empty()) {
       CheckpointRef checkpoint = this->checkpoints.back();
@@ -204,12 +208,11 @@ public:
 
   /* ログに記録されたアトムatomに対応する値をvalueに設定し, 正の値を返す.
    * ログにatomが存在しない場合は, 0を返す. */
-  int get_atom(LmnSymbolAtomRef atom,
-                        LmnWord *value) {
+  int get_atom(LmnSymbolAtomRef atom, LmnWord *value) {
     auto it = this->tbl.find(slim::process_id(atom));
     if (it == this->tbl.end())
       return 0;
-    
+
     if (value)
       *value = it->second;
     return 1;
@@ -220,7 +223,7 @@ public:
     auto it = this->tbl.find(slim::process_id(mem));
     if (it == this->tbl.end())
       return 0;
-    
+
     if (value)
       *value = it->second;
     return 1;
@@ -231,7 +234,7 @@ public:
     auto it = this->tbl.find(slim::process_id(hl));
     if (it == this->tbl.end())
       return 0;
-    
+
     if (value)
       *value = it->second;
     return 1;

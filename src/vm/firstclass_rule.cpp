@@ -36,15 +36,15 @@
 
 #include "firstclass_rule.h"
 
+#include <cstdio>
+
 #include "element/st.h"
 #include "ffi/lmntal_system_adapter.h"
 #include "loader/loader.h"
 
-#include <cstdio>
-
-#define LINK_PREFIX "L"
+#define LINK_PREFIX        "L"
 #define LINKCONNECTION_MAX 100000
-#define MAX_RULE_STR 10000
+#define MAX_RULE_STR       10000
 
 struct LinkConnection {
   LmnSymbolAtomRef atom;
@@ -52,8 +52,11 @@ struct LinkConnection {
   int link_pos, link_name;
 };
 
-int linkconnection_push(Vector *link_connections, LmnSymbolAtomRef satom,
-                        int link_p, HyperLink *hl) {
+int linkconnection_push(
+    Vector *link_connections,
+    LmnSymbolAtomRef satom,
+    int link_p,
+    HyperLink *hl) {
   int link_name = link_connections->get_num();
   struct LinkConnection *c = LMN_MALLOC(struct LinkConnection);
   c->atom = satom;
@@ -64,16 +67,13 @@ int linkconnection_push(Vector *link_connections, LmnSymbolAtomRef satom,
   return link_name;
 }
 
-int linkconnection_make_linkno(Vector *link_connections, LmnSymbolAtomRef satom,
-                               int link_p) {
+int linkconnection_make_linkno(Vector *link_connections, LmnSymbolAtomRef satom, int link_p) {
   if (LMN_IS_HL((LmnSymbolAtomRef)satom->get_link(link_p))) {
-    HyperLink *hll = lmn_hyperlink_at_to_hl(
-        (LmnSymbolAtomRef)satom->get_link(link_p));
+    HyperLink *hll = lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)satom->get_link(link_p));
     HyperLink *p_hl = hll->parent;
 
     for (int i = 0; i < link_connections->get_num(); i++) {
-      struct LinkConnection *c =
-          (struct LinkConnection *)link_connections->get(i);
+      struct LinkConnection *c = (struct LinkConnection *)link_connections->get(i);
       if (c->hl && p_hl->eq_hl(c->hl)) {
         return c->link_name;
       }
@@ -82,35 +82,29 @@ int linkconnection_make_linkno(Vector *link_connections, LmnSymbolAtomRef satom,
   }
 
   for (int i = 0; i < link_connections->get_num(); i++) {
-    struct LinkConnection *c =
-        (struct LinkConnection *)link_connections->get(i);
+    struct LinkConnection *c = (struct LinkConnection *)link_connections->get(i);
     if (c->atom == satom && c->link_pos == link_p) {
       return c->link_name;
     }
   }
 
-  LmnSymbolAtomRef dst_atom =
-      (LmnSymbolAtomRef)satom->get_link(link_p);
+  LmnSymbolAtomRef dst_atom = (LmnSymbolAtomRef)satom->get_link(link_p);
 
   if (dst_atom->get_functor() == LMN_IN_PROXY_FUNCTOR) {
-    LmnSymbolAtomRef out_proxy =
-        (LmnSymbolAtomRef)dst_atom->get_link(0);
+    LmnSymbolAtomRef out_proxy = (LmnSymbolAtomRef)dst_atom->get_link(0);
     LmnSymbolAtomRef atom = (LmnSymbolAtomRef)out_proxy->get_link(1);
     int arity = LMN_FUNCTOR_GET_LINK_NUM(atom->get_functor());
     for (int i = 0; i < arity; i++) {
-      LmnSymbolAtomRef linked_atom =
-          (LmnSymbolAtomRef)atom->get_link(i);
+      LmnSymbolAtomRef linked_atom = (LmnSymbolAtomRef)atom->get_link(i);
       if (linked_atom->get_functor() == LMN_OUT_PROXY_FUNCTOR) {
-        LmnSymbolAtomRef in_proxy =
-            (LmnSymbolAtomRef)linked_atom->get_link(0);
+        LmnSymbolAtomRef in_proxy = (LmnSymbolAtomRef)linked_atom->get_link(0);
         if (satom == in_proxy->get_link(1)) {
           return linkconnection_push(link_connections, atom, i, NULL);
         }
       }
     }
   } else if (dst_atom->get_functor() == LMN_OUT_PROXY_FUNCTOR) {
-    LmnSymbolAtomRef in_proxy =
-        (LmnSymbolAtomRef)dst_atom->get_link(0);
+    LmnSymbolAtomRef in_proxy = (LmnSymbolAtomRef)dst_atom->get_link(0);
     LmnSymbolAtomRef atom = (LmnSymbolAtomRef)in_proxy->get_link(1);
     return linkconnection_push(link_connections, atom, 0, NULL);
   }
@@ -136,9 +130,10 @@ std::string string_of_data_atom(LmnDataAtomRef data, LmnLinkAttr attr) {
   return "";
 }
 
-std::string string_of_template_membrane(Vector *link_connections,
-                                        LmnMembraneRef mem,
-                                        LmnSymbolAtomRef cm_atom) {
+std::string string_of_template_membrane(
+    Vector *link_connections,
+    LmnMembraneRef mem,
+    LmnSymbolAtomRef cm_atom) {
   std::string result;
   AtomListEntryRef ent;
   LmnFunctor f;
@@ -153,97 +148,86 @@ std::string string_of_template_membrane(Vector *link_connections,
     if (LMN_IS_PROXY_FUNCTOR(f))
       continue;
 
-    EACH_ATOM(
-        satom, ent, ({
-          int arity = LMN_FUNCTOR_GET_LINK_NUM(satom->get_functor());
-          const char *atom_name =
-              lmn_id_to_name(LMN_FUNCTOR_NAME_ID(lmn_functor_table, satom->get_functor()));
+    EACH_ATOM(satom, ent, ({
+                int arity = LMN_FUNCTOR_GET_LINK_NUM(satom->get_functor());
+                const char *atom_name =
+                    lmn_id_to_name(LMN_FUNCTOR_NAME_ID(lmn_functor_table, satom->get_functor()));
 
-          if (f == LMN_UNARY_PLUS_FUNCTOR) {
-            LmnSymbolAtomRef in_proxy =
-                (LmnSymbolAtomRef)satom->get_link(0);
-            LmnSymbolAtomRef out_proxy =
-                (LmnSymbolAtomRef)in_proxy->get_link(0);
-            if (cm_atom == out_proxy->get_link(1))
-              continue;
+                if (f == LMN_UNARY_PLUS_FUNCTOR) {
+                  LmnSymbolAtomRef in_proxy = (LmnSymbolAtomRef)satom->get_link(0);
+                  LmnSymbolAtomRef out_proxy = (LmnSymbolAtomRef)in_proxy->get_link(0);
+                  if (cm_atom == out_proxy->get_link(1))
+                    continue;
 
-            sprintf(istr, "%d",
-                    linkconnection_make_linkno(link_connections, satom, 0));
-            result += atom_name;
-            result += LINK_PREFIX;
-            result += istr;
-          } else if (strcmp(atom_name, "==") == 0) {
-            result += LINK_PREFIX;
-            sprintf(istr, "%d",
-                    linkconnection_make_linkno(link_connections, satom, 0));
-            result += istr;
-            result += "=";
-            result += LINK_PREFIX;
-            sprintf(istr, "%d",
-                    linkconnection_make_linkno(link_connections, satom, 1));
-            result += istr;
-          } else if (atom_name[0] == '@') {
-            result += atom_name;
-          } else if (atom_name[0] == '$') {
-            result += atom_name;
-            result += '[';
-
-            for (int i = 0; i < arity; i++) {
-              if (i > 0)
-                result += ",";
-              result += LINK_PREFIX;
-              sprintf(istr, "%d",
-                      linkconnection_make_linkno(link_connections, satom, i));
-              result += istr;
-            }
-
-            result += ']';
-          } else {
-            if (strcmp(atom_name, ":-") == 0) {
-              result += "':-'";
-            } else if (strcmp(atom_name, ".") == 0) {
-              result += "'.'";
-            } else if (strcmp(atom_name, "[]") == 0) {
-              result += "'[]'";
-            } else {
-              result += atom_name;
-            }
-
-            if (arity > 0) {
-              result += "(";
-              for (int i = 0; i < arity; i++) {
-                LmnLinkAttr attr = satom->get_attr(i);
-                if (i > 0)
-                  result += ",";
-
-                if (LMN_ATTR_IS_DATA(attr) && LMN_HL_ATTR == attr) {
+                  sprintf(istr, "%d", linkconnection_make_linkno(link_connections, satom, 0));
+                  result += atom_name;
                   result += LINK_PREFIX;
-                  sprintf(
-                      istr, "%d",
-                      linkconnection_make_linkno(link_connections, satom, i));
                   result += istr;
-                } else if (LMN_ATTR_IS_DATA(attr) && LMN_INT_ATTR == attr) {
-                  LmnAtomRef data = satom->get_link(i);
-                  char *s = int_to_str((long)data);
-                  result += s;
-                } else if (LMN_ATTR_IS_DATA(attr) && LMN_DBL_ATTR == attr) {
-                  LmnAtomRef data = satom->get_link(i);
-                  char buf[64];
-                  sprintf(buf, "%#g", lmn_get_double((LmnDataAtomRef)data));
-                  result += buf;
+                } else if (strcmp(atom_name, "==") == 0) {
+                  result += LINK_PREFIX;
+                  sprintf(istr, "%d", linkconnection_make_linkno(link_connections, satom, 0));
+                  result += istr;
+                  result += "=";
+                  result += LINK_PREFIX;
+                  sprintf(istr, "%d", linkconnection_make_linkno(link_connections, satom, 1));
+                  result += istr;
+                } else if (atom_name[0] == '@') {
+                  result += atom_name;
+                } else if (atom_name[0] == '$') {
+                  result += atom_name;
+                  result += '[';
+
+                  for (int i = 0; i < arity; i++) {
+                    if (i > 0)
+                      result += ",";
+                    result += LINK_PREFIX;
+                    sprintf(istr, "%d", linkconnection_make_linkno(link_connections, satom, i));
+                    result += istr;
+                  }
+
+                  result += ']';
                 } else {
-                  result += LINK_PREFIX;
-                  sprintf(
-                      istr, "%d",
-                      linkconnection_make_linkno(link_connections, satom, i));
-                  result += istr;
+                  if (strcmp(atom_name, ":-") == 0) {
+                    result += "':-'";
+                  } else if (strcmp(atom_name, ".") == 0) {
+                    result += "'.'";
+                  } else if (strcmp(atom_name, "[]") == 0) {
+                    result += "'[]'";
+                  } else {
+                    result += atom_name;
+                  }
+
+                  if (arity > 0) {
+                    result += "(";
+                    for (int i = 0; i < arity; i++) {
+                      LmnLinkAttr attr = satom->get_attr(i);
+                      if (i > 0)
+                        result += ",";
+
+                      if (LMN_ATTR_IS_DATA(attr) && LMN_HL_ATTR == attr) {
+                        result += LINK_PREFIX;
+                        sprintf(istr, "%d", linkconnection_make_linkno(link_connections, satom, i));
+                        result += istr;
+                      } else if (LMN_ATTR_IS_DATA(attr) && LMN_INT_ATTR == attr) {
+                        LmnAtomRef data = satom->get_link(i);
+                        char *s = int_to_str((long)data);
+                        result += s;
+                      } else if (LMN_ATTR_IS_DATA(attr) && LMN_DBL_ATTR == attr) {
+                        LmnAtomRef data = satom->get_link(i);
+                        char buf[64];
+                        sprintf(buf, "%#g", lmn_get_double((LmnDataAtomRef)data));
+                        result += buf;
+                      } else {
+                        result += LINK_PREFIX;
+                        sprintf(istr, "%d", linkconnection_make_linkno(link_connections, satom, i));
+                        result += istr;
+                      }
+                    }
+                    result += ")";
+                  }
                 }
-              }
-              result += ")";
-            }
-          }
-          result += ",";
-        }));
+                result += ",";
+              }));
   }
 
   for (LmnMembraneRef m = mem->mem_child_head(); m; m = m->mem_next()) {
@@ -270,11 +254,9 @@ std::string string_of_guard_op(LmnSymbolAtomRef satom) {
   else {
     attr = satom->get_attr(0);
     if (LMN_ATTR_IS_DATA(attr))
-      result += string_of_data_atom(
-          (LmnDataAtomRef)satom->get_link(0), attr);
+      result += string_of_data_atom((LmnDataAtomRef)satom->get_link(0), attr);
     else
-      result +=
-          string_of_guard_op((LmnSymbolAtomRef)satom->get_link(0));
+      result += string_of_guard_op((LmnSymbolAtomRef)satom->get_link(0));
 
     if (strcmp(":=", atom_name) == 0)
       result += "=";
@@ -283,11 +265,9 @@ std::string string_of_guard_op(LmnSymbolAtomRef satom) {
 
     attr = satom->get_attr(1);
     if (LMN_ATTR_IS_DATA(attr))
-      result += string_of_data_atom(
-          (LmnDataAtomRef)satom->get_link(1), attr);
+      result += string_of_data_atom((LmnDataAtomRef)satom->get_link(1), attr);
     else
-      result +=
-          string_of_guard_op((LmnSymbolAtomRef)satom->get_link(1));
+      result += string_of_guard_op((LmnSymbolAtomRef)satom->get_link(1));
   }
 
   return result;
@@ -296,10 +276,8 @@ std::string string_of_guard_op(LmnSymbolAtomRef satom) {
 std::string string_of_guard_mem(LmnMembraneRef mem, LmnSymbolAtomRef cm_atom) {
   AtomListEntryRef ent;
   LmnFunctor f;
-  const char *constraint_name[] = {"int",   "float", "ground",
-                                   "unary", "hlink", "new"};
-  const char *op_name[] = {"=:=", "=\\=", ">",  "<",   "=<",
-                           ">=",  ":=",   "==", "\\=", "><"};
+  const char *constraint_name[] = { "int", "float", "ground", "unary", "hlink", "new" };
+  const char *op_name[] = { "=:=", "=\\=", ">", "<", "=<", ">=", ":=", "==", "\\=", "><" };
   std::string result;
   for (auto it : mem->atom_lists()) {
     auto &ent = it.second;
@@ -307,47 +285,45 @@ std::string string_of_guard_mem(LmnMembraneRef mem, LmnSymbolAtomRef cm_atom) {
     if (LMN_IS_EX_FUNCTOR(f) || LMN_IS_PROXY_FUNCTOR(f))
       continue;
     LmnSymbolAtomRef satom;
-    EACH_ATOM(
-        satom, ent, ({
-          const char *atom_name =
-              lmn_id_to_name(LMN_FUNCTOR_NAME_ID(lmn_functor_table, satom->get_functor()));
+    EACH_ATOM(satom, ent, ({
+                const char *atom_name =
+                    lmn_id_to_name(LMN_FUNCTOR_NAME_ID(lmn_functor_table, satom->get_functor()));
 
-          if (f == LMN_UNARY_PLUS_FUNCTOR) {
-            LmnSymbolAtomRef in_proxy =
-                (LmnSymbolAtomRef)satom->get_link(0);
-            LmnSymbolAtomRef out_proxy =
-                (LmnSymbolAtomRef)in_proxy->get_link(0);
-            if (cm_atom == out_proxy->get_link(1))
-              continue;
-          } else {
-            for (int i = 0; i < ARY_SIZEOF(constraint_name); i++) {
-              if (strcmp(constraint_name[i], atom_name) != 0)
-                continue;
-              LmnSymbolAtomRef typed_pc_atom =
-                  (LmnSymbolAtomRef)satom->get_link(0);
-              const char *typed_pc_atom_name = lmn_id_to_name(
-                  LMN_FUNCTOR_NAME_ID(lmn_functor_table, typed_pc_atom->get_functor()));
-              result += constraint_name[i];
-              result += "(";
-              result += typed_pc_atom_name;
-              result += "),";
-            }
-            for (int i = 0; i < ARY_SIZEOF(op_name); i++) {
-              if (strcmp(op_name[i], atom_name) != 0)
-                continue;
-              result += string_of_guard_op(satom);
-              result += ",";
-            }
-          }
-        }));
+                if (f == LMN_UNARY_PLUS_FUNCTOR) {
+                  LmnSymbolAtomRef in_proxy = (LmnSymbolAtomRef)satom->get_link(0);
+                  LmnSymbolAtomRef out_proxy = (LmnSymbolAtomRef)in_proxy->get_link(0);
+                  if (cm_atom == out_proxy->get_link(1))
+                    continue;
+                } else {
+                  for (int i = 0; i < ARY_SIZEOF(constraint_name); i++) {
+                    if (strcmp(constraint_name[i], atom_name) != 0)
+                      continue;
+                    LmnSymbolAtomRef typed_pc_atom = (LmnSymbolAtomRef)satom->get_link(0);
+                    const char *typed_pc_atom_name = lmn_id_to_name(
+                        LMN_FUNCTOR_NAME_ID(lmn_functor_table, typed_pc_atom->get_functor()));
+                    result += constraint_name[i];
+                    result += "(";
+                    result += typed_pc_atom_name;
+                    result += "),";
+                  }
+                  for (int i = 0; i < ARY_SIZEOF(op_name); i++) {
+                    if (strcmp(op_name[i], atom_name) != 0)
+                      continue;
+                    result += string_of_guard_op(satom);
+                    result += ",";
+                  }
+                }
+              }));
   }
 
   return result;
 }
 
-std::string
-string_of_firstclass_rule(LmnMembraneRef h_mem, LmnMembraneRef g_mem,
-                          LmnMembraneRef b_mem, LmnSymbolAtomRef imply)
+std::string string_of_firstclass_rule(
+    LmnMembraneRef h_mem,
+    LmnMembraneRef g_mem,
+    LmnMembraneRef b_mem,
+    LmnSymbolAtomRef imply)
 /* 3引数の':-' のアトムで接続先が全て膜．
    引数は第一引数から順につながってる膜 */
 {
@@ -373,8 +349,7 @@ string_of_firstclass_rule(LmnMembraneRef h_mem, LmnMembraneRef g_mem,
 }
 
 LmnMembraneRef get_mem_linked_atom(LmnSymbolAtomRef target_atom, int link_n) {
-  LmnSymbolAtomRef atom =
-      (LmnSymbolAtomRef)target_atom->get_link(link_n);
+  LmnSymbolAtomRef atom = (LmnSymbolAtomRef)target_atom->get_link(link_n);
   return LMN_PROXY_GET_MEM((LmnSymbolAtomRef)atom->get_link(0));
 }
 
@@ -388,10 +363,12 @@ static int colon_minus_cmp(LmnSymbolAtomRef x, LmnSymbolAtomRef y) {
   return x != y;
 }
 
-static long colon_minus_hash(LmnSymbolAtomRef x) { return (long)x; }
+static long colon_minus_hash(LmnSymbolAtomRef x) {
+  return (long)x;
+}
 
-static struct st_hash_type type_colon_minushash = {
-    (st_cmp_func)colon_minus_cmp, (st_hash_func)colon_minus_hash};
+static struct st_hash_type type_colon_minushash = { (st_cmp_func)colon_minus_cmp,
+                                                    (st_hash_func)colon_minus_hash };
 
 void first_class_rule_tbl_init() {
   first_class_rule_tbl = st_init_table(&type_colon_minushash);

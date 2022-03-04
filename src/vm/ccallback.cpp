@@ -39,23 +39,24 @@
 
 #include "ccallback.h"
 
-CCallback::CCallback(){
+CCallback::CCallback() {
   f = NULL;
 }
-CCallback::~CCallback(){
+CCallback::~CCallback() {
   f = NULL;
 }
-int CCallback::get_arity() const{
+int CCallback::get_arity() const {
   return arity;
 }
-void *CCallback::get_f() const{
+void *CCallback::get_f() const {
   return f;
 }
 
 st_table_t CCallback::ccallback_tbl;
 
-void CCallback::ccallback_init() { ccallback_tbl = st_init_numtable(); }
-
+void CCallback::ccallback_init() {
+  ccallback_tbl = st_init_numtable();
+}
 
 void CCallback::ccallback_finalize() {
   st_foreach(ccallback_tbl, (st_iter_func)free_v, 0);

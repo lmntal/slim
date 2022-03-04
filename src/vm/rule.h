@@ -49,17 +49,19 @@ typedef struct LmnRule *LmnRuleRef;
 
 typedef struct LmnRuleSet *LmnRuleSetRef;
 
+#include <vector>
+
 #include "element/element.h"
 #include "lmntal.h"
 #include "symbol.h"
-
-#include <vector>
 
 /*----------------------------------------------------------------------
  * Rule Set
  */
 
-bool lmn_rulesets_equals(const std::vector<LmnRuleSetRef> &rulesets1, const std::vector<LmnRuleSetRef> &rulesets2);
+bool lmn_rulesets_equals(
+    const std::vector<LmnRuleSetRef> &rulesets1,
+    const std::vector<LmnRuleSetRef> &rulesets2);
 
 /*----------------------------------------------------------------------
  * System Rule Set
@@ -81,8 +83,7 @@ void lmn_add_initial_system_rule(LmnRuleRef rule);
  * Module
  */
 
-LMN_EXTERN void lmn_set_module(lmn_interned_str module_name,
-                               LmnRuleSetRef ruleset);
+LMN_EXTERN void lmn_set_module(lmn_interned_str module_name, LmnRuleSetRef ruleset);
 LMN_EXTERN LmnRuleSetRef lmn_get_module_ruleset(lmn_interned_str module_name);
 
 /* @} */

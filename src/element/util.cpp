@@ -38,6 +38,7 @@
  */
 
 #include "util.h"
+
 #include "../lmntal.h"
 #include "error.h"
 

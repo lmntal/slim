@@ -38,14 +38,15 @@
  */
 
 #include "hyperlink.h"
+
 #include "atom.h"
 #include "atomlist.hpp"
 
 #if SIZEOF_LONG == 4
-#define EMPTY_KEY 0xffffffffUL
+#define EMPTY_KEY   0xffffffffUL
 #define DELETED_KEY 0xfffffffeUL
 #elif SIZEOF_LONG == 8
-#define EMPTY_KEY 0xffffffffffffffffUL
+#define EMPTY_KEY   0xffffffffffffffffUL
 #define DELETED_KEY 0xfffffffffffffffeUL
 #endif
 
@@ -92,8 +93,7 @@ void HyperLink::put_attr(LmnAtomRef attrAtom, LmnLinkAttr attr) {
   this->attrAtom = attrAtom;
   this->attr = attr;
 }
-void lmn_hyperlink_make_with_attr(LmnSymbolAtomRef at, LmnAtomRef attrAtom,
-                                  LmnLinkAttr attr) {
+void lmn_hyperlink_make_with_attr(LmnSymbolAtomRef at, LmnAtomRef attrAtom, LmnLinkAttr attr) {
   new HyperLink(at);
   (lmn_hyperlink_at_to_hl(at))->put_attr(attrAtom, attr);
 }
@@ -109,8 +109,7 @@ LmnSymbolAtomRef lmn_hyperlink_new() {
   return atom;
 }
 
-LmnSymbolAtomRef lmn_hyperlink_new_with_attr(LmnAtomRef attrAtom,
-                                             LmnLinkAttr attr) {
+LmnSymbolAtomRef lmn_hyperlink_new_with_attr(LmnAtomRef attrAtom, LmnLinkAttr attr) {
   LmnSymbolAtomRef atom;
   atom = lmn_hyperlink_new();
   (lmn_hyperlink_at_to_hl(atom))->put_attr(attrAtom, attr);
@@ -155,8 +154,7 @@ HyperLink *HyperLink::head_child() {
   if (children) {
     HashSetIterator it;
 
-    for (it = hashset_iterator(children); !hashsetiter_isend(&it);
-         hashsetiter_next(&it)) {
+    for (it = hashset_iterator(children); !hashsetiter_isend(&it); hashsetiter_next(&it)) {
       HyperLink *child = (HyperLink *)hashsetiter_entry(&it);
       if ((HashKeyType)child < DELETED_KEY) {
         return child;
@@ -236,10 +234,9 @@ void lmn_hyperlink_delete_old(LmnSymbolAtomRef at) {
       parent->children = NULL;
     }
 
-    if (children) { // 子表があるとき
+    if (children) {  // 子表があるとき
       HashSetIterator it;
-      for (it = hashset_iterator(children); !hashsetiter_isend(&it);
-           hashsetiter_next(&it)) {
+      for (it = hashset_iterator(children); !hashsetiter_isend(&it); hashsetiter_next(&it)) {
         HyperLink *tmp = (HyperLink *)hashsetiter_entry(&it);
         if ((HashKeyType)tmp < DELETED_KEY) {
           parent->children->add((HashKeyType)tmp);
@@ -258,8 +255,7 @@ void lmn_hyperlink_delete_old(LmnSymbolAtomRef at) {
       HashSetIterator it;
 
       newroot = NULL;
-      for (it = hashset_iterator(children); !hashsetiter_isend(&it);
-           hashsetiter_next(&it)) {
+      for (it = hashset_iterator(children); !hashsetiter_isend(&it); hashsetiter_next(&it)) {
         newroot = (HyperLink *)hashsetiter_entry(&it);
         if ((HashKeyType)newroot < DELETED_KEY) {
           break; /* 現状では先頭の子を新しい親にしている */
@@ -274,8 +270,7 @@ void lmn_hyperlink_delete_old(LmnSymbolAtomRef at) {
         newroot->children = new HashSet(children->num);
       }
 
-      for (it = hashset_iterator(children); !hashsetiter_isend(&it);
-           hashsetiter_next(&it)) {
+      for (it = hashset_iterator(children); !hashsetiter_isend(&it); hashsetiter_next(&it)) {
         HyperLink *tmp = (HyperLink *)hashsetiter_entry(&it);
         if ((HashKeyType)tmp < DELETED_KEY) {
           newroot->children->add((HashKeyType)tmp);
@@ -308,8 +303,7 @@ void lmn_hyperlink_copy(LmnSymbolAtomRef newatom, LmnSymbolAtomRef oriatom) {
   new HyperLink(newatom);
   newhl = lmn_hyperlink_at_to_hl(newatom);
 
-  (orihl->get_root())->lmn_unify(newhl,
-                      LMN_HL_ATTRATOM(orihl), LMN_HL_ATTRATOM_ATTR(orihl));
+  (orihl->get_root())->lmn_unify(newhl, LMN_HL_ATTRATOM(orihl), LMN_HL_ATTRATOM_ATTR(orihl));
 }
 
 /* Union-Find algorithm の最適化 (Path Compression)
@@ -520,15 +514,17 @@ int HyperLink::element_num() {
 
 /* hyperlink 同士の比較 */
 BOOL HyperLink::eq_hl(HyperLink *hl2) {
-  return (this->get_root())->hl_to_at() ==
-    (hl2->get_root())->hl_to_at();
+  return (this->get_root())->hl_to_at() == (hl2->get_root())->hl_to_at();
 }
 
 /* hyperlink 同士の比較（'!'アトムポインタから直接） */
-BOOL lmn_hyperlink_eq(LmnSymbolAtomRef atom1, LmnLinkAttr attr1,
-                      LmnSymbolAtomRef atom2, LmnLinkAttr attr2) {
+BOOL lmn_hyperlink_eq(
+    LmnSymbolAtomRef atom1,
+    LmnLinkAttr attr1,
+    LmnSymbolAtomRef atom2,
+    LmnLinkAttr attr2) {
   return LMN_ATTR_IS_HL(attr1) && LMN_ATTR_IS_HL(attr2) &&
-    (lmn_hyperlink_at_to_hl(atom1))->eq_hl(lmn_hyperlink_at_to_hl(atom2));
+         (lmn_hyperlink_at_to_hl(atom1))->eq_hl(lmn_hyperlink_at_to_hl(atom2));
 }
 
 /* hyperlink を1 つ出力
@@ -547,84 +543,87 @@ BOOL hyperlink_print(LmnMembraneRef mem, BOOL *flag, int *group, int *element) {
   result = FALSE;
   WIDTH = 22;
   if ((atomlist = mem->get_atomlist(LMN_HL_FUNC))) {
-    EACH_ATOM(atom, atomlist, ({
-                result = TRUE;
+    EACH_ATOM(
+        atom, atomlist, ({
+          result = TRUE;
 
-                if (!(*flag)) {
-                  fprintf(f, "%9s %9s %13s %5s %5s\n", "[hl_ID]", "[parent]",
-                          "[linked with]", "[num]",
-                          "[direct children ( inside info )]");
-                  (*flag) = TRUE;
-                }
-                hl = lmn_hyperlink_at_to_hl(atom);
+          if (!(*flag)) {
+            fprintf(
+                f,
+                "%9s %9s %13s %5s %5s\n",
+                "[hl_ID]",
+                "[parent]",
+                "[linked with]",
+                "[num]",
+                "[direct children ( inside info )]");
+            (*flag) = TRUE;
+          }
+          hl = lmn_hyperlink_at_to_hl(atom);
 
-                /* hl_ID */
-                //      fprintf(f, "%9lx", LMN_ATOM(atom));
-                // fprintf(f, "%9lx", LMN_HL_ID(lmn_hyperlink_at_to_hl(atom)));
-		fprintf(f, "%9lu", LMN_HL_ID(lmn_hyperlink_at_to_hl(atom)));
-                //      fprintf(f, "%9lx",
-                //      LMN_HL_ID(lmn_hyperlink_get_root(lmn_hyperlink_at_to_hl(atom))));
+          /* hl_ID */
+          //      fprintf(f, "%9lx", LMN_ATOM(atom));
+          // fprintf(f, "%9lx", LMN_HL_ID(lmn_hyperlink_at_to_hl(atom)));
+          fprintf(f, "%9lu", LMN_HL_ID(lmn_hyperlink_at_to_hl(atom)));
+          //      fprintf(f, "%9lx",
+          //      LMN_HL_ID(lmn_hyperlink_get_root(lmn_hyperlink_at_to_hl(atom))));
 
-                /* parent */
-                if ((parent = hl->parent) != hl) {
-                  //        fprintf(f, " %9lx", LMN_ATOM(parent->atom));
-                  // fprintf(f, " %9lx", LMN_HL_ID(parent));
-                  fprintf(f, " %9lu", LMN_HL_ID(parent));
+          /* parent */
+          if ((parent = hl->parent) != hl) {
+            //        fprintf(f, " %9lx", LMN_ATOM(parent->atom));
+            // fprintf(f, " %9lx", LMN_HL_ID(parent));
+            fprintf(f, " %9lu", LMN_HL_ID(parent));
+          } else {
+            (*group)++;
+            fprintf(f, " %9s", "root");
+          }
+
+          /* linked with */
+          if (!LMN_ATTR_IS_DATA(atom->get_attr(0)) && atom->get_link(0)) {
+            fprintf(f, " %13s", ((LmnSymbolAtomRef)atom->get_link(0))->str());
+          } else {
+            fprintf(f, " %13s", "---");
+          }
+
+          /* element num */
+          fprintf(f, " %5d  ", hl->element_num());
+
+          /* (direct children) */
+          if ((children = hl->children)) {
+            HashSetIterator hsit;
+            HyperLink *ch_hl;
+            int i, n, width;
+            BOOL comma;
+
+            width = 0;
+            comma = FALSE;
+            i = 1;
+            for (hsit = hashset_iterator(children); !hashsetiter_isend(&hsit);
+                 hashsetiter_next(&hsit)) {
+              if ((HashKeyType)(ch_hl = (HyperLink *)hashsetiter_entry(&hsit)) < DELETED_KEY) {
+                if (!comma) {
+                  comma = TRUE;
                 } else {
-                  (*group)++;
-                  fprintf(f, " %9s", "root");
-                }
-
-                /* linked with */
-                if (!LMN_ATTR_IS_DATA(atom->get_attr(0)) &&
-                    atom->get_link(0)) {
-                  fprintf(f, " %13s",
-                          ((LmnSymbolAtomRef)atom->get_link(0))->str());
-                } else {
-                  fprintf(f, " %13s", "---");
-                }
-
-                /* element num */
-                fprintf(f, " %5d  ", hl->element_num());
-
-                /* (direct children) */
-                if ((children = hl->children)) {
-                  HashSetIterator hsit;
-                  HyperLink *ch_hl;
-                  int i, n, width;
-                  BOOL comma;
-
-                  width = 0;
-                  comma = FALSE;
-                  i = 1;
-                  for (hsit = hashset_iterator(children);
-                       !hashsetiter_isend(&hsit); hashsetiter_next(&hsit)) {
-                    if ((HashKeyType)(ch_hl = (HyperLink *)hashsetiter_entry(
-                                          &hsit)) < DELETED_KEY) {
-                      if (!comma) {
-                        comma = TRUE;
-                      } else {
-                        if (width > WIDTH - 4) {
-                          fprintf(f, ",\n%41s", "");
-                          width = 0;
-                        } else {
-                          fprintf(f, ",");
-                        }
-                      }
-
-                      //            fprintf(f, "%lx", LMN_ATOM(ch_hl->atom));
-                      // fprintf(f, "%lx%n", LMN_HL_ID(ch_hl), &n);
-                      fprintf(f, "%lu%n", LMN_HL_ID(ch_hl), &n);
-                      width += n;
-                      i++;
-                    }
+                  if (width > WIDTH - 4) {
+                    fprintf(f, ",\n%41s", "");
+                    width = 0;
+                  } else {
+                    fprintf(f, ",");
                   }
-                  fprintf(f, ".");
                 }
 
-                (*element)++;
-                fprintf(f, "\n");
-              }));
+                //            fprintf(f, "%lx", LMN_ATOM(ch_hl->atom));
+                // fprintf(f, "%lx%n", LMN_HL_ID(ch_hl), &n);
+                fprintf(f, "%lu%n", LMN_HL_ID(ch_hl), &n);
+                width += n;
+                i++;
+              }
+            }
+            fprintf(f, ".");
+          }
+
+          (*element)++;
+          fprintf(f, "\n");
+        }));
   }
   //  else result = FALSE;
 
@@ -664,10 +663,11 @@ void lmn_hyperlink_print(FILE *fp, LmnMembraneRef gr) {
   element = 0;
   group = 0;
   flag = FALSE;
-  fprintf(f,
-          "== HyperLink "
-          "=============================================================%n\n",
-          &WIDTH);
+  fprintf(
+      f,
+      "== HyperLink "
+      "=============================================================%n\n",
+      &WIDTH);
   if (!hyperlink_print(gr, &flag, &group, &element))
     fprintf(f, "There is no hyperlink.\n");
 
@@ -684,8 +684,7 @@ void lmn_hyperlink_print(FILE *fp, LmnMembraneRef gr) {
   else
     sprintf(tail_e, "elements ====");
 
-  place_e =
-      WIDTH - sizeof(tail_g) - sizeof(tail_e) - (place_g + 1) - (place_e + 1);
+  place_e = WIDTH - sizeof(tail_g) - sizeof(tail_e) - (place_g + 1) - (place_e + 1);
   while (place_e > 0) {
     fprintf(f, "=");
     place_e--;
@@ -778,7 +777,9 @@ void hyperlink_print_old() {
   //  printf("==========================================================================\n");
 }
 
-void lmn_hyperlink_print_old() { hyperlink_print_old(); }
+void lmn_hyperlink_print_old() {
+  hyperlink_print_old();
+}
 
 /* for debug @seiji */
 void sht_print(SimpleHashtbl *sht) {
@@ -790,16 +791,19 @@ void sht_print(SimpleHashtbl *sht) {
     printf(">>>> sht %p num %d cap %d\n", sht, n, sht->cap);
     for (i = 0; i < sht->cap; i++) {
       if (sht->tbl[i].key == EMPTY_KEY)
-        printf("%3d: key: %p data: %p\n", i, (void *)sht->tbl[i].key,
-               (HyperLink *)sht->tbl[i].data);
+        printf(
+            "%3d: key: %p data: %p\n", i, (void *)sht->tbl[i].key, (HyperLink *)sht->tbl[i].data);
       else {
         if (sht->tbl[i].data < DELETED_KEY) {
-          printf("%3d: key: %p data: %p->%p\n", i, (void *)sht->tbl[i].key,
-                 (HyperLink *)sht->tbl[i].data,
-                 (void *)((HyperLink *)sht->tbl[i].data)->atom);
+          printf(
+              "%3d: key: %p data: %p->%p\n",
+              i,
+              (void *)sht->tbl[i].key,
+              (HyperLink *)sht->tbl[i].data,
+              (void *)((HyperLink *)sht->tbl[i].data)->atom);
         } else {
-          printf("%3d: key: %p data: %p\n", i, (void *)sht->tbl[i].key,
-                 (HyperLink *)sht->tbl[i].data);
+          printf(
+              "%3d: key: %p data: %p\n", i, (void *)sht->tbl[i].key, (HyperLink *)sht->tbl[i].data);
         }
       }
     }
@@ -849,8 +853,7 @@ static inline void sameproccxt_destroy(SimpleHashtbl *hl_sameproccxt) {
   if (!hl_sameproccxt)
     return;
 
-  for (it = hashtbl_iterator(hl_sameproccxt); !hashtbliter_isend(&it);
-       hashtbliter_next(&it)) {
+  for (it = hashtbl_iterator(hl_sameproccxt); !hashtbliter_isend(&it); hashtbliter_next(&it)) {
     SameProcCxt *spc = (SameProcCxt *)(hashtbliter_entry(&it)->data);
     delete spc;
   }
@@ -861,8 +864,7 @@ static inline void sameproccxt_destroy(SimpleHashtbl *hl_sameproccxt) {
 /* rootの子を全てtreeに格納する(withoutは除く) */
 void HyperLink::get_children_without(Vector *tree, HyperLink *without) {
   HashSetIterator it;
-  for (it = hashset_iterator(this->children); !hashsetiter_isend(&it);
-       hashsetiter_next(&it)) {
+  for (it = hashset_iterator(this->children); !hashsetiter_isend(&it); hashsetiter_next(&it)) {
     //    printf("%p\n", (void *)((HyperLink *)hashsetiter_entry(&it))->atom);
     //    pro1++;
     HyperLink *hl = (HyperLink *)hashsetiter_entry(&it);

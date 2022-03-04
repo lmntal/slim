@@ -43,10 +43,9 @@
  * @defgroup Loader
  */
 
+#include "exception.hpp"
 #include "load.h"
 #include "syntax.hpp"
-
 #include "translate.hpp"
-#include "exception.hpp"
 
 #endif /* LMN_LOADER_H */

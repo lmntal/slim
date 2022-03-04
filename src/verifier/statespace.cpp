@@ -41,6 +41,7 @@
  *  Closed Address Hash Table / Parallel Hash Table for State Management Table
  */
 #include "statespace.h"
+
 #include "../lmntal.h"
 #include "automata.h"
 #include "delta_membrane.h"
@@ -49,9 +50,9 @@
 #include "runtime_status.h"
 #include "state.h"
 #include "state.hpp"
+#include "state_dumper.h"
 #include "state_table.hpp"
 #include "vm/vm.h"
-#include "state_dumper.h"
 
 namespace c14 = slim::element;
 
@@ -70,8 +71,13 @@ void StateSpace::make_table_pair(TablePair &t, TablePair &rehasher) {
 /** StateSpace
  */
 StateSpace::StateSpace(int thread_num, AutomataRef a, Vector *psyms)
-    : using_memenc(false), is_formated(false), thread_num(thread_num),
-      out(stdout), init_state(nullptr), property_automata(a), propsyms(psyms),
+    : using_memenc(false),
+      is_formated(false),
+      thread_num(thread_num),
+      out(stdout),
+      init_state(nullptr),
+      property_automata(a),
+      propsyms(psyms),
       end_states(thread_num) {
   if (lmn_env.mem_enc) {
     using_memenc = true;
@@ -87,7 +93,8 @@ StateSpace::StateSpace(int thread_num, AutomataRef a, Vector *psyms)
   }
 }
 
-StateSpace::~StateSpace() {}
+StateSpace::~StateSpace() {
+}
 
 /* 膜のIDを計算するハッシュ値(mhash)を追加する */
 void StateSpace::add_memid_hash(unsigned long hash) {
@@ -95,33 +102,27 @@ void StateSpace::add_memid_hash(unsigned long hash) {
   this->mhash_table.tbl->memid_rehash(hash);
 }
 
-std::unique_ptr<StateTable> &
-StateSpace::insert_destination(State *s, unsigned long hashv) {
+std::unique_ptr<StateTable> &StateSpace::insert_destination(State *s, unsigned long hashv) {
   if (s->is_encoded()) /* already calculated canonical binary strings */
-    return state_is_accept(automata(), s) ? this->memid_table.acc
-                                          : this->memid_table.tbl;
+    return state_is_accept(automata(), s) ? this->memid_table.acc : this->memid_table.tbl;
 
-  if (slim::config::profile && lmn_env.optimize_hash_old &&
-      !lmn_env.tree_compress && contains_hash(hashv))
-    return state_is_accept(automata(), s) ? this->memid_table.acc
-                                          : this->memid_table.tbl;
+  if (slim::config::profile && lmn_env.optimize_hash_old && !lmn_env.tree_compress &&
+      contains_hash(hashv))
+    return state_is_accept(automata(), s) ? this->memid_table.acc : this->memid_table.tbl;
 
   /* default */
-  return state_is_accept(automata(), s) ? this->mhash_table.acc
-                                        : this->mhash_table.tbl;
+  return state_is_accept(automata(), s) ? this->mhash_table.acc : this->mhash_table.tbl;
 }
 
-std::unique_ptr<StateTable> &
-StateSpace::resize_destination(std::unique_ptr<StateTable> &def, State *ret,
-                               State *s) {
+std::unique_ptr<StateTable>
+    &StateSpace::resize_destination(std::unique_ptr<StateTable> &def, State *ret, State *s) {
   /* rehasherが機能した場合, 通常のテーブルを入り口に,
    * memidテーブルにエントリが追加されている
    * なにも考慮せずにテーブル拡張の判定を行ってしまうと,
    * memidテーブルが定数サイズになってしまう. 判定を適切に行うため,
    * テーブルへのポインタを切り替える */
   if (ret->is_encoded())
-    return (state_is_accept(this->automata(), s)) ? this->memid_table.acc
-                                                  : this->memid_table.tbl;
+    return (state_is_accept(this->automata(), s)) ? this->memid_table.acc : this->memid_table.tbl;
 
   return def;
 }
@@ -139,8 +140,8 @@ State *StateSpace::insert(State *s) {
   unsigned long hashv = state_hash(s);
 
   auto &insert_dst = insert_destination(s, hashv);
-  if (slim::config::profile && lmn_env.optimize_hash_old &&
-      !lmn_env.tree_compress && !s->is_expanded() && contains_hash(hashv)) {
+  if (slim::config::profile && lmn_env.optimize_hash_old && !lmn_env.tree_compress &&
+      !s->is_expanded() && contains_hash(hashv)) {
     s->calc_mem_encode();
   }
 
@@ -150,8 +151,8 @@ State *StateSpace::insert(State *s) {
     ret = insert_dst->insert(s);
   }
 
-  if (slim::config::profile && lmn_env.optimize_hash_old &&
-      !lmn_env.tree_compress && col >= MEM_EQ_FAIL_THRESHOLD) {
+  if (slim::config::profile && lmn_env.optimize_hash_old && !lmn_env.tree_compress &&
+      col >= MEM_EQ_FAIL_THRESHOLD) {
     this->add_memid_hash(hashv);
   }
 
@@ -207,8 +208,7 @@ State *StateSpace::insert_delta(State *s, struct MemDeltaRoot *d) {
 
 /* 重複検査や排他制御なしに状態sを状態表ssに登録する */
 void StateSpace::add_direct(State *s) {
-  auto &add_dst =
-      (s->is_encoded()) ? this->memid_table.tbl : this->mhash_table.tbl;
+  auto &add_dst = (s->is_encoded()) ? this->memid_table.tbl : this->mhash_table.tbl;
   add_dst->add_direct(s);
   add_dst->resize_if_needed();
 }
@@ -346,10 +346,14 @@ void StateSpace::format_states() {
 #ifndef __CYGWIN__
   /* cygwinテスト時に, ボトルネックになっていた */
   if (!this->is_formated && lmn_env.sp_dump_format != INCREMENTAL) {
-    if (this->mhash_table.tbl) this->mhash_table.tbl->format_states();
-    if (this->mhash_table.acc) this->mhash_table.acc->format_states();
-    if (this->memid_table.tbl) this->memid_table.tbl->format_states();
-    if (this->memid_table.acc) this->memid_table.acc->format_states();
+    if (this->mhash_table.tbl)
+      this->mhash_table.tbl->format_states();
+    if (this->mhash_table.acc)
+      this->mhash_table.acc->format_states();
+    if (this->memid_table.tbl)
+      this->memid_table.tbl->format_states();
+    if (this->memid_table.acc)
+      this->memid_table.acc->format_states();
     this->is_formated = TRUE;
   }
 #endif

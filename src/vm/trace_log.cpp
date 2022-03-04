@@ -37,8 +37,7 @@
 
 #include "trace_log.h"
 
-
-template <typename T>
+template<typename T>
 const T ProcessTable<T>::unused = std::numeric_limits<T>::max();
 
 template class ProcessTable<unsigned char>;
@@ -48,7 +47,9 @@ template class ProcessTable<unsigned long>;
  * Tracker
  */
 
-BOOL tracelog_contains(TraceLogRef l, LmnWord key) { return l->contains(key); }
+BOOL tracelog_contains(TraceLogRef l, LmnWord key) {
+  return l->contains(key);
+}
 
 BOOL tracelog_contains_atom(TraceLogRef l, LmnSymbolAtomRef atom) {
   return l->contains(atom->get_id());

@@ -46,10 +46,11 @@
  * @{
  */
 
+#include <stdio.h>
+
 #include "automata.h"
 #include "element/element.h"
 #include "vm/vm.h"
-#include <stdio.h>
 
 typedef struct SymbolDefinition *SymbolDefinitionRef;
 typedef struct Proposition *PropositionRef;
@@ -66,8 +67,7 @@ PropositionRef propsym_get_proposition(SymbolDefinitionRef s);
 
 /* proposition */
 
-PropositionRef proposition_make(const char *head, const char *guard,
-                                const char *body);
+PropositionRef proposition_make(const char *head, const char *guard, const char *body);
 void proposition_free(PropositionRef p);
 LmnRuleRef proposition_get_rule(PropositionRef p);
 BOOL proposition_eval(PropositionRef prop, LmnMembraneRef mem);

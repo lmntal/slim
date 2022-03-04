@@ -40,6 +40,7 @@
 /* 外部プログラムの起動など、プロセス関連の便利関数の定義 */
 
 #include "process_util.h"
+
 #include <stdlib.h>
 #include <sys/wait.h>
 
@@ -56,35 +57,33 @@ FILE *run_program(const char *program_path, char **args) {
   pid = fork();
 
   switch (pid) {
-  case 0: /* 子プロセス */
-  {
-    int old;
-    close(fileno(stdout));
-    old = dup(pipes[1]);
-    close(pipes[0]);
-    close(pipes[1]);
+    case 0: /* 子プロセス */
+    {
+      int old;
+      close(fileno(stdout));
+      old = dup(pipes[1]);
+      close(pipes[0]);
+      close(pipes[1]);
 
-    if (execv(program_path, args) == -1) {
-      perror("execv failed");
-      exit(EXIT_FAILURE);
+      if (execv(program_path, args) == -1) {
+        perror("execv failed");
+        exit(EXIT_FAILURE);
+      }
     }
-  }
-  case -1: /* fork失敗 */
-    perror("fork failed");
-    exit(EXIT_FAILURE);
-  default: /* 親プロセス */
-  {
-    //     int status;
+    case -1: /* fork失敗 */ perror("fork failed"); exit(EXIT_FAILURE);
+    default: /* 親プロセス */
+    {
+      //     int status;
 
-    close(pipes[1]);
-    /* TODO: パイプのバッファを越える出力を受けた場合,
-     *       読み込むまでブロックされるためデッドロックしてしまう */
-    //     if (waitpid(pid, &status, 0) == -1) {
-    //       perror("waitpid failed");
-    //       exit(EXIT_FAILURE);
-    //     }
+      close(pipes[1]);
+      /* TODO: パイプのバッファを越える出力を受けた場合,
+       *       読み込むまでブロックされるためデッドロックしてしまう */
+      //     if (waitpid(pid, &status, 0) == -1) {
+      //       perror("waitpid failed");
+      //       exit(EXIT_FAILURE);
+      //     }
 
-    return fdopen(pipes[0], "r");
-  }
+      return fdopen(pipes[0], "r");
+    }
   }
 }

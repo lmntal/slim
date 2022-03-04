@@ -38,10 +38,12 @@
  */
 
 #include "file_util.h"
-#include "../arch.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "../arch.h"
 
 char *build_path(const char *dir, const char *component) {
   const int dir_len = strlen(dir);
@@ -52,8 +54,8 @@ char *build_path(const char *dir, const char *component) {
     buf = (char *)malloc(sizeof(char) * dir_len + comp_len + 1);
     sprintf(buf, "%s%s", dir, component);
   } else {
-    buf = (char *)malloc(sizeof(char) * dir_len + comp_len +
-                         strlen(DIR_SEPARATOR_STR) + comp_len + 1);
+    buf = (char *)malloc(
+        sizeof(char) * dir_len + comp_len + strlen(DIR_SEPARATOR_STR) + comp_len + 1);
     sprintf(buf, "%s%s%s", dir, DIR_SEPARATOR_STR, component);
   }
 

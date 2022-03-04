@@ -12,38 +12,37 @@ extern "C" {
 #endif
 
 /* ==========================================================================
- * constant definitions        
+ * constant definitions
  */
 
 #define ZD_NO_FLUSH      0
 #define ZD_PARTIAL_FLUSH 1 /* will be removed, use Z_SYNC_FLUSH instead */
 
-#define ZD_SYNC_FLUSH    2
-#define ZD_FULL_FLUSH    3
-#define ZD_FINISH        4
+#define ZD_SYNC_FLUSH 2
+#define ZD_FULL_FLUSH 3
+#define ZD_FINISH     4
 /* Allowed flush values; see zd_deflate() below for details */
 
-#define ZD_HUFFMAN_ONLY        0
-#define ZD_FILTERED            5
-#define ZD_DEFAULT_STRATEGY    7
+#define ZD_HUFFMAN_ONLY     0
+#define ZD_FILTERED         5
+#define ZD_DEFAULT_STRATEGY 7
 /* compression strategy; see zd_deflateInit2() below for details */
 
-#define ZD_NO_COMPRESSION         0
-#define ZD_BEST_SPEED             1
-#define ZD_BEST_COMPRESSION       9
-#define ZD_DEFAULT_COMPRESSION  (-1)
+#define ZD_NO_COMPRESSION      0
+#define ZD_BEST_SPEED          1
+#define ZD_BEST_COMPRESSION    9
+#define ZD_DEFAULT_COMPRESSION (-1)
 /* compression levels */
 
-#define ZD_BINARY   0
-#define ZD_ASCII    1
-#define ZD_UNKNOWN  2
+#define ZD_BINARY  0
+#define ZD_ASCII   1
+#define ZD_UNKNOWN 2
 /* Possible values of the data_type field */
 
-#define ZD_DEFLATED  5 /* randomly choosen 8,15 are reserved */
+#define ZD_DEFLATED 5 /* randomly choosen 8,15 are reserved */
 /* The deflate compression method (the only one supported in this version) */
 
-#define ZD_NULL  0  /* for initializing zalloc, zfree, opaque */
-
+#define ZD_NULL 0 /* for initializing zalloc, zfree, opaque */
 
 /* Return codes for the compression/decompression functions. Negative
  * values are errors, positive values are used for special but normal events.
@@ -52,28 +51,28 @@ extern "C" {
  */
 #define ZD_OK            0
 #define ZD_STREAM_END    1
-#define ZD_ERRNO        (-1)
-#define ZD_STREAM_ERROR (-2)
-#define ZD_DATA_ERROR   (-3)
-#define ZD_MEM_ERROR    (-4)
-#define ZD_BUF_ERROR    (-5)
+#define ZD_ERRNO         (-1)
+#define ZD_STREAM_ERROR  (-2)
+#define ZD_DATA_ERROR    (-3)
+#define ZD_MEM_ERROR     (-4)
+#define ZD_BUF_ERROR     (-5)
 #define ZD_VERSION_ERROR (-6)
 
 #ifndef REFNUM
-#define REFNUM 1            /* Reference Window Number */
+#define REFNUM 1 /* Reference Window Number */
 #endif
 #if REFNUM < 1 || REFNUM > 4
-#error: incorrect REFNUM value 
-#endif 
+#error : incorrect REFNUM value
+#endif
 
 #define ZDLIB_VERSION "2.1"
 /* current libzd version */
 
-/* 
+/*
      The 'libzd' compression library provides in-memory compression and
   decompression functions, including integrity checks of the uncompressed
   data.  This version of the library supports only one compression method
-  (delta_deflation) 
+  (delta_deflation)
   NOTE: 'libzd' complies with the ZLIB Compressed Data Format Specification
 
      Compression can be done in a single step if the buffers are large
@@ -88,39 +87,39 @@ extern "C" {
 */
 
 /* ==========================================================================
- * struct definitions        
+ * struct definitions
  */
 
-typedef voidpf (*alloc_func) OF((voidpf opaque, uInt items, uInt size));
-typedef void   (*free_func)  OF((voidpf opaque, voidpf address));
+typedef voidpf(*alloc_func) OF((voidpf opaque, uInt items, uInt size));
+typedef void(*free_func) OF((voidpf opaque, voidpf address));
 
 struct zd_internal_state;
 
 typedef struct zd_stream_s {
-  Bytef    *next_in;  /* next input byte */
-  uInt     avail_in;  /* number of bytes available at next_in */
-  uLong    total_in;  /* total nb of input bytes read so far */
-  
-  Bytef    *next_out; /* next output byte should be put there */
-  uInt     avail_out; /* remaining free space at next_out */
-  uLong    total_out; /* total nb of bytes output so far */
-  
-  Bytef    *base[REFNUM];      /* pointer to the base window    */
-  uLong    base_out[REFNUM];   /* total read bytes from the base window */
-  uLong    base_avail[REFNUM];
-  int      refnum;
+  Bytef *next_in; /* next input byte */
+  uInt avail_in;  /* number of bytes available at next_in */
+  uLong total_in; /* total nb of input bytes read so far */
 
-  char     *msg;      /* last error message, NULL if no error */
+  Bytef *next_out; /* next output byte should be put there */
+  uInt avail_out;  /* remaining free space at next_out */
+  uLong total_out; /* total nb of bytes output so far */
+
+  Bytef *base[REFNUM];    /* pointer to the base window    */
+  uLong base_out[REFNUM]; /* total read bytes from the base window */
+  uLong base_avail[REFNUM];
+  int refnum;
+
+  char *msg;                           /* last error message, NULL if no error */
   struct zd_internal_state FAR *state; /* not visible by applications */
 
-  alloc_func zalloc;  /* used to allocate the internal state */
-  free_func  zfree;   /* used to free the internal state */
-  voidpf     opaque;  /* private data object passed to zalloc and zfree */
+  alloc_func zalloc; /* used to allocate the internal state */
+  free_func zfree;   /* used to free the internal state */
+  voidpf opaque;     /* private data object passed to zalloc and zfree */
 
-  int     data_type;  /* best guess about the data type: ascii or binary */
-  uLong   adler;      /* adler32 value of the uncompressed data */
-  uLong   reserved;   /* reserved for future use */
- 
+  int data_type;  /* best guess about the data type: ascii or binary */
+  uLong adler;    /* adler32 value of the uncompressed data */
+  uLong reserved; /* reserved for future use */
+
 } zd_stream;
 
 typedef zd_stream FAR *zd_streamp;
@@ -138,7 +137,7 @@ typedef zd_stream FAR *zd_streamp;
    opaque value.
 
    zalloc must return ZD_NULL if there is not enough memory for the object.
-   If zdelta library is used in a multi-threaded application, zalloc and 
+   If zdelta library is used in a multi-threaded application, zalloc and
    zfree must be thread safe.
 
    The fields total_in and total_out can be used for statistics or
@@ -149,18 +148,18 @@ typedef zd_stream FAR *zd_streamp;
 */
 
 /* ==========================================================================
- * basic functions        
+ * basic functions
  */
 
-ZEXTERN const char * ZEXPORT zdlibVersion OF((void));
-/* 
+ZEXTERN const char *ZEXPORT zdlibVersion OF((void));
+/*
    The application can compare zdlibVersion and ZDLIB_VERSION for consistency.
    If the first character differs, the library code actually used is
    not compatible with the zdlib.h header file used by the application.
    This check is automatically made by zd_deflateInit and zd_inflateInit.
  */
 
-/* 
+/*
 ZEXTERN int ZEXPORT zd_deflateInit OF((zd_streamp strm, int level));
 
      Initializes the internal stream state for compression. The fields
@@ -176,7 +175,7 @@ ZEXTERN int ZEXPORT zd_deflateInit OF((zd_streamp strm, int level));
 
      zd_deflateInit returns ZD_OK if success, ZD_MEM_ERROR if there was not
    enough memory, ZD_STREAM_ERROR if level is not a valid compression level,
-   ZD_VERSION_ERROR if the zdlib library version (zdlibVersion) is 
+   ZD_VERSION_ERROR if the zdlib library version (zdlibVersion) is
    incompatible with the version assumed by the caller (ZDLIB_VERSION).
    msg is set to null if there is no error message.  zd_deflateInit does not
    perform any compression: this will be done by zd_deflate().
@@ -187,9 +186,9 @@ ZEXTERN int ZEXPORT zd_deflate OF((zd_streamp strm, int flush));
     zd_deflate compresses as much data as possible, and stops when the input
   buffer becomes empty or the output buffer becomes full. It may introduce some
   output latency (reading input without producing any output) except when
-  forced to flush. 
+  forced to flush.
 
-    The detailed semantics are as follows. zd_deflate performs one or both of 
+    The detailed semantics are as follows. zd_deflate performs one or both of
   the following actions:
 
   - Compress more input starting at next_in and update next_in and avail_in
@@ -208,8 +207,8 @@ ZEXTERN int ZEXPORT zd_deflate OF((zd_streamp strm, int flush));
   more output, and updating avail_in or avail_out accordingly; avail_out
   should never be zero before the call. The application can consume the
   compressed output when it wants, for example when the output buffer is full
-  (avail_out == 0), or after each call of zd_deflate(). If deflate returns 
-  ZD_OK and with zero avail_out, it must be called again after making room in 
+  (avail_out == 0), or after each call of zd_deflate(). If deflate returns
+  ZD_OK and with zero avail_out, it must be called again after making room in
   the output buffer because there might be more output pending.
 
     If the parameter flush is set to ZD_SYNC_FLUSH, all pending output is
@@ -217,7 +216,7 @@ ZEXTERN int ZEXPORT zd_deflate OF((zd_streamp strm, int flush));
   that the decompressor can get all input data available so far. (In particular
   avail_in is zero after the call if enough output space has been provided
   before the call.)  Flushing may degrade compression for some compression
-  algorithms and so it should be used only when necessary. 
+  algorithms and so it should be used only when necessary.
 
     If flush is set to ZD_FULL_FLUSH, all output is flushed as with
   ZD_SYNC_FLUSH, and the compression state is reset so that decompression can
@@ -225,9 +224,9 @@ ZEXTERN int ZEXPORT zd_deflate OF((zd_streamp strm, int flush));
   random access is desired. Using ZD_FULL_FLUSH too often can seriously degrade
   the compression.
 
-    If zd_deflate returns with avail_out == 0, this function must be called 
-  again with the same value of the flush parameter and more output space 
-  (updated avail_out), until the flush is complete (deflate returns with 
+    If zd_deflate returns with avail_out == 0, this function must be called
+  again with the same value of the flush parameter and more output space
+  (updated avail_out), until the flush is complete (deflate returns with
   non-zero avail_out).
 
     If the parameter flush is set to ZD_FINISH, pending input is processed,
@@ -237,13 +236,13 @@ ZEXTERN int ZEXPORT zd_deflate OF((zd_streamp strm, int flush));
   more input data, until it returns with ZD_STREAM_END or an error. After
   deflate has returned ZD_STREAM_END, the only possible operations on the
   stream are zd_deflateReset or zd_deflateEnd.
-  
-    ZD_FINISH can be used immediately after zd_deflateInit if all the 
-  compression is to be done in a single step. In this case, 
+
+    ZD_FINISH can be used immediately after zd_deflateInit if all the
+  compression is to be done in a single step. In this case,
   a recommended value for avail_out is at least 0.1% larger than avail_in plus
   12 bytes - on some rare occasions zdelta may expand the data more than this,
   the application should check the return codes for those cases!
-  If deflate does not return  ZD_STREAM_END, then it must be called 
+  If deflate does not return  ZD_STREAM_END, then it must be called
   again as described above.
 
     zd_deflate() sets strm->adler to the adler32 checksum of all input read
@@ -256,7 +255,6 @@ ZEXTERN int ZEXPORT zd_deflate OF((zd_streamp strm, int flush));
   if next_in or next_out was NULL), ZD_BUF_ERROR if no progress is possible
   (for example avail_in or avail_out was zero).
 */
-
 
 ZEXTERN int ZEXPORT zd_deflateEnd OF((zd_streamp strm));
 /*
@@ -271,8 +269,7 @@ ZEXTERN int ZEXPORT zd_deflateEnd OF((zd_streamp strm));
    deallocated).
 */
 
-
-/* 
+/*
 ZEXTERN int ZEXPORT inflateInit OF((z_streamp strm));
 
      Initializes the internal stream state for decompression. The fields
@@ -291,8 +288,6 @@ ZEXTERN int ZEXPORT inflateInit OF((z_streamp strm));
    the zdlib header if present: this will be done by zd_inflate().  (So next_in and
    avail_in may be modified, but next_out and avail_out are unchanged.)
 */
-
-
 
 ZEXTERN int ZEXPORT zd_inflate OF((zd_streamp strm, int flush));
 /*
@@ -321,7 +316,7 @@ ZEXTERN int ZEXPORT zd_inflate OF((zd_streamp strm, int flush));
   example when the output buffer is full (avail_out == 0), or after each
   call of zd_inflate(). If inflate returns ZD_OK and with zero avail_out, it
   must be called again after making room in the output buffer because there
-  might be more output pending. 
+  might be more output pending.
 
     If the parameter flush is set to ZD_SYNC_FLUSH, inflate flushes as much
   output as possible to the output buffer. The flushing behavior of inflate is
@@ -339,20 +334,19 @@ ZEXTERN int ZEXPORT zd_inflate OF((zd_streamp strm, int flush));
   be inflateEnd to deallocate the decompression state. The use of ZD_FINISH
   is never required, but can be used to inform inflate that a faster routine
   may be used for the single zd_inflate() call.
-  
-    zd_inflate() returns ZD_OK if some progress has been made (more input 
-  processed or more output produced), ZD_STREAM_END if the end of the 
-  compressed data has been reached and all uncompressed output has been 
-  produced, ZD_DATA_ERROR if the input data was corrupted (input stream not 
-  conforming to the zlib/libzd format or incorrect adler32 checksum), 
-  ZD_STREAM_ERROR if the stream structure was inconsistent (for example if 
+
+    zd_inflate() returns ZD_OK if some progress has been made (more input
+  processed or more output produced), ZD_STREAM_END if the end of the
+  compressed data has been reached and all uncompressed output has been
+  produced, ZD_DATA_ERROR if the input data was corrupted (input stream not
+  conforming to the zlib/libzd format or incorrect adler32 checksum),
+  ZD_STREAM_ERROR if the stream structure was inconsistent (for example if
   next_in or next_out was NULL), ZD_MEM_ERROR if there was not enough memory,
   ZD_BUF_ERROR if no progress is possible or if there was not enough room in
   the output buffer when ZD_FINISH is used.
 
-  NOTE: there is no check sum for the reference data! 
+  NOTE: there is no check sum for the reference data!
 */
-
 
 ZEXTERN int ZEXPORT zd_inflateEnd OF((zd_streamp strm));
 /*
@@ -360,14 +354,14 @@ ZEXTERN int ZEXPORT zd_inflateEnd OF((zd_streamp strm));
    This function discards any unprocessed input and does not flush any
    pending output.
 
-     zd_inflateEnd returns ZD_OK if success, ZD_STREAM_ERROR if the stream 
-   state was inconsistent. In the error case, msg may be set but then points 
+     zd_inflateEnd returns ZD_OK if success, ZD_STREAM_ERROR if the stream
+   state was inconsistent. In the error case, msg may be set but then points
    to a static string (which must not be deallocated).
 */
 
 /* ==========================================================================
- * advanced functions  
- */  
+ * advanced functions
+ */
 
 ZEXTERN int ZEXPORT zd_deflateReset OF((zd_streamp strm));
 /*
@@ -380,9 +374,7 @@ ZEXTERN int ZEXPORT zd_deflateReset OF((zd_streamp strm));
    stream state was inconsistent (such as zalloc or state being NULL).
 */
 
-ZEXTERN int ZEXPORT zd_deflateParams OF((zd_streamp strm,
-					 int level,
-					 int strategy));
+ZEXTERN int ZEXPORT zd_deflateParams OF((zd_streamp strm, int level, int strategy));
 /*
      Dynamically update the compression level and compression strategy.  The
    interpretation of level and strategy is as in zd_deflateInit2.  This can be
@@ -402,17 +394,17 @@ ZEXTERN int ZEXPORT zd_deflateParams OF((zd_streamp strm,
 */
 
 ZEXTERN int ZEXPORT zd_inflateSync OF((zd_streamp strm));
-/* 
+/*
     Skips invalid compressed data until a full flush point (see above the
   description of deflate with ZD_FULL_FLUSH) can be found, or until all
   available input is skipped. No output is provided.
 
-    zd_inflateSync returns ZD_OK if a full flush point has been found, 
-  ZD_BUF_ERROR if no more input was provided, ZD_DATA_ERROR if no flush point 
-  has been found, or ZD_STREAM_ERROR if the stream structure was inconsistent. 
-  In the success case, the application may save the current current value of 
+    zd_inflateSync returns ZD_OK if a full flush point has been found,
+  ZD_BUF_ERROR if no more input was provided, ZD_DATA_ERROR if no flush point
+  has been found, or ZD_STREAM_ERROR if the stream structure was inconsistent.
+  In the success case, the application may save the current current value of
   total_in which indicates where valid compressed data was found. In the error
-  case, the application may repeatedly call zd_inflateSync, providing more 
+  case, the application may repeatedly call zd_inflateSync, providing more
   input each time, until success or end of the input data.
 */
 
@@ -427,7 +419,7 @@ ZEXTERN int ZEXPORT zd_inflateReset OF((zd_streamp strm));
 */
 
 /* ==========================================================================
- * utility functions  
+ * utility functions
  */
 
 /* computes zdelta difference between target data and reference data
@@ -443,7 +435,7 @@ ZEXTERN int ZEXPORT zd_inflateReset OF((zd_streamp strm));
  *
  *
  * OUTPUT parameters:
- * delta    pointer to zdelta difference 
+ * delta    pointer to zdelta difference
  * *dsize   size of zdelta difference
  *
  * zd_compress returns ZD_OK on success,
@@ -451,11 +443,8 @@ ZEXTERN int ZEXPORT zd_inflateReset OF((zd_streamp strm));
  * ZD_BUF_ERROR if there was not enough room in the output
  * buffer.
  */
-ZEXTERN int ZEXPORT zd_compress OF ((const Bytef *ref, uLong rsize,
-				     const Bytef *tar, uLong tsize,
-				     Bytef *delta, uLongf* dsize));
-
-
+ZEXTERN int ZEXPORT zd_compress
+    OF((const Bytef *ref, uLong rsize, const Bytef *tar, uLong tsize, Bytef *delta, uLongf *dsize));
 
 /* computes zdelta difference between target data and reference data
  *
@@ -466,23 +455,21 @@ ZEXTERN int ZEXPORT zd_compress OF ((const Bytef *ref, uLong rsize,
  * tsize    size of targeted data set
  * delta    a pointer to NULL pointer
  *	    DO NOT allocate any memory for the output here
- *	    this will be done by libZD 
+ *	    this will be done by libZD
  *
  * OUTPUT parameters:
- * *delta   points to zdelta difference 
+ * *delta   points to zdelta difference
  *	    the memory space IS allocated by zdelta
  * *dsize   size ot zdelta difference
- *	    the memory space for this variable 
+ *	    the memory space for this variable
  *	    SHOULD be allocated by the user
  *
  * zd_compress1 returns ZD_OK on success
  * in case of failure an error code is returned, and
  * an error message is printed to stderr, delta is set to NULL
  */
-ZEXTERN int ZEXPORT zd_compress1 OF ((const Bytef *ref, uLong rsize,
-				      const Bytef *tar, uLong tsize,
-				      Bytef **delta, uLongf *dsize));
-
+ZEXTERN int ZEXPORT zd_compress1 OF(
+    (const Bytef *ref, uLong rsize, const Bytef *tar, uLong tsize, Bytef **delta, uLongf *dsize));
 
 /* computes zdelta difference between target data and N reference data sets
  *
@@ -495,25 +482,27 @@ ZEXTERN int ZEXPORT zd_compress1 OF ((const Bytef *ref, uLong rsize,
  * tsize    size of targeted data set
  * delta    a pointer to NULL pointer
  *	    DO NOT allocate any memory for the output here
- *	    this will be done by libZD 
+ *	    this will be done by libZD
  *
  * OUTPUT parameters:
- * delta    points to zdelta difference 
+ * delta    points to zdelta difference
  *	    the memory space IS allocated by the user
  * *dsize   size ot zdelta difference
- *	    the memory space for this variable 
+ *	    the memory space for this variable
  *	    SHOULD be allocated by the user
  *
  * zd_compress1 returns ZD_OK on success
  * in case of failure an error code is returned, and
  * an error message is printed to stderr, delta is set to NULL
  */
-ZEXTERN int ZEXPORT zd_compressN OF ((const Bytef *ref[],uLong rsize[],int rw,
-				      const Bytef *tar, uLong tsize,
-				      Bytef *delta, uLongf *dsize));
-
-
-
+ZEXTERN int ZEXPORT zd_compressN
+    OF((const Bytef *ref[],
+        uLong rsize[],
+        int rw,
+        const Bytef *tar,
+        uLong tsize,
+        Bytef *delta,
+        uLongf *dsize));
 
 /* rebuilds target data from reference data and zdelta difference
  *
@@ -536,10 +525,8 @@ ZEXTERN int ZEXPORT zd_compressN OF ((const Bytef *ref[],uLong rsize[],int rw,
  * ZD_BUF_ERROR if there was not enough room in the output
  * buffer.
  */
-ZEXTERN int ZEXPORT zd_uncompress OF ((const Bytef *ref, uLong rsize,
-				       Bytef *tar, uLongf *tsize,
-				       const Bytef *delta, uLong dsize));
-
+ZEXTERN int ZEXPORT zd_uncompress
+    OF((const Bytef *ref, uLong rsize, Bytef *tar, uLongf *tsize, const Bytef *delta, uLong dsize));
 
 /* rebuilds target data from reference data and zdelta difference
  *
@@ -548,29 +535,26 @@ ZEXTERN int ZEXPORT zd_uncompress OF ((const Bytef *ref, uLong rsize,
  * rsize    size of reference data set
  * tar      pointer to NULL poiner
  *	    DO NOT allocate any memory for the output here;
- *	    this will be done by libZD 
- * 
+ *	    this will be done by libZD
+ *
  * delta    pointer to zdelta diference
  * dsize    size of zdelta difference
  *
  * OUTPUT parameters:
- * *tar     pointer to the rebuild target data 
+ * *tar     pointer to the rebuild target data
  *	    the memory space IS allocated by zdelta
  * tsize    size ot the recomputed target
- *	    the memory space for this variable 
+ *	    the memory space for this variable
  *	    SHOULD be allocated by the user
  *
  * zd_uncompress1 returns ZD_OK on success
  * in case of failure an error code is returned, and
  * an error message is printed to the stderr, tar is set to NULL
  */
-ZEXTERN int ZEXPORT zd_uncompress1 OF ((const Bytef *ref, uLong rsize,
-					Bytef **tar, uLongf *tsize,
-					const Bytef *delta, uLong dsize));
+ZEXTERN int ZEXPORT zd_uncompress1 OF(
+    (const Bytef *ref, uLong rsize, Bytef **tar, uLongf *tsize, const Bytef *delta, uLong dsize));
 
-
-
-/* rebuilds target data from reference data and zdelta difference 
+/* rebuilds target data from reference data and zdelta difference
  *
  * INPUT:
  * ref      pointer to *N* reference data set
@@ -592,12 +576,14 @@ ZEXTERN int ZEXPORT zd_uncompress1 OF ((const Bytef *ref, uLong rsize,
  * ZD_BUF_ERROR if there was not enough room in the output
  * buffer.
  */
-ZEXTERN int ZEXPORT 
-zd_uncompressN OF((Bytef *ref[],uLong rsize[],int rw,
-		   const Bytef *tar, uLong *tsize,
-		   const Bytef *delta, uLongf dsize));
-  
-
+ZEXTERN int ZEXPORT zd_uncompressN
+    OF((Bytef * ref[],
+        uLong rsize[],
+        int rw,
+        const Bytef *tar,
+        uLong *tsize,
+        const Bytef *delta,
+        uLongf dsize));
 
 /* computes zdelta difference between target data and N reference data sets
  *
@@ -610,24 +596,27 @@ zd_uncompressN OF((Bytef *ref[],uLong rsize[],int rw,
  * tsize    size of targeted data set
  * delta    a pointer to NULL pointer
  *	    DO NOT allocate any memory for the output here
- *	    this will be done by libZD 
+ *	    this will be done by libZD
  *
  * OUTPUT parameters:
- * *delta   points to zdelta difference 
+ * *delta   points to zdelta difference
  *	    the memory space IS allocated by zdelta
  * *dsize   size ot zdelta difference
- *	    the memory space for this variable 
+ *	    the memory space for this variable
  *	    SHOULD be allocated by the user
  *
  * zd_compress1 returns ZD_OK on success
  * in case of failure an error code is returned, and
  * an error message is printed to stderr, delta is set to NULL
  */
-ZEXTERN int ZEXPORT zd_compressN1 OF ((const Bytef *ref[],uLong rsize[],int rw,
-				       const Bytef *tar, uLong tsize,
-				       Bytef **delta, uLongf *dsize));
-
-
+ZEXTERN int ZEXPORT zd_compressN1
+    OF((const Bytef *ref[],
+        uLong rsize[],
+        int rw,
+        const Bytef *tar,
+        uLong tsize,
+        Bytef **delta,
+        uLongf *dsize));
 
 /* rebuilds target data from reference data and zdelta difference
  *
@@ -638,48 +627,49 @@ ZEXTERN int ZEXPORT zd_compressN1 OF ((const Bytef *ref[],uLong rsize[],int rw,
  *
  * tar      pointer to NULL poiner
  *	    DO NOT allocate any memory for the output here;
- *	    this will be done by libZD 
- * 
+ *	    this will be done by libZD
+ *
  * delta    pointer to zdelta diference
  * dsize    size of zdelta difference
  *
  * OUTPUT parameters:
- * *tar     pointer to the rebuild target data 
+ * *tar     pointer to the rebuild target data
  *	    the memory space IS allocated by zdelta
  * tsize    size ot the recomputed target
- *	    the memory space for this variable 
+ *	    the memory space for this variable
  *	    SHOULD be allocated by the user
  *
  * zd_uncompress1 returns ZD_OK on success
  * in case of failure an error code is returned, and
  * an error message is printed to the stderr, tar is set to NULL
  */
-  ZEXTERN int ZEXPORT 
-  zd_uncompressN1 OF ((const Bytef **ref, uLong* rsize,int rw,
-		       Bytef **tar, uLongf *tsize,
-		       const Bytef *delta, uLong dsize));
+ZEXTERN int ZEXPORT zd_uncompressN1
+    OF((const Bytef **ref,
+        uLong *rsize,
+        int rw,
+        Bytef **tar,
+        uLongf *tsize,
+        const Bytef *delta,
+        uLong dsize));
 
-
-
-  /*ZEXTERN int ZEXPORT zd_inflateSync OF((zd_streamp strm)); */
-/* 
+/*ZEXTERN int ZEXPORT zd_inflateSync OF((zd_streamp strm)); */
+/*
     Skips invalid compressed data until a full flush point (see above the
   description of deflate with ZD_FULL_FLUSH) can be found, or until all
   available input is skipped. No output is provided.
 
-    zd_inflateSync returns ZD_OK if a full flush point has been found, 
-  ZD_BUF_ERROR if no more input was provided, ZD_DATA_ERROR if no flush 
-  point has been found, or ZD_STREAM_ERROR if the stream structure was 
-  inconsistent. In the success case, the application may save the current 
-  value of total_in which indicates where valid compressed data was found. 
-  In the error case, the application may repeatedly call zd_inflateSync, 
+    zd_inflateSync returns ZD_OK if a full flush point has been found,
+  ZD_BUF_ERROR if no more input was provided, ZD_DATA_ERROR if no flush
+  point has been found, or ZD_STREAM_ERROR if the stream structure was
+  inconsistent. In the success case, the application may save the current
+  value of total_in which indicates where valid compressed data was found.
+  In the error case, the application may repeatedly call zd_inflateSync,
   providing more input each time, until success or end of the input data.
 */
 
-
 /* ==========================================================================
- * checksum functions  
- */  
+ * checksum functions
+ */
 ZEXTERN uLong ZEXPORT zd_adler32 OF((uLong adler, const Bytef *buf, uInt len));
 
 /*
@@ -697,43 +687,52 @@ ZEXTERN uLong ZEXPORT zd_adler32 OF((uLong adler, const Bytef *buf, uInt len));
    if (adler != original_adler) error();
 */
 
-
 /* ==========================================================================
  */
-                        /* various hacks, don't look :) */
+/* various hacks, don't look :) */
 
 /* zd_deflateInit and zd_inflateInit are macros to allow checking the libzd
  * version and the compiler's view of zd_stream:
  */
-ZEXTERN int ZEXPORT zd_deflateInit_ OF((zd_streamp strm, int level,
-					const char *version, int stream_size));
-ZEXTERN int ZEXPORT zd_inflateInit_ OF((zd_streamp strm,
-					const char *version, int stream_size));
-ZEXTERN int ZEXPORT zd_deflateInit2_ OF((zd_streamp strm, int  level, 
-					 int  method, int windowBits,
-					 int memLevel, int strategy, 
-					 const char *version,int stream_size));
-ZEXTERN int ZEXPORT zd_inflateInit2_ OF((zd_streamp strm, int  windowBits,
-					const char *version, int stream_size));
+ZEXTERN int ZEXPORT zd_deflateInit_
+    OF((zd_streamp strm, int level, const char *version, int stream_size));
+ZEXTERN int ZEXPORT zd_inflateInit_ OF((zd_streamp strm, const char *version, int stream_size));
+ZEXTERN int ZEXPORT zd_deflateInit2_
+    OF((zd_streamp strm,
+        int level,
+        int method,
+        int windowBits,
+        int memLevel,
+        int strategy,
+        const char *version,
+        int stream_size));
+ZEXTERN int ZEXPORT zd_inflateInit2_
+    OF((zd_streamp strm, int windowBits, const char *version, int stream_size));
 
 #define zd_deflateInit(strm, level) \
-        zd_deflateInit_((strm), (level),       ZDLIB_VERSION, sizeof(zd_stream))
-#define zd_inflateInit(strm) \
-        zd_inflateInit_((strm),                ZDLIB_VERSION, sizeof(zd_stream))
+  zd_deflateInit_((strm), (level), ZDLIB_VERSION, sizeof(zd_stream))
+#define zd_inflateInit(strm) zd_inflateInit_((strm), ZDLIB_VERSION, sizeof(zd_stream))
 #define zd_deflateInit2(strm, level, method, windowBits, memLevel, strategy) \
-        zd_deflateInit2_((strm),(level),(method),(windowBits),(memLevel),\
-                      (strategy),           ZDLIB_VERSION, sizeof(zd_stream))
+  zd_deflateInit2_(                                                          \
+      (strm),                                                                \
+      (level),                                                               \
+      (method),                                                              \
+      (windowBits),                                                          \
+      (memLevel),                                                            \
+      (strategy),                                                            \
+      ZDLIB_VERSION,                                                         \
+      sizeof(zd_stream))
 #define zd_inflateInit2(strm, windowBits) \
-        zd_inflateInit2_((strm), (windowBits), ZDLIB_VERSION, sizeof(zd_stream))
+  zd_inflateInit2_((strm), (windowBits), ZDLIB_VERSION, sizeof(zd_stream))
 
 #if !defined(_ZD_UTIL_H) && !defined(ZD_NO_DUMMY_DECL)
-    struct zd_internal_state {int dummy;}; /* hack for buggy compilers */
+struct zd_internal_state {
+  int dummy;
+}; /* hack for buggy compilers */
 #endif
-
 
 #ifdef __cplusplus
 }
 #endif
 
 #endif /* ZD_LIBZD_H */
-

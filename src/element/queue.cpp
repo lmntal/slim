@@ -42,9 +42,11 @@
  */
 
 #include "queue.h"
-#include "error.h"
+
 #include <errno.h>
 #include <pthread.h>
+
+#include "error.h"
 
 #define Q_DEQ 0
 #define Q_ENQ 1
@@ -58,20 +60,13 @@ Queue::Queue(BOOL lock_type) {
   this->deq_num = 0UL;
 
   switch (lock_type) {
-  case LMN_Q_SRSW:
-    break;
-  case LMN_Q_MRMW:
-    lmn_mutex_init(&(this->deq_mtx));
-    /* fall through */
-  case LMN_Q_SRMW:
-    lmn_mutex_init(&(this->enq_mtx));
-    break;
-  case LMN_Q_MRSW:
-    lmn_mutex_init(&(this->deq_mtx));
-    break;
-  default:
-    lmn_fatal("unexpected");
-    break;
+    case LMN_Q_SRSW: break;
+    case LMN_Q_MRMW:
+      lmn_mutex_init(&(this->deq_mtx));
+      /* fall through */
+    case LMN_Q_SRMW: lmn_mutex_init(&(this->enq_mtx)); break;
+    case LMN_Q_MRSW: lmn_mutex_init(&(this->deq_mtx)); break;
+    default: lmn_fatal("unexpected"); break;
   }
   this->qlock = lock_type;
 }
@@ -99,21 +94,16 @@ Queue::~Queue() {
   }
 
   switch (this->qlock) {
-  case LMN_Q_MRMW:
-    lmn_mutex_destroy(&(this->deq_mtx));
-    /* FALL THROUGH */
-  case LMN_Q_SRMW:
-    lmn_mutex_destroy(&(this->enq_mtx));
-    break;
-  case LMN_Q_MRSW:
-    lmn_mutex_destroy(&(this->deq_mtx));
-    break;
-  default:
-    /* nothing to do */
-    break;
+    case LMN_Q_MRMW:
+      lmn_mutex_destroy(&(this->deq_mtx));
+      /* FALL THROUGH */
+    case LMN_Q_SRMW: lmn_mutex_destroy(&(this->enq_mtx)); break;
+    case LMN_Q_MRSW: lmn_mutex_destroy(&(this->deq_mtx)); break;
+    default:
+      /* nothing to do */
+      break;
   }
 }
-
 
 /*{tail, last}
  *     ↓
@@ -184,8 +174,6 @@ LmnWord Queue::dequeue() {
   return ret;
 }
 
-
-
 /* キューqが空なら真を返す.*/
 BOOL Queue::is_empty() {
   return (this->head == this->tail) && (this->enq_num == this->deq_num);
@@ -199,26 +187,20 @@ Node::Node(LmnWord v) {
   this->next = NULL;
 }
 
-Node::~Node() {};
+Node::~Node(){};
 
 void Queue::lock(BOOL is_enq) {
   if (is_enq) { /* for enqueue */
     switch (this->qlock) {
-    case LMN_Q_MRMW:
-    case LMN_Q_SRMW:
-      lmn_mutex_lock(&(this->enq_mtx));
-      break;
-    default:
-      break;
+      case LMN_Q_MRMW:
+      case LMN_Q_SRMW: lmn_mutex_lock(&(this->enq_mtx)); break;
+      default: break;
     }
   } else { /* for dequeue */
     switch (this->qlock) {
-    case LMN_Q_MRMW:
-    case LMN_Q_MRSW:
-      lmn_mutex_lock(&(this->deq_mtx));
-      break;
-    default:
-      break;
+      case LMN_Q_MRMW:
+      case LMN_Q_MRSW: lmn_mutex_lock(&(this->deq_mtx)); break;
+      default: break;
     }
   }
 }
@@ -226,21 +208,15 @@ void Queue::lock(BOOL is_enq) {
 void Queue::unlock(BOOL is_enq) {
   if (is_enq) { /* for enqueue */
     switch (this->qlock) {
-    case LMN_Q_MRMW:
-    case LMN_Q_SRMW:
-      lmn_mutex_unlock(&(this->enq_mtx));
-      break;
-    default:
-      break;
+      case LMN_Q_MRMW:
+      case LMN_Q_SRMW: lmn_mutex_unlock(&(this->enq_mtx)); break;
+      default: break;
     }
   } else { /* for dequeue */
     switch (this->qlock) {
-    case LMN_Q_MRMW:
-    case LMN_Q_MRSW:
-      lmn_mutex_unlock(&(this->deq_mtx));
-      break;
-    default:
-      break;
+      case LMN_Q_MRMW:
+      case LMN_Q_MRSW: lmn_mutex_unlock(&(this->deq_mtx)); break;
+      default: break;
     }
   }
 }
@@ -272,7 +248,9 @@ Deque::Deque(unsigned int init_size) {
 }
 
 /* destroy */
-void Deque::destroy() { LMN_FREE(this->tbl); }
+void Deque::destroy() {
+  LMN_FREE(this->tbl);
+}
 
 /* free */
 Deque::~Deque() {
@@ -280,9 +258,9 @@ Deque::~Deque() {
 }
 
 /* num */
-int Deque::num(){                                                             
-  return this->tail > this->head ? 
-    this->tail - this->head - 1 : this->cap - this->head + this->tail - 1;
+int Deque::num() {
+  return this->tail > this->head ? this->tail - this->head - 1
+                                 : this->cap - this->head + this->tail - 1;
 }
 
 /* is_empty */
@@ -340,19 +318,19 @@ LmnWord Deque::pop_tail() {
 }
 
 /* peek */
-LmnWord Deque::peek_head()const {
+LmnWord Deque::peek_head() const {
   unsigned int x = this->head;
   return this->tbl[DEQ_INC(x, this->cap)];
 }
 
 /* */
-LmnWord Deque::peek_tail()const {
+LmnWord Deque::peek_tail() const {
   unsigned int x = this->tail;
   return this->tbl[DEQ_DEC(x, this->cap)];
 }
 
 /* peek (no assertion) */
-LmnWord Deque::get(unsigned int i)const {
+LmnWord Deque::get(unsigned int i) const {
   return this->tbl[i];
 }
 
@@ -373,15 +351,14 @@ unsigned long Deque::space() {
 void Deque::print() {
   unsigned int i;
   FILE *f = stdout;
-  fprintf(f, "cap=%u, head=%u, tail=%u, num=%u\n[", this->cap, this->head,
-          this->tail, this->num());
+  fprintf(f, "cap=%u, head=%u, tail=%u, num=%u\n[", this->cap, this->head, this->tail, this->num());
   for (i = 0; i < this->cap; i++)
     fprintf(f, "%lu, ", this->tbl[i]);
   fprintf(f, "]\n");
 }
 
 /* contains */
-BOOL Deque::contains(LmnWord keyp)const {
+BOOL Deque::contains(LmnWord keyp) const {
   unsigned int i = this->tail;
   while (i != this->head) {
     DEQ_DEC(i, this->cap);

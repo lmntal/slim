@@ -46,9 +46,8 @@
 typedef struct SimpleProcessTable *SimplyProcessTableRef;
 
 #include "element/element.h"
-#include "vm/vm.h"
-
 #include "vm/process_table.hpp"
+#include "vm/vm.h"
 
 struct SimpleProcessTable : ProcessTable<BYTE> {
   SimpleProcessTable() : ProcessTable<BYTE>(){};
@@ -68,11 +67,17 @@ struct SimpleProcessTable : ProcessTable<BYTE> {
     this->put(key, v | flag);
   }
 
-  bool contains(key_type key) { return ProcessTable<BYTE>::contains(key); }
+  bool contains(key_type key) {
+    return ProcessTable<BYTE>::contains(key);
+  }
 
-  bool contains(LmnSymbolAtomRef atom) { return contains(atom->get_id()); }
+  bool contains(LmnSymbolAtomRef atom) {
+    return contains(atom->get_id());
+  }
 
-  bool contains(LmnMembraneRef mem) { return contains(mem->mem_id()); }
+  bool contains(LmnMembraneRef mem) {
+    return contains(mem->mem_id());
+  }
   void tbl_put(LmnWord key, BYTE value);
   void tbl_put_atom(LmnSymbolAtomRef atom, BYTE value);
   void tbl_put_mem(LmnMembraneRef mem, BYTE value);

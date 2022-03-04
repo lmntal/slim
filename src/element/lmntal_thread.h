@@ -90,12 +90,12 @@
 #
 #else /* !defined(ENABLE_PARALLEL) */
 #
-#define CAS(A, B, C) (A = C)
+#define CAS(A, B, C)        (A = C)
 #define ADD_AND_FETCH(A, B) (A += B)
 #define SUB_AND_FETCH(A, B) (A -= B)
 #define AND_AND_FETCH(A, B) (A &= B)
-#define OR_AND_FETCH(A, B) (A |= B)
-#define MEM_BARRIER() lmn_fatal("__sync_synchronize is unsupported")
+#define OR_AND_FETCH(A, B)  (A |= B)
+#define MEM_BARRIER()       lmn_fatal("__sync_synchronize is unsupported")
 #endif /* ENABLE_PARALLEL */
 
 void lmn_thread_set_CPU_affinity(unsigned long id);
@@ -115,8 +115,8 @@ typedef unsigned long mtx_data_t;
 /* 2のべき乗を使うと, &演算で剰余を求めることができる.
  * というわけで, wlockの数は2のべき乗でないと, 困る */
 #define DEFAULT_WLOCK_NUM (16384U)
-#define READABLE (TRUE)
-#define DISREADABLE (FALSE)
+#define READABLE          (TRUE)
+#define DISREADABLE       (FALSE)
 
 #include "../lmntal.h"
 
@@ -126,7 +126,7 @@ struct EWLock {
   lmn_mutex_t *elock;
   unsigned long wlock_num;
   lmn_mutex_t *wlock;
-  *EWLock(unsigned int e_num,unsigned int w_num);
+  *EWLock(unsigned int e_num, unsigned int w_num);
   ~EWLock();
   void acquire_write(mtx_data_t id);
   void release_write(mtx_data_t id);
@@ -136,9 +136,9 @@ struct EWLock {
   void permit_enter(mtx_data_t my_id);
 };
 
-#define lmn_ewlock_space(L)                                                    \
-  (!(L) ? 0                                                                    \
-        : ((sizeof(L) + ((L)->elock_num * sizeof(lmn_mutex_t)) +               \
+#define lmn_ewlock_space(L)                                      \
+  (!(L) ? 0                                                      \
+        : ((sizeof(L) + ((L)->elock_num * sizeof(lmn_mutex_t)) + \
             ((L)->wlock_num * sizeof(lmn_mutex_t)))))
 
 #define DEFAULT_LOCK_ID 0
@@ -152,39 +152,39 @@ void ewlock_reject_enter(EWLock *lock, unsigned long something);
 void ewlock_permit_enter(EWLock *lock, unsigned long something);
 
 namespace slim {
-namespace element {
-/** std::lock_guard/std::unique_lockのためのEWLockのラッパー */
-struct ewmutex {
-private:
-  EWLock *lck;
-  unsigned long id;
+  namespace element {
+    /** std::lock_guard/std::unique_lockのためのEWLockのラッパー */
+    struct ewmutex {
+     private:
+      EWLock *lck;
+      unsigned long id;
 
-  struct ewmutex_tag {
-    void (*lock)(EWLock *, unsigned long);
-    void (*unlock)(EWLock *, unsigned long);
-  };
-  const ewmutex_tag tag;
+      struct ewmutex_tag {
+        void (*lock)(EWLock *, unsigned long);
+        void (*unlock)(EWLock *, unsigned long);
+      };
+      const ewmutex_tag tag;
 
-public:
-  static constexpr ewmutex_tag write{ewlock_acquire_write,
-                                     ewlock_release_write};
-  static constexpr ewmutex_tag enter {ewlock_acquire_enter, ewlock_release_enter};
-  static constexpr ewmutex_tag exclusive_enter {ewlock_reject_enter, ewlock_permit_enter};
+     public:
+      static constexpr ewmutex_tag write{ ewlock_acquire_write, ewlock_release_write };
+      static constexpr ewmutex_tag enter{ ewlock_acquire_enter, ewlock_release_enter };
+      static constexpr ewmutex_tag exclusive_enter{ ewlock_reject_enter, ewlock_permit_enter };
 
-  ewmutex(ewmutex_tag tag, EWLock *lck, unsigned long id) : tag(tag), lck(lck), id(id) {}
+      ewmutex(ewmutex_tag tag, EWLock *lck, unsigned long id) : tag(tag), lck(lck), id(id) {
+      }
 
-  void lock() {
-    if (lck)
-      tag.lock(lck, id);
-  }
+      void lock() {
+        if (lck)
+          tag.lock(lck, id);
+      }
 
-  void unlock() {
-    if (lck)
-      tag.unlock(lck, id);
-  }
-};
-}
-}
+      void unlock() {
+        if (lck)
+          tag.unlock(lck, id);
+      }
+    };
+  }  // namespace element
+}  // namespace slim
 
 /* @} */
 

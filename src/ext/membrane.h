@@ -40,24 +40,35 @@
 #ifndef EXT_MEMBRANE_H
 #define EXT_MEMBRANE_H
 #include "lmntal.h"
-#include "vm/vm.h"
-#include "verifier/verifier.h"
 #include "set.h"
+#include "verifier/verifier.h"
+#include "vm/vm.h"
 
 class Membrane {
-  static void cb_mhash(LmnReactCxtRef rc,
-                            LmnMembraneRef mem,
-                            LmnAtomRef mem_proxy, LmnLinkAttr mem_proxy_link_attr,
-                            LmnAtomRef ret_mem_proxy, LmnLinkAttr ret_mem_proxy_link_attr,
-                            LmnAtomRef ret_hash_atom, LmnLinkAttr ret_hash_atom_link_attr);
-  static void cb_mem_equals(LmnReactCxtRef rc,
-                            LmnMembraneRef mem,
-                            LmnAtomRef mem0_proxy, LmnLinkAttr mem0_proxy_link_attr,
-                            LmnAtomRef mem1_proxy, LmnLinkAttr mem1_proxy_link_attr,
-                            LmnAtomRef ret_mem0_link, LmnLinkAttr ret_mem0_link_attr,
-                            LmnAtomRef ret_mem1_link, LmnLinkAttr ret_mem1_link_attr,
-                            LmnAtomRef res_link, LmnLinkAttr res_link_attr);
-  public:
+  static void cb_mhash(
+      LmnReactCxtRef rc,
+      LmnMembraneRef mem,
+      LmnAtomRef mem_proxy,
+      LmnLinkAttr mem_proxy_link_attr,
+      LmnAtomRef ret_mem_proxy,
+      LmnLinkAttr ret_mem_proxy_link_attr,
+      LmnAtomRef ret_hash_atom,
+      LmnLinkAttr ret_hash_atom_link_attr);
+  static void cb_mem_equals(
+      LmnReactCxtRef rc,
+      LmnMembraneRef mem,
+      LmnAtomRef mem0_proxy,
+      LmnLinkAttr mem0_proxy_link_attr,
+      LmnAtomRef mem1_proxy,
+      LmnLinkAttr mem1_proxy_link_attr,
+      LmnAtomRef ret_mem0_link,
+      LmnLinkAttr ret_mem0_link_attr,
+      LmnAtomRef ret_mem1_link,
+      LmnLinkAttr ret_mem1_link_attr,
+      LmnAtomRef res_link,
+      LmnLinkAttr res_link_attr);
+
+ public:
   static void init_membrane(void);
 };
 

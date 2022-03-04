@@ -42,12 +42,12 @@ class StateSpace;
 class State;
 class LmnMembrane;
 
-#include "lmntal.h"
-
 #include <cstdio>
 #include <memory>
-#include <string>
 #include <stdexcept>
+#include <string>
+
+#include "lmntal.h"
 /**
  * A dumper class for states and statespaces.
  *
@@ -61,11 +61,14 @@ class LmnMembrane;
  * @todo インターフェースは多少整理したので中身を綺麗にする
  */
 class StateDumper {
-public:
-  virtual ~StateDumper() {}
+ public:
+  virtual ~StateDumper() {
+  }
 
   virtual void dump(StateSpace *ss) = 0;
-  void dump(State *s) { dump(s, nullptr); }
+  void dump(State *s) {
+    dump(s, nullptr);
+  }
 
   //! @todo このメンバ関数をなんとかしたい
   void state_print_mem(State *s);
@@ -76,9 +79,10 @@ public:
     return std::unique_ptr<StateDumper>(from_env_ptr(fp));
   }
 
-protected:
+ protected:
   //! use factory method instead.
-  StateDumper(FILE *fp) : _fp(fp) {}
+  StateDumper(FILE *fp) : _fp(fp) {
+  }
   void dump(State *s, const StateSpace *_owner);
   void state_print_label(State *s, const StateSpace *_owner);
   void state_print_transition(State *s, const StateSpace *_owner);
@@ -87,7 +91,7 @@ protected:
   //! output stream
   FILE *_fp;
 
-private:
+ private:
   static StateDumper *from_env_ptr(FILE *fp);
 
   virtual MCdumpFormat dump_format() const = 0;
@@ -97,8 +101,7 @@ private:
   virtual std::string label_begin() const = 0;
   virtual std::string label_end() const = 0;
 
-  virtual void dump_state_data(State *s, unsigned long print_id,
-                               StateSpace *owner) {
+  virtual void dump_state_data(State *s, unsigned long print_id, StateSpace *owner) {
     throw std::runtime_error("unexpected");
   }
   virtual void print_state_label(State *s, StateSpace *owner) {

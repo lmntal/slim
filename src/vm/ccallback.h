@@ -46,8 +46,8 @@
  * @{
  */
 
-#include "lmntal.h"
 #include "element/element.h"
+#include "lmntal.h"
 #include "symbol.h"
 
 /* LMNtalから呼ばれるCのコールバック */
@@ -57,7 +57,8 @@ class CCallback {
   static st_table_t ccallback_tbl;
   static int free_v(st_data_t key, st_data_t v, st_data_t _t);
   CCallback(CCallback *);
-public:
+
+ public:
   CCallback();
   ~CCallback();
   int get_arity() const;
@@ -84,6 +85,5 @@ public:
    */
   static void ccallback_finalize(void);
 };
-
 
 #endif
