@@ -199,13 +199,17 @@ void Task::lmn_run(Vector *start_rulesets) {
   mrc->memstack_reconstruct(mem);
 
   if (lmn_env.trace) {
-    if (lmn_env.output_format != JSON) {
+    if (lmn_env.show_laststep_only) {
       mrc->increment_reaction_count();
-      fprintf(stdout, "%d: ", mrc->get_reaction_count());
+    } else {
+      if (lmn_env.output_format != JSON) {
+        mrc->increment_reaction_count();
+        fprintf(stdout, "%d: ", mrc->get_reaction_count());
+      }
+      lmn_dump_cell_stdout(mem);
+      if (lmn_env.show_hyperlink)
+          lmn_hyperlink_print(mem);
     }
-    lmn_dump_cell_stdout(mem);
-    if (lmn_env.show_hyperlink)
-      lmn_hyperlink_print(mem);
   }
 
   mem_oriented_loop(mrc.get(), mem);
@@ -222,6 +226,7 @@ void Task::lmn_run(Vector *start_rulesets) {
     if (lmn_env.sp_dump_format == LMN_SYNTAX) {
       fprintf(stdout, "finish.\n");
     } else {
+      if (lmn_env.show_laststep_only) fprintf(stdout, "%d: ", mrc->get_reaction_count());
       lmn_dump_cell_stdout(mem);
     }
   }
@@ -409,6 +414,8 @@ BOOL Task::react_rule(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule) {
         rc->increment_reaction_count();
       } else if (lmn_env.output_format == JSON) {
         lmn_dump_cell_stdout(rc->get_global_root());
+      } else if (lmn_env.show_laststep_only) {
+        rc->increment_reaction_count();
       } else {
         fprintf(stdout, "---->%s\n", lmn_id_to_name(rule->name));
         rc->increment_reaction_count();
