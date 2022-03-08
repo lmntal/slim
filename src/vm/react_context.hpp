@@ -60,6 +60,16 @@ using LmnReactCxtRef = LmnReactCxt *;
 struct LmnMembrane;
 struct SimpleHashtbl;
 
+/**
+ * SLIMはSPEC命令で指定される本数のレジスタを確保する。
+ * レジスタにはアトム、膜へのポインタその他が保持される。
+ * 中間命令では０から始まる番号によって参照される。実装ではLmnRegisterのベクタ。
+ *
+ * - wtはレジスタの持つデータへのポインタもしくはデータアトム。
+ *   ポインタにキャストして様々なオブジェクトを格納するのに使われる。
+ * - atはレジスタの持つデータが何かを表す属性。基本的にはリンク属性に準ずる。
+ * - ttはレジスタの持つデータの型を表す。TT_OTHER、TT_ATOM、TT_MEMの３つの値をとる。
+ */
 struct LmnRegister {
   LmnWord wt;
   LmnByte at;

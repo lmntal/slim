@@ -129,6 +129,14 @@ private:
 
     for (int i = 0; i < arg_num; i++)
       c17::visit(loader(*this), inst.args[i]);
+
+    /* ISGROUNDとCOPYGROUNDは引数の数が3と4の場合がある。3の場合は
+       第４引数として空リストを追加する */
+    if (inst.id == INSTR_ISGROUND || inst.id == INSTR_COPYGROUND) {
+      if (arg_num == 3) {
+	write_forward<LmnInstrVar>(0);
+      }
+    }
   }
 
   /* 現在の位置に書き込TYPE型のデータを書き込む */
