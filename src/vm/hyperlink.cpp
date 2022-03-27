@@ -200,7 +200,8 @@ void lmn_hyperlink_delete(LmnSymbolAtomRef at) {
       }
     }
 
-    LMN_FREE(hl);
+    // LMN_FREE(hl);
+    delete hl;
   }
 }
 
@@ -559,14 +560,16 @@ BOOL hyperlink_print(LmnMembraneRef mem, BOOL *flag, int *group, int *element) {
 
                 /* hl_ID */
                 //      fprintf(f, "%9lx", LMN_ATOM(atom));
-                fprintf(f, "%9lx", LMN_HL_ID(lmn_hyperlink_at_to_hl(atom)));
+                // fprintf(f, "%9lx", LMN_HL_ID(lmn_hyperlink_at_to_hl(atom)));
+		fprintf(f, "%9lu", LMN_HL_ID(lmn_hyperlink_at_to_hl(atom)));
                 //      fprintf(f, "%9lx",
                 //      LMN_HL_ID(lmn_hyperlink_get_root(lmn_hyperlink_at_to_hl(atom))));
 
                 /* parent */
                 if ((parent = hl->parent) != hl) {
                   //        fprintf(f, " %9lx", LMN_ATOM(parent->atom));
-                  fprintf(f, " %9lx", LMN_HL_ID(parent));
+                  // fprintf(f, " %9lx", LMN_HL_ID(parent));
+                  fprintf(f, " %9lu", LMN_HL_ID(parent));
                 } else {
                   (*group)++;
                   fprintf(f, " %9s", "root");
@@ -610,7 +613,8 @@ BOOL hyperlink_print(LmnMembraneRef mem, BOOL *flag, int *group, int *element) {
                       }
 
                       //            fprintf(f, "%lx", LMN_ATOM(ch_hl->atom));
-                      fprintf(f, "%lx%n", LMN_HL_ID(ch_hl), &n);
+                      // fprintf(f, "%lx%n", LMN_HL_ID(ch_hl), &n);
+                      fprintf(f, "%lu%n", LMN_HL_ID(ch_hl), &n);
                       width += n;
                       i++;
                     }
