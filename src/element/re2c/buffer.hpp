@@ -54,9 +54,7 @@ public:
   char *parsed_pos;
 
   buffer(int fill_size, int size = 256);
-  // virtual ~buffer() {}
-  virtual ~buffer();
-  //  ~buffer();
+  virtual ~buffer() {}
   virtual bool is_finished() const = 0;
   virtual void update_limit(size_t free) = 0;
 

@@ -45,12 +45,6 @@ buffer::buffer(int fill_size, int size)
     : fill_size(fill_size), size(size), buf(new char[fill_size + size]),
       YYLIMIT(buf + size), YYCURSOR(YYLIMIT), parsed_pos(YYLIMIT) {}
 
-buffer::~buffer() {
-  if(this->buf != NULL) {
-    delete[] buf;
-  }
-}
-
 bool buffer::fill(size_t need) {
   if (is_finished())
     return false;

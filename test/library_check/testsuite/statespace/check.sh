@@ -1,3 +1,3 @@
 #!/bin/sh
 
-../../src/slim -I../../lib $slim_CHECK_OPTIONS testsuite/statespace/statespace.il
+../../src/slim -I../../lib testsuite/statespace/statespace.il

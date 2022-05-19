@@ -206,11 +206,6 @@ const std::map<LmnInstruction, InstrSpec> instr_spec = {
     {INSTR_ISFLOAT, {"isfloat", {InstrVar}}},
     {INSTR_ISSTRING, {"isstring", {InstrVar}}},
 
-    {INSTR_FLOAT2INT, {"float2int", {InstrVar, InstrVar}}},
-    {INSTR_INT2FLOAT, {"int2float", {InstrVar, InstrVar}}},
-    {INSTR_FLOAT2INTFUNC, {"float2intfunc", {InstrVar, InstrVar}}},
-    {INSTR_INT2FLOATFUNC, {"int2floatfunc", {InstrVar, InstrVar}}},
-
     {INSTR_UNIQ, {"uniq", {InstrVarList}}},
 
     /* guard: hyperlink */
@@ -256,7 +251,6 @@ const std::map<LmnInstruction, InstrSpec> instr_spec = {
     {INSTR_IAND, {"iand", {InstrVar, InstrVar, InstrVar}}},
     {INSTR_IOR, {"ior", {InstrVar, InstrVar, InstrVar}}},
     {INSTR_IXOR, {"ixor", {InstrVar, InstrVar, InstrVar}}},
-    {INSTR_ISAL, {"isal", {InstrVar, InstrVar, InstrVar}}},
 
     {INSTR_ILTFUNC, {"iltfunc", {InstrVar, InstrVar}}},
     {INSTR_ILEFUNC, {"ilefunc", {InstrVar, InstrVar}}},

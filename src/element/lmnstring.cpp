@@ -160,22 +160,18 @@ void cb_string_replace(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
   lmn_mem_delete_atom(mem, a2, t2);
 }
 
-/*
- *    string型文字列を指定した分割文字をもとに分割し、リストの要素に変換する
- *    lib/string.lmn の string.split から利用出来る
- */
 void cb_string_split(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
                       LmnLinkAttr t0, LmnAtomRef a1, LmnLinkAttr t1,
                       LmnAtomRef a2, LmnLinkAttr t2) {
 
-  auto split_str = reinterpret_cast<LmnString *>(a0)->str;  //入力文字列
-  auto sep_str = reinterpret_cast<LmnString *>(a1)->str;    //分割文字(列)
+  auto split_str = reinterpret_cast<LmnString *>(a0)->str;
+  auto sep_str = reinterpret_cast<LmnString *>(a1)->str;
   auto sep_len = sep_str.length();
   auto ls = std::vector<std::string>();
 
-  if(sep_len == 0) {          // 分割文字として空文字が入力された場合は一文字ずつ分割する
-    for (auto i = 0; i < split_str.length(); i++) ls.push_back(split_str.substr(i,1));
-  } else {          // 分割文字が空文字以外に設定されている場合は分割文字の位置で分割する（分割文字は飛ばす）
+  if(sep_len == 0) {
+    ls.push_back(split_str);
+  } else {
     auto offset = std::string::size_type(0);
     while (1) {
       auto pos = split_str.find(sep_str, offset);

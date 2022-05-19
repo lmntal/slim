@@ -602,8 +602,7 @@ BOOL interpret_generated(LmnReactCxtRef rc,
     Vector *dstlovec, *retvec;
     ProcessTableRef atommap;
 
-    lmn_mem_copy_ground((LmnMembraneRef)rc->wt($2), srcvec, &dstlovec, &atommap,
-                        NULL, NULL, NULL, NULL);
+    lmn_mem_copy_ground((LmnMembraneRef)rc->wt($2), srcvec, &dstlovec, &atommap);
     Task::free_links(srcvec);
 
     /* 返り値の作成 */

@@ -108,8 +108,7 @@ public:
   LmnRule() : name(lmn_intern("")) {}
 
   ~LmnRule() {
-    // delete (this->inst_seq);
-    lmn_free(this->inst_seq);
+    delete (this->inst_seq);
   }
 
   void init_uniq_table() { is_unique_ = true; }

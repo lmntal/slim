@@ -262,7 +262,6 @@ LmnSymbolAtomRef lmn_copy_satom_with_data(LmnSymbolAtomRef atom,
   for (i = 0; i < arity; i++) {
     if (LMN_ATTR_IS_DATA(atom->get_attr(i))) {
       if (is_new_hl && atom->get_attr(i) == LMN_HL_ATTR) {
-	// fprintf(stderr,"new hyperlink being created, %d\n", i);  // extended
         LmnAtomRef hlAtom = atom->get_link(i);
         HyperLink *hl = lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)hlAtom);
         LmnAtomRef new_hlAtom = lmn_hyperlink_new_with_attr(
@@ -271,8 +270,6 @@ LmnSymbolAtomRef lmn_copy_satom_with_data(LmnSymbolAtomRef atom,
         newatom->set_attr(i, LMN_HL_ATTR);
         ((LmnSymbolAtomRef)new_hlAtom)->set_link(0, newatom);
         ((LmnSymbolAtomRef)new_hlAtom)->set_attr(0,LMN_ATTR_MAKE_LINK(i));
-	// fprintf(stderr,"new hyperlink: %4lu\n",
-	// 	LMN_HL_ID(lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)new_hlAtom)));
       } else {
         LmnDataAtomRef dt =
             lmn_copy_data_atom((LmnDataAtomRef)atom->get_link(i),

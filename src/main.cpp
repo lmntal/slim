@@ -181,7 +181,6 @@ static void parse_options(int *optid, int argc, char *argv[]) {
                                   {"dump-json", 0, 0, 1105},
                                   {"dump-fsm-lmn-detail", 0, 0, 1106},
                                   {"dump-fsm-hl", 0, 0, 1107},
-                                  {"show-laststep-only", 0, 0, 1108},
                                   {"interactive", 0, 0, 1200},
                                   {"translate", 0, 0, 1300},
                                   {"hl", 0, 0, 1350},
@@ -332,10 +331,6 @@ static void parse_options(int *optid, int argc, char *argv[]) {
       break;
     case 1107:
       lmn_env.mc_dump_format = LMN_FSM_GRAPH_HL_NODE;
-      break;
-    case 1108:
-      lmn_env.trace = TRUE;
-      lmn_env.show_laststep_only = TRUE;
       break;
     case 1200: /* jni interactive mode */
 #ifdef HAVE_JNI_H

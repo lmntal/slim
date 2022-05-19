@@ -7,101 +7,101 @@ system_ruleset.
  *
  * H is bound to A+B
  */
-system_iadd@@ H='+'(A, B) :- int(A),int(B),A+B=C | H=C.
+H='+'(A, B) :- int(A),int(B),A+B=C | H=C.
 
 /**
  * H = '-'(A,B):
  *
  * H is bound to A-B
  */
-system_isub@@ H='-'(A, B) :- int(A),int(B),A-B=C | H=C.
+H='-'(A, B) :- int(A),int(B),A-B=C | H=C.
 
 /**
  * H = '*'(A,B):
  *
  * H is bound to A*B
  */
-system_imul@@ H='*'(A, B) :- int(A),int(B),A*B=C | H=C.
+H='*'(A, B) :- int(A),int(B),A*B=C | H=C.
 
 /**
  * H = '/'(A,B):
  *
  * H is bound to A/B
  */
-system_idiv@@ H='/'(A, B) :- int(A),int(B),A/B=C | H=C.
+H='/'(A, B) :- int(A),int(B),A/B=C | H=C.
 
 /**
  * H = mod(A,B):
  *
  * H is bound to A mod B
  */
-system_imod@@ H=mod(A, B) :- int(A),int(B),A mod B = C | H=C.
+H=mod(A, B) :- int(A),int(B),A mod B = C | H=C.
 
 /*
  * H='>'(A,B):
  *
  * H is bound to true when A>B, false otherwise
  */
-system_igt@@ H='>'(A, B) :- int(A),int(B),A>B | H=true.
-system_igt@@ H='>'(A, B) :- int(A),int(B),A=<B | H=false.
+H='>'(A, B) :- int(A),int(B),A>B | H=true.
+H='>'(A, B) :- int(A),int(B),A=<B | H=false.
 
 /*
  * H='<'(A,B):
  *
  * H is bound to true when A<B, false otherwise
  */
-system_ilt@@ H='<'(A, B) :- int(A),int(B),A>=B | H=false.
-system_ilt@@ H='<'(A, B) :- int(A),int(B),A<B | H=true.
+H='<'(A, B) :- int(A),int(B),A>=B | H=false.
+H='<'(A, B) :- int(A),int(B),A<B | H=true.
 
 /*
  * H='>='(A,B):
  *
  * H is bound to true when A>=B, false otherwise
  */
-system_ige@@ H='>='(A, B) :- int(A),int(B),A>=B | H=true.
-system_ige@@ H='>='(A, B) :- int(A),int(B),A<B | H=false.
+H='>='(A, B) :- int(A),int(B),A>=B | H=true.
+H='>='(A, B) :- int(A),int(B),A<B | H=false.
 
 /*
  * H='=<'(A,B):
  *
  * H is bound to true when A=<B, false otherwise
  */
-system_ile@@ H='=<'(A, B) :- int(A),int(B),A>B | H=false.
-system_ile@@ H='=<'(A, B) :- int(A),int(B),A=<B | H=true.
+H='=<'(A, B) :- int(A),int(B),A>B | H=false.
+H='=<'(A, B) :- int(A),int(B),A=<B | H=true.
 
 /*
  * H='=='(A,B):
  *
  * H is bound to true when A==B, false otherwise
  */
-system_ieq@@ H='=='(A, B) :- int(A),int(B),A=B | H=true.
-system_ieq@@ H='=='(A, B) :- int(A),int(B),A-B>0 | H=false.
-system_ieq@@ H='=='(A, B) :- int(A),int(B),A-B<0 | H=false.
+H='=='(A, B) :- int(A),int(B),A=B | H=true.
+H='=='(A, B) :- int(A),int(B),A-B>0 | H=false.
+H='=='(A, B) :- int(A),int(B),A-B<0 | H=false.
 
 /* 
  * H='!='(A,B):
  *
  * H is bound to true when A!=B, false otherwise
  */
-system_ine@@ H='!='(A, B) :- int(A),int(B),A=B | H=false.
-system_ine@@ H='!='(A, B) :- int(A),int(B),A-B>0 | H=true.
-system_ine@@ H='!='(A, B) :- int(A),int(B),A-B<0 | H=true.
+H='!='(A, B) :- int(A),int(B),A=B | H=false.
+H='!='(A, B) :- int(A),int(B),A-B>0 | H=true.
+H='!='(A, B) :- int(A),int(B),A-B<0 | H=true.
 
 /*
  * H='<<'(A,B):
  *
  * H is bound to A shift left by N bits
  */
-system_isl@@ H = '<<'(A, N) :- int(A),int(N),N>0 | H='<<'(A*2,N-1).
-system_isl@@ H = '<<'(A, 0) :- H=A.
+H = '<<'(A, N) :- int(A),int(N),N>0 | H='<<'(A*2,N-1).
+H = '<<'(A, 0) :- H=A.
 
 /*
  * H='>>'(A,B):
  *
  * H is bound to A shift right by N bits
  */
-system_isr@@ H = '>>'(A, N) :- int(A),int(N),N>0 | H='>>'(A/2,N-1).
-system_isr@@ H = '>>'(A, 0) :- H=A.
+H = '>>'(A, N) :- int(A),int(N),N>0 | H='>>'(A/2,N-1).
+H = '>>'(A, 0) :- H=A.
 
 
 
@@ -112,93 +112,93 @@ system_isr@@ H = '>>'(A, 0) :- H=A.
  *
  * H is bound to A+B
  */
-system_fadd@@ H='+.'(A, B) :- float(A),float(B),A+.B=C | H=C.
+H='+.'(A, B) :- float(A),float(B),A+.B=C | H=C.
 
 /**
  * H = '-.'(A,B):
  *
  * H is bound to A-B
  */
-system_fsub@@ H='-.'(A, B) :- float(A),float(B),A-.B=C | H=C.
+H='-.'(A, B) :- float(A),float(B),A-.B=C | H=C.
 
 /**
  * H = '*.'(A,B):
  *
  * H is bound to A*B
  */
-system_fmul@@ H='*.'(A, B) :- float(A),float(B),A*.B=C | H=C.
+H='*.'(A, B) :- float(A),float(B),A*.B=C | H=C.
 
 /**
  * H = '/.'(A,B):
  *
  * H is bound to A/B
  */
-system_fdiv@@ H='/.'(A, B) :- float(A),float(B),A/.B=C | H=C.
+H='/.'(A, B) :- float(A),float(B),A/.B=C | H=C.
 
 /*
  * H='>'(A,B):
  *
  * H is bound to true when A>B, false otherwise
  */
-system_fgt@@ H='>'(A, B) :- float(A),float(B),A>.B | H=true.
-system_fgt@@ H='>'(A, B) :- float(A),float(B),A=<.B | H=false.
+H='>'(A, B) :- float(A),float(B),A>.B | H=true.
+H='>'(A, B) :- float(A),float(B),A=<.B | H=false.
 
 /*
  * H='<'(A,B):
  *
  * H is bound to true when A<B, false otherwise
  */
-system_flt@@ H='<'(A, B) :- float(A),float(B),A>=.B | H=false.
-system_flt@@ H='<'(A, B) :- float(A),float(B),A<.B | H=true.
+H='<'(A, B) :- float(A),float(B),A>=.B | H=false.
+H='<'(A, B) :- float(A),float(B),A<.B | H=true.
 
 /*
  * H='>='(A,B):
  *
  * H is bound to true when A>=B, false otherwise
  */
-system_fge@@ H='>='(A, B) :- float(A),float(B),A>=.B | H=true.
-system_fge@@ H='>='(A, B) :- float(A),float(B),A<.B | H=false.
+H='>='(A, B) :- float(A),float(B),A>=.B | H=true.
+H='>='(A, B) :- float(A),float(B),A<.B | H=false.
 
 /*
  * H='=<'(A,B):
  *
  * H is bound to true when A=<B, false otherwise
  */
-system_fle@@ H='=<'(A, B) :- float(A),float(B),A>.B | H=false.
-system_fle@@ H='=<'(A, B) :- float(A),float(B),A=<.B | H=true.
+H='=<'(A, B) :- float(A),float(B),A>.B | H=false.
+H='=<'(A, B) :- float(A),float(B),A=<.B | H=true.
 
 /*
  * H='=='(A,B):
  *
  * H is bound to true when A==B, false otherwise
  */
-system_feq@@ H='=='(A, B) :- float(A),float(B),A=:=.B | H=true.
-system_feq@@ H='=='(A, B) :- float(A),float(B),A-.B>.0 | H=false.
-system_feq@@ H='=='(A, B) :- float(A),float(B),A-.B<.0 | H=false.
+H='=='(A, B) :- float(A),float(B),A=:=.B | H=true.
+H='=='(A, B) :- float(A),float(B),A-.B>.0 | H=false.
+H='=='(A, B) :- float(A),float(B),A-.B<.0 | H=false.
 
 /* 
  * H='!='(A,B):
  *
  * H is bound to true when A!=B, false otherwise
  */
-system_fne@@ H='!='(A, B) :- float(A),float(B),A=\=.B | H=false.
-system_fne@@ H='!='(A, B) :- float(A),float(B),A-B>.0 | H=true.
-system_fne@@ H='!='(A, B) :- float(A),float(B),A-B<.0 | H=true.
+H='!='(A, B) :- float(A),float(B),A=\=.B | H=false.
+H='!='(A, B) :- float(A),float(B),A-B>.0 | H=true.
+H='!='(A, B) :- float(A),float(B),A-B<.0 | H=true.
 
 /*
  * H='<<'(A,B):
  *
  * H is bound to A shift left by N bits
  */
-system_fsl@@ H = '<<'(A, N) :- float(A),float(N),N>0 | H='<<'(A*.2,N-.1).
-system_fsl@@ H = '<<'(A, 0) :- H=A.
+H = '<<'(A, N) :- float(A),float(N),N>0 | H='<<'(A*.2,N-.1).
+H = '<<'(A, 0) :- H=A.
 
 /*
  * H='>>'(A,B):
  *
  * H is bound to A shift right by N bits
  */
-system_fsr@@ H = '>>'(A, N) :- float(A),float(N),N>0 | H='>>'(A/.2,N-.1).
-system_fsr@@ H = '>>'(A, 0) :- H=A.
+H = '>>'(A, N) :- float(A),float(N),N>0 | H='>>'(A/.2,N-.1).
+H = '>>'(A, 0) :- H=A.
 
 }.

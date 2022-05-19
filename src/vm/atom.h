@@ -79,15 +79,10 @@ typedef LmnWord LmnDataAtomRef;
  *  * Link Attribute
  *     リンク属性は, 先頭1ビットが立っていない場合は,
  * 下位7bitが接続先リンクの番号を記録しており, 先頭1ビットが立っている場合は,
- * Primitiveデータの種類を記録する。 
- * [Link Number]  0------- 
- * [int]          1000 0000 
- * [double]       1000 0001 
- * [special]      1000 0011 
- * [string]       1000 0011
- * [const string] 1000 0100
- * [const double] 1000 0101
- * [hyper link]   1000 1010
+ * Primitiveデータの種類を記録する。 [Link Number]  0------- [int]          1000
+ * 0000 [double]       1000 0001 [special]      1000 0011 [string]       1000
+ * 0011 [const string] 1000 0100 [const double] 1000 0101 [hyper link]   1000
+ * 1010
  *
  *     We are going to support some primitive data types.
  *     (signed/unsigned) int, short int, long int, byte, long long int,

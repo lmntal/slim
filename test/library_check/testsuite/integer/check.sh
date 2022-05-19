@@ -1,3 +1,3 @@
 #!/bin/sh
 
-../../src/slim -I../../lib $slim_CHECK_OPTIONS testsuite/integer/integer_set.il
+../../src/slim -I../../lib testsuite/integer/integer_set.il

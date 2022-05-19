@@ -62,7 +62,6 @@ struct ProcessTbl : ProcessTable<LmnWord> {
   int put_new_mem(LmnMembraneRef mem, LmnWord value);
   void proc_tbl_unput(LmnWord key);
   void unput_atom(LmnSymbolAtomRef atom);
-  void unput_hlink(HyperLink *hl);  // extended
 };
 
 /**
@@ -81,7 +80,5 @@ BOOL proc_tbl_contains(ProcessTableRef p, LmnWord key);
 BOOL proc_tbl_contains_atom(ProcessTableRef p, LmnSymbolAtomRef atom);
 BOOL proc_tbl_contains_mem(ProcessTableRef p, LmnMembraneRef mem);
 
-void proc_tbl_dump(const char* name, ProcessTableRef map);
-void proc_tbl_symbol_atom_dump(const char* name, ProcessTableRef map);
 
 #endif /* PROCESS_TABLE_H */
