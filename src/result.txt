@@ -1,0 +1,13 @@
+newdiffatom
+newdiffatom
+move_diffatomlist_to_atomlist_tail
+---print---
+diff atomlist is not empty
+newdiffatom
+move_diffatomlist_to_atomlist_tail
+---print---
+diff atomlist is not empty
+move_diffatomlist_to_atomlist_tail
+---print---
+diff empty!
+edge(1,4). edge(1,2). edge(1,3). edge(2,4). edge(2,3). edge(3,4). @4. 

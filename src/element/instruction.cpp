@@ -147,6 +147,14 @@ const std::map<LmnInstruction, InstrSpec> instr_spec = {
      {"insertconnectorsinnull", {InstrVar, InstrVarList}}},
     {INSTR_DELETECONNECTORS, {"deleteconnectors", {InstrVar, InstrVar}}},
 
+    //(imagawa)
+    {INSTR_NEWDIFFATOM, {"newdiffatom", {InstrVar, InstrVar, ArgFunctor}}},
+    {INSTR_MOVEDIFFATOMLIST2,{"movediffatomlist",{InstrVar, InstrVar, ArgFunctor}}},
+    {INSTR_DIFFATOMLISTEMPTY2,{"diffatomlistempty", {InstrVar, InstrVar, ArgFunctor}}},
+    {INSTR_DIFFATOMLISTNOTEMPTY,{"diffatomlistnotempty", {InstrVar, InstrVar, ArgFunctor}}},
+    {INSTR_FINDDIFFATOM, {"finddiffatom", {InstrVar, InstrVar, ArgFunctor}}},
+    {INSTR_PRINT,{"print",{}}},
+
     {INSTR_REACT,
      {"react", {InstrVar, InstrVarList, InstrVarList, InstrVarList}}},
     {INSTR_JUMP, {"jump", {Label, InstrVarList, InstrVarList, InstrVarList}}},
@@ -267,6 +275,7 @@ const std::map<LmnInstruction, InstrSpec> instr_spec = {
     {INSTR_SUBCLASS, {"subclass", {InstrVar, InstrVar}}},
 
     {INSTR_SUBRULE, {"subrule", {InstrVarList, InstrVar, String, InstrVarList}}},
+    {INSTR_DORULE, {"dorule", {InstrVarList, InstrVar, String, InstrVarList}}}, //(imagawa)
     {INSTR_SUCCRETURN, {"succreturn", {InstrVarList}}},
     {INSTR_FAILRETURN, {"failreturn", {}}},
     {INSTR_ISPAIREDLINK, {"ispairedlink", {InstrVar, InstrVar}}},

@@ -298,6 +298,25 @@ void move_symbol_atomlist_to_atomlist_tail(LmnSymbolAtomRef a,
     ent->head = a;
   }
 }
+//(imagawa)
+void move_symbol_diffatomlist_to_atomlist_tail(LmnSymbolAtomRef a, LmnMembraneRef mem) {
+  //diff atomlist のアトムが保持するファンクタは atomlist の atom が保持するものと一緒
+  LmnFunctor f = a->get_functor();
+  AtomListEntry *ent = mem->get_atomlist(f);
+  AtomListEntry *diff_ent = ent->d1;
+  AtomListEntry *diff_ent2 = ent->d2;
+  ent->append(diff_ent);
+  diff_ent->append(diff_ent2);
+}
+void move_symbol_diffatomlist_to_atomlist_tail2(LmnFunctor f, LmnMembraneRef mem) {
+  //diff atomlist のアトムが保持するファンクタは atomlist の atom が保持するものと一緒
+  AtomListEntry *ent = mem->get_atomlist(f);
+  AtomListEntry *diff_ent = ent->d1;
+  AtomListEntry *diff_ent2 = ent->d2;
+  ent->append(diff_ent);
+  diff_ent->append(diff_ent2);
+}
+
 void move_symbol_atom_to_atom_tail(LmnSymbolAtomRef a, LmnSymbolAtomRef a1,
                                    LmnMembraneRef mem) {
   LmnFunctor f = a->get_functor();
@@ -346,6 +365,41 @@ void mem_push_symbol_atom(LmnMembraneRef mem, LmnSymbolAtomRef atom) {
       }
     }
     as = mem->atomset[f] = make_atomlist();
+    as->d1=make_atomlist(); as->d2=make_atomlist();
+  }
+ 
+  as->push(atom);
+
+}
+  //差分アトムリスト用push(imagawa)
+void mem_push_symbol_diffatom(LmnMembraneRef mem, LmnSymbolAtomRef atom) {
+AtomListEntry *as;
+LmnFunctor f = atom->get_functor();
+
+if (atom->get_id() == 0) { /* 膜にpushしたならばidを割り当てる */
+  atom->set_id(env_gen_next_id());
+}
+
+
+as = mem->get_atomlist(f);
+if (!as) { /* 本膜内に初めてアトムatomがPUSHされた場合 */
+  LMN_ASSERT(
+      mem->atomset); /* interpreter側で値がオーバーフローすると発生するので,
+                        ここで止める */
+  if (mem->max_functor < f + 1) {
+    mem->max_functor = f + 1;
+    while (mem->atomset_size - 1 < mem->max_functor) {
+      int org_size = mem->atomset_size;
+      mem->atomset_size *= 2;
+      LMN_ASSERT(mem->atomset_size > 0);
+      mem->atomset = LMN_REALLOC(struct AtomListEntry *, mem->atomset,
+                                  mem->atomset_size);
+      memset(mem->atomset + org_size, 0,
+              (mem->atomset_size - org_size) * sizeof(struct AtomListEntry *));
+    }
+  }
+  as = mem->atomset[f] = make_atomlist();
+  as->d1=make_atomlist(); as->d2=make_atomlist();
   }
 
   if (LMN_IS_PROXY_FUNCTOR(f)) {
@@ -357,7 +411,7 @@ void mem_push_symbol_atom(LmnMembraneRef mem, LmnSymbolAtomRef atom) {
     /* symbol atom except proxy and unify */
     mem->symb_atom_inc();
   }
-
+  as = as->d2;
   as->push(atom);
 }
 unsigned long LmnMembrane::space() {
@@ -3444,6 +3498,14 @@ void move_atomlist_to_atomlist_tail(LmnSymbolAtomRef a, LmnMembraneRef mem) {
   move_symbol_atomlist_to_atomlist_tail(a, mem);
 }
 
+//(imagawa)
+void move_diffatomlist_to_atomlist_tail(LmnSymbolAtomRef a, LmnMembraneRef mem) {
+  move_symbol_diffatomlist_to_atomlist_tail(a, mem);
+}
+void move_diffatomlist_to_atomlist_tail2(LmnFunctor f, LmnMembraneRef mem) {
+  move_symbol_diffatomlist_to_atomlist_tail2(f, mem);
+}
+
 void move_atom_to_atom_tail(LmnSymbolAtomRef a, LmnSymbolAtomRef a1,
                             LmnMembraneRef mem) {
   move_symbol_atom_to_atom_tail(a, a1, mem);
@@ -3460,6 +3522,14 @@ void lmn_mem_push_atom(LmnMembraneRef mem, LmnAtomRef atom, LmnLinkAttr attr) {
     mem->data_atom_inc();
   } else { /* symbol atom */
     mem_push_symbol_atom(mem, (LmnSymbolAtomRef)atom);
+  }
+}
+//(imagawa)
+void lmn_mem_push_diffatom(LmnMembraneRef mem, LmnAtomRef atom, LmnLinkAttr attr) {
+  if (LMN_ATTR_IS_DATA_WITHOUT_EX(attr)) {
+    mem->data_atom_inc();
+  } else { /* symbol atom */
+    mem_push_symbol_diffatom(mem, (LmnSymbolAtomRef)atom);
   }
 }
 

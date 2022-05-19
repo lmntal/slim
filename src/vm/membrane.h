@@ -79,6 +79,8 @@ LmnRuleSetRef lmn_mem_get_ruleset(LmnMembraneRef m, int i);
 void lmn_mem_rulesets_destroy(const std::vector<LmnRuleSet *> &rulesets);
 void lmn_mem_rulesets_destroy(Vector *rulesets);
 void mem_push_symbol_atom(LmnMembraneRef mem, LmnSymbolAtomRef atom);
+//(imagawa)
+void mem_push_symbol_diffatom(LmnMembraneRef mem, LmnSymbolAtomRef atom);
 void lmn_mem_add_ruleset_sort(std::vector<LmnRuleSet *> *rulesets, LmnRuleSetRef ruleset);
 
 
@@ -119,6 +121,10 @@ BOOL ground_atoms_old(Vector *srcvec, Vector *avovec, HashSet **atoms,
 void move_symbol_atom_to_atomlist_head(LmnSymbolAtomRef a, LmnMembraneRef mem);
 void move_symbol_atomlist_to_atomlist_tail(LmnSymbolAtomRef a,
                                            LmnMembraneRef mem);
+//(imagawa 2)
+void move_symbol_diffatomlist_to_atomlist_tail(LmnSymbolAtomRef a, LmnMembraneRef mem);
+void move_symbol_diffatomlist_to_atomlist_tail2(LmnFunctor f, LmnMembraneRef mem);
+
 void move_symbol_atom_to_atom_tail(LmnSymbolAtomRef a, LmnSymbolAtomRef a1,
                                    LmnMembraneRef mem);
 
@@ -131,6 +137,9 @@ void mem_remove_symbol_atom_with_buddy_data(LmnMembraneRef mem,
 void lmn_mem_remove_atom(LmnMembraneRef mem, LmnAtomRef atom, LmnLinkAttr attr);
 void lmn_mem_delete_atom(LmnMembraneRef mem, LmnAtomRef atom, LmnLinkAttr attr);
 void lmn_mem_push_atom(LmnMembraneRef mem, LmnAtomRef atom, LmnLinkAttr attr);
+//(imagawa 2)
+void lmn_mem_push_diffatom(LmnMembraneRef mem, LmnAtomRef atom, LmnLinkAttr attr);
+
 void alter_functor(LmnMembraneRef mem, LmnSymbolAtomRef atom, LmnFunctor f);
 void lmn_mem_add_ruleset(LmnMembraneRef mem, LmnRuleSetRef ruleset);
 void newlink_symbol_and_something(LmnSymbolAtomRef atom0, int pos,

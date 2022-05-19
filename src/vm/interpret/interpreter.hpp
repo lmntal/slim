@@ -77,6 +77,8 @@ struct interpreter {
   void findatom(LmnReactCxt *rc, LmnRule *rule, LmnRuleInstr instr,
                 LmnMembrane *mem, LmnFunctor f, size_t reg);
   void findatom_history_management(LmnRule *rule, LmnMembrane *mem, LmnFunctor f, size_t reg);
+  void finddiffatom(LmnReactCxt *rc, LmnRule *rule, LmnRuleInstr instr,
+                LmnMembrane *mem, LmnFunctor f, size_t reg);
   void findatom_original_hyperlink(LmnReactCxt *rc, LmnRule *rule,
                                    LmnRuleInstr instr, SameProcCxt *spc,
                                    LmnMembrane *mem, LmnFunctor f, size_t reg);
