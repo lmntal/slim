@@ -275,6 +275,14 @@ const std::map<LmnInstruction, InstrSpec> instr_spec = {
     {INSTR_MERGESET, {"mergeset", {InstrVar, InstrVar}}},
     {INSTR_FREESET, {"freeset", {InstrVar}}},
 
+    //imagawa
+    {INSTR_NEWDIFFATOM, {"newdiffatom", {InstrVar, InstrVar, ArgFunctor}}},
+    {INSTR_MOVEDIFFATOMLIST2,{"movediffatomlist2",{InstrVar, InstrVar, ArgFunctor}}},
+    {INSTR_DIFFATOMLISTEMPTY,{"diffatomlistempty2", {InstrVar, InstrVar, ArgFunctor}}},
+    {INSTR_DIFFATOMLISTNOTEMPTY,{"diffatomlistnotempty", {InstrVar, InstrVar, ArgFunctor}}},
+    {INSTR_FINDDIFFATOM, {"finddiffatom", {InstrVar, InstrVar, ArgFunctor}}},
+
+
     /* etc */
     {INSTR_CELLDUMP, {"celldump", {}}}};
 
