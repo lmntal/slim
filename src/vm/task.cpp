@@ -752,6 +752,30 @@ void slim::vm::interpreter::findatom_history_management(LmnRuleRef rule, LmnMemb
 
 /* ここまで(nakata)*/
 
+//imagawa2
+void slim::vm::interpreter::finddiffatom(LmnReactCxtRef rc, LmnRuleRef rule,
+                                     LmnRuleInstr instr, LmnMembrane *mem,
+                                     LmnFunctor f, size_t reg) {
+ 
+  auto atomlist_ent = mem->get_atomlist(f)->d1;
+  if (!atomlist_ent)
+    return;
+  
+  auto iter = std::begin(*atomlist_ent);
+  auto end = std::end(*atomlist_ent);
+  if (iter == end)
+    return;
+
+  auto v = std::vector<LmnRegister>(atomlist_ent->size());
+  
+  std::transform(iter, end, v.begin(), [](LmnSymbolAtomRef atom) {
+    return LmnRegister({(LmnWord)atom, LMN_ATTR_MAKE_LINK(0), TT_ATOM});
+  });
+
+  this->false_driven_enumerate(reg, std::move(v));
+}
+
+
 /** find atom with a hyperlink occurred in the current rule for the first time.
  */
 void slim::vm::interpreter::findatom_original_hyperlink(
@@ -1056,8 +1080,123 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
 
   if (lmn_env.find_atom_parallel)
     return FALSE;
-
+  
+  printf("op = %d\n",op);
   switch (op) {
+  //imagawa2
+
+  
+  case INSTR_NEWDIFFATOM: {
+    LmnInstrVar atomi, memi;
+    LmnAtomRef ap;
+    LmnLinkAttr attr;
+
+    READ_VAL(LmnInstrVar, instr, atomi);
+    READ_VAL(LmnInstrVar, instr, memi);
+    READ_VAL(LmnLinkAttr, instr, attr);
+    if (LMN_ATTR_IS_DATA(attr)) {
+      READ_DATA_ATOM(ap, attr);
+    } else { /* symbol atom */
+      LmnFunctor f;
+
+      READ_VAL(LmnFunctor, instr, f);
+      ap = lmn_new_atom(f);
+      ((LmnSymbolAtomRef)ap)->record_flag = false;
+#ifdef USE_FIRSTCLASS_RULE
+      if (f == LMN_COLON_MINUS_FUNCTOR) {
+        lmn_rc_push_insertion(rc, (LmnSymbolAtomRef)ap,
+                              (LmnMembraneRef)rc->wt(memi));
+      }
+#endif
+    }
+    lmn_mem_push_diffatom((LmnMembraneRef)rc->wt(memi), (LmnAtomRef)ap, attr);
+    rc->reg(atomi) = {(LmnWord)ap, attr, TT_ATOM};
+    break;
+  }
+
+  case INSTR_MOVEDIFFATOMLIST2: {
+    LmnInstrVar atomi;
+    LmnInstrVar memi;
+    LmnLinkAttr attr;
+
+    READ_VAL(LmnInstrVar, instr, atomi);
+    READ_VAL(LmnInstrVar, instr, memi);
+    READ_VAL(LmnLinkAttr, instr, attr);
+    LmnFunctor f;
+    READ_VAL(LmnFunctor, instr, f);
+
+    move_diffatomlist_to_atomlist_tail2(f, (LmnMembraneRef)rc->wt(memi));                            
+
+    break;
+  }
+
+  case INSTR_DIFFATOMLISTEMPTY: {
+    LmnInstrVar atomi;
+    LmnInstrVar memi;
+    LmnLinkAttr attr;
+
+    READ_VAL(LmnInstrVar, instr, atomi);
+    READ_VAL(LmnInstrVar, instr, memi);
+    READ_VAL(LmnLinkAttr, instr, attr);
+    
+    LmnFunctor f;
+    READ_VAL(LmnFunctor, instr, f);
+
+    AtomListEntry *ent;
+    ent=((LmnMembraneRef)rc->wt(memi))->get_atomlist(f);
+    if(!(ent->d1->is_empty())){
+      return FALSE;
+    }
+                                 
+    break;
+  }
+
+  case INSTR_DIFFATOMLISTNOTEMPTY: {
+    LmnInstrVar atomi;
+    LmnInstrVar memi;
+    LmnLinkAttr attr;
+
+    READ_VAL(LmnInstrVar, instr, atomi);
+    READ_VAL(LmnInstrVar, instr, memi);
+    READ_VAL(LmnLinkAttr, instr, attr);
+    
+    LmnFunctor f;
+    READ_VAL(LmnFunctor, instr, f);
+
+    AtomListEntry *ent;
+    ent=((LmnMembraneRef)rc->wt(memi))->get_atomlist(f);
+    if((ent->d1->is_empty())){
+      return FALSE;
+    }
+                                 
+    break;
+  }
+
+  case INSTR_FINDDIFFATOM: {
+    LmnInstrVar atomi, memi;
+    LmnLinkAttr attr;
+
+    READ_VAL(LmnInstrVar, instr, atomi);
+    READ_VAL(LmnInstrVar, instr, memi);
+    READ_VAL(LmnLinkAttr, instr, attr);
+
+    if (LMN_ATTR_IS_DATA(attr))
+      throw std::runtime_error("cannot find data atoms.");
+
+    if (lmn_env.find_atom_parallel)
+      return false;
+
+    LmnFunctor f;
+    READ_VAL(LmnFunctor, instr, f);
+    auto mem = (LmnMembraneRef)rc->wt(memi);
+    finddiffatom(rc, rule, instr, mem, f, atomi);
+
+    return false; // false driven loop
+  }
+
+
+
+
   case INSTR_SPEC: {
     LmnInstrVar s0;
 
@@ -1376,6 +1515,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     break;
   }
   case INSTR_FINDATOM: {
+    printf("findatom \n");
     LmnInstrVar atomi, memi;
     LmnLinkAttr attr;
 

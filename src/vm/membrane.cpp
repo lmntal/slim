@@ -322,6 +322,60 @@ void move_symbol_atom_to_atom_tail(LmnSymbolAtomRef a, LmnSymbolAtomRef a1,
   a->set_next(a1);
 }
 
+//imagawa2
+void move_symbol_diffatomlist_to_atomlist_tail2(LmnFunctor f, LmnMembraneRef mem) {
+  //diff atomlist のアトムが保持するファンクタは atomlist の atom が保持するものと一緒
+  AtomListEntry *ent = mem->get_atomlist(f);
+  AtomListEntry *diff_ent = ent->d1;
+  AtomListEntry *diff_ent2 = ent->d2;
+  ent->append(diff_ent);
+  diff_ent->append(diff_ent2);
+}
+
+void mem_push_symbol_diffatom(LmnMembraneRef mem, LmnSymbolAtomRef atom) {
+AtomListEntry *as;
+LmnFunctor f = atom->get_functor();
+
+if (atom->get_id() == 0) { /* 膜にpushしたならばidを割り当てる */
+  atom->set_id(env_gen_next_id());
+}
+
+as = mem->get_atomlist(f);
+if (!as) { /* 本膜内に初めてアトムatomがPUSHされた場合 */
+  LMN_ASSERT(
+      mem->atomset); /* interpreter側で値がオーバーフローすると発生するので,
+                        ここで止める */
+  if (mem->max_functor < f + 1) {
+    mem->max_functor = f + 1;
+    while (mem->atomset_size - 1 < mem->max_functor) {
+      int org_size = mem->atomset_size;
+      mem->atomset_size *= 2;
+      LMN_ASSERT(mem->atomset_size > 0);
+      mem->atomset = LMN_REALLOC(struct AtomListEntry *, mem->atomset,
+                                  mem->atomset_size);
+      memset(mem->atomset + org_size, 0,
+              (mem->atomset_size - org_size) * sizeof(struct AtomListEntry *));
+    }
+  }
+  as = mem->atomset[f] = make_atomlist();
+  as->d1=make_atomlist(); as->d2=make_atomlist();
+  }
+
+  if (LMN_IS_PROXY_FUNCTOR(f)) {
+    LMN_PROXY_SET_MEM(atom, mem);
+  } else if (LMN_FUNC_IS_HL(f)) {
+    LMN_HL_MEM(lmn_hyperlink_at_to_hl(atom)) = mem;
+    mem->symb_atom_inc();
+  } else if (f != LMN_UNIFY_FUNCTOR) {
+    /* symbol atom except proxy and unify */
+    mem->symb_atom_inc();
+  }
+  as = as->d2;
+  as->push(atom);
+}
+
+
+
 void mem_push_symbol_atom(LmnMembraneRef mem, LmnSymbolAtomRef atom) {
   AtomListEntry *as;
   LmnFunctor f = atom->get_functor();
@@ -4098,6 +4152,21 @@ void move_atom_to_atom_tail(LmnSymbolAtomRef a, LmnSymbolAtomRef a1,
                             LmnMembraneRef mem) {
   move_symbol_atom_to_atom_tail(a, a1, mem);
 }
+
+//imagawa2
+void move_diffatomlist_to_atomlist_tail2(LmnFunctor f, LmnMembraneRef mem) {
+  move_symbol_diffatomlist_to_atomlist_tail2(f, mem);
+}
+
+void lmn_mem_push_diffatom(LmnMembraneRef mem, LmnAtomRef atom, LmnLinkAttr attr) {
+  if (LMN_ATTR_IS_DATA_WITHOUT_EX(attr)) {
+    mem->data_atom_inc();
+  } else { /* symbol atom */
+    mem_push_symbol_diffatom(mem, (LmnSymbolAtomRef)atom);
+  }
+}
+
+
 
 void lmn_mem_delete_atom(LmnMembraneRef mem, LmnAtomRef atom,
                          LmnLinkAttr attr) {

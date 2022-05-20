@@ -56,6 +56,9 @@ struct AtomListEntry {
   int n_record = 0; // 履歴管理用アトムのための変数(nakata)
   struct SimpleHashtbl *record;
 
+  //imagawa2
+  AtomListEntry *d1, *d2;
+
   bool is_empty() {
     return this->head == reinterpret_cast<LmnSymbolAtomRef>(this);
   }
@@ -293,6 +296,7 @@ void move_atom_to_atomlist_head(LmnSymbolAtomRef a, LmnMembrane *mem);
 void move_atomlist_to_atomlist_tail(LmnSymbolAtomRef a, LmnMembrane *mem);
 void move_atom_to_atom_tail(LmnSymbolAtomRef a, LmnSymbolAtomRef a1,
                             LmnMembrane *mem);
+void move_diffatomlist_to_atomlist_tail2(LmnFunctor f, LmnMembrane *mem);
 
 /* RecordAtom, RecordList クラスは履歴管理用アトムのためのクラス */
 class RecordAtom {
