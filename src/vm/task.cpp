@@ -1512,7 +1512,6 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     break;
   }
   case INSTR_FINDATOM: {
-    printf("findatom \n");
     LmnInstrVar atomi, memi;
     LmnLinkAttr attr;
 
