@@ -1073,8 +1073,6 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
   if (lmn_env.find_atom_parallel)
     return FALSE;
 
-  printf("op = %d\n",op);
-
   switch (op) {
   case INSTR_SPEC: {
     LmnInstrVar s0;
