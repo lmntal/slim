@@ -402,6 +402,7 @@ void mem_push_symbol_atom(LmnMembraneRef mem, LmnSymbolAtomRef atom) {
       }
     }
     as = mem->atomset[f] = make_atomlist();
+    as->d1=make_atomlist(); as->d2=make_atomlist();
   }
 
   if (LMN_IS_PROXY_FUNCTOR(f)) {
