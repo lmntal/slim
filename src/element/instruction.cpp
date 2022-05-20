@@ -277,8 +277,8 @@ const std::map<LmnInstruction, InstrSpec> instr_spec = {
 
     //imagawa
     {INSTR_NEWDIFFATOM, {"newdiffatom", {InstrVar, InstrVar, ArgFunctor}}},
-    {INSTR_MOVEDIFFATOMLIST2,{"movediffatomlist2",{InstrVar, InstrVar, ArgFunctor}}},
-    {INSTR_DIFFATOMLISTEMPTY,{"diffatomlistempty2", {InstrVar, InstrVar, ArgFunctor}}},
+    {INSTR_MOVEDIFFATOMLIST2,{"movediffatomlist",{InstrVar, InstrVar, ArgFunctor}}},
+    {INSTR_DIFFATOMLISTEMPTY,{"diffatomlistempty", {InstrVar, InstrVar, ArgFunctor}}},
     {INSTR_DIFFATOMLISTNOTEMPTY,{"diffatomlistnotempty", {InstrVar, InstrVar, ArgFunctor}}},
     {INSTR_FINDDIFFATOM, {"finddiffatom", {InstrVar, InstrVar, ArgFunctor}}},
 
