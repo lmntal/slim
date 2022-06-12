@@ -57,8 +57,8 @@
  *  =======================================
  */
 
-static inline void do_mc(LmnMembraneRef world_mem, AutomataRef a, Vector *psyms,
-                         int thread_num);
+//static inline void do_mc(LmnMembraneRef world_mem, AutomataRef a, Vector *psyms,
+//                         int thread_num);
 static void mc_dump(LmnWorkerGroup *wp);
 
 /* 非決定実行を行う. run_mcもMT-unsafeなので子ルーチンとしては使えない */
@@ -91,7 +91,7 @@ void run_mc(Vector *start_rulesets, AutomataRef a, Vector *psyms) {
   delete start_rulesets;
 }
 
-static inline void do_mc(LmnMembraneRef world_mem_org, AutomataRef a,
+void do_mc(LmnMembraneRef world_mem_org, AutomataRef a,
                          Vector *psyms, int thread_num) {
   LmnWorkerGroup *wp;
   StateSpaceRef states;
@@ -211,7 +211,8 @@ void mc_expand(const StateSpaceRef ss, State *s, AutomataStateRef p_s,
 
   /** restore : 膜の復元 */
   mem = state_restore_mem(s);
-
+  printf("%s:%d\n", __FUNCTION__, __LINE__);
+  lmn_dump_mem_dev(mem);
   /** expand  : 状態の展開 */
   if (p_s) {
     mc_gen_successors_with_property(s, mem, p_s, rc, psyms, f);
@@ -330,6 +331,8 @@ void mc_store_successors(const StateSpaceRef ss, State *s, MCReactContext *rc,
       src_succ_m = NULL;
     } else {                            /* default */
       src_succ_m = src_succ->state_mem(); /* for free mem pointed by src_succ */
+      printf("%s:%d\n", __FUNCTION__, __LINE__);
+      lmn_dump_mem_stdout(src_succ_m);
       succ = ss->insert(src_succ);
     }
 

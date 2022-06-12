@@ -508,6 +508,7 @@ static inline void dfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
     }
 
     /* サクセッサを展開 */
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
     mc_expand(worker_states(w), s, p_s, worker_rc(w).get(), new_ss, psyms,
               worker_flags(w));
 #ifndef MINIMAL_STATE
@@ -523,6 +524,7 @@ static inline void dfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
      s->set_on_stack();
       n = s->successor_num;
       for (i = 0; i < n; i++) {
+	printf("EXPAND!!!! %s:%d\n", __FUNCTION__, __LINE__);
         State *succ = state_succ_state(s, i);
 
         if (!succ->is_expanded()) {

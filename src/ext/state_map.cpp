@@ -42,6 +42,12 @@
 #include "verifier/verifier.h"
 #include "vm/vm.h"
 
+
+#include <algorithm>
+#include <iostream>
+#include <thread>
+#include <mutex>
+
 int LmnStateMap::state_map_atom_type;
 
 /* constructor */
@@ -76,7 +82,7 @@ void LmnStateMap::cb_state_map_init(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAt
 
 void LmnStateMap::cb_state_map_free(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
                        LmnLinkAttr t0) {
-  delete ((LmnStateMapRef)a0)->states, mem;
+  delete ((LmnStateMapRef)a0)->states;
   lmn_mem_remove_data_atom(mem, (LmnDataAtomRef)a0, t0);
 }
 
@@ -171,6 +177,44 @@ void LmnStateMap::cb_state_map_state_find(LmnReactCxtRef rc, LmnMembraneRef mem,
 
   mem->add_child_mem(new_mem);
 }
+/*
+ * +a0 Rule
+ * +a1 Graph
+ * +a2 Map
+ * -a3 RetRule
+ * -a4 Ret
+ */
+
+void cb_statespace_construction(LmnReactCxtRef rc, LmnMembraneRef mem,
+				LmnAtomRef a0, LmnLinkAttr t0,
+				LmnAtomRef a1, LmnLinkAttr t1,
+				LmnAtomRef a2, LmnLinkAttr t2,
+				LmnAtomRef a3, LmnLinkAttr t3,
+				LmnAtomRef a4, LmnLinkAttr t4
+				) {
+  LmnMembraneRef rule_mem = LMN_PROXY_GET_MEM((LmnSymbolAtomRef)((LmnSymbolAtomRef)a0)->get_link(0));
+  LmnMembraneRef graph_mem = LMN_PROXY_GET_MEM((LmnSymbolAtomRef)((LmnSymbolAtomRef)a1)->get_link(0));
+  LmnAtomRef in_mem = ((LmnSymbolAtomRef)a1)->get_link(0);
+  
+  lmn_mem_delete_atom(graph_mem, ((LmnSymbolAtomRef)in_mem)->get_link(1), ((LmnSymbolAtomRef)in_mem)->get_attr(1));
+  lmn_mem_delete_atom(graph_mem, in_mem, ((LmnSymbolAtomRef)a1)->get_attr(0));
+  LmnRuleSetRef rs = rule_mem->get_rulesets()[0];
+  graph_mem->copy_rules(rule_mem);
+  //((MemReactContext *)rc)->memstack_push(graph_mem);
+  graph_mem->activate_ancestors();
+  // lmn_env.enable_parallel = TRUE;
+  lmn_env.nd = TRUE;
+  do_mc(graph_mem, NULL, NULL, 1);
+  lmn_env.nd = FALSE;
+  lmn_mem_newlink(mem,
+		  a3, t3, LMN_ATTR_GET_VALUE(t3),
+		  a0, t0, LMN_ATTR_GET_VALUE(t0));
+  lmn_mem_newlink(mem,
+  		  a4, t4, LMN_ATTR_GET_VALUE(t4),
+  		  a2, t2, LMN_ATTR_GET_VALUE(t2));
+
+  return;
+}
 
 /*----------------------------------------------------------------------
  * Initialization
@@ -197,4 +241,5 @@ void LmnStateMap::init_state_map(void) {
   CCallback::lmn_register_c_fun("cb_state_map_id_find", (void *)cb_state_map_id_find, 4);
   CCallback::lmn_register_c_fun("cb_state_map_state_find", (void *)cb_state_map_state_find,
                      4);
+  CCallback::lmn_register_c_fun("cb_statespace_construction", (void *)cb_statespace_construction, 5);
 }
