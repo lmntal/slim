@@ -55,6 +55,7 @@ struct LmnMembrane;
 struct LmnRuleSet;
 typedef struct LmnMembrane *LmnMembraneRef;
 typedef struct AtomListEntry **AtomSet;
+typedef void *LmnAtomRef;
 
 struct LmnMembrane {
   AtomSet atomset;
@@ -69,6 +70,9 @@ struct LmnMembrane {
   LmnMembraneRef child_head;
   LmnMembraneRef prev, next;
   std::vector<LmnRuleSet *> rulesets;
+  //imagawa
+  std::vector<LmnAtomRef> remove_list;
+  int dec_count=0;
 #ifdef USE_FIRSTCLASS_RULE
   std::vector<LmnRuleSet *> firstclass_rulesets;
 #endif
@@ -82,6 +86,27 @@ struct LmnMembrane {
   }
   LmnMembrane();
   ~LmnMembrane();
+  //imagawa
+  void clear_remove_list(){
+    this->remove_list.clear();
+  }
+  void add_remove_list(LmnAtomRef atom){
+    this->remove_list.push_back(atom);
+  }
+  int remove_list_size(){
+    return this->remove_list.size();
+  }
+  void dec_inc(){
+    this->dec_count++;
+    printf("dec inc\n");
+  }
+  void dec_dec(){
+    this->dec_count--;
+  }
+  void do_dec(){
+    this->atom_data_num-=this->dec_count;
+    this->dec_count=0;
+  }
   lmn_interned_str NAME_ID() {
     return this->name;
   }

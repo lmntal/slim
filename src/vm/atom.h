@@ -137,6 +137,7 @@ enum LmnLinkAttribute {
 struct LmnSymbolAtom {
   LmnSymbolAtomRef prev;
   LmnSymbolAtomRef next;
+  bool del = false;
   LmnWord procId;
   bool record_flag = false;
   int rule_number = -1;
@@ -147,6 +148,8 @@ struct LmnSymbolAtom {
     };
     LmnAtomRef links[0];
   };
+  void init_del();
+
   /**
    * @brief アトムリストからATOMのprevアトムを取得する.
    *        アトムリストから履歴アトムを読み飛ばさないので,

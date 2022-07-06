@@ -73,6 +73,7 @@ LmnSymbolAtomRef lmn_new_atom(LmnFunctor f) {
   ap = (LmnSymbolAtomRef)memory_pool_malloc(atom_memory_pools[arity][cid]);
   ap->set_functor(f);
   ap->set_id(0);
+  ap->init_del();
 
   return ap;
 }

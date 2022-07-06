@@ -4155,6 +4155,36 @@ void move_atom_to_atom_tail(LmnSymbolAtomRef a, LmnSymbolAtomRef a1,
 }
 
 //imagawa2
+void add_removeatom(LmnMembraneRef mem, LmnAtomRef atom,
+                         LmnLinkAttr attr){
+  // printf("add removeatom\n");
+  if (LMN_ATTR_IS_DATA_WITHOUT_EX(attr)) {
+    // mem->dec_inc();
+    lmn_mem_remove_data_atom(mem, (LmnDataAtomRef)atom, attr);
+  } else {
+    ((LmnSymbolAtomRef)atom)->del=true;
+    mem->add_remove_list(atom);
+    //mem_remove_symbol_atom(mem, (LmnSymbolAtomRef)atom);
+  }
+}
+bool del_remove_list(LmnMembraneRef mem){
+  int max = mem->remove_list_size();
+  // printf("remove all %d\n",max);
+  // mem->do_dec();
+  //消さないなら true
+  if(max==0)return true;
+  if(max)
+  for (int i = 0; i < max; i++)
+  {
+    LmnSymbolAtomRef p = (LmnSymbolAtomRef)mem->remove_list[i];
+    mem_remove_symbol_atom(mem, p);
+    lmn_delete_atom(p);
+  }
+  mem->clear_remove_list();
+  return false;
+}
+
+
 void move_diffatomlist_to_atomlist_tail2(LmnFunctor f, LmnMembraneRef mem) {
   move_symbol_diffatomlist_to_atomlist_tail2(f, mem);
 }

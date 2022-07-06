@@ -41,6 +41,10 @@
 
 #include "hyperlink.h"
 
+void LmnSymbolAtom::init_del(){
+  this->del=false;
+}
+
 LmnSymbolAtomRef LmnSymbolAtom::get_prev() const{
   return this->prev;
 }

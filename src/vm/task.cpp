@@ -1191,6 +1191,43 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     return false; // false driven loop
   }
 
+  case INSTR_REMOVEATOM2: {
+    LmnInstrVar atomi1, atomi2, memi;
+
+    READ_VAL(LmnInstrVar, instr, atomi1);
+    // READ_VAL(LmnInstrVar, instr, atomi2);
+    READ_VAL(LmnInstrVar, instr, memi);
+
+    // printf("here remove\n");
+    add_removeatom((LmnMembraneRef)rc->wt(memi), (LmnAtomRef)rc->wt(atomi1),
+                        rc->at(atomi1));
+    // printf("remove fin\n");
+
+    break;
+  }
+
+  case INSTR_LATEREMOVE: {
+    LmnInstrVar memi;
+
+    READ_VAL(LmnInstrVar, instr, memi);
+
+    if(del_remove_list((LmnMembraneRef)rc->wt(memi))){
+      // printf("late remove false\n");
+      return FALSE;
+    }
+    break;
+  }
+
+  case INSTR_ISNOTREMOVE: {
+    LmnInstrVar atom;
+    READ_VAL(LmnInstrVar, instr, atom);
+    // printf("isnot remove %p, %d\n",(LmnSymbolAtomRef)rc->wt(atom),((LmnSymbolAtomRef)rc->wt(atom))->del);
+
+    if(((LmnSymbolAtomRef)rc->wt(atom))->del)return FALSE;
+
+    break;
+  }
+
 
 
 
@@ -2431,8 +2468,9 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
                             (LmnSymbolAtomRef)rc->wt(atom2), pos2);
     break;
   }
-  case INSTR_PROCEED:
+  case INSTR_PROCEED:{
     return TRUE;
+  }
   case INSTR_STOP:
     return FALSE;
   case INSTR_NOT: {
