@@ -220,6 +220,7 @@ struct LmnMembrane {
   LmnMembraneRef copy_ex();
   //まだリファクタリングしていない
   void remove_ground(Vector *srcvec);
+  void move_ground(Vector *srcvec, LmnMembraneRef srcmem);
   void delete_ground(Vector *srcvec);
   BOOL equals(LmnMembraneRef mem2);
   void remove_mem(LmnMembraneRef mem);

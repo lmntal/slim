@@ -98,6 +98,7 @@ const std::map<LmnInstruction, InstrSpec> instr_spec = {
     {INSTR_ALLOCATOMINDIRECT, {"allocatomindirect", {InstrVar, InstrVar}}},
     {INSTR_COPYATOM, {"copyatom", {InstrVar, InstrVar, InstrVar}}},
     {INSTR_ADDATOM, {"addatom", {InstrVar, InstrVar}}},
+    {INSTR_MOVEATOM, {"moveatom", {InstrVar, InstrVar, InstrVar}}},
 
     {INSTR_REMOVEMEM, {"removemem", {InstrVar, InstrVar}}},
     {INSTR_NEWMEM, {"newmem", {InstrVar, InstrVar, InstrVar}}},
@@ -120,6 +121,7 @@ const std::map<LmnInstruction, InstrSpec> instr_spec = {
     {INSTR_RELINK,
      {"relink", {InstrVar, InstrVar, InstrVar, InstrVar, InstrVar}}},
     {INSTR_SWAPLINK, {"swaplink", {InstrVar, InstrVar, InstrVar, InstrVar}}},
+    {INSTR_SWAPLINK2, {"swaplink2", {InstrVar, InstrVar}}},
     {INSTR_UNIFY,
      {"unify", {InstrVar, InstrVar, InstrVar, InstrVar, InstrVar}}},
     {INSTR_INHERITLINK,
@@ -146,6 +148,7 @@ const std::map<LmnInstruction, InstrSpec> instr_spec = {
     {INSTR_INSERTCONNECTORSINNULL,
      {"insertconnectorsinnull", {InstrVar, InstrVarList}}},
     {INSTR_DELETECONNECTORS, {"deleteconnectors", {InstrVar, InstrVar}}},
+    {INSTR_DELETECONNECTORSFROMORIG, {"deleteconnectorsfromorig", {InstrVar}}},
 
     {INSTR_REACT,
      {"react", {InstrVar, InstrVarList, InstrVarList, InstrVarList}}},
@@ -185,6 +188,7 @@ const std::map<LmnInstruction, InstrSpec> instr_spec = {
     {INSTR_COPYHLGROUNDINDIRECT,
      {"copyhlgroundindirect", {InstrVar, InstrVar, InstrVar, InstrVarList}}},
     {INSTR_COPYGROUND, {"copyground", {InstrVar, InstrVar, InstrVar}}},
+    {INSTR_MOVEGROUND, {"moveground", {InstrVar, InstrVar, InstrVar}}},
     {INSTR_REMOVEGROUND, {"removeground", {InstrVar, InstrVar}}},
     {INSTR_REMOVEHLGROUND,
      {"removehlground", {InstrVar, InstrVar, InstrVarList}}},
