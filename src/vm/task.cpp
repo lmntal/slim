@@ -1122,7 +1122,9 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     LmnFunctor f;
     READ_VAL(LmnFunctor, instr, f);
 
-    move_diffatomlist_to_atomlist_tail2(f, (LmnMembraneRef)rc->wt(memi));                            
+    if(!move_diffatomlist_to_atomlist_tail2(f, (LmnMembraneRef)rc->wt(memi))){
+      return FALSE;
+    }                            
 
     break;
   }

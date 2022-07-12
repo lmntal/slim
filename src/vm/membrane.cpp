@@ -323,13 +323,15 @@ void move_symbol_atom_to_atom_tail(LmnSymbolAtomRef a, LmnSymbolAtomRef a1,
 }
 
 //imagawa2
-void move_symbol_diffatomlist_to_atomlist_tail2(LmnFunctor f, LmnMembraneRef mem) {
+bool move_symbol_diffatomlist_to_atomlist_tail2(LmnFunctor f, LmnMembraneRef mem) {
   //diff atomlist のアトムが保持するファンクタは atomlist の atom が保持するものと一緒
   AtomListEntry *ent = mem->get_atomlist(f);
+  if(!ent)return false;
   AtomListEntry *diff_ent = ent->d1;
   AtomListEntry *diff_ent2 = ent->d2;
   ent->append(diff_ent);
   diff_ent->append(diff_ent2);
+  return true;
 }
 
 void mem_push_symbol_diffatom(LmnMembraneRef mem, LmnSymbolAtomRef atom) {
@@ -4185,8 +4187,8 @@ bool del_remove_list(LmnMembraneRef mem){
 }
 
 
-void move_diffatomlist_to_atomlist_tail2(LmnFunctor f, LmnMembraneRef mem) {
-  move_symbol_diffatomlist_to_atomlist_tail2(f, mem);
+bool move_diffatomlist_to_atomlist_tail2(LmnFunctor f, LmnMembraneRef mem) {
+  return move_symbol_diffatomlist_to_atomlist_tail2(f, mem);
 }
 
 void lmn_mem_push_diffatom(LmnMembraneRef mem, LmnAtomRef atom, LmnLinkAttr attr) {

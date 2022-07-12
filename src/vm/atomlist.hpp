@@ -296,7 +296,7 @@ void move_atom_to_atomlist_head(LmnSymbolAtomRef a, LmnMembrane *mem);
 void move_atomlist_to_atomlist_tail(LmnSymbolAtomRef a, LmnMembrane *mem);
 void move_atom_to_atom_tail(LmnSymbolAtomRef a, LmnSymbolAtomRef a1,
                             LmnMembrane *mem);
-void move_diffatomlist_to_atomlist_tail2(LmnFunctor f, LmnMembrane *mem);
+bool move_diffatomlist_to_atomlist_tail2(LmnFunctor f, LmnMembrane *mem);
 
 /* RecordAtom, RecordList クラスは履歴管理用アトムのためのクラス */
 class RecordAtom {

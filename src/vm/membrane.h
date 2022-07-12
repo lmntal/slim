@@ -173,11 +173,11 @@ void move_symbol_atomlist_to_atomlist_tail(LmnSymbolAtomRef a,
 void move_symbol_atom_to_atom_tail(LmnSymbolAtomRef a, LmnSymbolAtomRef a1,
                                    LmnMembraneRef mem);
 //imagawa2
-void move_symbol_diffatomlist_to_atomlist_tail2(LmnFunctor f, LmnMembraneRef mem);
+bool move_symbol_diffatomlist_to_atomlist_tail2(LmnFunctor f, LmnMembraneRef mem);
 
 void mem_push_symbol_diffatom(LmnMembraneRef mem, LmnSymbolAtomRef atom);
 
-void move_diffatomlist_to_atomlist_tail2(LmnFunctor f, LmnMembraneRef mem);
+bool move_diffatomlist_to_atomlist_tail2(LmnFunctor f, LmnMembraneRef mem);
 
 void lmn_mem_push_diffatom(LmnMembraneRef mem, LmnAtomRef atom, LmnLinkAttr attr);
 void add_removeatom(LmnMembraneRef mem, LmnAtomRef atom, LmnLinkAttr attr);
