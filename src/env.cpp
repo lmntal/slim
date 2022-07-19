@@ -142,6 +142,7 @@ LmnEnv::LmnEnv() {
   this->output_format = DEFAULT;
   this->mc_dump_format = CUI;
   this->sp_dump_format = SP_NONE;
+  this->show_laststep_only = FALSE;
   this->nd = FALSE;
   this->ltl = FALSE;
   this->ltl_all = FALSE;
