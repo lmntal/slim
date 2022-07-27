@@ -4114,6 +4114,19 @@ void mem_remove_symbol_atom(LmnMembraneRef mem, LmnSymbolAtomRef atom) {
     mem->symb_atom_dec();
   }
 }
+void mem_remove_symbol_atom2(LmnMembraneRef mem, LmnSymbolAtomRef atom) {
+  LmnFunctor f = atom->get_functor();
+  {
+    AtomListEntry *ent = mem->get_atomlist(f)->d1;
+    ent->remove(atom);
+  }
+
+  if (LMN_IS_PROXY_FUNCTOR(f)) {
+    LMN_PROXY_SET_MEM(atom, NULL);
+  } else if (f != LMN_UNIFY_FUNCTOR) {
+    mem->symb_atom_dec();
+  }
+}
 
 /* 膜memからアトムatomを取り除く.
  * atomの接続先データアトムが存在するならば, そのデータアトムも取り除く.
@@ -4169,19 +4182,49 @@ void add_removeatom(LmnMembraneRef mem, LmnAtomRef atom,
     //mem_remove_symbol_atom(mem, (LmnSymbolAtomRef)atom);
   }
 }
+void add_removeatom2(LmnMembraneRef mem, LmnAtomRef atom,
+                         LmnLinkAttr attr){
+  // printf("add removeatom\n");
+  if (LMN_ATTR_IS_DATA_WITHOUT_EX(attr)) {
+    // mem->dec_inc();
+    lmn_mem_remove_data_atom(mem, (LmnDataAtomRef)atom, attr);
+  } else {
+    ((LmnSymbolAtomRef)atom)->del=true;
+    mem->add_remove_list2(atom);
+    //mem_remove_symbol_atom(mem, (LmnSymbolAtomRef)atom);
+  }
+}
 bool del_remove_list(LmnMembraneRef mem){
-  int max = mem->remove_list_size();
-  // printf("remove all %d\n",max);
+  int max1 = mem->remove_list_size();
+  int max2 = mem->remove_list_size2();
+  // printf("max1 = %d max2=%d\n",max1, max2);
   // mem->do_dec();
   //消さないなら true
-  if(max==0)return true;
-  if(max)
-  for (int i = 0; i < max; i++)
+  if(max1==0 && max2==0)return true;
+  // if(max1!=0){
+  //   printf("atomlist size : %d %d\n",
+  //   mem->get_atomlist(((LmnSymbolAtomRef)mem->remove_list[0][0])->get_functor())->size(),
+  //   mem->get_atomlist(((LmnSymbolAtomRef)mem->remove_list[0][0])->get_functor())->d1->size());
+  // }else if(max2!=0){
+  //   printf("atomlist size : %d %d\n",
+  //   mem->get_atomlist(((LmnSymbolAtomRef)mem->remove_list[1][0])->get_functor())->size(),
+  //   mem->get_atomlist(((LmnSymbolAtomRef)mem->remove_list[1][0])->get_functor())->d1->size());
+  // }
+  for (int i = 0; i < max1; i++)
   {
-    LmnSymbolAtomRef p = (LmnSymbolAtomRef)mem->remove_list[i];
+    LmnSymbolAtomRef p = (LmnSymbolAtomRef)mem->remove_list[0][i];
+    // printf("1_%d:%s(%d) ",i,p->str(),p->get_link(0));
     mem_remove_symbol_atom(mem, p);
     lmn_delete_atom(p);
   }
+  for (int i = 0; i < max2; i++)
+  {
+    LmnSymbolAtomRef p = (LmnSymbolAtomRef)mem->remove_list[1][i];
+    // printf("2_%d:%s(%d) ",i,p->str(),p->get_link(0));
+    mem_remove_symbol_atom2(mem, p);
+    lmn_delete_atom(p);
+  }
+  // printf("\n");
   mem->clear_remove_list();
   return false;
 }

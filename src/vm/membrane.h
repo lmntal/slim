@@ -182,6 +182,8 @@ bool move_diffatomlist_to_atomlist_tail2(LmnFunctor f, LmnMembraneRef mem);
 void lmn_mem_push_diffatom(LmnMembraneRef mem, LmnAtomRef atom, LmnLinkAttr attr);
 void add_removeatom(LmnMembraneRef mem, LmnAtomRef atom, LmnLinkAttr attr);
 bool del_remove_list(LmnMembraneRef mem);
+void add_removeatom2(LmnMembraneRef mem, LmnAtomRef atom, LmnLinkAttr attr);
+bool del_remove_list2(LmnMembraneRef mem);
 
 
 LmnSymbolAtomRef lmn_mem_newatom(LmnMembraneRef mem, LmnFunctor f);

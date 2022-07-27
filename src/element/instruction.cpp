@@ -287,9 +287,11 @@ const std::map<LmnInstruction, InstrSpec> instr_spec = {
     {INSTR_DIFFATOMLISTEMPTY,{"diffatomlistempty", {InstrVar, InstrVar, ArgFunctor}}},
     {INSTR_DIFFATOMLISTNOTEMPTY,{"diffatomlistnotempty", {InstrVar, InstrVar, ArgFunctor}}},
     {INSTR_FINDDIFFATOM, {"finddiffatom", {InstrVar, InstrVar, ArgFunctor}}},
-    {INSTR_REMOVEATOM2,{"removeatom2", {InstrVar, InstrVar, InstrVar}}},
+    {INSTR_REMOVEATOM2,{"removeatom2", {InstrVar, InstrVar}}},
+    {INSTR_REMOVEDIFFATOM,{"removediffatom", {InstrVar, InstrVar}}},
     {INSTR_LATEREMOVE,{"lateremove",{InstrVar}}},
     {INSTR_ISNOTREMOVE,{"isnotremove",{{InstrVar}}}},
+    {INSTR_PRINT,{"print",{}}},
 
     /* etc */
     {INSTR_CELLDUMP, {"celldump", {}}}};

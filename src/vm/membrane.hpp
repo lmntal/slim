@@ -71,7 +71,7 @@ struct LmnMembrane {
   LmnMembraneRef prev, next;
   std::vector<LmnRuleSet *> rulesets;
   //imagawa
-  std::vector<LmnAtomRef> remove_list;
+  std::vector<LmnAtomRef> remove_list[2];
   int dec_count=0;
 #ifdef USE_FIRSTCLASS_RULE
   std::vector<LmnRuleSet *> firstclass_rulesets;
@@ -88,13 +88,20 @@ struct LmnMembrane {
   ~LmnMembrane();
   //imagawa
   void clear_remove_list(){
-    this->remove_list.clear();
+    this->remove_list[0].clear();
+    this->remove_list[1].clear();
   }
   void add_remove_list(LmnAtomRef atom){
-    this->remove_list.push_back(atom);
+    this->remove_list[0].push_back(atom);
+  }
+  void add_remove_list2(LmnAtomRef atom){
+    this->remove_list[1].push_back(atom);
   }
   int remove_list_size(){
-    return this->remove_list.size();
+    return this->remove_list[0].size();
+  }
+  int remove_list_size2(){
+    return this->remove_list[1].size();
   }
   void dec_inc(){
     this->dec_count++;

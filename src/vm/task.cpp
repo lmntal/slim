@@ -1207,9 +1207,24 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
 
     break;
   }
+  case INSTR_REMOVEDIFFATOM: {
+    LmnInstrVar atomi1, atomi2, memi;
+
+    READ_VAL(LmnInstrVar, instr, atomi1);
+    // READ_VAL(LmnInstrVar, instr, atomi2);
+    READ_VAL(LmnInstrVar, instr, memi);
+
+    // printf("here remove\n");
+    add_removeatom2((LmnMembraneRef)rc->wt(memi), (LmnAtomRef)rc->wt(atomi1),
+                        rc->at(atomi1));
+    // printf("remove fin\n");
+
+    break;
+  }
 
   case INSTR_LATEREMOVE: {
     LmnInstrVar memi;
+    // printf("lateremove\n");
 
     READ_VAL(LmnInstrVar, instr, memi);
 
@@ -1226,6 +1241,11 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     // printf("isnot remove %p, %d\n",(LmnSymbolAtomRef)rc->wt(atom),((LmnSymbolAtomRef)rc->wt(atom))->del);
 
     if(((LmnSymbolAtomRef)rc->wt(atom))->del)return FALSE;
+
+    break;
+  }
+  case INSTR_PRINT: {
+    printf("print\n");
 
     break;
   }
