@@ -1,5 +1,6 @@
 #include "interactive_debug.hpp"
 #include "task.h"
+#include "stringifier.hpp"
 #include <iostream>
 #include <string>
 #include <sstream>
@@ -11,62 +12,12 @@ const char* get_instr_name(const int id) {
   return "unknown";
 }
 
-std::string InteractiveDebugger::stringify(const LmnAtomRef atom, const LmnByte at) {
-  std::ostringstream retVal;
-
-  if (LMN_ATTR_IS_DATA(at)) {
-    LmnDataAtomRef dAtomRef = (LmnDataAtomRef) atom;
-    switch (at) {
-      case LMN_INT_ATTR:
-        retVal << *((long *)&dAtomRef);
-        break;
-      case LMN_DBL_ATTR:
-        retVal << lmn_get_double(dAtomRef);
-        break;
-      default:
-        retVal << "0x" << std::hex << *((unsigned long *)&dAtomRef) << std::dec;
-        break;
-    }
-  } else if (!atom) {
-    retVal << "null";
-  } else {
-    LmnSymbolAtomRef sAtomRef = (LmnSymbolAtomRef) atom;
-    retVal << sAtomRef->str() << "(";
-
-    for (size_t i = 0, linkNum = sAtomRef->get_link_num(); i < linkNum; i++) {
-      LmnAtomRef ref = sAtomRef->get_link(i);
-      LmnLinkAttr attr = sAtomRef->get_attr(i);
-      if (LMN_ATTR_IS_DATA(attr)) {
-        switch (attr) {
-          case LMN_INT_ATTR:
-            retVal << *((long *)&ref);
-            break;
-          case LMN_DBL_ATTR:
-            retVal << lmn_get_double((LmnDataAtomRef) ref);
-            break;
-          default:
-            retVal << "0x" << std::hex << *((unsigned long *)&ref) << std::dec;
-            break;
-        }
-      } else if (!ref) {
-        retVal << "null";
-      } else {
-        // TODO fix segmentation fault
-        retVal << ((LmnSymbolAtomRef)ref)->str();
-        // retVal << std::hex << ref << std::dec << "(" << attr << ",?)";
-      }
-      if (i != linkNum - 1) {
-        retVal << ",";
-      }
-    }
-    retVal << ")";
-  }
-
-  return retVal.str();
+std::string InteractiveDebugger::stringify_atom(const LmnAtomRef atom, const LmnByte at) {
+  return slim::stringifier::lmn_stringify_atom(atom, at);
 }
 
 // print register content
-std::string InteractiveDebugger::stringify(const LmnRegister *reg) {
+std::string InteractiveDebugger::stringify_register(const LmnRegister *reg) {
   if (!reg) {
     return "null";
   }
@@ -77,17 +28,17 @@ std::string InteractiveDebugger::stringify(const LmnRegister *reg) {
   LmnByte tt = reg->tt;
 
   if (tt == TT_ATOM) {
-    retVal << stringify((LmnAtomRef) wt, at);
+    retVal << stringify_atom((LmnAtomRef)wt, at);
   } else if (tt == TT_MEM) {
-    retVal << "0x" << std::hex << wt << std::dec << "(" << std::to_string(at) << ",mem)";
+    retVal << "0x" << std::hex << wt << std::dec << "(" << (unsigned int) at << ",mem)";
   } else {
-    retVal << wt << "(" << std::to_string(at) << ",other)";
+    retVal << wt << "(" << (unsigned int) at << ",other)";
   }
 
   return retVal.str();
 }
 
-std::string InteractiveDebugger::stringify(const LmnRegisterArray *reg_array) {
+std::string InteractiveDebugger::stringify_regarray(const LmnRegisterArray *reg_array) {
   if (!reg_array) {
     return "null";
   }
@@ -96,7 +47,7 @@ std::string InteractiveDebugger::stringify(const LmnRegisterArray *reg_array) {
 
   retVal << "[ ";
   for (size_t i = 0, reg_len = reg_array->size(); i < reg_len; i++) {
-    retVal << stringify(&(reg_array->at(i)));
+    retVal << stringify_register(&(reg_array->at(i)));
     if (i != reg_len - 1) {
       retVal << " | ";
     }
@@ -106,7 +57,7 @@ std::string InteractiveDebugger::stringify(const LmnRegisterArray *reg_array) {
   return retVal.str();
 }
 
-std::string InteractiveDebugger::stringify(const LmnRuleInstr instr) {
+std::string InteractiveDebugger::stringify_instr(const LmnRuleInstr instr) {
   if (!instr) {
     return "null";
   }
@@ -161,7 +112,7 @@ std::string InteractiveDebugger::stringify(const LmnRuleInstr instr) {
           case ArgFunctor:
             LmnLinkAttr arg_functor;
             READ_VAL(LmnLinkAttr, instr_copy, arg_functor);
-            retVal << std::to_string(arg_functor);
+            retVal << (unsigned int) arg_functor;
             break;
           case ArgRuleset:
             LmnRulesetId arg_ruleset;
@@ -189,13 +140,13 @@ std::string InteractiveDebugger::stringify(const LmnRuleInstr instr) {
     retVal << ", ";
     retVal << lmn_id_to_name(lmn_functor_table->get_entry(func)->name);
     retVal << "_";
-    retVal << std::to_string(lmn_functor_table->get_entry(func)->arity);
+    retVal << (unsigned int) lmn_functor_table->get_entry(func)->arity;
   }
 
   return retVal.str();
 }
 
-std::string InteractiveDebugger::stringify(const AtomListEntry *atomlist) {
+std::string InteractiveDebugger::stringify_atomlist(const AtomListEntry *atomlist) {
   if (!atomlist) {
     return "null";
   }
@@ -207,7 +158,7 @@ std::string InteractiveDebugger::stringify(const AtomListEntry *atomlist) {
   retVal << "[ ";
 
   while (iter != end) {
-    retVal << stringify(*iter, LMN_ATTR_MAKE_LINK(0));
+    retVal << stringify_atom(*iter, LMN_ATTR_MAKE_LINK(0));
     ++iter;
     if (iter != end) {
       retVal << " | ";
@@ -242,36 +193,34 @@ std::vector<std::string> InteractiveDebugger::split_command(std::string command)
 }
 
 void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRef rule, const LmnRuleInstr instr) {
-  using namespace std;
-
   if (input_eof) {
     return;
   }
 
   fflush(stdout);
 
-  cout << endl;
-  cout << "Rule        : ";
-  cout << (!rule ? "null" : rule->name == ANONYMOUS ? "ANONYMOUS" : lmn_id_to_name(rule->name)) << endl;
+  std::cout << std::endl;
+  std::cout << "Rule        : ";
+  std::cout << (!rule ? "null" : rule->name == ANONYMOUS ? "ANONYMOUS" : lmn_id_to_name(rule->name)) << std::endl;
 
-  cout << "Instruction : " << stringify(instr) << endl;
+  std::cout << "Instruction : " << stringify_instr(instr) << std::endl;
 
   if (instr && *((LmnInstrOp *)instr) != INSTR_SPEC && previous_instr >= instr) {
-    cout << "Possible backtracking. (Prev Inst : " << stringify(previous_instr) << ")" << endl;
+    std::cout << "Possible backtracking. (Prev Inst : " << stringify_instr(previous_instr) << ")" << std::endl;
   }
 
   bool continue_session = true;
   while (continue_session) {
-    string debug_command_input;
+    std::string debug_command_input;
 
-    if (cin.eof()) {
-      cout << "^D" << endl;
+    if (std::cin.eof()) {
+      std::cout << "^D" << std::endl;
       input_eof = true;
       break;
     }
 
-    cout << "(debugger) ";
-    getline(cin, debug_command_input);
+    std::cout << "(debugger) ";
+    std::getline(std::cin, debug_command_input);
 
     auto v = split_command(debug_command_input);
 
@@ -307,20 +256,20 @@ void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRe
         break;
       case DebugCommand::DBGCMD_INFO:
         if (arg_len < 2) {
-          cout << "Too few arguments" << endl;
+          std::cout << "Too few arguments" << std::endl;
           break;
         }
 
         if (arg1 == DebugCommandArg::DBGARG_RULE_REG) {
           if (!rc) {
-            cout << "LmnReactCxtRef is null" << endl;
+            std::cout << "LmnReactCxtRef is null" << std::endl;
             break;
           }
-          cout << stringify(&rc->work_array) << endl;
+          std::cout << stringify_regarray(&rc->work_array) << std::endl;
         }
         else if (arg1 == DebugCommandArg::DBGARG_ATOMLIST) {
           if (!rc) {
-            cout << "LmnReactCxtRef is null" << endl;
+            std::cout << "LmnReactCxtRef is null" << std::endl;
             break;
           }
 
@@ -330,27 +279,27 @@ void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRe
             for (size_t i = 0; i < list_count; i++) {
               auto list = ((LmnMembraneRef) rc->wt(0))->atomset[i];
               if (list) {
-                cout << lmn_id_to_name(lmn_functor_table->get_entry(i)->name);
-                cout << "_";
-                cout << lmn_functor_table->get_entry(i)->arity;
-                cout << " \t: " << stringify(list) << endl;
+                std::cout << lmn_id_to_name(lmn_functor_table->get_entry(i)->name);
+                std::cout << "_";
+                std::cout << (unsigned int) lmn_functor_table->get_entry(i)->arity;
+                std::cout << " \t: " << stringify_atomlist(list) << std::endl;
               }
             }
           } else {
             for (size_t i = 0; i < list_count; i++) {
               auto list = ((LmnMembraneRef) rc->wt(0))->atomset[i];
               if (list) {
-                string functor_name = lmn_id_to_name(lmn_functor_table->get_entry(i)->name);
+                std::string functor_name = lmn_id_to_name(lmn_functor_table->get_entry(i)->name);
                 unsigned int functor_arity = lmn_functor_table->get_entry(i)->arity;
 
                 for (size_t j = 2; j < arg_len; j++) {
                   size_t underscore = v.at(j).find("_");
-                  if (underscore != string::npos && underscore > 0 && underscore < v.at(j).size()) {
-                    string input_name = v.at(j).substr(0, underscore);
+                  if (underscore != std::string::npos && underscore > 0 && underscore < v.at(j).size()) {
+                    std::string input_name = v.at(j).substr(0, underscore);
                     unsigned int input_arity = stoul(v.at(j).substr(underscore + 1));
                     if (functor_name == input_name && functor_arity == input_arity) {
-                      cout << "  " << functor_name << "_" << functor_arity << " \t: ";
-                      cout << stringify(list) << endl;
+                      std::cout << "  " << functor_name << "_" << functor_arity << " \t: ";
+                      std::cout << stringify_atomlist(list) << std::endl;
                     }
                   }
                 }
@@ -359,25 +308,29 @@ void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRe
           }
         }
         else if (arg1 == DebugCommandArg::DBGARG_BRKPNT) {
-          cout << "Breakpoints for instructions :" << endl;
+          std::cout << "Breakpoints for instructions :" << std::endl;
           for (auto i : breakpoints_on_instr) {
-            cout << "  " << get_instr_name(i) << endl;
+            std::cout << "  " << get_instr_name(i) << std::endl;
           }
 
-          cout << endl << "Breakpoints for rules :" << endl;
+          std::cout << std::endl << "Breakpoints for rules :" << std::endl;
           for (auto str : breakpoints_on_rule) {
-            cout << "  " << str << endl;
+            std::cout << "  " << str << std::endl;
           }
-          cout << endl;
+          std::cout << std::endl;
+        }
+        else if (arg1 == DebugCommandArg::DBGARG_MEMBRANE) {
+          std::cout << "Current membrane : " << std::endl;
+          std::cout << slim::stringifier::lmn_stringify_mem((LmnMembraneRef)rc->wt(0)) << std::endl;
         }
         else {
-          cout << "Invalid arguments" << endl;
+          std::cout << "Invalid arguments" << std::endl;
         }
 
         break;
       case DebugCommand::DBGCMD_STEP:
         if (arg_len < 2) {
-          cout << "Too few arguments" << endl;
+          std::cout << "Too few arguments" << std::endl;
           break;
         }
 
@@ -395,7 +348,7 @@ void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRe
             rule_reaction_stop_at = l;
             continue_session = false;
           } else {
-            cout << "Invalid step count: " << l << endl;
+            std::cout << "Invalid step count: " << l << std::endl;
           }
         }
         else if (arg1 == DebugCommandArg::DBGARG_INSTR) {
@@ -412,17 +365,17 @@ void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRe
             instr_execution_stop_at = l;
             continue_session = false;
           } else {
-            cout << "Invalid step count: " << l << endl;
+            std::cout << "Invalid step count: " << l << std::endl;
           }
         }
         else {
-          cout << "Invalid arguments" << endl;
+          std::cout << "Invalid arguments" << std::endl;
         }
 
         break;
       case DebugCommand::DBGCMD_BREAK:
         if (arg_len < 3) {
-          cout << "Too few arguments" << endl;
+          std::cout << "Too few arguments" << std::endl;
           break;
         }
 
@@ -435,17 +388,17 @@ void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRe
             }
           }
           if (exists) {
-            cout << "Breakpoint is already set to instruction: " << v.at(2) << endl;
+            std::cout << "Breakpoint is already set to instruction: " << v.at(2) << std::endl;
           } else {
             breakpoints_on_rule.push_back(v.at(2));
-            cout << "Breakpoint is set to rule: " << v.at(2) << endl;
+            std::cout << "Breakpoint is set to rule: " << v.at(2) << std::endl;
           }
         }
         else if (arg1 == DebugCommandArg::DBGARG_INSTR) {
           int instr_id = get_instr_id(v.at(2).c_str());
 
           if (instr_id == -1) {
-            cout << "Unknown Instruction: breakpoint is not set." << endl;
+            std::cout << "Unknown Instruction: breakpoint is not set." << std::endl;
             break;
           }
 
@@ -458,20 +411,20 @@ void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRe
           }
 
           if (already_exists) {
-            cout << "Breakpoint is already set to instruction: " << v.at(2) << endl;
+            std::cout << "Breakpoint is already set to instruction: " << v.at(2) << std::endl;
           } else {
             breakpoints_on_instr.push_back((LmnInstruction) instr_id);
-            cout << "Breakpoint is set to instruction: " << v.at(2) << endl;
+            std::cout << "Breakpoint is set to instruction: " << v.at(2) << std::endl;
           }
         }
         else {
-          cout << "Invalid arguments" << endl;
+          std::cout << "Invalid arguments" << std::endl;
         }
 
         break;
       case DebugCommand::DBGCMD_DELETE:
         if (arg_len < 3) {
-          cout << "Too few arguments" << endl;
+          std::cout << "Too few arguments" << std::endl;
           break;
         }
 
@@ -484,17 +437,17 @@ void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRe
           }
 
           if (index == max) {
-            cout << "Breakpoint is not set to rule: " << v.at(2) << endl;
+            std::cout << "Breakpoint is not set to rule: " << v.at(2) << std::endl;
           } else {
             breakpoints_on_rule.erase(breakpoints_on_rule.begin() + index);
-            cout << "Breakpoint is deleted for rule: " << v.at(2) << endl;
+            std::cout << "Breakpoint is deleted for rule: " << v.at(2) << std::endl;
           }
           break;
         }
         else if (arg1 == DebugCommandArg::DBGARG_INSTR) {
           int instr_id = get_instr_id(v.at(2).c_str());
           if (instr_id == -1) {
-            cout << "Unknown Instruction: no breakpoint is deleted" << endl;
+            std::cout << "Unknown Instruction: no breakpoint is deleted" << std::endl;
           } else {
             size_t index = 0, max = breakpoints_on_instr.size();
             for ( ; index < max; index++) {
@@ -504,39 +457,40 @@ void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRe
             }
 
             if (index == max) {
-              cout << "Breakpoint is not set to instruction: " << v.at(2) << endl;
+              std::cout << "Breakpoint is not set to instruction: " << v.at(2) << std::endl;
             } else {
               breakpoints_on_instr.erase(breakpoints_on_instr.begin() + index);
-              cout << "Breakpoint is deleted for instruction: " << v.at(2) << endl;
+              std::cout << "Breakpoint is deleted for instruction: " << v.at(2) << std::endl;
             }
           }
         }
         else {
-          cout << "Invalid arguments" << endl;
+          std::cout << "Invalid arguments" << std::endl;
         }
 
         break;
       case DebugCommand::DBGCMD_HELP:
-        cout << "(c)ontinue -- continue execution until next breakpoint" << endl;
-        cout << "(s)tep (i)nstruction -- execute one intermediate instruction" << endl;
-        cout << "(s)tep (i)nstruction <N> -- execute N intermediate instructions" << endl;
-        cout << "(s)tep (r)ule -- apply one rule" << endl;
-        cout << "(s)tep (r)ule <N> -- apply N rules" << endl;
-        cout << "(i)nfo (r)egisters -- print register content of current react context" << endl;
-        cout << "(i)nfo (a)tomlist -- print atomlist of current membrane" << endl;
-        cout << "(i)nfo (a)tomlist FUNCTOR -- print atomlist with functor FUNCTOR of current membrane" << endl;
-        cout << "(i)nfo (b)reakpoints -- list all breakpoints" << endl;
-        cout << "(b)reak (i)nstruction NAME -- set breakpoint on instruction named NAME" << endl;
-        cout << "(b)reak (r)ule NAME -- set breakpoint on rule named NAME" << endl;
-        cout << "(d)elete (i)nstruction NAME -- delete breakpoint on instruction named NAME" << endl;
-        cout << "(d)elete (r)ule NAME -- delete breakpoint on rule named NAME" << endl;
-        cout << "(h)elp -- show this help" << endl;
+        std::cout << "(c)ontinue -- continue execution until next breakpoint" << std::endl;
+        std::cout << "(s)tep (i)nstruction -- execute one intermediate instruction" << std::endl;
+        std::cout << "(s)tep (i)nstruction <N> -- execute N intermediate instructions" << std::endl;
+        std::cout << "(s)tep (r)ule -- apply one rule" << std::endl;
+        std::cout << "(s)tep (r)ule <N> -- apply N rules" << std::endl;
+        std::cout << "(i)nfo (r)egisters -- print register content of current react context" << std::endl;
+        std::cout << "(i)nfo (a)tomlist -- print atomlist of current membrane" << std::endl;
+        std::cout << "(i)nfo (a)tomlist FUNCTOR -- print atomlist with functor FUNCTOR of current membrane" << std::endl;
+        std::cout << "(i)nfo (m)embrane -- print currently reacting membrane" << std::endl;
+        std::cout << "(i)nfo (b)reakpoints -- list all breakpoints" << std::endl;
+        std::cout << "(b)reak (i)nstruction NAME -- set breakpoint on instruction named NAME" << std::endl;
+        std::cout << "(b)reak (r)ule NAME -- set breakpoint on rule named NAME" << std::endl;
+        std::cout << "(d)elete (i)nstruction NAME -- delete breakpoint on instruction named NAME" << std::endl;
+        std::cout << "(d)elete (r)ule NAME -- delete breakpoint on rule named NAME" << std::endl;
+        std::cout << "(h)elp -- show this help" << std::endl;
         break;
       case DebugCommand::DBGCMD_UNKNOWN:
-        cout << "Unknown command" << endl;
+        std::cout << "Unknown command" << std::endl;
         break;
       default:
-        cout << "Not implemented" << endl;
+        std::cout << "Not implemented" << std::endl;
         break;
     }
   }

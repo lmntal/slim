@@ -58,6 +58,7 @@ class InteractiveDebugger {
       DBGARG_RULE_REG,
       DBGARG_ATOMLIST,
       DBGARG_BRKPNT,
+      DBGARG_MEMBRANE,
       DBGARG_UNKNOWN
     };
 
@@ -70,15 +71,17 @@ class InteractiveDebugger {
       {"atomlist", DebugCommandArg::DBGARG_ATOMLIST},
       {"a", DebugCommandArg::DBGARG_ATOMLIST},
       {"breakpoints", DebugCommandArg::DBGARG_BRKPNT},
-      {"b", DebugCommandArg::DBGARG_BRKPNT}
+      {"b", DebugCommandArg::DBGARG_BRKPNT},
+      {"membrane", DebugCommandArg::DBGARG_MEMBRANE},
+      {"m", DebugCommandArg::DBGARG_MEMBRANE}
     };
 
   std::vector<std::string> split_command(std::string);
-  std::string stringify(const LmnAtomRef atom, const LmnByte at);
-  std::string stringify(const LmnRegister *reg);
-  std::string stringify(const LmnRegisterArray *reg_array);
-  std::string stringify(const AtomListEntry *atomlist);
-  std::string stringify(const LmnRuleInstr instr);
+  std::string stringify_atom(const LmnAtomRef atom, const LmnByte at);
+  std::string stringify_register(const LmnRegister *reg);
+  std::string stringify_regarray(const LmnRegisterArray *reg_array);
+  std::string stringify_atomlist(const AtomListEntry *atomlist);
+  std::string stringify_instr(const LmnRuleInstr instr);
 
   public:
     InteractiveDebugger(const InteractiveDebugger&) = delete;

@@ -27,4 +27,5 @@ liblmn_vm_a_SOURCES =                              \
 	simply_process_table.cpp simply_process_table.h        \
 	trace_log.h              trace_log.cpp                 \
 	simply_trace_log.h       simply_trace_log.cpp \
-	interactive_debug.hpp interactive_debug.cpp
+	interactive_debug.hpp interactive_debug.cpp \
+	stringifier.hpp stringifier.cpp
