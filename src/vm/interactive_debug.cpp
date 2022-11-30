@@ -18,13 +18,13 @@ std::string InteractiveDebugger::stringify(const LmnAtomRef atom, const LmnByte 
     LmnDataAtomRef dAtomRef = (LmnDataAtomRef) atom;
     switch (at) {
       case LMN_INT_ATTR:
-        retVal << *((int *)&dAtomRef);
+        retVal << *((long *)&dAtomRef);
         break;
       case LMN_DBL_ATTR:
         retVal << lmn_get_double(dAtomRef);
         break;
       default:
-        retVal << *((long *)&dAtomRef);
+        retVal << "0x" << std::hex << *((unsigned long *)&dAtomRef) << std::dec;
         break;
     }
   } else if (!atom) {
@@ -39,13 +39,13 @@ std::string InteractiveDebugger::stringify(const LmnAtomRef atom, const LmnByte 
       if (LMN_ATTR_IS_DATA(attr)) {
         switch (attr) {
           case LMN_INT_ATTR:
-            retVal << *((int *)&ref);
+            retVal << *((long *)&ref);
             break;
           case LMN_DBL_ATTR:
             retVal << lmn_get_double((LmnDataAtomRef) ref);
             break;
           default:
-            retVal << *((long *)&ref);
+            retVal << "0x" << std::hex << *((unsigned long *)&ref) << std::dec;
             break;
         }
       } else if (!ref) {
@@ -53,7 +53,7 @@ std::string InteractiveDebugger::stringify(const LmnAtomRef atom, const LmnByte 
       } else {
         // TODO fix segmentation fault
         retVal << ((LmnSymbolAtomRef)ref)->str();
-        // retVal << std::hex << ref << dec << "(" << attr << ",?)";
+        // retVal << std::hex << ref << std::dec << "(" << attr << ",?)";
       }
       if (i != linkNum - 1) {
         retVal << ",";
