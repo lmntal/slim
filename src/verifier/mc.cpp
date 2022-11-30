@@ -51,6 +51,7 @@
 #include "state.h"
 #include "state.hpp"
 #include "state_dumper.h"
+#include "../vm/interactive_debug.hpp"
 
 /** =======================================
  *  ==== Entrance for model checking ======
@@ -75,6 +76,10 @@ void run_mc(Vector *start_rulesets, AutomataRef a, Vector *psyms) {
     mem = new LmnMembrane();
   }
 
+  if (lmn_env.interactive_debug) {
+    InteractiveDebugger::get_instance().start_session(nullptr, nullptr, nullptr);
+  }
+
   Task::react_start_rulesets(mem, start_rulesets);
   mem->activate_ancestors();
 
@@ -86,6 +91,10 @@ void run_mc(Vector *start_rulesets, AutomataRef a, Vector *psyms) {
     lmn_env.nd_remaining = FALSE;
     mem->drop();
     delete mem;
+  }
+
+  if (lmn_env.interactive_debug) {
+    InteractiveDebugger::get_instance().finish_debugging();
   }
 
   delete start_rulesets;

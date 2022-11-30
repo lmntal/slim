@@ -46,6 +46,7 @@
 #include "symbol.h"
 #include "verifier/runtime_status.h"
 #include "verifier/verifier.h"
+#include "interactive_debug.hpp"
 
 #ifdef USE_FIRSTCLASS_RULE
 #include "firstclass_rule.h"
@@ -189,6 +190,10 @@ void Task::lmn_run(Vector *start_rulesets) {
     normal_parallel_init();
   }
 
+  if (lmn_env.interactive_debug) {
+    InteractiveDebugger::get_instance().start_session(nullptr, nullptr, nullptr);
+  }
+
   /** PROFILE START */
   if (lmn_env.profile_level >= 1) {
     profile_start_exec();
@@ -218,6 +223,10 @@ void Task::lmn_run(Vector *start_rulesets) {
   if (lmn_env.profile_level >= 1) {
     profile_finish_exec_thread();
     profile_finish_exec();
+  }
+
+  if (lmn_env.interactive_debug) {
+    InteractiveDebugger::get_instance().finish_debugging();
   }
 
   if (lmn_env
@@ -380,6 +389,10 @@ BOOL Task::react_rule(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule) {
   rc->resize(1);
   rc->wt(0) = (LmnWord)mem;
   rc->tt(0) = TT_MEM;
+
+  if (lmn_env.interactive_debug) {
+    InteractiveDebugger::get_instance().break_on_rule(rc, rule, nullptr);
+  }
 
   profile_start_trial();
 
@@ -1056,6 +1069,10 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
 
   if (lmn_env.find_atom_parallel)
     return FALSE;
+  
+  if (lmn_env.interactive_debug) {
+    InteractiveDebugger::get_instance().break_on_instruction(rc, rule, instr - sizeof(LmnInstrOp));
+  }
 
   switch (op) {
   case INSTR_SPEC: {
