@@ -48,8 +48,8 @@
 #include <iostream>
 #include <sstream>
 
-#define MAX_DEPTH 1000
-#define LINK_PREFIX "L"
+constexpr int MAX_DEPTH = 1000;
+constexpr char LINK_PREFIX[] = "L";
 
 namespace slim {
 namespace stringifier {
@@ -426,7 +426,7 @@ static std::string stringify_symbol_atom(LmnSymbolAtomRef atom,
 
   if (t->done)
     return retVal.str();
-  
+
   // トップレベルに cons ('.') が出現した場合は，
   // `[1,2,3|X]=X` のようにイコールアトムで繋いで [] （角括弧） を用いて出力する．
   if (call_depth == 0 &&
@@ -741,10 +741,6 @@ static std::string lmn_stringify_cell_nonewline(LmnMembraneRef mem) {
   return retVal;
 }
 
-std::string lmn_stringify_cell_stdout(LmnMembraneRef mem) {
-  return lmn_stringify_cell(mem) + "\n";
-}
-
 std::string lmn_stringify_cell(LmnMembraneRef mem, OutputFormat format) {
   std::ostringstream retVal;
   switch (format) {
@@ -757,7 +753,7 @@ std::string lmn_stringify_cell(LmnMembraneRef mem, OutputFormat format) {
   case DEV:
     retVal << lmn_stringify_mem_dev(mem);
     retVal << lmn_stringify_cell_nonewline(mem); // ueda
-    retVal << std::endl;
+    retVal << "\n";
     break;
   case JSON:
     retVal << lmn_stringify_mem_json(mem);
@@ -771,10 +767,6 @@ std::string lmn_stringify_cell(LmnMembraneRef mem, OutputFormat format) {
 
 std::string lmn_stringify_cell(LmnMembraneRef mem) {
   return lmn_stringify_cell(mem, lmn_env.output_format);
-}
-
-std::string lmn_stringify_mem_stdout(LmnMembraneRef mem) {
-  return lmn_stringify_mem(mem) + "\n";
 }
 
 /* print membrane structure */
@@ -811,19 +803,17 @@ std::string stringify_atom_dev(LmnSymbolAtomRef atom) {
   f = atom->get_functor();
   arity = LMN_FUNCTOR_ARITY(lmn_functor_table, f);
 
-  // TODO: does this (sstream) works for escape sequence?
   retVal << __ESC_START__ << CODE__FORECOLOR_LIGHTBLUE << __ESC_END__;
   retVal << "Func[" << (unsigned int) f << "], ";
   retVal << "Name[" << lmn_id_to_name(LMN_FUNCTOR_NAME_ID(lmn_functor_table, f)) << "], ";
   retVal << "A[" << (unsigned int) arity << "], ";
-  retVal << "Addr[" << "0x" << std::hex << atom << std::dec << "], ";
+  retVal << "Addr[" << std::hex << atom << std::dec << "], ";
   retVal << "ID[" << (unsigned long) atom->get_id() << "], ";
 
   if (LMN_FUNC_IS_HL(f)) {
     retVal << "HL_OBJ_ID[" << (unsigned long) LMN_HL_ID(LMN_HL_ATOM_ROOT_HL(atom)) << "], ";
   }
-  // esc_code_clear();
-  retVal << __ESC_START__ << __ESC_END__ << std::endl;
+  retVal << __ESC_START__ << __ESC_END__ << "\n";
 
   for (i = 0; i < arity; i++) {
     LmnLinkAttr attr;
@@ -832,17 +822,17 @@ std::string stringify_atom_dev(LmnSymbolAtomRef atom) {
     retVal << "   " << i << ": ";
     attr = atom->get_attr(i);
     if (i == 2 && LMN_IS_PROXY_FUNCTOR(f)) { /* membrane */
-      retVal << "mem[" << "0x" << std::hex << LMN_PROXY_GET_MEM(atom) << std::dec << "], ";
+      retVal << "mem[" << std::hex << LMN_PROXY_GET_MEM(atom) << std::dec << "], ";
     } else if (i == 1 && LMN_FUNC_IS_HL(f)) {
       HyperLink *h = (HyperLink *)atom->get_link(i);
-      retVal << " link[HLobj, Addr:" << "0x" << std::hex << h << std::dec << ", ";
+      retVal << " link[HLobj, Addr:" << std::hex << h << std::dec << ", ";
       retVal << "HL_ID:" << (unsigned long) LMN_HL_ID(h) << ", ";
       retVal << "ROOT_HL_ID:" << (unsigned long) LMN_HL_ID(h->get_root()) << ", ";
-      retVal << "Owner!Addr:" << "0x" << std::hex << h->hl_to_at() << std::dec << ", ";
+      retVal << "Owner!Addr:" << std::hex << h->hl_to_at() << std::dec << ", ";
       retVal << "Owner'!'ID:" << (unsigned long) (h->hl_to_at())->get_id() << "], ";
     } else if (!LMN_ATTR_IS_DATA(attr)) { /* symbol atom */
       retVal << " link[" << LMN_ATTR_GET_VALUE(attr) << ", ";
-      retVal << "Addr:" << "0x" << std::hex << atom->get_link(i) << std::dec << ",    ";
+      retVal << "Addr:" << std::hex << atom->get_link(i) << std::dec << ",    ";
       retVal << "ID:" << (unsigned long) ((LmnSymbolAtomRef)atom->get_link(i))->get_id() << "], ";
       // checking buddy
       id2 = ((LmnSymbolAtomRef)
@@ -875,11 +865,11 @@ std::string stringify_atom_dev(LmnSymbolAtomRef atom) {
         break;
       }
     }
-    retVal << std::endl;
+    retVal << "\n";
   }
 
   if (arity == 0)
-    retVal << std::endl;
+    retVal << "\n";
 
   return retVal.str();
 }
@@ -891,7 +881,7 @@ static std::string stringify_ruleset_dev(const std::vector<LmnRuleSet *> &v) {
   for (i = 0; i < v.size(); i++) {
     retVal << (int) (v[i])->id << " ";
   }
-  retVal << "]" << std::endl;
+  retVal << "]\n";
   return retVal.str();
 }
 
@@ -901,10 +891,10 @@ std::string lmn_stringify_mem_dev(LmnMembraneRef mem) {
   if (!mem)
     return "";
 
-  retVal << "{" << std::endl;
+  retVal << "{\n";
   retVal << "Mem[" << (unsigned int) mem->NAME_ID() << "], ";
   retVal << "Addr[" << std::hex << mem << std::dec << "], ";
-  retVal << "ID[" << (unsigned long) mem->mem_id() << "]" << std::endl;
+  retVal << "ID[" << (unsigned long) mem->mem_id() << "]\n";
 
   for (auto it : (mem)->atom_lists()) {
     ent = it.second;
@@ -921,7 +911,7 @@ std::string lmn_stringify_mem_dev(LmnMembraneRef mem) {
 
   retVal << stringify_ruleset_dev(mem->get_rulesets());
   retVal << lmn_stringify_mem_dev(mem->mem_child_head());
-  retVal << "}" << std::endl;
+  retVal << "}\n";
   retVal << lmn_stringify_mem_dev(mem->mem_next());
   return retVal.str();
 }
@@ -990,17 +980,17 @@ static std::string stringify_dot_cell(LmnMembraneRef mem, SimpleHashtbl *ht, int
                   hashtbl_put(&ar->args, LMN_ATTR_GET_VALUE(attr), 1);
                   retVal << (unsigned long) atom2;
                 }
-                retVal << std::endl;
+                retVal << "\n";
               }
             }));
       }));
 
   /* dump chidren */
   for (m = mem->mem_child_head(); m; m = m->mem_next()) {
-    retVal << "subgraph cluster" << *cluster_id << " {" << std::endl;
+    retVal << "subgraph cluster" << *cluster_id << " {\n";
     (*cluster_id)++;
     retVal << stringify_dot_cell(m, ht, data_id, cluster_id);
-    retVal << "}" << std::endl;
+    retVal << "}\n";
   }
   return retVal.str();
 }
@@ -1111,7 +1101,7 @@ static std::string lmn_stringify_mem_json(LmnMembraneRef mem) {
     for (auto it : (mem)->atom_lists()) {
       ent = it.second;
       f = it.first;
-      
+
       LmnSymbolAtomRef atom;
       if (LMN_IS_EX_FUNCTOR(f)) {
         continue;

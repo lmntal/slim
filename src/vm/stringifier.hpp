@@ -47,10 +47,6 @@
 namespace slim {
 namespace stringifier {
 /**
- * @brief return string representation of a membrane to stdout.
- */
-std::string lmn_stringify_mem_stdout(LmnMembraneRef mem);
-/**
  * @brief return string representation of a membrane.
  */
 std::string lmn_stringify_mem(LmnMembraneRef mem);
@@ -58,10 +54,6 @@ std::string lmn_stringify_mem(LmnMembraneRef mem);
  * @brief return string representation of a membrane in development mode.
  */
 std::string lmn_stringify_mem_dev(LmnMembraneRef mem);
-/**
- * @brief return string representation of the contents of a membrane to stdout.
- */
-std::string lmn_stringify_cell_stdout(LmnMembraneRef mem);
 /**
  * @brief return string representation of the contents of a membrane.
  */
@@ -90,7 +82,8 @@ std::string lmn_stringify_atom(LmnAtomRef atom, LmnLinkAttr attr);
  */
 std::string stringify_escaped(const char *s);
 
-// extern char char_to_escape_char[];
+// additional functions
+std::string stringify_atom_dev(LmnSymbolAtomRef atom);
 }
 }
 
