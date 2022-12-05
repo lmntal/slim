@@ -181,6 +181,12 @@ static std::string stringify_instr(const LmnRuleInstr instr) {
     if (op == p.first) {
       for (size_t i = 0, argSize = p.second.args.size(); i < argSize; i++) {
         ArgType argType = p.second.args.at(i);
+        if (op == INSTR_NEWATOM && argType == ArgFunctor) {
+          LmnLinkAttr at;
+          READ_VAL(LmnLinkAttr, instr_copy, at);
+          retVal << (unsigned int) at;
+          continue;
+        }
         switch (argType) {
           case InstrVar:
             LmnInstrVar arg_instrvar;
@@ -241,7 +247,7 @@ static std::string stringify_instr(const LmnRuleInstr instr) {
     }
   }
 
-  if (op == INSTR_FINDATOM || op == INSTR_FINDATOM2 || op == INSTR_FINDATOMP) {
+  if (op == INSTR_FINDATOM || op == INSTR_FINDATOM2 || op == INSTR_FINDATOMP || op == INSTR_NEWATOM) {
     LmnFunctor func;
     READ_VAL(LmnFunctor, instr_copy, func);
     retVal << ", ";
