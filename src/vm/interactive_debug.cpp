@@ -470,8 +470,25 @@ void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRe
           print_feeding(s);
         }
         else if (arg1 == DebugCommandArg::DBGARG_MEMBRANE) {
-          std::string s = "Current membrane :\n";
-          s += slim::stringifier::lmn_stringify_mem((LmnMembraneRef)rc->wt(0));
+          if (rc == nullptr) {
+            std::cout << "LmnReactCxtRef is null\n";
+            break;
+          }
+          if (argc < 3) {
+            std::cout << few_arg_message << '\n';
+            break;
+          }
+          std::string s = "";
+          if (argv.at(2) == "current" || argv.at(2) == "c") {
+            s += "Current membrane :\n";
+            s += slim::stringifier::lmn_stringify_mem((LmnMembraneRef)rc->wt(0));
+          } else if (argv.at(2) == "global" || argv.at(2) == "g") {
+            s += "Global root membrane :\n";
+            s += slim::stringifier::lmn_stringify_mem(rc->global_root);
+          } else {
+            std::cout << invalid_arg_message << " at 2 (" << argv.at(2) << ")\n";
+            break;
+          }
           s += "\n";
           print_feeding(s);
         }
@@ -618,7 +635,8 @@ void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRe
         std::cout << "(i)nfo (r)egisters <N> -- print Nth register content of current react context in detail\n";
         std::cout << "(i)nfo (a)tomlist -- print atomlist of current membrane\n";
         std::cout << "(i)nfo (a)tomlist FUNCTOR -- print atomlist with functor FUNCTOR of current membrane\n";
-        std::cout << "(i)nfo (m)embrane -- print currently reacting membrane\n";
+        std::cout << "(i)nfo (m)embrane (c)urrent -- print currently reacting membrane\n";
+        std::cout << "(i)nfo (m)embrane (g)lobal -- print global root membrane\n";
         std::cout << "(i)nfo (b)reakpoints -- list all breakpoints\n";
         std::cout << "(b)reak (i)nstruction NAME -- set breakpoint on instruction named NAME\n";
         std::cout << "(b)reak (r)ule NAME -- set breakpoint on rule named NAME\n";
