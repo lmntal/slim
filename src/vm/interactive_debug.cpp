@@ -67,6 +67,12 @@ const char* get_instr_name(int id) {
   return "unknown";
 }
 
+static inline std::string pointer_to_string(void *p) {
+  std::ostringstream oss;
+  oss << p;
+  return oss.str();
+}
+
 InteractiveDebugger::InteractiveDebugger() {
   struct winsize w;
   ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
@@ -304,6 +310,55 @@ static void split_command(const std::string &command, std::vector<std::string> &
   return;
 }
 
+static std::string get_membrane_tree(LmnMembraneRef mem, std::string prefix, LmnMembraneRef global, LmnMembraneRef current) {
+  if (mem == nullptr) {
+    return "";
+  }
+
+  // 自身の名前の取得
+  std::string myname = "";
+  lmn_interned_str in_str = mem->NAME_ID();
+  myname += (in_str == ANONYMOUS ? "ANONYMOUS" : lmn_id_to_name(in_str));
+  std::ostringstream addr;
+  addr << &mem;
+  myname += "[";
+  myname += addr.str();
+  myname += "]";
+
+  if (mem == global) {
+    myname += " *global";
+  }
+  if (mem == current) {
+    myname += " *current";
+  }
+
+  // 自身の名前を追加
+  std::string retVal = prefix;
+  retVal += "|--";
+  retVal += myname;
+  retVal += "\n";
+
+  // 子があれば先に取得
+  if (mem->child_head != nullptr) {
+    retVal += get_membrane_tree(mem->child_head, prefix + "|  ", global, current);
+    retVal += "\n";
+  }
+
+  // 兄弟(？)があれば続けて表示
+  if (mem->next != nullptr) {
+    // 間を調整
+    if (mem->child_head != nullptr) {
+      retVal += prefix;
+      retVal += "|";
+    }
+    retVal += get_membrane_tree(mem->next, prefix, global, current);
+    retVal += "\n";
+  }
+
+  retVal.pop_back();
+  return retVal;
+}
+
 void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRef rule, const LmnRuleInstr instr) {
   if (input_eof) {
     return;
@@ -364,23 +419,29 @@ void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRe
     }
 
     switch(cmd) {
+      // continue
       case DebugCommand::DBGCMD_CONTINUE:
         continue_session = false;
         break;
+      // info
       case DebugCommand::DBGCMD_INFO:
+        // info
         if (argc < 2) {
           std::cout << few_arg_message << '\n';
           break;
         }
-
+        // info registers
         if (arg1 == DebugCommandArg::DBGARG_RULE_REG) {
           if (rc == nullptr) {
             std::cout << "LmnReactCxtRef is null\n";
             break;
           }
+          // info registers
           if (argc == 2) {
             print_feeding(stringify_regarray(&rc->work_array));
-          } else {
+          }
+          // info registers <N>...
+          else {
             for (size_t i = 2; i < argc; i++) {
               size_t l;
               try {
@@ -396,6 +457,7 @@ void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRe
             }
           }
         }
+        // info atomlist
         else if (arg1 == DebugCommandArg::DBGARG_ATOMLIST) {
           if (rc == nullptr) {
             std::cout << "LmnReactCxtRef is null\n";
@@ -404,6 +466,7 @@ void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRe
 
           size_t list_count = ((LmnMembraneRef) rc->wt(0))->max_functor;
 
+          // info atomlist
           if (argc == 2) {
             std::string s = "";
             for (size_t i = 0; i < list_count; i++) {
@@ -418,7 +481,9 @@ void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRe
               }
             }
             print_feeding(s);
-          } else {
+          }
+          // info atomlist <FUNCTOR>...
+          else {
             std::string s = "";
             for (size_t i = 0; i < list_count; i++) {
               auto list = ((LmnMembraneRef) rc->wt(0))->atomset[i];
@@ -453,6 +518,7 @@ void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRe
             }
           }
         }
+        // info breakpoints
         else if (arg1 == DebugCommandArg::DBGARG_BRKPNT) {
           std::string s = "Breakpoints for instructions :\n";
           for (auto &i : breakpoints_on_instr) {
@@ -469,46 +535,68 @@ void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRe
           }
           print_feeding(s);
         }
+        // info membrane
+        // TODO 機能拡張
         else if (arg1 == DebugCommandArg::DBGARG_MEMBRANE) {
           if (rc == nullptr) {
             std::cout << "LmnReactCxtRef is null\n";
             break;
           }
-          if (argc < 3) {
-            std::cout << few_arg_message << '\n';
-            break;
+          // info membrane
+          if (argc == 2) {
+            if (rc->global_root == nullptr) {
+              std::cout << "Global Root Membrane is null\n";
+            } else {
+              std::string s = get_membrane_tree(rc->global_root, "", rc->global_root, (LmnMembraneRef) rc->wt(0));
+              print_feeding(s);
+            }
           }
-          std::string s = "";
-          if (argv.at(2) == "current" || argv.at(2) == "c") {
-            s += "Current membrane :\n";
-            s += slim::stringifier::lmn_stringify_mem((LmnMembraneRef)rc->wt(0));
-          } else if (argv.at(2) == "global" || argv.at(2) == "g") {
-            s += "Global root membrane :\n";
-            s += slim::stringifier::lmn_stringify_mem(rc->global_root);
-          } else {
-            std::cout << invalid_arg_message << " at 2 (" << argv.at(2) << ")\n";
-            break;
+          // info membrane <ARG>...
+          else {
+            std::string s = "";
+            // info membrane current
+            if (argv.at(2) == "current" || argv.at(2) == "c") {
+              s += "Current membrane [";
+              s += pointer_to_string((LmnMembraneRef)rc->wt(0));
+              s += "]:\n";
+              s += slim::stringifier::lmn_stringify_mem((LmnMembraneRef)rc->wt(0));
+            }
+            // info membrane global
+            else if (argv.at(2) == "global" || argv.at(2) == "g") {
+              s += "Global root membrane [";
+              s += pointer_to_string((LmnMembraneRef)rc->global_root);
+              s += "]:\n";
+              s += slim::stringifier::lmn_stringify_mem(rc->global_root);
+            }
+            // info membrane <UNKNOWN>
+            else {
+              std::cout << invalid_arg_message << " at 2 (" << argv.at(2) << ")\n";
+              break;
+            }
+            s += "\n";
+            print_feeding(s);
           }
-          s += "\n";
-          print_feeding(s);
         }
+        // info <UNKNOWN>
         else {
           std::cout << invalid_args_message << '\n';
         }
-
         break;
+      // step
       case DebugCommand::DBGCMD_STEP:
+        // step
         if (argc < 2) {
           std::cout << few_arg_message << '\n';
           break;
         }
-
+        // step rule
         if (arg1 == DebugCommandArg::DBGARG_RULE_REG) {
           instr_execution_count = 0;
           instr_execution_stop_at = -1;
           rule_reaction_count = 0;
 
           long l = 1;
+          // step rule <N>
           if (argc >= 3) {
             try {
               l = std::stol(argv.at(2));
@@ -524,12 +612,14 @@ void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRe
             std::cout << invalid_arg_message << ": " << argv.at(2) << '\n';
           }
         }
+        // step instruction
         else if (arg1 == DebugCommandArg::DBGARG_INSTR) {
           rule_reaction_count = 0;
           rule_reaction_stop_at = -1;
           instr_execution_count = 0;
 
           long l = 1;
+          // step instruction <N>
           if (argc >= 3) {
             try {
               l = std::stol(argv.at(2));
@@ -545,17 +635,19 @@ void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRe
             std::cout << invalid_arg_message << ": " << argv.at(2) << '\n';
           }
         }
+        // step <UNKNOWN>
         else {
           std::cout << invalid_args_message << '\n';
         }
-
         break;
+      // break
       case DebugCommand::DBGCMD_BREAK:
+        // break | break <ARG>
         if (argc < 3) {
           std::cout << few_arg_message << '\n';
           break;
         }
-
+        // break rule <RULE>
         if (arg1 == DebugCommandArg::DBGARG_RULE_REG) {
           auto end = breakpoints_on_rule.end();
           auto res = std::find(breakpoints_on_rule.begin(), end, argv.at(2));
@@ -566,6 +658,7 @@ void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRe
             std::cout << "Breakpoint is set to rule: " << argv.at(2) << '\n';
           }
         }
+        // break instruction <INSTR>
         else if (arg1 == DebugCommandArg::DBGARG_INSTR) {
           int instr_id = get_instr_id(argv.at(2).c_str());
 
@@ -583,17 +676,19 @@ void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRe
             std::cout << "Breakpoint is set to instruction: " << argv.at(2) << '\n';
           }
         }
+        // break <UNKNOWN> <ARG>
         else {
           std::cout << invalid_args_message << '\n';
         }
-
         break;
+      // delete
       case DebugCommand::DBGCMD_DELETE:
+        // delete | delete <ARG>
         if (argc < 3) {
           std::cout << few_arg_message << '\n';
           break;
         }
-
+        // delete rule <RULE>
         if (arg1 == DebugCommandArg::DBGARG_RULE_REG) {
           auto end = breakpoints_on_rule.end();
           auto res = std::find(breakpoints_on_rule.begin(), end, argv.at(2));
@@ -603,8 +698,8 @@ void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRe
             breakpoints_on_rule.erase(res);
             std::cout << "Breakpoint is deleted for rule: " << argv.at(2) << '\n';
           }
-          break;
         }
+        // delete instruction <INSTR>
         else if (arg1 == DebugCommandArg::DBGARG_INSTR) {
           int instr_id = get_instr_id(argv.at(2).c_str());
           if (instr_id == -1) {
@@ -620,11 +715,12 @@ void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRe
             }
           }
         }
+        // delete <UNKNOWN> <ARG>
         else {
-          std::cout << invalid_args_message << std::endl;
+          std::cout << invalid_args_message << '\n';
         }
-
         break;
+      // help
       case DebugCommand::DBGCMD_HELP:
         std::cout << "(c)ontinue -- continue execution until next breakpoint\n";
         std::cout << "(s)tep (i)nstruction -- execute one intermediate instruction\n";
@@ -632,9 +728,10 @@ void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRe
         std::cout << "(s)tep (r)ule -- apply one rule\n";
         std::cout << "(s)tep (r)ule <N> -- apply N rules\n";
         std::cout << "(i)nfo (r)egisters -- print register content of current react context\n";
-        std::cout << "(i)nfo (r)egisters <N> -- print Nth register content of current react context in detail\n";
+        std::cout << "(i)nfo (r)egisters <N>... -- print Nth register content of current react context in detail\n";
         std::cout << "(i)nfo (a)tomlist -- print atomlist of current membrane\n";
-        std::cout << "(i)nfo (a)tomlist FUNCTOR -- print atomlist with functor FUNCTOR of current membrane\n";
+        std::cout << "(i)nfo (a)tomlist <FUNCTOR>... -- print atomlist with functor FUNCTOR of current membrane\n";
+        std::cout << "(i)nfo (m)embrane -- print all membranes' family tree\n";
         std::cout << "(i)nfo (m)embrane (c)urrent -- print currently reacting membrane\n";
         std::cout << "(i)nfo (m)embrane (g)lobal -- print global root membrane\n";
         std::cout << "(i)nfo (b)reakpoints -- list all breakpoints\n";
@@ -758,7 +855,7 @@ void InteractiveDebugger::print_feeding(const std::string &str) {
 
   size_t current_line = 0, max_line = lines.size() - (screen_height - 1);
   bool feeding = print_section(lines, current_line, screen_height, screen_width);
-
+  bool esc_pressed = false;
   while (feeding) {
     size_t new_line = current_line;
     int c = getchar();
@@ -792,6 +889,35 @@ void InteractiveDebugger::print_feeding(const std::string &str) {
         break;
       case ' ':
         new_line += (screen_height - 1);
+        break;
+      case '\e':
+        esc_pressed = true;
+        break;
+      case 'A': // up arrow
+        if (esc_pressed) {
+          if (new_line >= 1) {
+            new_line -= 1;
+          }
+          esc_pressed = false;
+        }
+        break;
+      case 'B': // down arrow
+        if (esc_pressed) {
+          new_line += 1;
+          esc_pressed = false;
+        }
+        break;
+      case 'H': // home
+        if (esc_pressed) {
+          new_line = 0;
+          esc_pressed = false;
+        }
+        break;
+      case 'F': // end
+        if (esc_pressed) {
+          new_line = max_line;
+          esc_pressed = false;
+        }
         break;
       default:
         break;
