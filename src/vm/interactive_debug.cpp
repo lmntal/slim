@@ -67,7 +67,7 @@ const char* get_instr_name(int id) {
   return "unknown";
 }
 
-static inline std::string pointer_to_string(void *p) {
+static inline std::string pointer_to_string(const void *p) {
   std::ostringstream oss;
   oss << p;
   return oss.str();
@@ -82,7 +82,7 @@ InteractiveDebugger::InteractiveDebugger() {
 
 InteractiveDebugger::~InteractiveDebugger() {}
 
-static std::string stringify_atom(const LmnAtomRef atom, const LmnByte at) {
+static std::string stringify_atom(const LmnAtomRef atom, LmnByte at) {
   if (atom == nullptr) {
     return "null";
   }
@@ -105,7 +105,7 @@ static std::string stringify_register(const LmnRegisterRef reg) {
       retVal << stringify_atom((LmnAtomRef)wt, at);
       break;
     case TT_MEM:
-      retVal << std::hex << (LmnMembraneRef) wt << std::dec << "(" << (unsigned int) at << ",mem)";
+      retVal << (LmnMembraneRef) wt << "(" << (unsigned int) at << ",mem)";
       break;
     case TT_OTHER:
       retVal << wt << "(" << (unsigned int) at << ",other)";
@@ -137,7 +137,10 @@ static std::string stringify_register_dev(const LmnRegisterRef reg) {
       }
       break;
     case TT_MEM:
-      retVal << slim::stringifier::lmn_stringify_mem_dev((LmnMembraneRef) wt);
+      // retVal << slim::stringifier::lmn_stringify_mem_dev((LmnMembraneRef) wt);
+      retVal << "Mem[" << (unsigned int) ((LmnMembraneRef) wt)->NAME_ID() << "], ";
+      retVal << "Addr[" << (LmnMembraneRef) wt << "], ";
+      retVal << "ID[" << (unsigned long) ((LmnMembraneRef) wt)->mem_id() << "]\n";
       break;
     case TT_OTHER:
       retVal << "wt[0x" << std::hex << wt << std::dec << "], ";
@@ -310,20 +313,20 @@ static void split_command(const std::string &command, std::vector<std::string> &
   return;
 }
 
-static std::string get_membrane_tree(LmnMembraneRef mem, std::string prefix, LmnMembraneRef global, LmnMembraneRef current) {
+static std::string get_membrane_tree(const LmnMembraneRef mem, std::string prefix, const LmnMembraneRef global, const LmnMembraneRef current) {
   if (mem == nullptr) {
-    return "";
+    return "null";
   }
 
   // 自身の名前の取得
-  std::string myname = "";
+  std::string myname = "Membrane (Name[";
   lmn_interned_str in_str = mem->NAME_ID();
   myname += (in_str == ANONYMOUS ? "ANONYMOUS" : lmn_id_to_name(in_str));
-  std::ostringstream addr;
-  addr << &mem;
-  myname += "[";
-  myname += addr.str();
-  myname += "]";
+  myname += "], Addr[";
+  myname += pointer_to_string(mem);
+  myname += "], ID[";
+  myname += std::to_string(mem->mem_id());
+  myname += "])";
 
   if (mem == global) {
     myname += " *global";
@@ -357,6 +360,16 @@ static std::string get_membrane_tree(LmnMembraneRef mem, std::string prefix, Lmn
 
   retVal.pop_back();
   return retVal;
+}
+
+static bool is_pointer_valid_for_membrane(const LmnMembraneRef mem, const void *p) {
+  if (mem == nullptr) {
+    return false;
+  } else if (mem == p) {
+    return true;
+  } else {
+    return is_pointer_valid_for_membrane(mem->child_head, p) || is_pointer_valid_for_membrane(mem->next, p);
+  }
 }
 
 void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRef rule, const LmnRuleInstr instr) {
@@ -536,45 +549,61 @@ void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRe
           print_feeding(s);
         }
         // info membrane
-        // TODO 機能拡張
         else if (arg1 == DebugCommandArg::DBGARG_MEMBRANE) {
           if (rc == nullptr) {
             std::cout << "LmnReactCxtRef is null\n";
             break;
           }
+          if (rc->global_root == nullptr) {
+            std::cout << "Global Root Membrane is null\n";
+            break;
+          }
           // info membrane
           if (argc == 2) {
-            if (rc->global_root == nullptr) {
-              std::cout << "Global Root Membrane is null\n";
-            } else {
-              std::string s = get_membrane_tree(rc->global_root, "", rc->global_root, (LmnMembraneRef) rc->wt(0));
-              print_feeding(s);
-            }
+            std::string s = get_membrane_tree(rc->global_root, "", rc->global_root, (LmnMembraneRef) rc->wt(0));
+            print_feeding(s);
           }
           // info membrane <ARG>...
           else {
-            std::string s = "";
             // info membrane current
             if (argv.at(2) == "current" || argv.at(2) == "c") {
-              s += "Current membrane [";
+              std::string s = "Current membrane [";
               s += pointer_to_string((LmnMembraneRef)rc->wt(0));
               s += "]:\n";
               s += slim::stringifier::lmn_stringify_mem((LmnMembraneRef)rc->wt(0));
+              s += "\n";
+              print_feeding(s);
             }
             // info membrane global
             else if (argv.at(2) == "global" || argv.at(2) == "g") {
-              s += "Global root membrane [";
+              std::string s = "Global root membrane [";
               s += pointer_to_string((LmnMembraneRef)rc->global_root);
               s += "]:\n";
               s += slim::stringifier::lmn_stringify_mem(rc->global_root);
+              s += "\n";
+              print_feeding(s);
             }
-            // info membrane <UNKNOWN>
+            // info membrane <HEX>
             else {
-              std::cout << invalid_arg_message << " at 2 (" << argv.at(2) << ")\n";
-              break;
+              unsigned long l;
+              try {
+                l = std::stoul(argv.at(2), 0, 16);
+              } catch (const std::invalid_argument& e) {
+                std::cout << invalid_arg_message << " at 2 (" << argv.at(2) << ")\n";
+                break;
+              }
+              if (is_pointer_valid_for_membrane(rc->global_root, (void *)l)) {
+                std::string s = "Membrane [";
+                s += pointer_to_string((LmnMembraneRef)l);
+                s += "]:\n";
+                s += slim::stringifier::lmn_stringify_mem((LmnMembraneRef)l);
+                s += "\n";
+                print_feeding(s);
+              } else {
+                std::cout << invalid_arg_message << " at 2 (" << argv.at(2) << "): not a valid pointer to LmnMembrane\n";
+                break;
+              }
             }
-            s += "\n";
-            print_feeding(s);
           }
         }
         // info <UNKNOWN>
@@ -734,6 +763,7 @@ void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRe
         std::cout << "(i)nfo (m)embrane -- print all membranes' family tree\n";
         std::cout << "(i)nfo (m)embrane (c)urrent -- print currently reacting membrane\n";
         std::cout << "(i)nfo (m)embrane (g)lobal -- print global root membrane\n";
+        std::cout << "(i)nfo (m)embrane <HEX> -- print membrane whose address is <HEX>\n";
         std::cout << "(i)nfo (b)reakpoints -- list all breakpoints\n";
         std::cout << "(b)reak (i)nstruction NAME -- set breakpoint on instruction named NAME\n";
         std::cout << "(b)reak (r)ule NAME -- set breakpoint on rule named NAME\n";
