@@ -10,54 +10,34 @@
 #include <termios.h>
 
 enum class DebugCommand {
-  DBGCMD_CONTINUE,
-  DBGCMD_STEP,
-  DBGCMD_INFO,
-  DBGCMD_PRINT,
-  DBGCMD_BREAK,
-  DBGCMD_DELETE,
-  DBGCMD_HELP,
-  DBGCMD_UNKNOWN
+  CONTINUE,
+  HELP,
+  STEP_RULE,
+  STEP_INSTR,
+  INFO_REGISTER,
+  INFO_ATOMLIST,
+  INFO_MEMBRANE,
+  INFO_BREAKPOINT,
+  BREAK_RULE,
+  BREAK_INSTR,
+  DELETE_RULE,
+  DELETE_INSTR,
+  UNKNOWN
 };
 
-static const std::map<std::string, DebugCommand> debug_commands = {
-  {"continue", DebugCommand::DBGCMD_CONTINUE},
-  {"c", DebugCommand::DBGCMD_CONTINUE},
-  {"step", DebugCommand::DBGCMD_STEP},
-  {"s", DebugCommand::DBGCMD_STEP},
-  {"info", DebugCommand::DBGCMD_INFO},
-  {"i", DebugCommand::DBGCMD_INFO},
-  {"print", DebugCommand::DBGCMD_PRINT},
-  {"p", DebugCommand::DBGCMD_PRINT},
-  {"break", DebugCommand::DBGCMD_BREAK},
-  {"b", DebugCommand::DBGCMD_BREAK},
-  {"delete", DebugCommand::DBGCMD_DELETE},
-  {"d", DebugCommand::DBGCMD_DELETE},
-  {"help", DebugCommand::DBGCMD_HELP},
-  {"h", DebugCommand::DBGCMD_HELP}
-};
-
-enum class DebugCommandArg {
-  DBGARG_INSTR,
-  DBGARG_RULE_REG,
-  DBGARG_ATOMLIST,
-  DBGARG_BRKPNT,
-  DBGARG_MEMBRANE,
-  DBGARG_UNKNOWN
-};
-
-static const std::map<std::string, DebugCommandArg> debug_command_args = {
-  {"instruction", DebugCommandArg::DBGARG_INSTR},
-  {"i", DebugCommandArg::DBGARG_INSTR},
-  {"rule", DebugCommandArg::DBGARG_RULE_REG},
-  {"registers", DebugCommandArg::DBGARG_RULE_REG},
-  {"r", DebugCommandArg::DBGARG_RULE_REG},
-  {"atomlist", DebugCommandArg::DBGARG_ATOMLIST},
-  {"a", DebugCommandArg::DBGARG_ATOMLIST},
-  {"breakpoints", DebugCommandArg::DBGARG_BRKPNT},
-  {"b", DebugCommandArg::DBGARG_BRKPNT},
-  {"membrane", DebugCommandArg::DBGARG_MEMBRANE},
-  {"m", DebugCommandArg::DBGARG_MEMBRANE}
+static const std::map<DebugCommand, std::vector<std::string>> debug_commands = {
+  {DebugCommand::CONTINUE, {"continue"}},
+  {DebugCommand::HELP, {"help"}},
+  {DebugCommand::STEP_RULE, {"step", "rule"}},
+  {DebugCommand::STEP_INSTR, {"step", "instruction"}},
+  {DebugCommand::INFO_REGISTER, {"info", "registers"}},
+  {DebugCommand::INFO_ATOMLIST, {"info", "atomlist"}},
+  {DebugCommand::INFO_MEMBRANE, {"info", "membrane"}},
+  {DebugCommand::INFO_BREAKPOINT, {"info", "breakpoints"}},
+  {DebugCommand::BREAK_RULE, {"break", "rule"}},
+  {DebugCommand::BREAK_INSTR, {"break", "instruction"}},
+  {DebugCommand::DELETE_RULE, {"delete", "rule"}},
+  {DebugCommand::DELETE_INSTR, {"delete", "instruction"}},
 };
 
 const char* get_instr_name(int id) {
@@ -71,6 +51,14 @@ static inline std::string pointer_to_string(const void *p) {
   std::ostringstream oss;
   oss << p;
   return oss.str();
+}
+
+static inline bool string_starts_with(const std::string &str1, const std::string &str2) {
+  if (str1.size() < str2.size()) {
+    return false;
+  } else {
+    return std::equal(str2.begin(), str2.end(), str1.begin());
+  }
 }
 
 InteractiveDebugger::InteractiveDebugger() {
@@ -246,6 +234,8 @@ static std::string stringify_instr(const LmnRuleInstr instr) {
             READ_VAL(LmnSubInstrSize, instr_copy, arg_instrlist);
             retVal << arg_instrlist;
             break;
+          default:
+            break;
         }
 
         if (i != argSize - 1) {
@@ -372,6 +362,17 @@ static bool is_pointer_valid_for_membrane(const LmnMembraneRef mem, const void *
   }
 }
 
+static LmnMembraneRef get_pointer_to_membrane_by_id(const LmnMembraneRef mem, unsigned long id) {
+  if (mem == nullptr) {
+    return nullptr;
+  } else if (mem->mem_id() == id) {
+    return mem;
+  } else {
+    LmnMembraneRef ref = get_pointer_to_membrane_by_id(mem->child_head, id);
+    return ref != nullptr ? ref : get_pointer_to_membrane_by_id(mem->next, id);
+  }
+}
+
 void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRef rule, const LmnRuleInstr instr) {
   if (input_eof) {
     return;
@@ -411,372 +412,401 @@ void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRe
       continue;
     }
 
-    DebugCommand cmd = DebugCommand::DBGCMD_UNKNOWN;
-
-    for (auto &p : debug_commands) {
-      if (p.first == argv.at(0)) {
-        cmd = p.second;
-        break;
-      }
-    }
-
-    DebugCommandArg arg1 = DebugCommandArg::DBGARG_UNKNOWN;
-
-    if (argc >= 2) {
-      for (auto &p : debug_command_args) {
-        if (p.first == argv.at(1)) {
-          arg1 = p.second;
-          break;
+    // reduce ambiguity
+    bool has_ambiguous_arg = false;
+    for (size_t i = 0; i < argc && !has_ambiguous_arg; i++) {
+      std::vector<std::string> argument_candidate;
+      for (auto &p : debug_commands) {
+        if (i < p.second.size()) {
+          if (std::equal(p.second.begin(), p.second.begin() + i, argv.begin())) {
+            if (string_starts_with(p.second.at(i), argv.at(i))) {
+              auto res = std::find(argument_candidate.begin(), argument_candidate.end(), p.second.at(i));
+              if (res == argument_candidate.end()) {
+                argument_candidate.push_back(p.second.at(i));
+              }
+            }
+          }
         }
       }
+      if (argument_candidate.size() == 1) {
+        argv.at(i) = argument_candidate.at(0);
+      } else if (argument_candidate.size() > 1) {
+        has_ambiguous_arg = true;
+        std::cout << "Ambiguous command \"" << argv.at(i) << "\": ";
+        for (auto &s : argument_candidate) {
+          std::cout << s << ", ";
+        }
+        std::cout << "\b\b.\n";
+      }
     }
+
+    if (has_ambiguous_arg) {
+      continue;
+    }
+
+    // identify command
+    auto cmd_iter_end = debug_commands.end();
+    auto cmd_iter_found = std::find_if(
+      debug_commands.begin(), cmd_iter_end,
+      [&argv, argc](std::pair<DebugCommand, std::vector<std::string>> p) -> bool {
+          return std::equal(
+            p.second.begin(), p.second.end(),
+            argv.begin()
+          );
+      }
+    );
+
+    DebugCommand cmd = cmd_iter_found == cmd_iter_end ? DebugCommand::UNKNOWN : (*cmd_iter_found).first;
 
     switch(cmd) {
       // continue
-      case DebugCommand::DBGCMD_CONTINUE:
+      case DebugCommand::CONTINUE: {
         continue_session = false;
         break;
-      // info
-      case DebugCommand::DBGCMD_INFO:
-        // info
-        if (argc < 2) {
-          std::cout << few_arg_message << '\n';
+      }
+      // info registers
+      case DebugCommand::INFO_REGISTER: {
+        if (rc == nullptr) {
+          std::cout << "LmnReactCxtRef is null.\n";
           break;
         }
         // info registers
-        if (arg1 == DebugCommandArg::DBGARG_RULE_REG) {
-          if (rc == nullptr) {
-            std::cout << "LmnReactCxtRef is null\n";
-            break;
-          }
-          // info registers
-          if (argc == 2) {
-            print_feeding(stringify_regarray(&rc->work_array));
-          }
-          // info registers <N>...
-          else {
-            for (size_t i = 2; i < argc; i++) {
-              size_t l;
-              try {
-                l = std::stoul(argv.at(i));
-              } catch (const std::invalid_argument& e) {
-                l = rc->capacity();
-              }
-              if (l >= rc->capacity()) {
-                std::cout << invalid_arg_message << " at " << i << " (" << argv.at(i) << ")\n";
-                continue;
-              }
-              print_feeding("Register[" + argv.at(i) + "] : \n" + stringify_register_dev(&rc->reg(l)));
+        if (argc == 2) {
+          print_feeding(stringify_regarray(&rc->work_array));
+        }
+        // info registers <N>...
+        else {
+          for (size_t i = 2; i < argc; i++) {
+            size_t l;
+            try {
+              l = std::stoul(argv.at(i));
+            } catch (const std::invalid_argument& e) {
+              std::cout << invalid_arg_message << " at " << i << ": Not a valid integer.\n";
+              continue;
             }
+            if (l >= rc->capacity()) {
+              std::cout << invalid_arg_message << " at " << i << ": Exceeds length of register.\n";
+              continue;
+            }
+            print_feeding("Register[" + std::to_string(l) + "] : \n" + stringify_register_dev(&rc->reg(l)));
           }
+        }
+        break;
+      }
+      // info atomlist
+      case DebugCommand::INFO_ATOMLIST: {
+        if (rc == nullptr) {
+          std::cout << "LmnReactCxtRef is null.\n";
+          break;
         }
         // info atomlist
-        else if (arg1 == DebugCommandArg::DBGARG_ATOMLIST) {
-          if (rc == nullptr) {
-            std::cout << "LmnReactCxtRef is null\n";
-            break;
-          }
-
-          size_t list_count = ((LmnMembraneRef) rc->wt(0))->max_functor;
-
-          // info atomlist
-          if (argc == 2) {
-            std::string s = "";
-            for (size_t i = 0; i < list_count; i++) {
-              auto list = ((LmnMembraneRef) rc->wt(0))->atomset[i];
-              if (list != nullptr) {
-                s += lmn_id_to_name(lmn_functor_table->get_entry(i)->name);
-                s += "_";
-                s += std::to_string(lmn_functor_table->get_entry(i)->arity);
-                s += " \t: ";
-                s += stringify_atomlist(list);
-                s += "\n";
-              }
+        if (argc == 2) {
+          std::string s = "";
+          for (size_t i = 0, max = ((LmnMembraneRef) rc->wt(0))->max_functor; i < max; i++) {
+            auto list = ((LmnMembraneRef) rc->wt(0))->atomset[i];
+            if (list != nullptr) {
+              s += lmn_id_to_name(lmn_functor_table->get_entry(i)->name);
+              s += "_";
+              s += std::to_string(lmn_functor_table->get_entry(i)->arity);
+              s += " \t: ";
+              s += stringify_atomlist(list);
+              s += "\n";
             }
-            print_feeding(s);
-          }
-          // info atomlist <FUNCTOR>...
-          else {
-            std::string s = "";
-            for (size_t i = 0; i < list_count; i++) {
-              auto list = ((LmnMembraneRef) rc->wt(0))->atomset[i];
-              if (list != nullptr) {
-                std::string functor_name = lmn_id_to_name(lmn_functor_table->get_entry(i)->name);
-                unsigned int functor_arity = lmn_functor_table->get_entry(i)->arity;
-
-                for (size_t j = 2; j < argc; j++) {
-                  size_t underscore = argv.at(j).find("_");
-                  if (underscore != std::string::npos && underscore > 0 && underscore < argv.at(j).size() - 1) {
-                    unsigned int input_arity;
-                    std::string input_name = argv.at(j).substr(0, underscore);
-                    try {
-                      input_arity = std::stoul(argv.at(j).substr(underscore + 1));
-                    } catch (const std::invalid_argument& e) {
-                      std::cout << invalid_arg_message << " at " << j << " (" << argv.at(j) << ")\n";
-                      continue;
-                    }
-                    if (functor_name == input_name && functor_arity == input_arity) {
-                      s += "  ";
-                      s += functor_name;
-                      s += "_";
-                      s += functor_arity;
-                      s += " \t: ";
-                      s += stringify_atomlist(list);
-                      s += "\n";
-                    }
-                  }
-                }
-                print_feeding(s);
-              }
-            }
-          }
-        }
-        // info breakpoints
-        else if (arg1 == DebugCommandArg::DBGARG_BRKPNT) {
-          std::string s = "Breakpoints for instructions :\n";
-          for (auto &i : breakpoints_on_instr) {
-            s += "  ";
-            s += get_instr_name(i);
-            s += "\n";
-          }
-
-          s += "\nBreakpoints for rules :\n";
-          for (auto &str : breakpoints_on_rule) {
-            s += "  ";
-            s += str;
-            s += "\n";
           }
           print_feeding(s);
         }
+        // info atomlist <FUNCTOR>...
+        else {
+          std::string s = "";
+          for (size_t i = 0, max = ((LmnMembraneRef) rc->wt(0))->max_functor; i < max; i++) {
+            auto list = ((LmnMembraneRef) rc->wt(0))->atomset[i];
+            if (list != nullptr) {
+              std::string functor_name = lmn_id_to_name(lmn_functor_table->get_entry(i)->name);
+              unsigned int functor_arity = lmn_functor_table->get_entry(i)->arity;
+
+              for (size_t j = 2; j < argc; j++) {
+                size_t underscore = argv.at(j).find("_");
+                if (underscore != std::string::npos && underscore > 0 && underscore < argv.at(j).size() - 1) {
+                  unsigned int input_arity;
+                  std::string input_name = argv.at(j).substr(0, underscore);
+                  try {
+                    input_arity = std::stoul(argv.at(j).substr(underscore + 1));
+                  } catch (const std::invalid_argument& e) {
+                    std::cout << invalid_arg_message << " at " << j << ": Not a valid integer for arity.\n";
+                    continue;
+                  }
+                  if (functor_name == input_name && functor_arity == input_arity) {
+                    s += "  ";
+                    s += functor_name;
+                    s += "_";
+                    s += functor_arity;
+                    s += " \t: ";
+                    s += stringify_atomlist(list);
+                    s += "\n";
+                  }
+                }
+              }
+              print_feeding(s);
+            }
+          }
+        }
+        break;
+      }
+      // info breakpoints
+      case DebugCommand::INFO_BREAKPOINT: {
+        std::string s = "Breakpoints for instructions :\n";
+        for (auto &i : breakpoints_on_instr) {
+          s += "    ";
+          s += get_instr_name(i);
+          s += "\n";
+        }
+
+        s += "Breakpoints for rules :\n";
+        for (auto &str : breakpoints_on_rule) {
+          s += "    ";
+          s += str;
+          s += "\n";
+        }
+        print_feeding(s);
+        break;
+      }
+      // info membrane
+      case DebugCommand::INFO_MEMBRANE: {
+        if (rc == nullptr) {
+          std::cout << "LmnReactCxtRef is null.\n";
+          break;
+        }
+        if (rc->global_root == nullptr) {
+          std::cout << "Global Root Membrane is null.\n";
+          break;
+        }
         // info membrane
-        else if (arg1 == DebugCommandArg::DBGARG_MEMBRANE) {
-          if (rc == nullptr) {
-            std::cout << "LmnReactCxtRef is null\n";
-            break;
-          }
-          if (rc->global_root == nullptr) {
-            std::cout << "Global Root Membrane is null\n";
-            break;
-          }
-          // info membrane
-          if (argc == 2) {
-            std::string s = get_membrane_tree(rc->global_root, "", rc->global_root, (LmnMembraneRef) rc->wt(0));
+        if (argc == 2) {
+          std::string s = get_membrane_tree(rc->global_root, "", rc->global_root, (LmnMembraneRef) rc->wt(0));
+          print_feeding(s);
+        }
+        // info membrane <ARG>...
+        else {
+          // info membrane current
+          if (string_starts_with("current", argv.at(2))) {
+            std::string s = "Current membrane (Addr[";
+            s += pointer_to_string((LmnMembraneRef)rc->wt(0));
+            s += "]) :\n";
+            s += slim::stringifier::lmn_stringify_mem((LmnMembraneRef)rc->wt(0));
+            s += "\n";
             print_feeding(s);
           }
-          // info membrane <ARG>...
+          // info membrane global
+          else if (string_starts_with("global", argv.at(2))) {
+            std::string s = "Global root membrane (Addr[";
+            s += pointer_to_string((LmnMembraneRef)rc->global_root);
+            s += "]) :\n";
+            s += slim::stringifier::lmn_stringify_mem(rc->global_root);
+            s += "\n";
+            print_feeding(s);
+          }
+          // info membrane <HEX>
+          else if (string_starts_with(argv.at(2), "0x")) {
+            unsigned long l;
+            try {
+              l = std::stoul(argv.at(2), 0, 16);
+            } catch (const std::invalid_argument& e) {
+              std::cout << invalid_arg_message << " at 2: Not a valid hexadecimal integer.\n";
+              break;
+            }
+            if (is_pointer_valid_for_membrane(rc->global_root, (void *)l)) {
+              std::string s = "Membrane (Addr[";
+              s += pointer_to_string((LmnMembraneRef)l);
+              s += "]) :\n";
+              s += slim::stringifier::lmn_stringify_mem((LmnMembraneRef)l);
+              s += "\n";
+              print_feeding(s);
+            } else {
+              std::cout << invalid_arg_message << " at 2: Not a valid pointer to LmnMembrane.\n";
+              break;
+            }
+          }
+          // info membrane <N>
           else {
-            // info membrane current
-            if (argv.at(2) == "current" || argv.at(2) == "c") {
-              std::string s = "Current membrane [";
-              s += pointer_to_string((LmnMembraneRef)rc->wt(0));
-              s += "]:\n";
-              s += slim::stringifier::lmn_stringify_mem((LmnMembraneRef)rc->wt(0));
+            unsigned long l;
+            try {
+              l = std::stoul(argv.at(2));
+            } catch (const std::invalid_argument& e) {
+              std::cout << invalid_arg_message << " at 2: Not a valid integer.\n";
+              break;
+            }
+            LmnMembraneRef mem = get_pointer_to_membrane_by_id(rc->global_root, l);
+            if (mem != nullptr) {
+              std::string s = "Membrane (Addr[";
+              s += pointer_to_string(mem);
+              s += "], ID[";
+              s += std::to_string(l);
+              s += "]) : \n";
+              s += slim::stringifier::lmn_stringify_mem(mem);
               s += "\n";
               print_feeding(s);
-            }
-            // info membrane global
-            else if (argv.at(2) == "global" || argv.at(2) == "g") {
-              std::string s = "Global root membrane [";
-              s += pointer_to_string((LmnMembraneRef)rc->global_root);
-              s += "]:\n";
-              s += slim::stringifier::lmn_stringify_mem(rc->global_root);
-              s += "\n";
-              print_feeding(s);
-            }
-            // info membrane <HEX>
-            else {
-              unsigned long l;
-              try {
-                l = std::stoul(argv.at(2), 0, 16);
-              } catch (const std::invalid_argument& e) {
-                std::cout << invalid_arg_message << " at 2 (" << argv.at(2) << ")\n";
-                break;
-              }
-              if (is_pointer_valid_for_membrane(rc->global_root, (void *)l)) {
-                std::string s = "Membrane [";
-                s += pointer_to_string((LmnMembraneRef)l);
-                s += "]:\n";
-                s += slim::stringifier::lmn_stringify_mem((LmnMembraneRef)l);
-                s += "\n";
-                print_feeding(s);
-              } else {
-                std::cout << invalid_arg_message << " at 2 (" << argv.at(2) << "): not a valid pointer to LmnMembrane\n";
-                break;
-              }
+            } else {
+              std::cout << invalid_arg_message << " at 2: Membrane with specified ID could not be found.\n";
+              break;
             }
           }
-        }
-        // info <UNKNOWN>
-        else {
-          std::cout << invalid_args_message << '\n';
         }
         break;
-      // step
-      case DebugCommand::DBGCMD_STEP:
-        // step
-        if (argc < 2) {
-          std::cout << few_arg_message << '\n';
-          break;
-        }
-        // step rule
-        if (arg1 == DebugCommandArg::DBGARG_RULE_REG) {
-          instr_execution_count = 0;
-          instr_execution_stop_at = -1;
-          rule_reaction_count = 0;
+      }
+      // step rule
+      case DebugCommand::STEP_RULE: {
+        instr_execution_count = 0;
+        instr_execution_stop_at = -1;
+        rule_reaction_count = 0;
 
-          long l = 1;
-          // step rule <N>
-          if (argc >= 3) {
-            try {
-              l = std::stol(argv.at(2));
-            } catch (const std::invalid_argument& e) {
-              l = -1;
-            }
-          }
-
-          if (l >= 1) {
-            rule_reaction_stop_at = l;
-            continue_session = false;
-          } else {
-            std::cout << invalid_arg_message << ": " << argv.at(2) << '\n';
+        long l = 1;
+        // step rule <N>
+        if (argc >= 3) {
+          try {
+            l = std::stol(argv.at(2));
+          } catch (const std::invalid_argument& e) {
+            l = -1;
           }
         }
-        // step instruction
-        else if (arg1 == DebugCommandArg::DBGARG_INSTR) {
-          rule_reaction_count = 0;
-          rule_reaction_stop_at = -1;
-          instr_execution_count = 0;
 
-          long l = 1;
-          // step instruction <N>
-          if (argc >= 3) {
-            try {
-              l = std::stol(argv.at(2));
-            } catch (const std::invalid_argument& e) {
-              l = -1;
-            }
-          }
-
-          if (l >= 1) {
-            instr_execution_stop_at = l;
-            continue_session = false;
-          } else {
-            std::cout << invalid_arg_message << ": " << argv.at(2) << '\n';
-          }
-        }
-        // step <UNKNOWN>
-        else {
-          std::cout << invalid_args_message << '\n';
+        if (l >= 1) {
+          rule_reaction_stop_at = l;
+          continue_session = false;
+        } else {
+          std::cout << invalid_arg_message << ": Not a valid integer.\n";
         }
         break;
-      // break
-      case DebugCommand::DBGCMD_BREAK:
-        // break | break <ARG>
+      }
+      // step instruction
+      case DebugCommand::STEP_INSTR: {
+        rule_reaction_count = 0;
+        rule_reaction_stop_at = -1;
+        instr_execution_count = 0;
+
+        long l = 1;
+        // step instruction <N>
+        if (argc >= 3) {
+          try {
+            l = std::stol(argv.at(2));
+          } catch (const std::invalid_argument& e) {
+            l = -1;
+          }
+        }
+
+        if (l >= 1) {
+          instr_execution_stop_at = l;
+          continue_session = false;
+        } else {
+          std::cout << invalid_arg_message << ": Not a valid integer.\n";
+        }
+        break;
+      }
+      // break rule <RULE>
+      case DebugCommand::BREAK_RULE: {
         if (argc < 3) {
-          std::cout << few_arg_message << '\n';
+          std::cout << few_arg_message << ".\n";
           break;
         }
-        // break rule <RULE>
-        if (arg1 == DebugCommandArg::DBGARG_RULE_REG) {
-          auto end = breakpoints_on_rule.end();
-          auto res = std::find(breakpoints_on_rule.begin(), end, argv.at(2));
-          if (res != end) {
-            std::cout << "Breakpoint is already set to instruction: " << argv.at(2) << '\n';
-          } else {
-            breakpoints_on_rule.push_back(argv.at(2));
-            std::cout << "Breakpoint is set to rule: " << argv.at(2) << '\n';
-          }
+        auto end = breakpoints_on_rule.end();
+        auto res = std::find(breakpoints_on_rule.begin(), end, argv.at(2));
+        if (res != end) {
+          std::cout << "Breakpoint is already set to rule: " << argv.at(2) << '\n';
+        } else {
+          breakpoints_on_rule.push_back(argv.at(2));
+          std::cout << "Breakpoint is set to rule: " << argv.at(2) << '\n';
         }
-        // break instruction <INSTR>
-        else if (arg1 == DebugCommandArg::DBGARG_INSTR) {
-          int instr_id = get_instr_id(argv.at(2).c_str());
-
-          if (instr_id == -1) {
-            std::cout << "Unknown Instruction: breakpoint is not set\n";
-            break;
-          }
-
+        break;
+      }
+      // break instruction <INSTR>
+      case DebugCommand::BREAK_INSTR: {
+        if (argc < 3) {
+          std::cout << few_arg_message << ".\n";
+          break;
+        }
+        int instr_id = get_instr_id(argv.at(2).c_str());
+        if (instr_id == -1) {
+          std::cout << "Unknown Instruction: breakpoint is not set.\n";
+          break;
+        }
+        auto end = breakpoints_on_instr.end();
+        auto res = std::find(breakpoints_on_instr.begin(), end, instr_id);
+        if (res != end) {
+          std::cout << "Breakpoint is already set to instruction: " << argv.at(2) << '\n';
+        } else {
+          breakpoints_on_instr.push_back((LmnInstruction) instr_id);
+          std::cout << "Breakpoint is set to instruction: " << argv.at(2) << '\n';
+        }
+        break;
+      }
+      // delete rule <RULE>
+      case DebugCommand::DELETE_RULE: {
+        if (argc < 3) {
+          std::cout << few_arg_message << ".\n";
+          break;
+        }
+        auto end = breakpoints_on_rule.end();
+        auto res = std::find(breakpoints_on_rule.begin(), end, argv.at(2));
+        if (res == end) {
+          std::cout << "Breakpoint is not set to rule: " << argv.at(2) << '\n';
+        } else {
+          breakpoints_on_rule.erase(res);
+          std::cout << "Breakpoint is deleted for rule: " << argv.at(2) << '\n';
+        }
+        break;
+      }
+      // delete instruction <INSTR>
+      case DebugCommand::DELETE_INSTR: {
+        if (argc < 3) {
+          std::cout << few_arg_message << ".\n";
+          break;
+        }
+        int instr_id = get_instr_id(argv.at(2).c_str());
+        if (instr_id == -1) {
+          std::cout << "Unknown Instruction: no breakpoint is deleted" << '\n';
+        } else {
           auto end = breakpoints_on_instr.end();
           auto res = std::find(breakpoints_on_instr.begin(), end, instr_id);
-          if (res != end) {
-            std::cout << "Breakpoint is already set to instruction: " << argv.at(2) << '\n';
-          } else {
-            breakpoints_on_instr.push_back((LmnInstruction) instr_id);
-            std::cout << "Breakpoint is set to instruction: " << argv.at(2) << '\n';
-          }
-        }
-        // break <UNKNOWN> <ARG>
-        else {
-          std::cout << invalid_args_message << '\n';
-        }
-        break;
-      // delete
-      case DebugCommand::DBGCMD_DELETE:
-        // delete | delete <ARG>
-        if (argc < 3) {
-          std::cout << few_arg_message << '\n';
-          break;
-        }
-        // delete rule <RULE>
-        if (arg1 == DebugCommandArg::DBGARG_RULE_REG) {
-          auto end = breakpoints_on_rule.end();
-          auto res = std::find(breakpoints_on_rule.begin(), end, argv.at(2));
           if (res == end) {
-            std::cout << "Breakpoint is not set to rule: " << argv.at(2) << '\n';
+            std::cout << "Breakpoint is not set to instruction: " << argv.at(2) << '\n';
           } else {
-            breakpoints_on_rule.erase(res);
-            std::cout << "Breakpoint is deleted for rule: " << argv.at(2) << '\n';
+            breakpoints_on_instr.erase(res);
+            std::cout << "Breakpoint is deleted for instruction: " << argv.at(2) << '\n';
           }
-        }
-        // delete instruction <INSTR>
-        else if (arg1 == DebugCommandArg::DBGARG_INSTR) {
-          int instr_id = get_instr_id(argv.at(2).c_str());
-          if (instr_id == -1) {
-            std::cout << "Unknown Instruction: no breakpoint is deleted" << '\n';
-          } else {
-            auto end = breakpoints_on_instr.end();
-            auto res = std::find(breakpoints_on_instr.begin(), end, instr_id);
-            if (res == end) {
-              std::cout << "Breakpoint is not set to instruction: " << argv.at(2) << '\n';
-            } else {
-              breakpoints_on_instr.erase(res);
-              std::cout << "Breakpoint is deleted for instruction: " << argv.at(2) << '\n';
-            }
-          }
-        }
-        // delete <UNKNOWN> <ARG>
-        else {
-          std::cout << invalid_args_message << '\n';
         }
         break;
+      }
       // help
-      case DebugCommand::DBGCMD_HELP:
-        std::cout << "(c)ontinue -- continue execution until next breakpoint\n";
-        std::cout << "(s)tep (i)nstruction -- execute one intermediate instruction\n";
-        std::cout << "(s)tep (i)nstruction <N> -- execute N intermediate instructions\n";
-        std::cout << "(s)tep (r)ule -- apply one rule\n";
-        std::cout << "(s)tep (r)ule <N> -- apply N rules\n";
-        std::cout << "(i)nfo (r)egisters -- print register content of current react context\n";
-        std::cout << "(i)nfo (r)egisters <N>... -- print Nth register content of current react context in detail\n";
-        std::cout << "(i)nfo (a)tomlist -- print atomlist of current membrane\n";
-        std::cout << "(i)nfo (a)tomlist <FUNCTOR>... -- print atomlist with functor FUNCTOR of current membrane\n";
-        std::cout << "(i)nfo (m)embrane -- print all membranes' family tree\n";
-        std::cout << "(i)nfo (m)embrane (c)urrent -- print currently reacting membrane\n";
-        std::cout << "(i)nfo (m)embrane (g)lobal -- print global root membrane\n";
-        std::cout << "(i)nfo (m)embrane <HEX> -- print membrane whose address is <HEX>\n";
-        std::cout << "(i)nfo (b)reakpoints -- list all breakpoints\n";
-        std::cout << "(b)reak (i)nstruction NAME -- set breakpoint on instruction named NAME\n";
-        std::cout << "(b)reak (r)ule NAME -- set breakpoint on rule named NAME\n";
-        std::cout << "(d)elete (i)nstruction NAME -- delete breakpoint on instruction named NAME\n";
-        std::cout << "(d)elete (r)ule NAME -- delete breakpoint on rule named NAME\n";
-        std::cout << "(h)elp -- show this help\n";
+      case DebugCommand::HELP: {
+        std::cout << "continue -- continue execution until next breakpoint\n";
+        std::cout << "step instruction -- execute one intermediate instruction\n";
+        std::cout << "step instruction <N> -- execute N intermediate instructions\n";
+        std::cout << "step rule -- apply one rule\n";
+        std::cout << "step rule <N> -- apply N rules\n";
+        std::cout << "info registers -- print register content of current react context\n";
+        std::cout << "info registers <N>... -- print Nth register content of current react context in detail\n";
+        std::cout << "info atomlist -- print atomlist of current membrane\n";
+        std::cout << "info atomlist <FUNCTOR>... -- print atomlist with functor FUNCTOR of current membrane\n";
+        std::cout << "info membrane -- print all membranes' family tree\n";
+        std::cout << "info membrane current -- print currently reacting membrane\n";
+        std::cout << "info membrane global -- print global root membrane\n";
+        std::cout << "info membrane <HEX> -- print membrane whose address is <HEX>\n";
+        std::cout << "info membrane <N> -- print membrane whose ID is <N>\n";
+        std::cout << "info breakpoints -- list all breakpoints\n";
+        std::cout << "break instruction NAME -- set breakpoint on instruction named NAME\n";
+        std::cout << "break rule NAME -- set breakpoint on rule named NAME\n";
+        std::cout << "delete instruction NAME -- delete breakpoint on instruction named NAME\n";
+        std::cout << "delete rule NAME -- delete breakpoint on rule named NAME\n";
+        std::cout << "help -- show this help\n";
         break;
-      case DebugCommand::DBGCMD_UNKNOWN:
-        std::cout << "Unknown command\n";
+      }
+      case DebugCommand::UNKNOWN: {
+        std::cout << "Unknown command.\n";
         break;
-      default:
-        std::cout << "Not implemented\n";
+      }
+      default: {
+        std::cout << "Not implemented.\n";
         break;
+      }
     }
 
     std::flush(std::cout);
