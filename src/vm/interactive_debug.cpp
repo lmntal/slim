@@ -18,6 +18,7 @@ enum class DebugCommand {
   INFO_ATOMLIST,
   INFO_MEMBRANE,
   INFO_BREAKPOINT,
+  INFO_STATESPACE,
   BREAK_RULE,
   BREAK_INSTR,
   DELETE_RULE,
@@ -34,6 +35,7 @@ static const std::map<DebugCommand, std::vector<std::string>> debug_commands = {
   {DebugCommand::INFO_ATOMLIST, {"info", "atomlist"}},
   {DebugCommand::INFO_MEMBRANE, {"info", "membrane"}},
   {DebugCommand::INFO_BREAKPOINT, {"info", "breakpoints"}},
+  {DebugCommand::INFO_STATESPACE, {"info", "statespaces"}},
   {DebugCommand::BREAK_RULE, {"break", "rule"}},
   {DebugCommand::BREAK_INSTR, {"break", "instruction"}},
   {DebugCommand::DELETE_RULE, {"delete", "rule"}},
@@ -387,7 +389,7 @@ void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRe
   std::cout << "Instruction : " << stringify_instr(instr) << '\n';
 
   if (instr != nullptr && *((LmnInstrOp *)instr) != INSTR_SPEC && previous_instr >= instr) {
-    std::cout << "Possible backtracking. (Prev Inst : " << stringify_instr(previous_instr) << ")\n";
+    std::cout << "Possible backtracking. (From: " << stringify_instr(previous_instr) << ")\n";
   }
 
   bool continue_session = true;

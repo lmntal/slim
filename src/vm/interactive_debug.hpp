@@ -33,8 +33,8 @@ private:
   bool input_eof = false;
 
   // for feeding outputs
-  int screen_height;
-  int screen_width;
+  int screen_height = -1;
+  int screen_width = -1;
   void print_feeding(const std::string &str);
 
 public:
