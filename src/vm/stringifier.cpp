@@ -215,7 +215,6 @@ static std::string stringify_data_atom(LmnAtomRef data, LmnLinkAttr attr) {
     retVal << (long)data;
   } break;
   case LMN_DBL_ATTR: {
-    char buf[64];
     retVal << lmn_get_double((LmnDataAtomRef)data);
   } break;
   case LMN_SP_ATOM_ATTR: {
@@ -229,7 +228,6 @@ static std::string stringify_data_atom(LmnAtomRef data, LmnLinkAttr attr) {
     }
     break;
   case LMN_HL_ATTR: {
-    char buf[18];
     retVal << EXCLAMATION_NAME << "H";
     if (lmn_env.show_hyperlink) {
       retVal << (unsigned long) LMN_HL_ID(lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)data));
@@ -508,7 +506,6 @@ static std::string stringify_toplevel_atom(LmnSymbolAtomRef atom,
 
 static std::string stringify_rule(LmnRuleSetRef rs) {
   std::ostringstream retVal;
-  unsigned int i, n;
 
   if (!rs->has_unique())
     return "";
@@ -545,7 +542,6 @@ static std::string stringify_ruleset(const std::vector<LmnRuleSet *> &v) {
 
   for (i = 0; i < v.size(); i++) {
     LmnRuleSetRef rs;
-    char *s;
 
     rs = v[i];
     if (lmn_env.sp_dump_format == LMN_SYNTAX) {

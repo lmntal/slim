@@ -391,8 +391,6 @@ void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRe
   }
 
   bool continue_session = true;
-  std::string arg_string;
-  std::vector<std::string> argv;
   while (continue_session) {
     if (std::cin.eof()) {
       std::cout << "^D" << std::endl;
@@ -400,10 +398,11 @@ void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRe
       break;
     }
 
+    std::string arg_string;
     std::cout << "(debugger) ";
     std::getline(std::cin, arg_string);
 
-    argv.clear();
+    std::vector<std::string> argv;
     split_command(arg_string, argv);
 
     const size_t argc = argv.size();
@@ -420,8 +419,9 @@ void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRe
         if (i < p.second.size()) {
           if (std::equal(p.second.begin(), p.second.begin() + i, argv.begin())) {
             if (string_starts_with(p.second.at(i), argv.at(i))) {
-              auto res = std::find(argument_candidate.begin(), argument_candidate.end(), p.second.at(i));
-              if (res == argument_candidate.end()) {
+              auto end = argument_candidate.end();
+              auto res = std::find(argument_candidate.begin(), end, p.second.at(i));
+              if (res == end) {
                 argument_candidate.push_back(p.second.at(i));
               }
             }
@@ -481,11 +481,11 @@ void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRe
             try {
               l = std::stoul(argv.at(i));
             } catch (const std::invalid_argument& e) {
-              std::cout << invalid_arg_message << " at " << i << ": Not a valid integer.\n";
+              std::cout << "Invalid argument at " << i << ": Not a valid integer.\n";
               continue;
             }
             if (l >= rc->capacity()) {
-              std::cout << invalid_arg_message << " at " << i << ": Exceeds length of register.\n";
+              std::cout << "Invalid argument at " << i << ": Exceeds length of register.\n";
               continue;
             }
             print_feeding("Register[" + std::to_string(l) + "] : \n" + stringify_register_dev(&rc->reg(l)));
@@ -532,7 +532,7 @@ void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRe
                   try {
                     input_arity = std::stoul(argv.at(j).substr(underscore + 1));
                   } catch (const std::invalid_argument& e) {
-                    std::cout << invalid_arg_message << " at " << j << ": Not a valid integer for arity.\n";
+                    std::cout << "Invalid argument at " << j << ": Not a valid integer for arity.\n";
                     continue;
                   }
                   if (functor_name == input_name && functor_arity == input_arity) {
@@ -611,7 +611,7 @@ void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRe
             try {
               l = std::stoul(argv.at(2), 0, 16);
             } catch (const std::invalid_argument& e) {
-              std::cout << invalid_arg_message << " at 2: Not a valid hexadecimal integer.\n";
+              std::cout << "Invalid argument at 2: Not a valid hexadecimal integer.\n";
               break;
             }
             if (is_pointer_valid_for_membrane(rc->global_root, (void *)l)) {
@@ -622,7 +622,7 @@ void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRe
               s += "\n";
               print_feeding(s);
             } else {
-              std::cout << invalid_arg_message << " at 2: Not a valid pointer to LmnMembrane.\n";
+              std::cout << "Invalid argument at 2: Not a valid pointer to LmnMembrane.\n";
               break;
             }
           }
@@ -632,7 +632,7 @@ void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRe
             try {
               l = std::stoul(argv.at(2));
             } catch (const std::invalid_argument& e) {
-              std::cout << invalid_arg_message << " at 2: Not a valid integer.\n";
+              std::cout << "Invalid argument at 2: Not a valid integer.\n";
               break;
             }
             LmnMembraneRef mem = get_pointer_to_membrane_by_id(rc->global_root, l);
@@ -646,7 +646,7 @@ void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRe
               s += "\n";
               print_feeding(s);
             } else {
-              std::cout << invalid_arg_message << " at 2: Membrane with specified ID could not be found.\n";
+              std::cout << "Invalid argument at 2: Membrane with specified ID could not be found.\n";
               break;
             }
           }
@@ -673,7 +673,7 @@ void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRe
           rule_reaction_stop_at = l;
           continue_session = false;
         } else {
-          std::cout << invalid_arg_message << ": Not a valid integer.\n";
+          std::cout << "Invalid argument: Not a valid integer.\n";
         }
         break;
       }
@@ -697,14 +697,14 @@ void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRe
           instr_execution_stop_at = l;
           continue_session = false;
         } else {
-          std::cout << invalid_arg_message << ": Not a valid integer.\n";
+          std::cout << "Invalid argument: Not a valid integer.\n";
         }
         break;
       }
       // break rule <RULE>
       case DebugCommand::BREAK_RULE: {
         if (argc < 3) {
-          std::cout << few_arg_message << ".\n";
+          std::cout << "Too few arguments.\n";
           break;
         }
         auto end = breakpoints_on_rule.end();
@@ -720,7 +720,7 @@ void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRe
       // break instruction <INSTR>
       case DebugCommand::BREAK_INSTR: {
         if (argc < 3) {
-          std::cout << few_arg_message << ".\n";
+          std::cout << "Too few arguments.\n";
           break;
         }
         int instr_id = get_instr_id(argv.at(2).c_str());
@@ -741,7 +741,7 @@ void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRe
       // delete rule <RULE>
       case DebugCommand::DELETE_RULE: {
         if (argc < 3) {
-          std::cout << few_arg_message << ".\n";
+          std::cout << "Too few arguments.\n";
           break;
         }
         auto end = breakpoints_on_rule.end();
@@ -757,7 +757,7 @@ void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRe
       // delete instruction <INSTR>
       case DebugCommand::DELETE_INSTR: {
         if (argc < 3) {
-          std::cout << few_arg_message << ".\n";
+          std::cout << "Too few arguments.\n";
           break;
         }
         int instr_id = get_instr_id(argv.at(2).c_str());

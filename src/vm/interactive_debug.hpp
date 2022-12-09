@@ -32,11 +32,6 @@ private:
   // for managing inputs
   bool input_eof = false;
 
-  // for outputs
-  const std::string invalid_arg_message = "Invalid argument";
-  const std::string invalid_args_message = "Invalid arguments";
-  const std::string few_arg_message = "Too few arguments";
-
   // for feeding outputs
   int screen_height;
   int screen_width;
