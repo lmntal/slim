@@ -65,14 +65,14 @@ struct DumpState {
   DumpState();
 };
 
-static std::string stringify_atom(LmnAtomRef atom, SimpleHashtbl *ht,
+static std::pair<std::string, bool> stringify_atom(LmnAtomRef atom, SimpleHashtbl *ht,
                       LmnLinkAttr attr, struct DumpState *s, int call_depth);
 static std::string lmn_stringify_cell_internal(LmnMembraneRef mem,
                                    SimpleHashtbl *ht, struct DumpState *s);
 
 static std::string stringify_link(LmnSymbolAtomRef atom, int i,
                       SimpleHashtbl *ht, struct DumpState *s);
-static std::string lmn_stringify_mem_internal(LmnMembraneRef mem,
+static std::pair<std::string, bool> lmn_stringify_mem_internal(LmnMembraneRef mem,
                                   SimpleHashtbl *ht, struct DumpState *s);
 
 static std::string stringify_atom_args(LmnSymbolAtomRef atom,
@@ -117,21 +117,21 @@ static void atomrec_tbl_destroy(SimpleHashtbl *ht) {
 // static void dump_state_init(struct DumpState *s) { ; }
 DumpState::DumpState() { link_num = 0; }
 
-static BOOL is_direct_printable(LmnFunctor f) {
+static bool is_direct_printable(LmnFunctor f) {
   const char *s;
 
   if (LMN_IS_PROXY_FUNCTOR(f) || f == LMN_NIL_FUNCTOR)
-    return TRUE;
+    return true;
 
   s = LMN_FUNCTOR_STR(f);
   if (!(isalpha((unsigned char)*s) && islower((unsigned char)*s)))
-    return FALSE;
+    return false;
   while (*(++s)) {
     if (!(isalpha((unsigned char)*s) || isdigit((unsigned char)*s) ||
           *s == '_'))
-      return FALSE;
+      return false;
   }
-  return TRUE;
+  return true;
 }
 
 /* htからatomに対応するAtomRecを取得。なければ追加してから返す */
@@ -175,13 +175,11 @@ static std::string stringify_arg(LmnSymbolAtomRef atom, int i,
   rec = get_atomrec(ht, atom);
 
   if (hashtbl_contains(&rec->args, i)) {
-    retVal << stringify_link(atom, i, ht, s);
+    return stringify_link(atom, i, ht, s);
   } else {
-    retVal << stringify_atom(atom->get_link(i), ht,
-              atom->get_attr(i), s, call_depth + 1);
+    return stringify_atom(atom->get_link(i), ht,
+              atom->get_attr(i), s, call_depth + 1).first;
   }
-
-  return retVal.str();
 }
 
 static std::string stringify_link(LmnSymbolAtomRef atom, int i,
@@ -356,7 +354,7 @@ static void assign_link_to_proxy(LmnSymbolAtomRef atom, SimpleHashtbl *ht,
   }
 }
 
-static std::string stringify_proxy(LmnSymbolAtomRef atom,
+static std::pair<std::string, bool> stringify_proxy(LmnSymbolAtomRef atom,
                        SimpleHashtbl *ht, int link_pos, struct DumpState *s,
                        int call_depth) {
   std::ostringstream retVal;
@@ -371,10 +369,9 @@ static std::string stringify_proxy(LmnSymbolAtomRef atom,
       retVal << "(";
       retVal << stringify_link_name(t->link_num);
       retVal << ")";
-      return retVal.str();
     } else {
       /* symbol atom has dumped */
-      return "";
+      return {"", false};
     }
   } else {
     BOOL dumped = FALSE;
@@ -388,7 +385,7 @@ static std::string stringify_proxy(LmnSymbolAtomRef atom,
         if (mem->nfreelinks(1)) {
           get_atomrec(ht, (LmnSymbolAtomRef)in->get_link(1))->done =
               TRUE;
-          retVal << lmn_stringify_mem_internal(mem, ht, s);
+          retVal << lmn_stringify_mem_internal(mem, ht, s).first;
           dumped = TRUE;
         }
       }
@@ -397,10 +394,10 @@ static std::string stringify_proxy(LmnSymbolAtomRef atom,
       retVal << stringify_link_name(t->link_num);
     }
   }
-  return retVal.str();
+  return {retVal.str(), true};
 }
 
-static std::string stringify_symbol_atom(LmnSymbolAtomRef atom,
+static std::pair<std::string, bool> stringify_symbol_atom(LmnSymbolAtomRef atom,
                              SimpleHashtbl *ht, int link_pos,
                              struct DumpState *s, int call_depth) {
   std::ostringstream retVal;
@@ -418,12 +415,11 @@ static std::string stringify_symbol_atom(LmnSymbolAtomRef atom,
   if ((call_depth > 0 && link_pos != arity - 1) || /* not last link */
       (call_depth > 0 && t->done) ||               /* already printed */
       call_depth > MAX_DEPTH) {                    /* limit overflow */
-    retVal << stringify_link(atom, link_pos, ht, s);
-    return retVal.str();
+    return {stringify_link(atom, link_pos, ht, s), true};
   }
 
   if (t->done)
-    return retVal.str();
+    return {"", false};
 
   // トップレベルに cons ('.') が出現した場合は，
   // `[1,2,3|X]=X` のようにイコールアトムで繋いで [] （角括弧） を用いて出力する．
@@ -432,7 +428,7 @@ static std::string stringify_symbol_atom(LmnSymbolAtomRef atom,
     retVal << stringify_list(atom, ht, s, 0);
     retVal << "=";
     retVal << stringify_arg(atom, 2, ht, s, 1);
-    return retVal.str();
+    return {retVal.str(), true};
   }
 
   t->done = TRUE;
@@ -440,13 +436,14 @@ static std::string stringify_symbol_atom(LmnSymbolAtomRef atom,
   if (call_depth == 0 &&
       (f == LMN_UNARY_PLUS_FUNCTOR || f == LMN_UNARY_MINUS_FUNCTOR)) {
     retVal << lmn_id_to_name(LMN_FUNCTOR_NAME_ID(lmn_functor_table, f));
-    retVal << stringify_atom(atom->get_link(0), ht,
+    auto p = stringify_atom(atom->get_link(0), ht,
                      atom->get_attr(0), s, 1);
-    return retVal.str();
+    retVal << p.first;
+    return {retVal.str(), p.second};
   }
   retVal << stringify_atomname(f);
   retVal << stringify_atom_args(atom, ht, s, call_depth);
-  return retVal.str();
+  return {retVal.str(), true};
 }
 
 static std::string stringify_atom_args(LmnSymbolAtomRef atom,
@@ -473,10 +470,10 @@ static std::string stringify_atom_args(LmnSymbolAtomRef atom,
   return retVal.str();
 }
 
-static std::string stringify_atom(LmnAtomRef atom, SimpleHashtbl *ht,
+static std::pair<std::string, bool> stringify_atom(LmnAtomRef atom, SimpleHashtbl *ht,
                       LmnLinkAttr attr, struct DumpState *s, int call_depth) {
   if (LMN_ATTR_IS_DATA(attr)) {
-    return stringify_data_atom(atom, attr);
+    return {stringify_data_atom(atom, attr), true};
   } else {
     LmnSymbolAtomRef a = (LmnSymbolAtomRef)atom;
     LmnFunctor f = a->get_functor();
@@ -485,7 +482,7 @@ static std::string stringify_atom(LmnAtomRef atom, SimpleHashtbl *ht,
         (f == LMN_IN_PROXY_FUNCTOR || f == LMN_OUT_PROXY_FUNCTOR)) {
       return stringify_proxy(a, ht, link_pos, s, call_depth);
     } else if (f == LMN_LIST_FUNCTOR && link_pos == 2) {
-      return stringify_list(a, ht, s, call_depth);
+      return {stringify_list(a, ht, s, call_depth), true};
     } else {
       return stringify_symbol_atom(a, ht, link_pos, s, call_depth);
     }
@@ -493,7 +490,7 @@ static std::string stringify_atom(LmnAtomRef atom, SimpleHashtbl *ht,
 }
 
 /* atom must be a symbol atom */
-static std::string stringify_toplevel_atom(LmnSymbolAtomRef atom,
+static std::pair<std::string, bool> stringify_toplevel_atom(LmnSymbolAtomRef atom,
                                SimpleHashtbl *ht, struct DumpState *s) {
   const LmnFunctor f = atom->get_functor();
   if (!lmn_env.show_proxy &&
@@ -571,11 +568,11 @@ std::string lmn_stringify_ruleset(const std::vector<LmnRuleSet *> &v) {
   return stringify_ruleset(v);
 }
 
-static std::string lmn_stringify_mem_internal(LmnMembraneRef mem,
+static std::pair<std::string, bool> lmn_stringify_mem_internal(LmnMembraneRef mem,
                                   SimpleHashtbl *ht, struct DumpState *s) {
   std::ostringstream retVal;
   if (hashtbl_contains(ht, (HashKeyType)mem))
-    return "";
+    return {"", false};
 
   hashtbl_put(ht, (HashKeyType)mem, (HashValueType)0);
 
@@ -586,7 +583,7 @@ static std::string lmn_stringify_mem_internal(LmnMembraneRef mem,
   retVal << lmn_stringify_cell_internal(mem, ht, s);
   retVal << "}";
 
-  return retVal.str();
+  return {retVal.str(), true};
 }
 
 static std::string lmn_stringify_cell_internal(LmnMembraneRef mem,
@@ -686,11 +683,13 @@ static std::string lmn_stringify_cell_internal(LmnMembraneRef mem,
     for (i = 0; i < PRI_NUM; i++) {
       for (j = 0; j < pred_atoms[i].get_num(); j++) {
         LmnSymbolAtomRef atom = (LmnSymbolAtomRef)pred_atoms[i].get(j);
-        retVal << stringify_toplevel_atom(atom, ht, s);
-        // TODO: inspect
-        // if (dump_toplevel_atom(port, atom, ht, s)) {
+        auto p = stringify_toplevel_atom(atom, ht, s);
+        retVal << p.first;
+        /* TODO アトムの出力の後には常に ". "が入ってしまう.
+             アトムの間に ", "を挟んだ方が見栄えが良い */
+        if (p.second) {
           retVal << ". ";
-        // }
+        }
       }
     }
   }
@@ -702,9 +701,9 @@ static std::string lmn_stringify_cell_internal(LmnMembraneRef mem,
     LmnMembraneRef m;
     BOOL dumped = FALSE;
     for (m = mem->mem_child_head(); m; m = m->mem_next()) {
-      std::string mem_string_rep = lmn_stringify_mem_internal(m, ht, s);
-      retVal << mem_string_rep;
-      if (!mem_string_rep.empty()) {
+      auto p = lmn_stringify_mem_internal(m, ht, s);
+      retVal << p.first;
+      if (p.second) {
         dumped = TRUE;
       }
       /* 一回でも出力したことがあって、かつ次回が出力可能ならカンマを打つ */
@@ -1159,7 +1158,7 @@ std::string lmn_stringify_atom(LmnAtomRef atom, LmnLinkAttr attr) {
   SimpleHashtbl ht;
 
   hashtbl_init(&ht, 0);
-  std::string retVal = stringify_atom(atom, &ht, attr, &s, 0);
+  std::string retVal = stringify_atom(atom, &ht, attr, &s, 0).first;
   atomrec_tbl_destroy(&ht);
   return retVal;
 }

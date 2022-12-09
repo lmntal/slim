@@ -777,26 +777,28 @@ void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRe
       }
       // help
       case DebugCommand::HELP: {
-        std::cout << "continue -- continue execution until next breakpoint\n";
-        std::cout << "step instruction -- execute one intermediate instruction\n";
-        std::cout << "step instruction <N> -- execute N intermediate instructions\n";
-        std::cout << "step rule -- apply one rule\n";
-        std::cout << "step rule <N> -- apply N rules\n";
-        std::cout << "info registers -- print register content of current react context\n";
-        std::cout << "info registers <N>... -- print Nth register content of current react context in detail\n";
-        std::cout << "info atomlist -- print atomlist of current membrane\n";
-        std::cout << "info atomlist <FUNCTOR>... -- print atomlist with functor FUNCTOR of current membrane\n";
-        std::cout << "info membrane -- print all membranes' family tree\n";
-        std::cout << "info membrane current -- print currently reacting membrane\n";
-        std::cout << "info membrane global -- print global root membrane\n";
-        std::cout << "info membrane <HEX> -- print membrane whose address is <HEX>\n";
-        std::cout << "info membrane <N> -- print membrane whose ID is <N>\n";
-        std::cout << "info breakpoints -- list all breakpoints\n";
-        std::cout << "break instruction NAME -- set breakpoint on instruction named NAME\n";
-        std::cout << "break rule NAME -- set breakpoint on rule named NAME\n";
-        std::cout << "delete instruction NAME -- delete breakpoint on instruction named NAME\n";
-        std::cout << "delete rule NAME -- delete breakpoint on rule named NAME\n";
-        std::cout << "help -- show this help\n";
+        print_feeding(
+          "continue -- continue execution until next breakpoint\n"
+          "step instruction -- execute one intermediate instruction\n"
+          "step instruction <N> -- execute N intermediate instructions\n"
+          "step rule -- apply one rule\n"
+          "step rule <N> -- apply N rules\n"
+          "info registers -- print register content of current react context\n"
+          "info registers <N>... -- print Nth register content of current react context in detail\n"
+          "info atomlist -- print atomlist of current membrane\n"
+          "info atomlist <FUNCTOR>... -- print atomlist with functor FUNCTOR of current membrane\n"
+          "info membrane -- print all membranes' family tree\n"
+          "info membrane current -- print currently reacting membrane\n"
+          "info membrane global -- print global root membrane\n"
+          "info membrane <HEX> -- print membrane whose address is <HEX>\n"
+          "info membrane <N> -- print membrane whose ID is <N>\n"
+          "info breakpoints -- list all breakpoints\n"
+          "break instruction NAME -- set breakpoint on instruction named NAME\n"
+          "break rule NAME -- set breakpoint on rule named NAME\n"
+          "delete instruction NAME -- delete breakpoint on instruction named NAME\n"
+          "delete rule NAME -- delete breakpoint on rule named NAME\n"
+          "help -- show this help\n"
+        );
         break;
       }
       case DebugCommand::UNKNOWN: {
