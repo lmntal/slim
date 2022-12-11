@@ -42,7 +42,7 @@ static const std::map<DebugCommand, std::vector<std::string>> debug_commands = {
   {DebugCommand::BREAK_RULE, {"break", "rule"}},
   {DebugCommand::BREAK_INSTR, {"break", "instruction"}},
   {DebugCommand::DELETE_RULE, {"delete", "rule"}},
-  {DebugCommand::DELETE_INSTR, {"delete", "instruction"}},
+  {DebugCommand::DELETE_INSTR, {"delete", "instruction"}}
 };
 
 const char* get_instr_name(int id) {
@@ -76,9 +76,6 @@ InteractiveDebugger::InteractiveDebugger() {
 InteractiveDebugger::~InteractiveDebugger() {}
 
 static std::string stringify_atom(const LmnAtomRef atom, LmnByte at) {
-  if (atom == nullptr) {
-    return "null";
-  }
   return slim::stringifier::lmn_stringify_atom(atom, at);
 }
 
@@ -124,17 +121,20 @@ static std::string stringify_register_dev(const LmnRegisterRef reg) {
   switch (tt) {
     case TT_ATOM:
       if (LMN_ATTR_IS_DATA(at)) {
-        retVal << stringify_atom((LmnAtomRef) wt, at);
+        retVal << "\n   " << stringify_atom((LmnAtomRef) wt, at);
       } else {
+        retVal << stringify_atom((LmnAtomRef) wt, at) << "\n";
         retVal << slim::stringifier::stringify_atom_dev((LmnSymbolAtomRef) wt);
       }
       break;
-    case TT_MEM:
-      // retVal << slim::stringifier::lmn_stringify_mem_dev((LmnMembraneRef) wt);
-      retVal << "Mem[" << (unsigned int) ((LmnMembraneRef) wt)->NAME_ID() << "], ";
+    case TT_MEM: {
+      lmn_interned_str str = ((LmnMembraneRef) wt)->NAME_ID();
+      retVal << "Name[" << (str == ANONYMOUS ? "ANONYMOUS" : lmn_id_to_name(str)) << "], ";
       retVal << "Addr[" << (LmnMembraneRef) wt << "], ";
       retVal << "ID[" << (unsigned long) ((LmnMembraneRef) wt)->mem_id() << "]\n";
+      retVal << slim::stringifier::lmn_stringify_mem_dev((LmnMembraneRef) wt);
       break;
+    }
     case TT_OTHER:
       retVal << "wt[0x" << std::hex << wt << std::dec << "], ";
       retVal << "at[" << (unsigned int) at << "], ";
@@ -493,7 +493,7 @@ void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRe
               std::cout << "Invalid argument at " << i << ": Exceeds length of register.\n";
               continue;
             }
-            print_feeding("Register[" + std::to_string(l) + "] : \n" + stringify_register_dev(&rc->reg(l)));
+            print_feeding("Register[" + std::to_string(l) + "] : " + stringify_register_dev(&rc->reg(l)));
           }
         }
         break;
@@ -658,17 +658,96 @@ void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRe
         }
         break;
       }
+      // info statespace
       case DebugCommand::INFO_STATESPACE: {
-        std::cout << "AutomataRef: " << pointer_to_string(automata) << "\n";
-        std::cout << "StateSpaceRef: " << pointer_to_string(statespace) << "\n";
-        if (statespace != nullptr) {
-          for (State *state : statespace->all_states()) {
-            std::cout << "    state: " << pointer_to_string(state) << "\n";
+        if (!lmn_env.nd) {
+          std::cout << "StateSpace could not be shown in normal execution\n";
+          break;
+        }
+        if (statespace == nullptr) {
+          std::cout << "StateSpaceRef is null\n";
+          break;
+        }
+        // info statespace
+        if (argc == 2) {
+          std::string s = "StateSpace (Addr[";
+          s += pointer_to_string(statespace);
+          s += "])\n";
+          auto states_vec = statespace->all_states();
+          std::sort(states_vec.begin(), states_vec.end(),
+            [](State *state_l, State *state_r) -> bool {
+              return state_id(state_l) < state_id(state_r);
+            }
+          );
+          for (State *state : states_vec) {
+            // state info
+            s += "State[";
+            s += std::to_string(state_id(state));
+            s += "] : ";
+
+            // membrane
             LmnMembraneRef mem = state->restore_membrane_inner(false);
-            std::cout << "    " << slim::stringifier::lmn_stringify_mem(mem) << "\n";
+            s += slim::stringifier::lmn_stringify_mem(mem);
             if (state->is_binstr_user()) {
               mem->free_rec();
             }
+
+            s += " -> ";
+            for (unsigned int i = 0, max = state->successor_num; i < max; i++) {
+              s += std::to_string(state_id(state_succ_state(state, i)));
+              if (i != max - 1) {
+                s += ",";
+              }
+            }
+
+            s += "\n";
+          }
+          print_feeding(s);
+        }
+        // info statespace <ARG>...
+        else {
+          // info statespace <N>
+          if (true) {
+            unsigned long l;
+            try {
+              l = std::stoul(argv.at(2));
+            } catch (const std::invalid_argument &e) {
+              std::cout << "Invalid argument: Not a valid integer\n";
+              break;
+            }
+
+            auto end = statespace->all_states().end();
+            auto res = std::find_if(statespace->all_states().begin(), end,
+              [l](State *state) -> bool { return state_id(state) == l; }
+            );
+
+            if (res == end) {
+              std::cout << "State with given id could not be found.\n";
+              break;
+            }
+
+            State *state = *res;
+            std::string s = "StateSpace (Addr[";
+            s += pointer_to_string(statespace);
+            s += "])\n";
+
+            s += "State (Addr[";
+            s += pointer_to_string(state);
+            s += "], ID[";
+            s += std::to_string(state_id(state));
+            s += "])\n";
+
+            LmnMembraneRef mem = state->restore_membrane_inner(false);
+            // FIXME causes segmentation fault
+            s += slim::stringifier::lmn_stringify_mem(mem);
+            if (state->is_binstr_user()) {
+              mem->free_rec();
+            }
+
+            print_feeding(s);
+          } else {
+            std::cout << "Unknown subcommand\n";
+            break;
           }
         }
         break;

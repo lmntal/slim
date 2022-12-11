@@ -769,7 +769,7 @@ std::string lmn_stringify_mem(LmnMembraneRef mem) {
   std::ostringstream retVal;
   switch (lmn_env.output_format) {
   case DEFAULT:
-    retVal << "{ ";
+    retVal << "{";
     retVal << lmn_stringify_cell_nonewline(mem);
     retVal << "}";
     break;
