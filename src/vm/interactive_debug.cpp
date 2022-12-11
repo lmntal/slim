@@ -1,6 +1,9 @@
 #include "interactive_debug.hpp"
-#include "task.h"
 #include "stringifier.hpp"
+
+#include "task.h"
+#include "../verifier/statespace.h"
+
 #include <iostream>
 #include <string>
 #include <sstream>
@@ -384,9 +387,9 @@ void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRe
   std::flush(std::cout);
 
   std::cout << "\nRule        : ";
-  std::cout << (rule == nullptr ? "null" : rule->name == ANONYMOUS ? "ANONYMOUS" : lmn_id_to_name(rule->name)) << '\n';
+  std::cout << (rule == nullptr ? "null" : rule->name == ANONYMOUS ? "ANONYMOUS" : lmn_id_to_name(rule->name)) << "\n";
 
-  std::cout << "Instruction : " << stringify_instr(instr) << '\n';
+  std::cout << "Instruction : " << stringify_instr(instr) << "\n";
 
   if (instr != nullptr && *((LmnInstrOp *)instr) != INSTR_SPEC && previous_instr >= instr) {
     std::cout << "Possible backtracking. (From: " << stringify_instr(previous_instr) << ")\n";
@@ -655,6 +658,21 @@ void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRe
         }
         break;
       }
+      case DebugCommand::INFO_STATESPACE: {
+        std::cout << "AutomataRef: " << pointer_to_string(automata) << "\n";
+        std::cout << "StateSpaceRef: " << pointer_to_string(statespace) << "\n";
+        if (statespace != nullptr) {
+          for (State *state : statespace->all_states()) {
+            std::cout << "    state: " << pointer_to_string(state) << "\n";
+            LmnMembraneRef mem = state->restore_membrane_inner(false);
+            std::cout << "    " << slim::stringifier::lmn_stringify_mem(mem) << "\n";
+            if (state->is_binstr_user()) {
+              mem->free_rec();
+            }
+          }
+        }
+        break;
+      }
       // step rule
       case DebugCommand::STEP_RULE: {
         instr_execution_count = 0;
@@ -712,10 +730,10 @@ void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRe
         auto end = breakpoints_on_rule.end();
         auto res = std::find(breakpoints_on_rule.begin(), end, argv.at(2));
         if (res != end) {
-          std::cout << "Breakpoint is already set to rule: " << argv.at(2) << '\n';
+          std::cout << "Breakpoint is already set to rule: " << argv.at(2) << "\n";
         } else {
           breakpoints_on_rule.push_back(argv.at(2));
-          std::cout << "Breakpoint is set to rule: " << argv.at(2) << '\n';
+          std::cout << "Breakpoint is set to rule: " << argv.at(2) << "\n";
         }
         break;
       }
@@ -733,10 +751,10 @@ void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRe
         auto end = breakpoints_on_instr.end();
         auto res = std::find(breakpoints_on_instr.begin(), end, instr_id);
         if (res != end) {
-          std::cout << "Breakpoint is already set to instruction: " << argv.at(2) << '\n';
+          std::cout << "Breakpoint is already set to instruction: " << argv.at(2) << "\n";
         } else {
           breakpoints_on_instr.push_back((LmnInstruction) instr_id);
-          std::cout << "Breakpoint is set to instruction: " << argv.at(2) << '\n';
+          std::cout << "Breakpoint is set to instruction: " << argv.at(2) << "\n";
         }
         break;
       }
@@ -749,10 +767,10 @@ void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRe
         auto end = breakpoints_on_rule.end();
         auto res = std::find(breakpoints_on_rule.begin(), end, argv.at(2));
         if (res == end) {
-          std::cout << "Breakpoint is not set to rule: " << argv.at(2) << '\n';
+          std::cout << "Breakpoint is not set to rule: " << argv.at(2) << "\n";
         } else {
           breakpoints_on_rule.erase(res);
-          std::cout << "Breakpoint is deleted for rule: " << argv.at(2) << '\n';
+          std::cout << "Breakpoint is deleted for rule: " << argv.at(2) << "\n";
         }
         break;
       }
@@ -764,15 +782,15 @@ void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRe
         }
         int instr_id = get_instr_id(argv.at(2).c_str());
         if (instr_id == -1) {
-          std::cout << "Unknown Instruction: no breakpoint is deleted" << '\n';
+          std::cout << "Unknown Instruction: no breakpoint is deleted\n";
         } else {
           auto end = breakpoints_on_instr.end();
           auto res = std::find(breakpoints_on_instr.begin(), end, instr_id);
           if (res == end) {
-            std::cout << "Breakpoint is not set to instruction: " << argv.at(2) << '\n';
+            std::cout << "Breakpoint is not set to instruction: " << argv.at(2) << "\n";
           } else {
             breakpoints_on_instr.erase(res);
-            std::cout << "Breakpoint is deleted for instruction: " << argv.at(2) << '\n';
+            std::cout << "Breakpoint is deleted for instruction: " << argv.at(2) << "\n";
           }
         }
         break;
@@ -852,7 +870,7 @@ void InteractiveDebugger::break_on_rule(const LmnReactCxtRef rc, const LmnRuleRe
 }
 
 void InteractiveDebugger::finish_debugging(void) {
-  std::cout << '\n';
+  std::cout << "\n";
   std::flush(std::cout);
 }
 
@@ -860,7 +878,7 @@ static bool print_section(const std::vector<std::string> &lines, size_t from_lin
   size_t line_count = lines.size();
   if (line_count < screen_height) {
     for (auto s : lines) {
-      std::cout << s << '\n';
+      std::cout << s << "\n";
     }
     return false;
   }
@@ -872,7 +890,7 @@ static bool print_section(const std::vector<std::string> &lines, size_t from_lin
   std::cout << "\e[2J\e[0;0H"; // delete screen and move cursor to top left
 
   for (size_t i = from_line; i < from_line + (screen_height - 1); i++) {
-    std::cout << lines.at(i) << '\n';
+    std::cout << lines.at(i) << "\n";
   }
 
   std::cout << "(" << from_line << "-" << (from_line + (screen_height - 1)) << "/" << line_count << ") :";
@@ -999,4 +1017,12 @@ void InteractiveDebugger::print_feeding(const std::string &str) {
   tcsetattr(STDIN_FILENO, TCSANOW, &old_termios);
 
   return;
+}
+
+void InteractiveDebugger::register_automata(AutomataRef ref) {
+  automata = ref;
+}
+
+void InteractiveDebugger::register_statespace(StateSpaceRef ref) {
+  statespace = ref;
 }

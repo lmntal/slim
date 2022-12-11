@@ -116,6 +116,9 @@ static inline void do_mc(LmnMembraneRef world_mem_org, AutomataRef a,
   }
   wp = new LmnWorkerGroup(a, psyms, thread_num);
   states = worker_states(wp->get_worker(LMN_PRIMARY_ID));
+  if (lmn_env.interactive_debug) {
+    InteractiveDebugger::get_instance().register_statespace(states);
+  }
   p_label = a ? a->get_init_state() : DEFAULT_STATE_ID;
   mem = world_mem_org->copy();
   init_s = new State(mem, p_label, states->use_memenc());

@@ -6,6 +6,7 @@
 #include "atomlist.hpp"
 #include "rule.h"
 #include "rule.hpp"
+#include "../verifier/automata.h"
 
 // get name from id
 const char* get_instr_name(int id);
@@ -37,6 +38,10 @@ private:
   int screen_width = -1;
   void print_feeding(const std::string &str);
 
+  // for non-deterministic execution (experimental)
+  AutomataRef automata = nullptr;
+  StateSpaceRef statespace = nullptr;
+
 public:
   InteractiveDebugger(const InteractiveDebugger&) = delete;
   InteractiveDebugger& operator=(const InteractiveDebugger&) = delete;
@@ -52,6 +57,9 @@ public:
     static InteractiveDebugger instance;
     return instance;
   }
+
+  void register_automata(AutomataRef ref);
+  void register_statespace(StateSpaceRef ref);
 };
 
 #endif
