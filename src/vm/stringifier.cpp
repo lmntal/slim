@@ -216,7 +216,7 @@ static std::string stringify_data_atom(LmnAtomRef data, LmnLinkAttr attr) {
     retVal << lmn_get_double((LmnDataAtomRef)data);
   } break;
   case LMN_SP_ATOM_ATTR: {
-    // TODO: do not use port
+    // TODO: try not to use port
     // taken from slim::to_string(const LmnMembrane*, OutputFormat) at src/vm/dumper.cpp
     LmnPortRef tmp_port = lmn_make_output_string_port();
     SP_ATOM_DUMP(data, tmp_port);

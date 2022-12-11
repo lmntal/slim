@@ -686,7 +686,7 @@ void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRe
             s += "] : ";
 
             // membrane
-            LmnMembraneRef mem = state->restore_membrane_inner(false);
+            LmnMembraneRef mem = state->restore_membrane_inner(FALSE);
             s += slim::stringifier::lmn_stringify_mem(mem);
             if (state->is_binstr_user()) {
               mem->free_rec();
@@ -716,8 +716,9 @@ void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRe
               break;
             }
 
-            auto end = statespace->all_states().end();
-            auto res = std::find_if(statespace->all_states().begin(), end,
+            auto states_vec = statespace->all_states();
+            auto end = states_vec.end();
+            auto res = std::find_if(states_vec.begin(), end,
               [l](State *state) -> bool { return state_id(state) == l; }
             );
 
@@ -735,10 +736,20 @@ void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRe
             s += pointer_to_string(state);
             s += "], ID[";
             s += std::to_string(state_id(state));
-            s += "])\n";
+            s += "]) -> ";
 
-            LmnMembraneRef mem = state->restore_membrane_inner(false);
-            // FIXME causes segmentation fault
+            for (unsigned int i = 0, max = state->successor_num; i < max; i++) {
+              s += std::to_string(state_id(state_succ_state(state, i)));
+              if (i != max - 1) {
+                s += ",";
+              }
+            }
+
+            s += "\n";
+
+            // （0以外の）無効なポインタが返ってくる場合あり
+            // → 引数をfalseからFALSEに変えたら解決した？
+            LmnMembraneRef mem = state->restore_membrane_inner(FALSE);
             s += slim::stringifier::lmn_stringify_mem(mem);
             if (state->is_binstr_user()) {
               mem->free_rec();
