@@ -8,6 +8,9 @@
 #include <string>
 #include <sstream>
 #include <stdexcept>
+#include <cctype>
+#include <iomanip>
+
 #include <sys/ioctl.h>
 #include <unistd.h>
 #include <termios.h>
@@ -52,18 +55,35 @@ const char* get_instr_name(int id) {
   return "unknown";
 }
 
-static inline std::string pointer_to_string(const void *p) {
+template <class T>
+static inline std::string to_hex_string(T value) {
+  constexpr int width = sizeof(T) * 2;
   std::ostringstream oss;
-  oss << p;
+  oss << "0x";
+  oss << std::noshowbase;
+  oss << std::hex << std::setw(width) << std::setfill('0') << value;
   return oss.str();
 }
 
-static inline bool string_starts_with(const std::string &str1, const std::string &str2) {
-  if (str1.size() < str2.size()) {
-    return false;
-  } else {
-    return std::equal(str2.begin(), str2.end(), str1.begin());
+template <>
+inline std::string to_hex_string<unsigned char>(unsigned char value) {
+  if (value == 0) {
+    return "0x00";
   }
+  std::ostringstream oss;
+  oss << "0x";
+  oss << std::noshowbase;
+  oss << std::hex << std::setw(2) << std::setfill('0') << (unsigned int) value;
+  return oss.str();
+}
+
+template <class T>
+static inline std::string to_hex_string(T* value) {
+  return to_hex_string((uintptr_t)value);
+}
+
+static inline bool string_starts_with(const std::string &str1, const std::string &str2) {
+  return str1.size() < str2.size() ? false : std::equal(str2.begin(), str2.end(), str1.begin());
 }
 
 InteractiveDebugger::InteractiveDebugger() {
@@ -74,10 +94,6 @@ InteractiveDebugger::InteractiveDebugger() {
 }
 
 InteractiveDebugger::~InteractiveDebugger() {}
-
-static std::string stringify_atom(const LmnAtomRef atom, LmnByte at) {
-  return slim::stringifier::lmn_stringify_atom(atom, at);
-}
 
 // print register content
 static std::string stringify_register(const LmnRegisterRef reg) {
@@ -92,7 +108,7 @@ static std::string stringify_register(const LmnRegisterRef reg) {
 
   switch (tt) {
     case TT_ATOM:
-      retVal << stringify_atom((LmnAtomRef)wt, at);
+      retVal << slim::stringifier::lmn_stringify_atom((LmnAtomRef)wt, at);
       break;
     case TT_MEM:
       retVal << (LmnMembraneRef) wt << "(" << (unsigned int) at << ",mem)";
@@ -121,9 +137,9 @@ static std::string stringify_register_dev(const LmnRegisterRef reg) {
   switch (tt) {
     case TT_ATOM:
       if (LMN_ATTR_IS_DATA(at)) {
-        retVal << "\n   " << stringify_atom((LmnAtomRef) wt, at);
+        retVal << "\n   " << slim::stringifier::lmn_stringify_atom((LmnAtomRef) wt, at);
       } else {
-        retVal << stringify_atom((LmnAtomRef) wt, at) << "\n";
+        retVal << slim::stringifier::lmn_stringify_atom((LmnAtomRef) wt, at) << "\n";
         retVal << slim::stringifier::stringify_atom_dev((LmnSymbolAtomRef) wt);
       }
       break;
@@ -275,7 +291,7 @@ static std::string stringify_atomlist(const AtomListEntry *atomlist) {
   retVal << "[ ";
 
   while (begin != end) {
-    retVal << stringify_atom(*begin, LMN_ATTR_MAKE_LINK(0));
+    retVal << slim::stringifier::lmn_stringify_atom(*begin, LMN_ATTR_MAKE_LINK(0));
     ++begin;
     if (begin != end) {
       retVal << " | ";
@@ -318,7 +334,7 @@ static std::string get_membrane_tree(const LmnMembraneRef mem, std::string prefi
   lmn_interned_str in_str = mem->NAME_ID();
   myname += (in_str == ANONYMOUS ? "ANONYMOUS" : lmn_id_to_name(in_str));
   myname += "], Addr[";
-  myname += pointer_to_string(mem);
+  myname += to_hex_string(mem);
   myname += "], ID[";
   myname += std::to_string(mem->mem_id());
   myname += "])";
@@ -479,9 +495,11 @@ void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRe
         if (argc == 2) {
           print_feeding(stringify_regarray(&rc->work_array));
         }
-        // info registers <N>...
+        // info registers (dev) <N>...
         else {
-          for (size_t i = 2; i < argc; i++) {
+          bool dev = argc > 3 && argv.at(2) == "dev";
+          std::string s = "";
+          for (size_t i = (dev ? 3 : 2); i < argc; i++) {
             size_t l;
             try {
               l = std::stoul(argv.at(i));
@@ -493,8 +511,17 @@ void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRe
               std::cout << "Invalid argument at " << i << ": Exceeds length of register.\n";
               continue;
             }
-            print_feeding("Register[" + std::to_string(l) + "] : " + stringify_register_dev(&rc->reg(l)));
+            s += "Register[";
+            s += std::to_string(l);
+            s += "] : ";
+            if (dev) {
+              s += stringify_register_dev(&rc->reg(l));
+            } else {
+              s += stringify_register(&rc->reg(l));
+            }
+            s += "\n";
           }
+          print_feeding(s);
         }
         break;
       }
@@ -595,7 +622,7 @@ void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRe
           // info membrane current
           if (string_starts_with("current", argv.at(2))) {
             std::string s = "Current membrane (Addr[";
-            s += pointer_to_string((LmnMembraneRef)rc->wt(0));
+            s += to_hex_string((LmnMembraneRef)rc->wt(0));
             s += "]) :\n";
             s += slim::stringifier::lmn_stringify_mem((LmnMembraneRef)rc->wt(0));
             s += "\n";
@@ -604,7 +631,7 @@ void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRe
           // info membrane global
           else if (string_starts_with("global", argv.at(2))) {
             std::string s = "Global root membrane (Addr[";
-            s += pointer_to_string((LmnMembraneRef)rc->global_root);
+            s += to_hex_string((LmnMembraneRef)rc->global_root);
             s += "]) :\n";
             s += slim::stringifier::lmn_stringify_mem(rc->global_root);
             s += "\n";
@@ -621,7 +648,7 @@ void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRe
             }
             if (is_pointer_valid_for_membrane(rc->global_root, (void *)l)) {
               std::string s = "Membrane (Addr[";
-              s += pointer_to_string((LmnMembraneRef)l);
+              s += to_hex_string((LmnMembraneRef)l);
               s += "]) :\n";
               s += slim::stringifier::lmn_stringify_mem((LmnMembraneRef)l);
               s += "\n";
@@ -643,7 +670,7 @@ void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRe
             LmnMembraneRef mem = get_pointer_to_membrane_by_id(rc->global_root, l);
             if (mem != nullptr) {
               std::string s = "Membrane (Addr[";
-              s += pointer_to_string(mem);
+              s += to_hex_string(mem);
               s += "], ID[";
               s += std::to_string(l);
               s += "]) : \n";
@@ -661,17 +688,17 @@ void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRe
       // info statespace
       case DebugCommand::INFO_STATESPACE: {
         if (!lmn_env.nd) {
-          std::cout << "StateSpace could not be shown in normal execution\n";
+          std::cout << "StateSpace could not be shown in normal execution.\n";
           break;
         }
         if (statespace == nullptr) {
-          std::cout << "StateSpaceRef is null\n";
+          std::cout << "StateSpaceRef is null.\n";
           break;
         }
         // info statespace
         if (argc == 2) {
           std::string s = "StateSpace (Addr[";
-          s += pointer_to_string(statespace);
+          s += to_hex_string(statespace);
           s += "])\n";
           auto states_vec = statespace->all_states();
           std::sort(states_vec.begin(), states_vec.end(),
@@ -712,7 +739,7 @@ void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRe
             try {
               l = std::stoul(argv.at(2));
             } catch (const std::invalid_argument &e) {
-              std::cout << "Invalid argument: Not a valid integer\n";
+              std::cout << "Invalid argument: Not a valid integer.\n";
               break;
             }
 
@@ -729,11 +756,11 @@ void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRe
 
             State *state = *res;
             std::string s = "StateSpace (Addr[";
-            s += pointer_to_string(statespace);
+            s += to_hex_string(statespace);
             s += "])\n";
 
-            s += "State (Addr[";
-            s += pointer_to_string(state);
+            s += " State (Addr[";
+            s += to_hex_string(state);
             s += "], ID[";
             s += std::to_string(state_id(state));
             s += "]) -> ";
@@ -747,9 +774,13 @@ void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRe
 
             s += "\n";
 
-            // （0以外の）無効なポインタが返ってくる場合あり
-            // → 引数をfalseからFALSEに変えたら解決した？
             LmnMembraneRef mem = state->restore_membrane_inner(FALSE);
+            s += "  Membrane (Name[";
+            lmn_interned_str str = mem->NAME_ID();
+            s += (str == ANONYMOUS ? "ANONYMOUS" : lmn_id_to_name(str));
+            s += "], ID[";
+            s += std::to_string(mem->mem_id());
+            s += "])\n   ";
             s += slim::stringifier::lmn_stringify_mem(mem);
             if (state->is_binstr_user()) {
               mem->free_rec();
@@ -757,7 +788,7 @@ void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRe
 
             print_feeding(s);
           } else {
-            std::cout << "Unknown subcommand\n";
+            std::cout << "Unknown subcommand.\n";
             break;
           }
         }
@@ -902,6 +933,8 @@ void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRe
           "info membrane global -- print global root membrane\n"
           "info membrane <HEX> -- print membrane whose address is <HEX>\n"
           "info membrane <N> -- print membrane whose ID is <N>\n"
+          "info statespace -- print all states\n"
+          "info statespace <N> -- print a state whose ID is <N>\n"
           "info breakpoints -- list all breakpoints\n"
           "break instruction NAME -- set breakpoint on instruction named NAME\n"
           "break rule NAME -- set breakpoint on rule named NAME\n"
