@@ -190,10 +190,6 @@ void Task::lmn_run(Vector *start_rulesets) {
     normal_parallel_init();
   }
 
-  if (lmn_env.interactive_debug) {
-    InteractiveDebugger::get_instance().start_session(nullptr, nullptr, nullptr);
-  }
-
   /** PROFILE START */
   if (lmn_env.profile_level >= 1) {
     profile_start_exec();
@@ -202,6 +198,13 @@ void Task::lmn_run(Vector *start_rulesets) {
 
   react_start_rulesets(mem, start_rulesets);
   mrc->memstack_reconstruct(mem);
+
+  if (lmn_env.interactive_debug) {
+    esc_code_add(CODE__FORECOLOR_GREEN);
+    std::cout << "Launched interactive debug shell on normal execution start.\n";
+    esc_code_clear();
+    InteractiveDebugger::get_instance().start_session(nullptr, nullptr, nullptr);
+  }
 
   if (lmn_env.trace) {
     if (lmn_env.show_laststep_only) {

@@ -6,7 +6,6 @@
 #include "atomlist.hpp"
 #include "rule.h"
 #include "rule.hpp"
-#include "../verifier/automata.h"
 
 // get name from id
 const char* get_instr_name(int id);
@@ -29,6 +28,7 @@ private:
   long rule_reaction_stop_at = -1;
   long instr_execution_count = 0;
   long instr_execution_stop_at = -1;
+  bool finish_current_rule = false;
 
   // for managing inputs
   bool input_eof = false;
@@ -38,8 +38,7 @@ private:
   int screen_width = -1;
   void print_feeding(const std::string &str);
 
-  // for non-deterministic execution (experimental)
-  AutomataRef automata = nullptr;
+  // for non-deterministic execution
   StateSpaceRef statespace = nullptr;
 
 public:
@@ -58,7 +57,6 @@ public:
     return instance;
   }
 
-  void register_automata(AutomataRef ref);
   void register_statespace(StateSpaceRef ref);
 };
 

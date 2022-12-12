@@ -18,6 +18,7 @@
 enum class DebugCommand {
   CONTINUE,
   HELP,
+  FINISH,
   STEP_RULE,
   STEP_INSTR,
   INFO_REGISTER,
@@ -35,6 +36,7 @@ enum class DebugCommand {
 static const std::map<DebugCommand, std::vector<std::string>> debug_commands = {
   {DebugCommand::CONTINUE, {"continue"}},
   {DebugCommand::HELP, {"help"}},
+  {DebugCommand::FINISH, {"finish"}},
   {DebugCommand::STEP_RULE, {"step", "rule"}},
   {DebugCommand::STEP_INSTR, {"step", "instruction"}},
   {DebugCommand::INFO_REGISTER, {"info", "registers"}},
@@ -516,6 +518,8 @@ void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRe
             s += "] : ";
             if (dev) {
               s += stringify_register_dev(&rc->reg(l));
+            } else if (rc->tt(l) == TT_MEM) {
+                s += slim::stringifier::lmn_stringify_mem((LmnMembraneRef)rc->wt(l));
             } else {
               s += stringify_register(&rc->reg(l));
             }
@@ -633,27 +637,6 @@ void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRe
             s += "\n";
             print_feeding(s);
           }
-          // info membrane <HEX>
-          else if (string_starts_with(argv.at(2), "0x")) {
-            unsigned long l;
-            try {
-              l = std::stoul(argv.at(2), 0, 16);
-            } catch (const std::invalid_argument& e) {
-              std::cout << "Invalid argument at 2: Not a valid hexadecimal integer.\n";
-              break;
-            }
-            if (is_pointer_valid_for_membrane(rc->global_root, (void *)l)) {
-              std::string s = "Membrane (Addr[";
-              s += to_hex_string((LmnMembraneRef)l);
-              s += "]) :\n";
-              s += slim::stringifier::lmn_stringify_mem((LmnMembraneRef)l);
-              s += "\n";
-              print_feeding(s);
-            } else {
-              std::cout << "Invalid argument at 2: Not a valid pointer to LmnMembrane.\n";
-              break;
-            }
-          }
           // info membrane <N>
           else {
             unsigned long l;
@@ -704,7 +687,7 @@ void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRe
           );
           for (State *state : states_vec) {
             // state info
-            s += "State[";
+            s += "   State[";
             s += std::to_string(state_id(state));
             s += "] : ";
 
@@ -727,66 +710,60 @@ void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRe
           }
           print_feeding(s);
         }
-        // info statespace <ARG>...
+        // info statespace <N>
         else {
-          // info statespace <N>
-          if (true) {
-            unsigned long l;
-            try {
-              l = std::stoul(argv.at(2));
-            } catch (const std::invalid_argument &e) {
-              std::cout << "Invalid argument: Not a valid integer.\n";
-              break;
-            }
-
-            auto states_vec = statespace->all_states();
-            auto end = states_vec.end();
-            auto res = std::find_if(states_vec.begin(), end,
-              [l](State *state) -> bool { return state_id(state) == l; }
-            );
-
-            if (res == end) {
-              std::cout << "State with given id could not be found.\n";
-              break;
-            }
-
-            State *state = *res;
-            std::string s = "StateSpace (Addr[";
-            s += to_hex_string(statespace);
-            s += "])\n";
-
-            s += " State (Addr[";
-            s += to_hex_string(state);
-            s += "], ID[";
-            s += std::to_string(state_id(state));
-            s += "]) -> ";
-
-            for (unsigned int i = 0, max = state->successor_num; i < max; i++) {
-              s += std::to_string(state_id(state_succ_state(state, i)));
-              if (i != max - 1) {
-                s += ",";
-              }
-            }
-
-            s += "\n";
-
-            LmnMembraneRef mem = state->restore_membrane_inner(FALSE);
-            s += "  Membrane (Name[";
-            lmn_interned_str str = mem->NAME_ID();
-            s += (str == ANONYMOUS ? "ANONYMOUS" : lmn_id_to_name(str));
-            s += "], ID[";
-            s += std::to_string(mem->mem_id());
-            s += "])\n   ";
-            s += slim::stringifier::lmn_stringify_mem(mem);
-            if (state->is_binstr_user()) {
-              mem->free_rec();
-            }
-
-            print_feeding(s);
-          } else {
-            std::cout << "Unknown subcommand.\n";
+          unsigned long l;
+          try {
+            l = std::stoul(argv.at(2));
+          } catch (const std::invalid_argument &e) {
+            std::cout << "Invalid argument: Not a valid integer.\n";
             break;
           }
+
+          auto states_vec = statespace->all_states();
+          auto end = states_vec.end();
+          auto res = std::find_if(states_vec.begin(), end,
+            [l](State *state) -> bool { return state_id(state) == l; }
+          );
+
+          if (res == end) {
+            std::cout << "State with given id could not be found.\n";
+            break;
+          }
+
+          State *state = *res;
+          std::string s = "StateSpace (Addr[";
+          s += to_hex_string(statespace);
+          s += "])\n";
+
+          s += " State (Addr[";
+          s += to_hex_string(state);
+          s += "], ID[";
+          s += std::to_string(state_id(state));
+          s += "]) -> ";
+
+          for (unsigned int i = 0, max = state->successor_num; i < max; i++) {
+            s += std::to_string(state_id(state_succ_state(state, i)));
+            if (i != max - 1) {
+              s += ",";
+            }
+          }
+
+          s += "\n";
+
+          LmnMembraneRef mem = state->restore_membrane_inner(FALSE);
+          s += "  Membrane (Name[";
+          lmn_interned_str str = mem->NAME_ID();
+          s += (str == ANONYMOUS ? "ANONYMOUS" : lmn_id_to_name(str));
+          s += "], ID[";
+          s += std::to_string(mem->mem_id());
+          s += "])\n   ";
+          s += slim::stringifier::lmn_stringify_mem(mem);
+          if (state->is_binstr_user()) {
+            mem->free_rec();
+          }
+
+          print_feeding(s);
         }
         break;
       }
@@ -912,6 +889,16 @@ void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRe
         }
         break;
       }
+      case DebugCommand::FINISH: {
+        auto end = breakpoints_on_instr.end();
+        auto res = std::find(breakpoints_on_instr.begin(), end, INSTR_PROCEED);
+        if (res == end) {
+          finish_current_rule = true;
+          breakpoints_on_instr.push_back(INSTR_PROCEED);
+        }
+        continue_session = false;
+        break;
+      }
       // help
       case DebugCommand::HELP: {
         print_feeding(
@@ -927,7 +914,6 @@ void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRe
           "info membrane -- print all membranes' family tree\n"
           "info membrane current -- print currently reacting membrane\n"
           "info membrane global -- print global root membrane\n"
-          "info membrane <HEX> -- print membrane whose address is <HEX>\n"
           "info membrane <N> -- print membrane whose ID is <N>\n"
           "info statespace -- print all states\n"
           "info statespace <N> -- print a state whose ID is <N>\n"
@@ -957,13 +943,33 @@ void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRe
 void InteractiveDebugger::break_on_instruction(const LmnReactCxtRef rc, const LmnRuleRef rule, const LmnRuleInstr instr) {
   instr_execution_count++;
   if (instr_execution_count == instr_execution_stop_at) {
+    esc_code_add(CODE__FORECOLOR_YELLOW);
+    printf("Steped %ld instructions.\n", instr_execution_stop_at);
+    esc_code_clear();
     instr_execution_count = 0;
     instr_execution_stop_at = -1;
+    rule_reaction_count = 0;
+    rule_reaction_stop_at = -1;
     start_session(rc, rule, instr);
   } else {
     auto end = breakpoints_on_instr.end();
     auto res = std::find(breakpoints_on_instr.begin(), end, *(LmnInstrOp *)instr);
     if (res != end) {
+      if (finish_current_rule && *res == INSTR_PROCEED) {
+        esc_code_add(CODE__FORECOLOR_YELLOW);
+        printf("Finishing current rule.\n");
+        esc_code_clear();
+        finish_current_rule = false;
+        breakpoints_on_instr.erase(res);
+      } else {
+        esc_code_add(CODE__FORECOLOR_YELLOW);
+        printf("Breakpoint on instruction \"%s\" hit.\n", get_instr_name(*res));
+        esc_code_clear();
+      }
+      instr_execution_count = 0;
+      instr_execution_stop_at = -1;
+      rule_reaction_count = 0;
+      rule_reaction_stop_at = -1;
       start_session(rc, rule, instr);
     }
   }
@@ -974,6 +980,11 @@ void InteractiveDebugger::break_on_instruction(const LmnReactCxtRef rc, const Lm
 void InteractiveDebugger::break_on_rule(const LmnReactCxtRef rc, const LmnRuleRef rule, const LmnRuleInstr instr) {
   rule_reaction_count++;
   if (rule_reaction_count == rule_reaction_stop_at) {
+    esc_code_add(CODE__FORECOLOR_YELLOW);
+    printf("Steped %ld rules.\n", rule_reaction_stop_at);
+    esc_code_clear();
+    instr_execution_count = 0;
+    instr_execution_stop_at = -1;
     rule_reaction_count = 0;
     rule_reaction_stop_at = -1;
     start_session(rc, rule, instr);
@@ -981,6 +992,13 @@ void InteractiveDebugger::break_on_rule(const LmnReactCxtRef rc, const LmnRuleRe
     auto end = breakpoints_on_rule.end();
     auto res = std::find(breakpoints_on_rule.begin(), end, lmn_id_to_name(rule->name));
     if (res != end) {
+      esc_code_add(CODE__FORECOLOR_YELLOW);
+      printf("Breakpoint on rule \"%s\" hit.\n", (*res).c_str());
+      esc_code_clear();
+      instr_execution_count = 0;
+      instr_execution_stop_at = -1;
+      rule_reaction_count = 0;
+      rule_reaction_stop_at = -1;
       start_session(rc, rule, instr);
     }
   }
@@ -1136,10 +1154,6 @@ void InteractiveDebugger::print_feeding(const std::string &str) {
   tcsetattr(STDIN_FILENO, TCSANOW, &old_termios);
 
   return;
-}
-
-void InteractiveDebugger::register_automata(AutomataRef ref) {
-  automata = ref;
 }
 
 void InteractiveDebugger::register_statespace(StateSpaceRef ref) {
