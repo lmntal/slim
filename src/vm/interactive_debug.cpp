@@ -111,10 +111,10 @@ static std::string stringify_register(const LmnRegisterRef reg) {
       retVal << slim::stringifier::lmn_stringify_atom((LmnAtomRef)wt, at);
       break;
     case TT_MEM:
-      retVal << (LmnMembraneRef) wt << "(" << (unsigned int) at << ",mem)";
+      retVal << std::showbase << std::hex << wt << "(" << (unsigned int)at << std::dec << ",mem)";
       break;
     case TT_OTHER:
-      retVal << wt << "(" << (unsigned int) at << ",other)";
+      retVal << std::showbase << std::hex << wt << "(" << (unsigned int)at << std::dec << ",other)";
       break;
     default:
       retVal << "unknown tt type";
@@ -146,14 +146,14 @@ static std::string stringify_register_dev(const LmnRegisterRef reg) {
     case TT_MEM: {
       lmn_interned_str str = ((LmnMembraneRef) wt)->NAME_ID();
       retVal << "Name[" << (str == ANONYMOUS ? "ANONYMOUS" : lmn_id_to_name(str)) << "], ";
-      retVal << "Addr[" << (LmnMembraneRef) wt << "], ";
-      retVal << "ID[" << (unsigned long) ((LmnMembraneRef) wt)->mem_id() << "]\n";
+      retVal << "Addr[" << to_hex_string(wt) << "], ";
+      retVal << "ID[" << ((LmnMembraneRef) wt)->mem_id() << "]\n";
       retVal << slim::stringifier::lmn_stringify_mem_dev((LmnMembraneRef) wt);
       break;
     }
     case TT_OTHER:
-      retVal << "wt[0x" << std::hex << wt << std::dec << "], ";
-      retVal << "at[" << (unsigned int) at << "], ";
+      retVal << "wt[" << std::showbase << std::hex << wt << "], ";
+      retVal << "at[" << (unsigned int)at << std::dec << "], ";
       retVal << "tt[other]";
       break;
     default:
@@ -531,56 +531,52 @@ void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRe
           std::cout << "LmnReactCxtRef is null.\n";
           break;
         }
+        auto atom_lists = ((LmnMembraneRef)rc->wt(0))->atom_lists(); 
         // info atomlist
         if (argc == 2) {
           std::string s = "";
-          for (size_t i = 0, max = ((LmnMembraneRef) rc->wt(0))->max_functor; i < max; i++) {
-            auto list = ((LmnMembraneRef) rc->wt(0))->atomset[i];
-            if (list != nullptr) {
-              s += lmn_id_to_name(lmn_functor_table->get_entry(i)->name);
-              s += "_";
-              s += std::to_string(lmn_functor_table->get_entry(i)->arity);
-              s += " \t: ";
-              s += stringify_atomlist(list);
-              s += "\n";
-            }
+          for (auto &p : atom_lists) {
+            auto func_entry = lmn_functor_table->get_entry(p.first);
+            s += lmn_id_to_name(func_entry->name);
+            s += "_";
+            s += std::to_string(func_entry->arity);
+            s += " \t: ";
+            s += stringify_atomlist(p.second);
+            s += "\n";
           }
           print_feeding(s);
         }
         // info atomlist <FUNCTOR>...
         else {
           std::string s = "";
-          for (size_t i = 0, max = ((LmnMembraneRef) rc->wt(0))->max_functor; i < max; i++) {
-            auto list = ((LmnMembraneRef) rc->wt(0))->atomset[i];
-            if (list != nullptr) {
-              std::string functor_name = lmn_id_to_name(lmn_functor_table->get_entry(i)->name);
-              unsigned int functor_arity = lmn_functor_table->get_entry(i)->arity;
-
-              for (size_t j = 2; j < argc; j++) {
-                size_t underscore = argv.at(j).find("_");
-                if (underscore != std::string::npos && underscore > 0 && underscore < argv.at(j).size() - 1) {
-                  unsigned int input_arity;
-                  std::string input_name = argv.at(j).substr(0, underscore);
-                  try {
-                    input_arity = std::stoul(argv.at(j).substr(underscore + 1));
-                  } catch (const std::invalid_argument& e) {
-                    std::cout << "Invalid argument at " << j << ": Not a valid integer for arity.\n";
-                    continue;
-                  }
-                  if (functor_name == input_name && functor_arity == input_arity) {
-                    s += "  ";
-                    s += functor_name;
-                    s += "_";
-                    s += functor_arity;
-                    s += " \t: ";
-                    s += stringify_atomlist(list);
-                    s += "\n";
-                  }
+          for (size_t input_idx = 2; input_idx < argc; input_idx++) {
+            size_t underscore = argv.at(input_idx).find("_");
+            if (underscore != std::string::npos && underscore > 0 && underscore < argv.at(input_idx).size() - 1) {
+              unsigned int input_arity;
+              std::string input_name = argv.at(input_idx).substr(0, underscore);
+              try {
+                input_arity = std::stoul(argv.at(input_idx).substr(underscore + 1));
+              } catch (const std::invalid_argument& e) {
+                std::cout << "Invalid argument at " << input_idx << ": Not a valid integer for arity.\n";
+                continue;
+              }
+              for (auto &p : atom_lists) {
+                auto func_entry = lmn_functor_table->get_entry(p.first);
+                std::string functor_name = lmn_id_to_name(func_entry->name);
+                auto functor_arity = func_entry->arity;
+                if (functor_name == input_name && functor_arity == input_arity) {
+                  s += "  ";
+                  s += functor_name;
+                  s += "_";
+                  s += std::to_string(functor_arity);
+                  s += " \t: ";
+                  s += stringify_atomlist(p.second);
+                  s += "\n";
                 }
               }
-              print_feeding(s);
             }
           }
+          print_feeding(s);
         }
         break;
       }
