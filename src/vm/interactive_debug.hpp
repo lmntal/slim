@@ -6,6 +6,7 @@
 #include "atomlist.hpp"
 #include "rule.h"
 #include "rule.hpp"
+#include "interpret/interpreter.hpp"
 
 // get name from id
 const char* get_instr_name(int id);
@@ -47,10 +48,11 @@ public:
   InteractiveDebugger(InteractiveDebugger&&) = delete;
   InteractiveDebugger& operator=(InteractiveDebugger&&) = delete;
 
-  void start_session(const LmnReactCxtRef rc, const LmnRuleRef rule, const LmnRuleInstr instr);
-  void break_on_instruction(const LmnReactCxtRef rc, const LmnRuleRef rule, const LmnRuleInstr instr);
-  void break_on_rule(const LmnReactCxtRef rc, const LmnRuleRef rule, const LmnRuleInstr instr);
-  void finish_debugging(void);
+  void start_session_on_entry();
+  void start_session_with_interpreter(const slim::vm::interpreter *interpreter);
+  void break_on_instruction(const slim::vm::interpreter *interpreter);
+  void break_on_rule(const slim::vm::interpreter *interpreter);
+  void finish_debugging();
 
   static InteractiveDebugger& get_instance() {
     static InteractiveDebugger instance;

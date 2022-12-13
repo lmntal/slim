@@ -129,7 +129,7 @@ static inline void do_mc(LmnMembraneRef world_mem_org, AutomataRef a,
     esc_code_add(CODE__FORECOLOR_GREEN);
     printf("Launched interactive debug shell on non-deterministic execution start.\n");
     esc_code_clear();
-    InteractiveDebugger::get_instance().start_session(nullptr, nullptr, nullptr);
+    InteractiveDebugger::get_instance().start_session_on_entry();
   }
 
   /** START

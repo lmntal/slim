@@ -396,13 +396,162 @@ static LmnMembraneRef get_pointer_to_membrane_by_id(const LmnMembraneRef mem, un
   }
 }
 
-void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRef rule, const LmnRuleInstr instr) {
+void InteractiveDebugger::start_session_on_entry() {
+  bool continue_session = true;
+  while (continue_session) {
+    if (std::cin.eof()) {
+      std::cout << "^D" << std::endl;
+      input_eof = true;
+      break;
+    }
+
+    std::string arg_string;
+    std::cout << "(debugger) ";
+    std::getline(std::cin, arg_string);
+
+    std::vector<std::string> argv;
+    split_command(arg_string, argv);
+
+    const size_t argc = argv.size();
+
+    if (argc == 0) {
+      continue;
+    }
+
+    // info
+    if (string_starts_with("info", argv.at(0))) {
+      if (argc == 1) {
+        std::cout << "Missing subcommand.\n";
+        continue;
+      } else if (!string_starts_with("breakpoints", argv.at(1))) {
+        std::cout << "Unknown subcommand.\n";
+        continue;
+      }
+      std::string s = "Breakpoints for instructions :\n";
+      for (auto &i : breakpoints_on_instr) {
+        s += "    ";
+        s += get_instr_name(i);
+        s += "\n";
+      }
+
+      s += "Breakpoints for rules :\n";
+      for (auto &str : breakpoints_on_rule) {
+        s += "    ";
+        s += str;
+        s += "\n";
+      }
+      print_feeding(s);
+    }
+    // break
+    else if (string_starts_with("break", argv.at(0))) {
+      if (argc == 1) {
+        std::cout << "Missing subcommand.\n";
+        continue;
+      } else if (argc == 2) {
+        std::cout << "Missing target instruction/rule name.\n";
+        continue;
+      }
+      // break instruction
+      else if (string_starts_with("instruction", argv.at(1))) {
+        int instr_id = get_instr_id(argv.at(2).c_str());
+        if (instr_id == -1) {
+          std::cout << "Unknown Instruction: breakpoint is not set.\n";
+          break;
+        }
+        auto end = breakpoints_on_instr.end();
+        auto res = std::find(breakpoints_on_instr.begin(), end, instr_id);
+        if (res != end) {
+          std::cout << "Breakpoint is already set to instruction: " << argv.at(2) << "\n";
+        } else {
+          breakpoints_on_instr.push_back((LmnInstruction) instr_id);
+          std::cout << "Breakpoint is set to instruction: " << argv.at(2) << "\n";
+        }
+      }
+      // break rule
+      else if (string_starts_with("rule", argv.at(1))) {
+        auto end = breakpoints_on_rule.end();
+        auto res = std::find(breakpoints_on_rule.begin(), end, argv.at(2));
+        if (res != end) {
+          std::cout << "Breakpoint is already set to rule: " << argv.at(2) << "\n";
+        } else {
+          breakpoints_on_rule.push_back(argv.at(2));
+          std::cout << "Breakpoint is set to rule: " << argv.at(2) << "\n";
+        }
+      } else {
+        std::cout << "Unknown subcommand.\n";
+      }
+    }
+    // delete
+    else if (string_starts_with("delete", argv.at(0))) {
+      if (argc == 1) {
+        std::cout << "Missing subcommand.\n";
+        continue;
+      } else if (argc == 2) {
+        std::cout << "Missing target instruction/rule name.\n";
+        continue;
+      }
+      // delete instruction
+      else if (string_starts_with("instruction", argv.at(1))) {
+        int instr_id = get_instr_id(argv.at(2).c_str());
+        if (instr_id == -1) {
+          std::cout << "Unknown Instruction: no breakpoint is deleted\n";
+        } else {
+          auto end = breakpoints_on_instr.end();
+          auto res = std::find(breakpoints_on_instr.begin(), end, instr_id);
+          if (res == end) {
+            std::cout << "Breakpoint is not set to instruction: " << argv.at(2) << "\n";
+          } else {
+            breakpoints_on_instr.erase(res);
+            std::cout << "Breakpoint is deleted for instruction: " << argv.at(2) << "\n";
+          }
+        }
+      }
+      // delete rule
+      else if (string_starts_with("rule", argv.at(1))) {
+        auto end = breakpoints_on_rule.end();
+        auto res = std::find(breakpoints_on_rule.begin(), end, argv.at(2));
+        if (res == end) {
+          std::cout << "Breakpoint is not set to rule: " << argv.at(2) << "\n";
+        } else {
+          breakpoints_on_rule.erase(res);
+          std::cout << "Breakpoint is deleted for rule: " << argv.at(2) << "\n";
+        }
+      } else {
+        std::cout << "Unknown subcommand.\n";
+      }
+    }
+    // run
+    else if (string_starts_with("run", argv.at(0))) {
+      continue_session = false;
+    }
+    // help
+    else if (string_starts_with("help", argv.at(0))) {
+      std::cout << (
+        "info breakpoints -- list all breakpoints\n"
+        "break instruction <NAME> -- set breakpoint on instruction named <NAME>\n"
+        "break rule <NAME> -- set breakpoint on rule named <NAME>\n"
+        "delete instruction <NAME> -- delete breakpoint on instruction named <NAME>\n"
+        "delete rule <NAME> -- delete breakpoint on rule named <NAME>\n"
+        "run -- start execution\n"
+        "help -- show this help\n"
+      );
+    } else {
+      std::cout << "Unknown command.\n";
+    }
+  }
+}
+
+void InteractiveDebugger::start_session_with_interpreter(const slim::vm::interpreter *interpreter) {
   if (input_eof) {
     return;
   }
 
   fflush(stdout);
   std::flush(std::cout);
+
+  const LmnReactCxtRef rc = interpreter == nullptr ? nullptr : interpreter->rc;
+  const LmnRuleRef rule = interpreter == nullptr ? nullptr : interpreter->rule;
+  const LmnRuleInstr instr = interpreter == nullptr ? nullptr : interpreter->instr;
 
   std::cout << "Rule        : ";
   std::cout << (rule == nullptr ? "null" : rule->name == ANONYMOUS ? "ANONYMOUS" : lmn_id_to_name(rule->name)) << "\n";
@@ -942,7 +1091,10 @@ void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRe
   }
 }
 
-void InteractiveDebugger::break_on_instruction(const LmnReactCxtRef rc, const LmnRuleRef rule, const LmnRuleInstr instr) {
+void InteractiveDebugger::break_on_instruction(const slim::vm::interpreter *interpreter) {
+  if (input_eof) {
+    return;
+  }
   instr_execution_count++;
   if (instr_execution_count == instr_execution_stop_at) {
     esc_code_add(CODE__FORECOLOR_YELLOW);
@@ -952,10 +1104,10 @@ void InteractiveDebugger::break_on_instruction(const LmnReactCxtRef rc, const Lm
     instr_execution_stop_at = -1;
     rule_reaction_count = 0;
     rule_reaction_stop_at = -1;
-    start_session(rc, rule, instr);
+    start_session_with_interpreter(interpreter);
   } else {
     auto end = breakpoints_on_instr.end();
-    auto res = std::find(breakpoints_on_instr.begin(), end, *(LmnInstrOp *)instr);
+    auto res = std::find(breakpoints_on_instr.begin(), end, *(LmnInstrOp *)(interpreter->instr));
     if (res != end) {
       if (finish_current_rule && *res == INSTR_PROCEED) {
         esc_code_add(CODE__FORECOLOR_YELLOW);
@@ -972,14 +1124,17 @@ void InteractiveDebugger::break_on_instruction(const LmnReactCxtRef rc, const Lm
       instr_execution_stop_at = -1;
       rule_reaction_count = 0;
       rule_reaction_stop_at = -1;
-      start_session(rc, rule, instr);
+      start_session_with_interpreter(interpreter);
     }
   }
 
-  previous_instr = instr;
+  previous_instr = interpreter->instr;
 }
 
-void InteractiveDebugger::break_on_rule(const LmnReactCxtRef rc, const LmnRuleRef rule, const LmnRuleInstr instr) {
+void InteractiveDebugger::break_on_rule(const slim::vm::interpreter *interpreter) {
+  if (input_eof) {
+    return;
+  }
   rule_reaction_count++;
   if (rule_reaction_count == rule_reaction_stop_at) {
     esc_code_add(CODE__FORECOLOR_YELLOW);
@@ -989,10 +1144,10 @@ void InteractiveDebugger::break_on_rule(const LmnReactCxtRef rc, const LmnRuleRe
     instr_execution_stop_at = -1;
     rule_reaction_count = 0;
     rule_reaction_stop_at = -1;
-    start_session(rc, rule, instr);
+    start_session_with_interpreter(interpreter);
   } else {
     auto end = breakpoints_on_rule.end();
-    auto res = std::find(breakpoints_on_rule.begin(), end, lmn_id_to_name(rule->name));
+    auto res = std::find(breakpoints_on_rule.begin(), end, lmn_id_to_name(interpreter->rule->name));
     if (res != end) {
       esc_code_add(CODE__FORECOLOR_YELLOW);
       printf("\nBreakpoint on rule \"%s\" hit.\n", (*res).c_str());
@@ -1001,14 +1156,14 @@ void InteractiveDebugger::break_on_rule(const LmnReactCxtRef rc, const LmnRuleRe
       instr_execution_stop_at = -1;
       rule_reaction_count = 0;
       rule_reaction_stop_at = -1;
-      start_session(rc, rule, instr);
+      start_session_with_interpreter(interpreter);
     }
   }
 
-  previous_rule = rule;
+  previous_rule = interpreter->rule;
 }
 
-void InteractiveDebugger::finish_debugging(void) {
+void InteractiveDebugger::finish_debugging() {
   std::cout << "\n";
   std::flush(std::cout);
 }
