@@ -228,6 +228,10 @@ void mc_expand(const StateSpaceRef ss, State *s, AutomataStateRef p_s,
   /** restore : 膜の復元 */
   mem = state_restore_mem(s);
 
+  if (lmn_env.interactive_debug) {
+    InteractiveDebugger::get_instance().register_expanding_state(s);
+  }
+
   /** expand  : 状態の展開 */
   if (p_s) {
     mc_gen_successors_with_property(s, mem, p_s, rc, psyms, f);

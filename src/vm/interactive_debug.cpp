@@ -524,6 +524,10 @@ void InteractiveDebugger::start_session_on_entry() {
     else if (string_starts_with("run", argv.at(0))) {
       continue_session = false;
     }
+    else if (string_starts_with("start", argv.at(0))) {
+      break_on_entry = true;
+      continue_session = false;
+    }
     // help
     else if (string_starts_with("help", argv.at(0))) {
       std::cout << (
@@ -533,6 +537,7 @@ void InteractiveDebugger::start_session_on_entry() {
         "delete instruction <NAME> -- delete breakpoint on instruction named <NAME>\n"
         "delete rule <NAME> -- delete breakpoint on rule named <NAME>\n"
         "run -- start execution\n"
+        "start -- start execution with temporary breakpoint on reaction of first rule\n"
         "help -- show this help\n"
       );
     } else {
@@ -847,12 +852,17 @@ void InteractiveDebugger::start_session_with_interpreter(const slim::vm::interpr
               mem->free_rec();
             }
 
-            s += " -> ";
+            s += " -> [";
             for (unsigned int i = 0, max = state->successor_num; i < max; i++) {
               s += std::to_string(state_id(state_succ_state(state, i)));
               if (i != max - 1) {
                 s += ",";
               }
+            }
+            s += "]";
+
+            if (state == expanding_state) {
+              s += " *expanding";
             }
 
             s += "\n";
@@ -1092,7 +1102,7 @@ void InteractiveDebugger::start_session_with_interpreter(const slim::vm::interpr
 }
 
 void InteractiveDebugger::break_on_instruction(const slim::vm::interpreter *interpreter) {
-  if (input_eof) {
+  if (input_eof || reacting_system_ruleset) {
     return;
   }
   instr_execution_count++;
@@ -1132,8 +1142,12 @@ void InteractiveDebugger::break_on_instruction(const slim::vm::interpreter *inte
 }
 
 void InteractiveDebugger::break_on_rule(const slim::vm::interpreter *interpreter) {
-  if (input_eof) {
+  if (input_eof || reacting_system_ruleset) {
     return;
+  }
+  if (break_on_entry) {
+    break_on_entry = false;
+    start_session_with_interpreter(interpreter);
   }
   rule_reaction_count++;
   if (rule_reaction_count == rule_reaction_stop_at) {
@@ -1311,8 +1325,4 @@ void InteractiveDebugger::print_feeding(const std::string &str) {
   tcsetattr(STDIN_FILENO, TCSANOW, &old_termios);
 
   return;
-}
-
-void InteractiveDebugger::register_statespace(StateSpaceRef ref) {
-  statespace = ref;
 }

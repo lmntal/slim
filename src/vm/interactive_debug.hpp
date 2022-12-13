@@ -29,7 +29,6 @@ private:
   long rule_reaction_stop_at = -1;
   long instr_execution_count = 0;
   long instr_execution_stop_at = -1;
-  bool finish_current_rule = false;
 
   // for managing inputs
   bool input_eof = false;
@@ -41,6 +40,12 @@ private:
 
   // for non-deterministic execution
   StateSpaceRef statespace = nullptr;
+  State* expanding_state = nullptr;
+
+  // for other controls
+  bool break_on_entry = false;
+  bool finish_current_rule = false;
+  bool reacting_system_ruleset = false;
 
 public:
   InteractiveDebugger(const InteractiveDebugger&) = delete;
@@ -59,7 +64,17 @@ public:
     return instance;
   }
 
-  void register_statespace(StateSpaceRef ref);
+  void register_statespace(StateSpaceRef ref) {
+    statespace = ref;
+  }
+
+  void register_expanding_state(State* state) {
+    expanding_state = state;
+  }
+
+  void set_system_ruleset_reacting(bool flag) {
+    reacting_system_ruleset = flag;
+  }
 };
 
 #endif
