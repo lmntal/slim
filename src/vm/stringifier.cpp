@@ -170,7 +170,6 @@ static std::string stringify_atomname(LmnFunctor f) {
 
 static std::string stringify_arg(LmnSymbolAtomRef atom, int i,
                      SimpleHashtbl *ht, struct DumpState *s, int call_depth) {
-  std::ostringstream retVal;
   struct AtomRec *rec;
   rec = get_atomrec(ht, atom);
 

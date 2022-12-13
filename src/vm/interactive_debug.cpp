@@ -19,6 +19,8 @@ enum class DebugCommand {
   CONTINUE,
   HELP,
   FINISH,
+  RUN,
+  START,
   STEP_RULE,
   STEP_INSTR,
   INFO_REGISTER,
@@ -30,13 +32,17 @@ enum class DebugCommand {
   BREAK_INSTR,
   DELETE_RULE,
   DELETE_INSTR,
-  UNKNOWN
+  __UNKNOWN,
+  __AMBIGUOUS,
+  __EMPTY
 };
 
 static const std::map<DebugCommand, std::vector<std::string>> debug_commands = {
   {DebugCommand::CONTINUE, {"continue"}},
   {DebugCommand::HELP, {"help"}},
   {DebugCommand::FINISH, {"finish"}},
+  {DebugCommand::RUN, {"run"}},
+  {DebugCommand::START, {"start"}},
   {DebugCommand::STEP_RULE, {"step", "rule"}},
   {DebugCommand::STEP_INSTR, {"step", "instruction"}},
   {DebugCommand::INFO_REGISTER, {"info", "registers"}},
@@ -50,6 +56,30 @@ static const std::map<DebugCommand, std::vector<std::string>> debug_commands = {
   {DebugCommand::DELETE_INSTR, {"delete", "instruction"}}
 };
 
+// prototype
+// Get hex form of value
+template <class T>
+static inline std::string to_hex_string(T value);
+template <>
+inline std::string to_hex_string<unsigned char>(unsigned char value);
+
+// check if vector contains value
+template <class T>
+static inline bool vector_contains(const std::vector<T> &vector, T value);
+
+static inline bool string_starts_with(const std::string &str1, const std::string &str2);
+
+static std::string stringify_register(const LmnRegisterRef reg);
+static std::string stringify_register_dev(const LmnRegisterRef reg);
+static std::string stringify_regarray(const LmnRegisterArray *reg_array);
+static std::string stringify_instr(const LmnRuleInstr instr);
+static std::string stringify_atomlist(const AtomListEntry *atomlist);
+static std::pair<DebugCommand,std::vector<std::string>> parse_command(const std::string &command);
+static std::string get_membrane_tree(const LmnMembraneRef mem, std::string prefix, const LmnMembraneRef global, const LmnMembraneRef current);
+static LmnMembraneRef get_pointer_to_membrane_by_id(const LmnMembraneRef mem, unsigned long id);
+static bool print_section(const std::vector<std::string> &lines, size_t from_line, size_t screen_height, size_t screen_width);
+// prototype end
+
 const char* get_instr_name(int id) {
   for (auto &p : instr_spec)
     if (id == p.first)
@@ -59,33 +89,31 @@ const char* get_instr_name(int id) {
 
 template <class T>
 static inline std::string to_hex_string(T value) {
-  constexpr int width = sizeof(T) * 2;
   std::ostringstream oss;
-  oss << "0x";
-  oss << std::noshowbase;
-  oss << std::hex << std::setw(width) << std::setfill('0') << value;
+  oss << std::showbase << std::hex << value;
   return oss.str();
 }
 
 template <>
 inline std::string to_hex_string<unsigned char>(unsigned char value) {
   if (value == 0) {
-    return "0x00";
+    return "0x0";
+  } else {
+    std::ostringstream oss;
+    oss << std::showbase << std::hex << (unsigned int) value;
+    return oss.str();
   }
-  std::ostringstream oss;
-  oss << "0x";
-  oss << std::noshowbase;
-  oss << std::hex << std::setw(2) << std::setfill('0') << (unsigned int) value;
-  return oss.str();
-}
-
-template <class T>
-static inline std::string to_hex_string(T* value) {
-  return to_hex_string((uintptr_t)value);
 }
 
 static inline bool string_starts_with(const std::string &str1, const std::string &str2) {
-  return str1.size() < str2.size() ? false : std::equal(str2.begin(), str2.end(), str1.begin());
+  return str1.size() < str2.size() ? false : std::equal(str2.cbegin(), str2.cend(), str1.cbegin());
+}
+
+template <class T>
+static inline bool vector_contains(const std::vector<T> &vector, T value) {
+  auto end = vector.cend();
+  auto res = std::find(vector.cbegin(), end, value);
+  return res != end;
 }
 
 InteractiveDebugger::InteractiveDebugger() {
@@ -103,27 +131,20 @@ static std::string stringify_register(const LmnRegisterRef reg) {
     return "null";
   }
 
-  std::ostringstream retVal;
   LmnWord wt = reg->wt;
   LmnByte at = reg->at;
   LmnByte tt = reg->tt;
 
   switch (tt) {
     case TT_ATOM:
-      retVal << slim::stringifier::lmn_stringify_atom((LmnAtomRef)wt, at);
-      break;
+      return slim::stringifier::lmn_stringify_atom((LmnAtomRef)wt, at);
     case TT_MEM:
-      retVal << std::showbase << std::hex << wt << "(" << (unsigned int)at << std::dec << ",mem)";
-      break;
+      return to_hex_string(wt) + "(" + std::to_string(at) + ",mem)";
     case TT_OTHER:
-      retVal << std::showbase << std::hex << wt << "(" << (unsigned int)at << std::dec << ",other)";
-      break;
+      return to_hex_string(wt) + "(" + std::to_string(at) + ",other)";
     default:
-      retVal << "unknown tt type";
-      break;
+      return "unknown tt type";
   }
-
-  return retVal.str();
 }
 
 static std::string stringify_register_dev(const LmnRegisterRef reg) {
@@ -154,8 +175,8 @@ static std::string stringify_register_dev(const LmnRegisterRef reg) {
       break;
     }
     case TT_OTHER:
-      retVal << "wt[" << std::showbase << std::hex << wt << "], ";
-      retVal << "at[" << (unsigned int)at << std::dec << "], ";
+      retVal << "wt[" << to_hex_string(wt) << "], ";
+      retVal << "at[" << to_hex_string(at) << "], ";
       retVal << "tt[other]";
       break;
     default:
@@ -304,17 +325,19 @@ static std::string stringify_atomlist(const AtomListEntry *atomlist) {
   return retVal.str();
 }
 
-static void split_command(const std::string &command, std::vector<std::string> &argv) {
+static std::pair<DebugCommand,std::vector<std::string>> parse_command(const std::string &command) {
   if (command.empty()) {
-    return;
+    return {DebugCommand::__EMPTY, {}};
   }
+
+  std::vector<std::string> command_vec;
 
   for (size_t start_index = 0, max = command.size(); start_index < max; ) {
     size_t space_index = command.find(' ', start_index);
     std::string temp = command.substr(start_index, space_index - start_index);
 
     if (!temp.empty()) {
-      argv.push_back(temp);
+      command_vec.push_back(temp);
     }
     if (space_index == std::string::npos) {
       break;
@@ -323,7 +346,48 @@ static void split_command(const std::string &command, std::vector<std::string> &
     start_index = space_index + 1;
   }
 
-  return;
+  const size_t argc = command_vec.size();
+  // reduce ambiguity
+  bool has_ambiguous_arg = false;
+  for (size_t i = 0; i < argc && !has_ambiguous_arg; i++) {
+    std::vector<std::string> argument_candidate;
+    for (auto &p : debug_commands) {
+      if (i < p.second.size()) {
+        if (std::equal(p.second.begin(), p.second.begin() + i, command_vec.begin())) {
+          if (string_starts_with(p.second.at(i), command_vec.at(i))) {
+            if (!vector_contains(argument_candidate, p.second.at(i))) {
+              argument_candidate.push_back(p.second.at(i));
+            }
+          }
+        }
+      }
+    }
+    if (argument_candidate.size() == 1) {
+      command_vec.at(i) = argument_candidate.at(0);
+    } else if (argument_candidate.size() > 1) {
+      argument_candidate.insert(argument_candidate.begin(), command_vec.at(i));
+      return {DebugCommand::__AMBIGUOUS, argument_candidate};
+    }
+  }
+
+  // identify command
+  auto cmd_iter_end = debug_commands.end();
+  auto cmd_iter_found = std::find_if(
+    debug_commands.begin(), cmd_iter_end,
+    [&command_vec, argc](std::pair<DebugCommand, std::vector<std::string>> p) -> bool {
+        return std::equal(
+          p.second.cbegin(), p.second.cend(),
+          command_vec.cbegin()
+        );
+    }
+  );
+
+  if (cmd_iter_found == cmd_iter_end) {
+    return {DebugCommand::__UNKNOWN, {}};
+  } else {
+    command_vec.erase(command_vec.begin(), command_vec.begin() + (*cmd_iter_found).second.size());
+    return {(*cmd_iter_found).first, command_vec};
+  }
 }
 
 static std::string get_membrane_tree(const LmnMembraneRef mem, std::string prefix, const LmnMembraneRef global, const LmnMembraneRef current) {
@@ -375,16 +439,6 @@ static std::string get_membrane_tree(const LmnMembraneRef mem, std::string prefi
   return retVal;
 }
 
-static bool is_pointer_valid_for_membrane(const LmnMembraneRef mem, const void *p) {
-  if (mem == nullptr) {
-    return false;
-  } else if (mem == p) {
-    return true;
-  } else {
-    return is_pointer_valid_for_membrane(mem->child_head, p) || is_pointer_valid_for_membrane(mem->next, p);
-  }
-}
-
 static LmnMembraneRef get_pointer_to_membrane_by_id(const LmnMembraneRef mem, unsigned long id) {
   if (mem == nullptr) {
     return nullptr;
@@ -409,139 +463,125 @@ void InteractiveDebugger::start_session_on_entry() {
     std::cout << "(debugger) ";
     std::getline(std::cin, arg_string);
 
-    std::vector<std::string> argv;
-    split_command(arg_string, argv);
+    const auto parse_result = parse_command(arg_string);
+    const auto cmd = parse_result.first;
+    const auto opt_argv = parse_result.second;
+    const size_t opt_argc = opt_argv.size();
 
-    const size_t argc = argv.size();
-
-    if (argc == 0) {
+    if (cmd == DebugCommand::__EMPTY) {
+      continue;
+    }
+    if (cmd == DebugCommand::__AMBIGUOUS) {
+      std::cerr << "Ambiguous input.\n";
       continue;
     }
 
-    // info
-    if (string_starts_with("info", argv.at(0))) {
-      if (argc == 1) {
-        std::cout << "Missing subcommand.\n";
-        continue;
-      } else if (!string_starts_with("breakpoints", argv.at(1))) {
-        std::cout << "Unknown subcommand.\n";
-        continue;
-      }
-      std::string s = "Breakpoints for instructions :\n";
-      for (auto &i : breakpoints_on_instr) {
-        s += "    ";
-        s += get_instr_name(i);
-        s += "\n";
-      }
+    switch (cmd) {
+      // info breakpoints
+      case DebugCommand::INFO_BREAKPOINT: {
+        std::string s = "Breakpoints for instructions :\n";
+        for (auto &i : breakpoints_on_instr) {
+          s += "    ";
+          s += get_instr_name(i);
+          s += "\n";
+        }
 
-      s += "Breakpoints for rules :\n";
-      for (auto &str : breakpoints_on_rule) {
-        s += "    ";
-        s += str;
-        s += "\n";
-      }
-      print_feeding(s);
-    }
-    // break
-    else if (string_starts_with("break", argv.at(0))) {
-      if (argc == 1) {
-        std::cout << "Missing subcommand.\n";
-        continue;
-      } else if (argc == 2) {
-        std::cout << "Missing target instruction/rule name.\n";
-        continue;
+        s += "Breakpoints for rules :\n";
+        for (auto &str : breakpoints_on_rule) {
+          s += "    ";
+          s += str;
+          s += "\n";
+        }
+        print_feeding(s);
+        break;
       }
       // break instruction
-      else if (string_starts_with("instruction", argv.at(1))) {
-        int instr_id = get_instr_id(argv.at(2).c_str());
+      case DebugCommand::BREAK_INSTR: {
+        int instr_id = get_instr_id(opt_argv.at(0).c_str());
         if (instr_id == -1) {
           std::cout << "Unknown Instruction: breakpoint is not set.\n";
           break;
         }
-        auto end = breakpoints_on_instr.end();
-        auto res = std::find(breakpoints_on_instr.begin(), end, instr_id);
-        if (res != end) {
-          std::cout << "Breakpoint is already set to instruction: " << argv.at(2) << "\n";
+        if (vector_contains(breakpoints_on_instr, (LmnInstruction)instr_id)) {
+          std::cout << "Breakpoint is already set to instruction: " << opt_argv.at(0) << "\n";
         } else {
           breakpoints_on_instr.push_back((LmnInstruction) instr_id);
-          std::cout << "Breakpoint is set to instruction: " << argv.at(2) << "\n";
+          std::cout << "Breakpoint is set to instruction: " << opt_argv.at(0) << "\n";
         }
+        break;
       }
       // break rule
-      else if (string_starts_with("rule", argv.at(1))) {
-        auto end = breakpoints_on_rule.end();
-        auto res = std::find(breakpoints_on_rule.begin(), end, argv.at(2));
-        if (res != end) {
-          std::cout << "Breakpoint is already set to rule: " << argv.at(2) << "\n";
+      case DebugCommand::BREAK_RULE: {
+        if (vector_contains(breakpoints_on_rule, opt_argv.at(0))) {
+          std::cout << "Breakpoint is already set to rule: " << opt_argv.at(0) << "\n";
         } else {
-          breakpoints_on_rule.push_back(argv.at(2));
-          std::cout << "Breakpoint is set to rule: " << argv.at(2) << "\n";
+          breakpoints_on_rule.push_back(opt_argv.at(0));
+          std::cout << "Breakpoint is set to rule: " << opt_argv.at(0) << "\n";
         }
-      } else {
-        std::cout << "Unknown subcommand.\n";
-      }
-    }
-    // delete
-    else if (string_starts_with("delete", argv.at(0))) {
-      if (argc == 1) {
-        std::cout << "Missing subcommand.\n";
-        continue;
-      } else if (argc == 2) {
-        std::cout << "Missing target instruction/rule name.\n";
-        continue;
+        break;
       }
       // delete instruction
-      else if (string_starts_with("instruction", argv.at(1))) {
-        int instr_id = get_instr_id(argv.at(2).c_str());
+      case DebugCommand::DELETE_INSTR: {
+        int instr_id = get_instr_id(opt_argv.at(0).c_str());
         if (instr_id == -1) {
           std::cout << "Unknown Instruction: no breakpoint is deleted\n";
         } else {
           auto end = breakpoints_on_instr.end();
           auto res = std::find(breakpoints_on_instr.begin(), end, instr_id);
           if (res == end) {
-            std::cout << "Breakpoint is not set to instruction: " << argv.at(2) << "\n";
+            std::cout << "Breakpoint is not set to instruction: " << opt_argv.at(0) << "\n";
           } else {
             breakpoints_on_instr.erase(res);
-            std::cout << "Breakpoint is deleted for instruction: " << argv.at(2) << "\n";
+            std::cout << "Breakpoint is deleted for instruction: " << opt_argv.at(0) << "\n";
           }
         }
+        break;
       }
       // delete rule
-      else if (string_starts_with("rule", argv.at(1))) {
+      case DebugCommand::DELETE_RULE: {
         auto end = breakpoints_on_rule.end();
-        auto res = std::find(breakpoints_on_rule.begin(), end, argv.at(2));
+        auto res = std::find(breakpoints_on_rule.begin(), end, opt_argv.at(0));
         if (res == end) {
-          std::cout << "Breakpoint is not set to rule: " << argv.at(2) << "\n";
+          std::cout << "Breakpoint is not set to rule: " << opt_argv.at(0) << "\n";
         } else {
           breakpoints_on_rule.erase(res);
-          std::cout << "Breakpoint is deleted for rule: " << argv.at(2) << "\n";
+          std::cout << "Breakpoint is deleted for rule: " << opt_argv.at(0) << "\n";
         }
-      } else {
-        std::cout << "Unknown subcommand.\n";
+        break;
       }
-    }
-    // run
-    else if (string_starts_with("run", argv.at(0))) {
-      continue_session = false;
-    }
-    else if (string_starts_with("start", argv.at(0))) {
-      break_on_entry = true;
-      continue_session = false;
-    }
-    // help
-    else if (string_starts_with("help", argv.at(0))) {
-      std::cout << (
-        "info breakpoints -- list all breakpoints\n"
-        "break instruction <NAME> -- set breakpoint on instruction named <NAME>\n"
-        "break rule <NAME> -- set breakpoint on rule named <NAME>\n"
-        "delete instruction <NAME> -- delete breakpoint on instruction named <NAME>\n"
-        "delete rule <NAME> -- delete breakpoint on rule named <NAME>\n"
-        "run -- start execution\n"
-        "start -- start execution with temporary breakpoint on reaction of first rule\n"
-        "help -- show this help\n"
-      );
-    } else {
-      std::cout << "Unknown command.\n";
+      // run
+      case DebugCommand::RUN: {
+        continue_session = false;
+        break;
+      }
+      // start
+      case DebugCommand::START: {
+        break_on_entry = true;
+        continue_session = false;
+        break;
+      }
+      // help
+      case DebugCommand::HELP: {
+        print_feeding(
+          "info breakpoints -- list all breakpoints\n"
+          "break instruction <NAME> -- set breakpoint on instruction named <NAME>\n"
+          "break rule <NAME> -- set breakpoint on rule named <NAME>\n"
+          "delete instruction <NAME> -- delete breakpoint on instruction named <NAME>\n"
+          "delete rule <NAME> -- delete breakpoint on rule named <NAME>\n"
+          "run -- start execution\n"
+          "start -- start execution with temporary breakpoint on reaction of first rule\n"
+          "help -- show this help\n"
+        );
+        break;
+      }
+      case DebugCommand::__UNKNOWN: {
+        std::cout << "Unknown command.\n";
+        break;
+      }
+      default: {
+        std::cout << "The command was not executed because program is not running.\n";
+        break;
+      }
     }
   }
 }
@@ -560,12 +600,7 @@ void InteractiveDebugger::start_session_with_interpreter(const slim::vm::interpr
 
   std::cout << "Rule        : ";
   std::cout << (rule == nullptr ? "null" : rule->name == ANONYMOUS ? "ANONYMOUS" : lmn_id_to_name(rule->name)) << "\n";
-
   std::cout << "Instruction : " << stringify_instr(instr) << "\n";
-
-  // if (instr != nullptr && previous_rule == rule && previous_instr >= instr) {
-  //   std::cout << "Possible backtracking. (from: " << stringify_instr(previous_instr) << ")\n";
-  // }
 
   bool continue_session = true;
   while (continue_session) {
@@ -579,61 +614,26 @@ void InteractiveDebugger::start_session_with_interpreter(const slim::vm::interpr
     std::cout << "(debugger) ";
     std::getline(std::cin, arg_string);
 
-    std::vector<std::string> argv;
-    split_command(arg_string, argv);
+    const auto parse_result = parse_command(arg_string);
+    const auto cmd = parse_result.first;
+    const auto opt_argv = parse_result.second;
+    const size_t opt_argc = opt_argv.size();
 
-    const size_t argc = argv.size();
-
-    if (argc == 0) {
+    if (cmd == DebugCommand::__EMPTY) {
       continue;
     }
 
-    // reduce ambiguity
-    bool has_ambiguous_arg = false;
-    for (size_t i = 0; i < argc && !has_ambiguous_arg; i++) {
-      std::vector<std::string> argument_candidate;
-      for (auto &p : debug_commands) {
-        if (i < p.second.size()) {
-          if (std::equal(p.second.begin(), p.second.begin() + i, argv.begin())) {
-            if (string_starts_with(p.second.at(i), argv.at(i))) {
-              auto end = argument_candidate.end();
-              auto res = std::find(argument_candidate.begin(), end, p.second.at(i));
-              if (res == end) {
-                argument_candidate.push_back(p.second.at(i));
-              }
-            }
-          }
+    if (cmd == DebugCommand::__AMBIGUOUS) {
+      std::cout << "Ambiguous command \"" << opt_argv.at(0) << "\": ";
+      for (size_t i = 1; i < opt_argc; i++) {
+        std::cout << opt_argv.at(i);
+        if (i != opt_argc - 1) {
+          std::cout << ", ";
         }
       }
-      if (argument_candidate.size() == 1) {
-        argv.at(i) = argument_candidate.at(0);
-      } else if (argument_candidate.size() > 1) {
-        has_ambiguous_arg = true;
-        std::cout << "Ambiguous command \"" << argv.at(i) << "\": ";
-        for (auto &s : argument_candidate) {
-          std::cout << s << ", ";
-        }
-        std::cout << "\b\b.\n";
-      }
-    }
-
-    if (has_ambiguous_arg) {
+      std::cout << "\n";
       continue;
     }
-
-    // identify command
-    auto cmd_iter_end = debug_commands.end();
-    auto cmd_iter_found = std::find_if(
-      debug_commands.begin(), cmd_iter_end,
-      [&argv, argc](std::pair<DebugCommand, std::vector<std::string>> p) -> bool {
-          return std::equal(
-            p.second.begin(), p.second.end(),
-            argv.begin()
-          );
-      }
-    );
-
-    DebugCommand cmd = cmd_iter_found == cmd_iter_end ? DebugCommand::UNKNOWN : (*cmd_iter_found).first;
 
     switch(cmd) {
       // continue
@@ -648,17 +648,17 @@ void InteractiveDebugger::start_session_with_interpreter(const slim::vm::interpr
           break;
         }
         // info registers
-        if (argc == 2) {
+        if (opt_argc == 0) {
           print_feeding(stringify_regarray(&rc->work_array));
         }
         // info registers (dev) <N>...
         else {
-          bool dev = argc > 3 && argv.at(2) == "dev";
+          bool dev = opt_argc > 1 && opt_argv.at(0) == "dev";
           std::string s = "";
-          for (size_t i = (dev ? 3 : 2); i < argc; i++) {
+          for (size_t i = (dev ? 1 : 0); i < opt_argc; i++) {
             size_t l;
             try {
-              l = std::stoul(argv.at(i));
+              l = std::stoul(opt_argv.at(i));
             } catch (const std::invalid_argument& e) {
               std::cout << "Invalid argument at " << i << ": Not a valid integer.\n";
               continue;
@@ -673,7 +673,7 @@ void InteractiveDebugger::start_session_with_interpreter(const slim::vm::interpr
             if (dev) {
               s += stringify_register_dev(&rc->reg(l));
             } else if (rc->tt(l) == TT_MEM) {
-                s += slim::stringifier::lmn_stringify_mem((LmnMembraneRef)rc->wt(l));
+              s += slim::stringifier::lmn_stringify_mem((LmnMembraneRef)rc->wt(l));
             } else {
               s += stringify_register(&rc->reg(l));
             }
@@ -691,50 +691,112 @@ void InteractiveDebugger::start_session_with_interpreter(const slim::vm::interpr
         }
         auto atom_lists = ((LmnMembraneRef)rc->wt(0))->atom_lists(); 
         // info atomlist
-        if (argc == 2) {
+        if (opt_argc == 0) {
           std::string s = "";
           for (auto &p : atom_lists) {
             auto func_entry = lmn_functor_table->get_entry(p.first);
             s += lmn_id_to_name(func_entry->name);
             s += "_";
             s += std::to_string(func_entry->arity);
-            s += " \t: ";
+            s += "   : ";
             s += stringify_atomlist(p.second);
             s += "\n";
           }
           print_feeding(s);
         }
-        // info atomlist <FUNCTOR>...
-        else {
-          std::string s = "";
-          for (size_t input_idx = 2; input_idx < argc; input_idx++) {
-            size_t underscore = argv.at(input_idx).find("_");
-            if (underscore != std::string::npos && underscore > 0 && underscore < argv.at(input_idx).size() - 1) {
-              unsigned int input_arity;
-              std::string input_name = argv.at(input_idx).substr(0, underscore);
-              try {
-                input_arity = std::stoul(argv.at(input_idx).substr(underscore + 1));
-              } catch (const std::invalid_argument& e) {
-                std::cout << "Invalid argument at " << input_idx << ": Not a valid integer for arity.\n";
-                continue;
-              }
-              for (auto &p : atom_lists) {
-                auto func_entry = lmn_functor_table->get_entry(p.first);
-                std::string functor_name = lmn_id_to_name(func_entry->name);
-                auto functor_arity = func_entry->arity;
-                if (functor_name == input_name && functor_arity == input_arity) {
-                  s += "  ";
-                  s += functor_name;
-                  s += "_";
-                  s += std::to_string(functor_arity);
-                  s += " \t: ";
-                  s += stringify_atomlist(p.second);
-                  s += "\n";
-                }
+        // info atomlist <FUNCTOR>
+        else if (opt_argc == 1) {
+          size_t underscore = opt_argv.at(0).find("_");
+          if (underscore != std::string::npos && underscore > 0 && underscore < opt_argv.at(0).size() - 1) {
+            unsigned int input_arity;
+            std::string input_name = opt_argv.at(0).substr(0, underscore);
+            AtomListEntryRef atomlist = nullptr;
+            try {
+              input_arity = std::stoul(opt_argv.at(0).substr(underscore + 1));
+            } catch (const std::invalid_argument& e) {
+              std::cout << "Invalid argument: Not a valid integer for arity.\n";
+              continue;
+            }
+            for (auto &p : atom_lists) {
+              auto func_entry = lmn_functor_table->get_entry(p.first);
+              std::string functor_name = lmn_id_to_name(func_entry->name);
+              auto functor_arity = func_entry->arity;
+              if (functor_name == input_name && functor_arity == input_arity) {
+                atomlist = p.second;
+                break;
               }
             }
+            if (atomlist == nullptr) {
+              std::cout << "Atomlist with specified functor could not be found.\n";
+              break;
+            } else {
+              std::string s = "  ";
+              s += opt_argv.at(0);
+              s += "   : ";
+              s += stringify_atomlist(atomlist);
+              s += "\n";
+              print_feeding(s);
+            }
+          } else {
+            std::cout << "Malformed functor.\n";
+            break;
           }
-          print_feeding(s);
+        }
+        // info atomlist <FUNCTOR> <N> (dev)
+        else {
+          bool dev = opt_argc > 2 && opt_argv.at(2) == "dev";
+          size_t input_n;
+          try {
+            input_n = std::stoul(opt_argv.at(1));
+          } catch (const std::invalid_argument &e) {
+            std::cout << "Invalid argument at 3: Not a valid integer.\n";
+            break;
+          }
+          AtomListEntryRef atomlist = nullptr;
+          size_t underscore = opt_argv.at(1).find("_");
+          if (underscore != std::string::npos && underscore > 0 && underscore < opt_argv.at(1).size() - 1) {
+            unsigned int input_arity;
+            std::string input_name = opt_argv.at(1).substr(0, underscore);
+            try {
+              input_arity = std::stoul(opt_argv.at(1).substr(underscore + 1));
+            } catch (const std::invalid_argument& e) {
+              std::cout << "Invalid argument at 2: Not a valid integer for arity.\n";
+              continue;
+            }
+            for (auto &p : atom_lists) {
+              auto func_entry = lmn_functor_table->get_entry(p.first);
+              std::string functor_name = lmn_id_to_name(func_entry->name);
+              auto functor_arity = func_entry->arity;
+              if (functor_name == input_name && functor_arity == input_arity) {
+                atomlist = p.second;
+                break;
+              }
+            }
+            if (atomlist == nullptr) {
+              std::cout << "Atomlist with specified functor could not be found.\n";
+              break;
+            }
+            size_t i = 0;
+            for (auto &s : *atomlist) {
+              if (i == input_n) {
+                std::string str = slim::stringifier::lmn_stringify_atom(s, LMN_ATTR_MAKE_LINK(input_arity));
+                if (dev) {
+                  str += "\n";
+                  str += slim::stringifier::stringify_atom_dev(s);
+                }
+                print_feeding(str);
+                break;
+              }
+              i++;
+            }
+            if (i != input_n) {
+              std::cout << "Invalid argument: Exceeds length of atomlist.\n";
+              break;
+            }
+          } else {
+            std::cout << "Malformed functor.\n";
+            break;
+          }
         }
         break;
       }
@@ -767,14 +829,13 @@ void InteractiveDebugger::start_session_with_interpreter(const slim::vm::interpr
           break;
         }
         // info membrane
-        if (argc == 2) {
-          std::string s = get_membrane_tree(rc->global_root, "", rc->global_root, (LmnMembraneRef) rc->wt(0));
-          print_feeding(s);
+        if (opt_argc == 0) {
+          print_feeding(get_membrane_tree(rc->global_root, "", rc->global_root, (LmnMembraneRef) rc->wt(0)));
         }
         // info membrane <ARG>...
         else {
           // info membrane current
-          if (string_starts_with("current", argv.at(2))) {
+          if (string_starts_with("current", opt_argv.at(0))) {
             std::string s = "Current membrane (Addr[";
             s += to_hex_string((LmnMembraneRef)rc->wt(0));
             s += "]) :\n";
@@ -783,7 +844,7 @@ void InteractiveDebugger::start_session_with_interpreter(const slim::vm::interpr
             print_feeding(s);
           }
           // info membrane global
-          else if (string_starts_with("global", argv.at(2))) {
+          else if (string_starts_with("global", opt_argv.at(0))) {
             std::string s = "Global root membrane (Addr[";
             s += to_hex_string((LmnMembraneRef)rc->global_root);
             s += "]) :\n";
@@ -795,23 +856,17 @@ void InteractiveDebugger::start_session_with_interpreter(const slim::vm::interpr
           else {
             unsigned long l;
             try {
-              l = std::stoul(argv.at(2));
+              l = std::stoul(opt_argv.at(0));
             } catch (const std::invalid_argument& e) {
               std::cout << "Invalid argument at 2: Not a valid integer.\n";
               break;
             }
             LmnMembraneRef mem = get_pointer_to_membrane_by_id(rc->global_root, l);
             if (mem != nullptr) {
-              std::string s = "Membrane (Addr[";
-              s += to_hex_string(mem);
-              s += "], ID[";
-              s += std::to_string(l);
-              s += "]) : \n";
-              s += slim::stringifier::lmn_stringify_mem(mem);
-              s += "\n";
-              print_feeding(s);
+              print_feeding("Membrane (Addr[" + to_hex_string(mem) + "], ID[" + std::to_string(l) + "]) : \n"
+                             + slim::stringifier::lmn_stringify_mem(mem) + "\n");
             } else {
-              std::cout << "Invalid argument at 2: Membrane with specified ID could not be found.\n";
+              std::cout << "Invalid argument at 2: Membrane with specified ID could not be found in a tree rooted from global root membrane.\n";
               break;
             }
           }
@@ -829,7 +884,7 @@ void InteractiveDebugger::start_session_with_interpreter(const slim::vm::interpr
           break;
         }
         // info statespace
-        if (argc == 2) {
+        if (opt_argc == 0) {
           std::string s = "StateSpace (Addr[";
           s += to_hex_string(statespace);
           s += "])\n";
@@ -873,7 +928,7 @@ void InteractiveDebugger::start_session_with_interpreter(const slim::vm::interpr
         else {
           unsigned long l;
           try {
-            l = std::stoul(argv.at(2));
+            l = std::stoul(opt_argv.at(0));
           } catch (const std::invalid_argument &e) {
             std::cout << "Invalid argument: Not a valid integer.\n";
             break;
@@ -886,7 +941,7 @@ void InteractiveDebugger::start_session_with_interpreter(const slim::vm::interpr
           );
 
           if (res == end) {
-            std::cout << "State with given id could not be found.\n";
+            std::cout << "State with given id could not be found in this statespace.\n";
             break;
           }
 
@@ -926,17 +981,16 @@ void InteractiveDebugger::start_session_with_interpreter(const slim::vm::interpr
         }
         break;
       }
+      // FIXME 1ステップ余分に進んでいるかも
       // step rule
       case DebugCommand::STEP_RULE: {
-        instr_execution_count = 0;
-        instr_execution_stop_at = -1;
-        rule_reaction_count = 0;
+        reset_step_execution();
 
         long l = 1;
         // step rule <N>
-        if (argc >= 3) {
+        if (opt_argc > 0) {
           try {
-            l = std::stol(argv.at(2));
+            l = std::stol(opt_argv.at(0));
           } catch (const std::invalid_argument& e) {
             l = -1;
           }
@@ -952,15 +1006,13 @@ void InteractiveDebugger::start_session_with_interpreter(const slim::vm::interpr
       }
       // step instruction
       case DebugCommand::STEP_INSTR: {
-        rule_reaction_count = 0;
-        rule_reaction_stop_at = -1;
-        instr_execution_count = 0;
+        reset_step_execution();
 
         long l = 1;
         // step instruction <N>
-        if (argc >= 3) {
+        if (opt_argc > 0) {
           try {
-            l = std::stol(argv.at(2));
+            l = std::stol(opt_argv.at(0));
           } catch (const std::invalid_argument& e) {
             l = -1;
           }
@@ -976,85 +1028,80 @@ void InteractiveDebugger::start_session_with_interpreter(const slim::vm::interpr
       }
       // break rule <RULE>
       case DebugCommand::BREAK_RULE: {
-        if (argc < 3) {
-          std::cout << "Too few arguments.\n";
+        if (opt_argc == 0) {
+          std::cout << "Missing target rule name.\n";
           break;
         }
-        auto end = breakpoints_on_rule.end();
-        auto res = std::find(breakpoints_on_rule.begin(), end, argv.at(2));
-        if (res != end) {
-          std::cout << "Breakpoint is already set to rule: " << argv.at(2) << "\n";
+        if (vector_contains(breakpoints_on_rule, opt_argv.at(0))) {
+          std::cout << "Breakpoint is already set to rule: " << opt_argv.at(0) << "\n";
         } else {
-          breakpoints_on_rule.push_back(argv.at(2));
-          std::cout << "Breakpoint is set to rule: " << argv.at(2) << "\n";
+          breakpoints_on_rule.push_back(opt_argv.at(0));
+          std::cout << "Breakpoint is set to rule: " << opt_argv.at(0) << "\n";
         }
         break;
       }
       // break instruction <INSTR>
       case DebugCommand::BREAK_INSTR: {
-        if (argc < 3) {
-          std::cout << "Too few arguments.\n";
+        if (opt_argc == 0) {
+          std::cout << "Missing target instruction name.\n";
           break;
         }
-        int instr_id = get_instr_id(argv.at(2).c_str());
+        int instr_id = get_instr_id(opt_argv.at(0).c_str());
         if (instr_id == -1) {
           std::cout << "Unknown Instruction: breakpoint is not set.\n";
           break;
         }
-        auto end = breakpoints_on_instr.end();
-        auto res = std::find(breakpoints_on_instr.begin(), end, instr_id);
-        if (res != end) {
-          std::cout << "Breakpoint is already set to instruction: " << argv.at(2) << "\n";
+        if (vector_contains(breakpoints_on_instr, (LmnInstruction)instr_id)) {
+          std::cout << "Breakpoint is already set to instruction: " << opt_argv.at(0) << "\n";
         } else {
           breakpoints_on_instr.push_back((LmnInstruction) instr_id);
-          std::cout << "Breakpoint is set to instruction: " << argv.at(2) << "\n";
+          std::cout << "Breakpoint is set to instruction: " << opt_argv.at(0) << "\n";
         }
         break;
       }
       // delete rule <RULE>
       case DebugCommand::DELETE_RULE: {
-        if (argc < 3) {
-          std::cout << "Too few arguments.\n";
+        if (opt_argc == 0) {
+          std::cout << "Missing target rule name.\n";
           break;
         }
         auto end = breakpoints_on_rule.end();
-        auto res = std::find(breakpoints_on_rule.begin(), end, argv.at(2));
+        auto res = std::find(breakpoints_on_rule.begin(), end, opt_argv.at(0));
         if (res == end) {
-          std::cout << "Breakpoint is not set to rule: " << argv.at(2) << "\n";
+          std::cout << "Breakpoint is not set to rule: " << opt_argv.at(0) << "\n";
         } else {
           breakpoints_on_rule.erase(res);
-          std::cout << "Breakpoint is deleted for rule: " << argv.at(2) << "\n";
+          std::cout << "Breakpoint is deleted for rule: " << opt_argv.at(0) << "\n";
         }
         break;
       }
       // delete instruction <INSTR>
       case DebugCommand::DELETE_INSTR: {
-        if (argc < 3) {
-          std::cout << "Too few arguments.\n";
+        if (opt_argc == 0) {
+          std::cout << "Missing target instruction name.\n";
           break;
         }
-        int instr_id = get_instr_id(argv.at(2).c_str());
+        int instr_id = get_instr_id(opt_argv.at(0).c_str());
         if (instr_id == -1) {
           std::cout << "Unknown Instruction: no breakpoint is deleted\n";
         } else {
           auto end = breakpoints_on_instr.end();
           auto res = std::find(breakpoints_on_instr.begin(), end, instr_id);
           if (res == end) {
-            std::cout << "Breakpoint is not set to instruction: " << argv.at(2) << "\n";
+            std::cout << "Breakpoint is not set to instruction: " << opt_argv.at(0) << "\n";
           } else {
             breakpoints_on_instr.erase(res);
-            std::cout << "Breakpoint is deleted for instruction: " << argv.at(2) << "\n";
+            std::cout << "Breakpoint is deleted for instruction: " << opt_argv.at(0) << "\n";
           }
         }
         break;
       }
       case DebugCommand::FINISH: {
-        auto end = breakpoints_on_instr.end();
-        auto res = std::find(breakpoints_on_instr.begin(), end, INSTR_PROCEED);
-        if (res == end) {
-          finish_current_rule = true;
-          breakpoints_on_instr.push_back(INSTR_PROCEED);
+        if (*(LmnInstrOp*)instr == INSTR_PROCEED) {
+          std::cout << "Already at the end of current rule.\n";
+          break;
         }
+        finish_current_rule = true;
         continue_session = false;
         break;
       }
@@ -1070,7 +1117,9 @@ void InteractiveDebugger::start_session_with_interpreter(const slim::vm::interpr
           "info registers <N>... -- print Nth register content of current react context in detail\n"
           "info registers dev <N>... -- print Nth register content of current react context in more detail\n"
           "info atomlist -- print atomlist of current membrane\n"
-          "info atomlist <FUNCTOR>... -- print atomlist whose functor is <FUNCTOR> in current membrane\n"
+          "info atomlist <FUNCTOR> -- print atomlist whose functor is <FUNCTOR> in current membrane\n"
+          "info atomlist <FUNCTOR> <N> -- print Nth element of atomlist whose functor is <FUNCTOR> in current membrane\n"
+          "info atomlist <FUNCTOR> <N> dev -- print Nth element of atomlist whose functor is <FUNCTOR> in current membrane in detail\n"
           "info membrane -- print all membranes' family tree\n"
           "info membrane current -- print currently reacting membrane\n"
           "info membrane global -- print global root membrane\n"
@@ -1087,8 +1136,13 @@ void InteractiveDebugger::start_session_with_interpreter(const slim::vm::interpr
         );
         break;
       }
-      case DebugCommand::UNKNOWN: {
+      case DebugCommand::__UNKNOWN: {
         std::cout << "Unknown command.\n";
+        break;
+      }
+      case DebugCommand::START:
+      case DebugCommand::RUN: {
+        std::cout << "Program is already running.\n";
         break;
       }
       default: {
@@ -1106,34 +1160,30 @@ void InteractiveDebugger::break_on_instruction(const slim::vm::interpreter *inte
     return;
   }
   instr_execution_count++;
-  if (instr_execution_count == instr_execution_stop_at) {
+  LmnInstrOp instr_op = *(LmnInstrOp*)interpreter->instr;
+  // step execution
+  if (instr_execution_stop_at != 0 && instr_execution_count == instr_execution_stop_at) {
     esc_code_add(CODE__FORECOLOR_YELLOW);
     printf("\nSteped %ld instructions.\n", instr_execution_stop_at);
     esc_code_clear();
-    instr_execution_count = 0;
-    instr_execution_stop_at = -1;
-    rule_reaction_count = 0;
-    rule_reaction_stop_at = -1;
+    reset_step_execution();
     start_session_with_interpreter(interpreter);
-  } else {
-    auto end = breakpoints_on_instr.end();
-    auto res = std::find(breakpoints_on_instr.begin(), end, *(LmnInstrOp *)(interpreter->instr));
-    if (res != end) {
-      if (finish_current_rule && *res == INSTR_PROCEED) {
-        esc_code_add(CODE__FORECOLOR_YELLOW);
-        printf("\nFinishing current rule.\n");
-        esc_code_clear();
-        finish_current_rule = false;
-        breakpoints_on_instr.erase(res);
-      } else {
-        esc_code_add(CODE__FORECOLOR_YELLOW);
-        printf("\nBreakpoint on instruction \"%s\" hit.\n", get_instr_name(*res));
-        esc_code_clear();
-      }
-      instr_execution_count = 0;
-      instr_execution_stop_at = -1;
-      rule_reaction_count = 0;
-      rule_reaction_stop_at = -1;
+  }
+  // finishing rule
+  else if (finish_current_rule && instr_op == INSTR_PROCEED) {
+    esc_code_add(CODE__FORECOLOR_YELLOW);
+    printf("\nFinishing current rule.\n");
+    esc_code_clear();
+    finish_current_rule = false;
+    start_session_with_interpreter(interpreter);
+  }
+  // hit breakpoint
+  else {
+    if (vector_contains(breakpoints_on_instr, (LmnInstruction)instr_op)) {
+      esc_code_add(CODE__FORECOLOR_YELLOW);
+      printf("\nBreakpoint on instruction \"%s\" hit.\n", get_instr_name(instr_op));
+      esc_code_clear();
+      reset_step_execution();
       start_session_with_interpreter(interpreter);
     }
   }
@@ -1145,31 +1195,27 @@ void InteractiveDebugger::break_on_rule(const slim::vm::interpreter *interpreter
   if (input_eof || reacting_system_ruleset) {
     return;
   }
+  // break on entry
   if (break_on_entry) {
     break_on_entry = false;
     start_session_with_interpreter(interpreter);
   }
   rule_reaction_count++;
-  if (rule_reaction_count == rule_reaction_stop_at) {
+  // step execution
+  if (rule_reaction_stop_at != 0 && rule_reaction_count == rule_reaction_stop_at) {
     esc_code_add(CODE__FORECOLOR_YELLOW);
     printf("\nSteped %ld rules.\n", rule_reaction_stop_at);
     esc_code_clear();
-    instr_execution_count = 0;
-    instr_execution_stop_at = -1;
-    rule_reaction_count = 0;
-    rule_reaction_stop_at = -1;
+    reset_step_execution();
     start_session_with_interpreter(interpreter);
-  } else {
-    auto end = breakpoints_on_rule.end();
-    auto res = std::find(breakpoints_on_rule.begin(), end, lmn_id_to_name(interpreter->rule->name));
-    if (res != end) {
+  }
+  // hit breakpoint
+  else {
+    if (vector_contains(breakpoints_on_rule, std::string(lmn_id_to_name(interpreter->rule->name)))) {
       esc_code_add(CODE__FORECOLOR_YELLOW);
-      printf("\nBreakpoint on rule \"%s\" hit.\n", (*res).c_str());
+      printf("\nBreakpoint on rule \"%s\" hit.\n", lmn_id_to_name(interpreter->rule->name));
       esc_code_clear();
-      instr_execution_count = 0;
-      instr_execution_stop_at = -1;
-      rule_reaction_count = 0;
-      rule_reaction_stop_at = -1;
+      reset_step_execution();
       start_session_with_interpreter(interpreter);
     }
   }
@@ -1237,14 +1283,19 @@ void InteractiveDebugger::print_feeding(const std::string &str) {
     }
   }
 
+  size_t current_line = 0, max_line = lines.size() - (screen_height - 1);
+  bool feeding = print_section(lines, current_line, screen_height, screen_width);
+
+  if (!feeding) {
+    return;
+  }
+
   struct termios old_termios, new_termios;
   tcgetattr(STDIN_FILENO, &old_termios);
   new_termios = old_termios;
   new_termios.c_lflag &= ~(ICANON | ECHO);
   tcsetattr(STDIN_FILENO, TCSANOW, &new_termios);
 
-  size_t current_line = 0, max_line = lines.size() - (screen_height - 1);
-  bool feeding = print_section(lines, current_line, screen_height, screen_width);
   bool esc_pressed = false;
   while (feeding) {
     size_t new_line = current_line;
@@ -1323,6 +1374,4 @@ void InteractiveDebugger::print_feeding(const std::string &str) {
   }
 
   tcsetattr(STDIN_FILENO, TCSANOW, &old_termios);
-
-  return;
 }

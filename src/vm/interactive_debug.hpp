@@ -8,7 +8,7 @@
 #include "rule.hpp"
 #include "interpret/interpreter.hpp"
 
-// get name from id
+// Get instruction name from id
 const char* get_instr_name(int id);
 
 class InteractiveDebugger {
@@ -25,10 +25,10 @@ private:
   LmnRuleRef previous_rule = nullptr;
 
   // for step execution
-  long rule_reaction_count = 0;
-  long rule_reaction_stop_at = -1;
-  long instr_execution_count = 0;
-  long instr_execution_stop_at = -1;
+  size_t rule_reaction_count = 0;
+  size_t rule_reaction_stop_at = 0;
+  size_t instr_execution_count = 0;
+  size_t instr_execution_stop_at = 0;
 
   // for managing inputs
   bool input_eof = false;
@@ -46,6 +46,13 @@ private:
   bool break_on_entry = false;
   bool finish_current_rule = false;
   bool reacting_system_ruleset = false;
+
+  void reset_step_execution() {
+    rule_reaction_count = 0;
+    rule_reaction_stop_at = 0;
+    instr_execution_count = 0;
+    instr_execution_stop_at = 0;
+  }
 
 public:
   InteractiveDebugger(const InteractiveDebugger&) = delete;
