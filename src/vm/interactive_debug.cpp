@@ -404,14 +404,14 @@ void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRe
   fflush(stdout);
   std::flush(std::cout);
 
-  std::cout << "\nRule        : ";
+  std::cout << "Rule        : ";
   std::cout << (rule == nullptr ? "null" : rule->name == ANONYMOUS ? "ANONYMOUS" : lmn_id_to_name(rule->name)) << "\n";
 
   std::cout << "Instruction : " << stringify_instr(instr) << "\n";
 
-  if (instr != nullptr && *((LmnInstrOp *)instr) != INSTR_SPEC && previous_instr >= instr) {
-    std::cout << "Possible backtracking. (From: " << stringify_instr(previous_instr) << ")\n";
-  }
+  // if (instr != nullptr && previous_rule == rule && previous_instr >= instr) {
+  //   std::cout << "Possible backtracking. (from: " << stringify_instr(previous_instr) << ")\n";
+  // }
 
   bool continue_session = true;
   while (continue_session) {
@@ -909,8 +909,9 @@ void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRe
           "step rule <N> -- apply N rules\n"
           "info registers -- print register content of current react context\n"
           "info registers <N>... -- print Nth register content of current react context in detail\n"
+          "info registers dev <N>... -- print Nth register content of current react context in more detail\n"
           "info atomlist -- print atomlist of current membrane\n"
-          "info atomlist <FUNCTOR>... -- print atomlist with functor FUNCTOR of current membrane\n"
+          "info atomlist <FUNCTOR>... -- print atomlist whose functor is <FUNCTOR> in current membrane\n"
           "info membrane -- print all membranes' family tree\n"
           "info membrane current -- print currently reacting membrane\n"
           "info membrane global -- print global root membrane\n"
@@ -918,10 +919,11 @@ void InteractiveDebugger::start_session(const LmnReactCxtRef rc, const LmnRuleRe
           "info statespace -- print all states\n"
           "info statespace <N> -- print a state whose ID is <N>\n"
           "info breakpoints -- list all breakpoints\n"
-          "break instruction NAME -- set breakpoint on instruction named NAME\n"
-          "break rule NAME -- set breakpoint on rule named NAME\n"
-          "delete instruction NAME -- delete breakpoint on instruction named NAME\n"
-          "delete rule NAME -- delete breakpoint on rule named NAME\n"
+          "finish -- continue execution till end of current rule\n"
+          "break instruction <NAME> -- set breakpoint on instruction named <NAME>\n"
+          "break rule <NAME> -- set breakpoint on rule named <NAME>\n"
+          "delete instruction <NAME> -- delete breakpoint on instruction named <NAME>\n"
+          "delete rule <NAME> -- delete breakpoint on rule named <NAME>\n"
           "help -- show this help\n"
         );
         break;
@@ -944,7 +946,7 @@ void InteractiveDebugger::break_on_instruction(const LmnReactCxtRef rc, const Lm
   instr_execution_count++;
   if (instr_execution_count == instr_execution_stop_at) {
     esc_code_add(CODE__FORECOLOR_YELLOW);
-    printf("Steped %ld instructions.\n", instr_execution_stop_at);
+    printf("\nSteped %ld instructions.\n", instr_execution_stop_at);
     esc_code_clear();
     instr_execution_count = 0;
     instr_execution_stop_at = -1;
@@ -957,13 +959,13 @@ void InteractiveDebugger::break_on_instruction(const LmnReactCxtRef rc, const Lm
     if (res != end) {
       if (finish_current_rule && *res == INSTR_PROCEED) {
         esc_code_add(CODE__FORECOLOR_YELLOW);
-        printf("Finishing current rule.\n");
+        printf("\nFinishing current rule.\n");
         esc_code_clear();
         finish_current_rule = false;
         breakpoints_on_instr.erase(res);
       } else {
         esc_code_add(CODE__FORECOLOR_YELLOW);
-        printf("Breakpoint on instruction \"%s\" hit.\n", get_instr_name(*res));
+        printf("\nBreakpoint on instruction \"%s\" hit.\n", get_instr_name(*res));
         esc_code_clear();
       }
       instr_execution_count = 0;
@@ -981,7 +983,7 @@ void InteractiveDebugger::break_on_rule(const LmnReactCxtRef rc, const LmnRuleRe
   rule_reaction_count++;
   if (rule_reaction_count == rule_reaction_stop_at) {
     esc_code_add(CODE__FORECOLOR_YELLOW);
-    printf("Steped %ld rules.\n", rule_reaction_stop_at);
+    printf("\nSteped %ld rules.\n", rule_reaction_stop_at);
     esc_code_clear();
     instr_execution_count = 0;
     instr_execution_stop_at = -1;
@@ -993,7 +995,7 @@ void InteractiveDebugger::break_on_rule(const LmnReactCxtRef rc, const LmnRuleRe
     auto res = std::find(breakpoints_on_rule.begin(), end, lmn_id_to_name(rule->name));
     if (res != end) {
       esc_code_add(CODE__FORECOLOR_YELLOW);
-      printf("Breakpoint on rule \"%s\" hit.\n", (*res).c_str());
+      printf("\nBreakpoint on rule \"%s\" hit.\n", (*res).c_str());
       esc_code_clear();
       instr_execution_count = 0;
       instr_execution_stop_at = -1;
