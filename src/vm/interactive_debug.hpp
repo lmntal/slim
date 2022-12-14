@@ -8,9 +8,6 @@
 #include "rule.hpp"
 #include "interpret/interpreter.hpp"
 
-// Get instruction name from id
-const char* get_instr_name(int id);
-
 class InteractiveDebugger {
 private:
   InteractiveDebugger();

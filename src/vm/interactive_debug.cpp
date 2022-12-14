@@ -1,20 +1,16 @@
 #include "interactive_debug.hpp"
-#include "stringifier.hpp"
+#include "debug_printer.hpp"
 
 #include "task.h"
 #include "../verifier/statespace.h"
 
 #include <iostream>
-#include <string>
-#include <sstream>
-#include <stdexcept>
-#include <cctype>
-#include <iomanip>
 
 #include <sys/ioctl.h>
 #include <unistd.h>
 #include <termios.h>
 
+// constants
 enum class DebugCommand {
   CONTINUE,
   HELP,
@@ -57,53 +53,16 @@ static const std::map<DebugCommand, std::vector<std::string>> debug_commands = {
 };
 
 // prototype
-// Get hex form of value
-template <class T>
-static inline std::string to_hex_string(T value);
-template <>
-inline std::string to_hex_string<unsigned char>(unsigned char value);
-
-// check if vector contains value
+// container
 template <class T>
 static inline bool vector_contains(const std::vector<T> &vector, T value);
 
-static inline bool string_starts_with(const std::string &str1, const std::string &str2);
-
-static std::string stringify_register(const LmnRegisterRef reg);
-static std::string stringify_register_dev(const LmnRegisterRef reg);
-static std::string stringify_regarray(const LmnRegisterArray *reg_array);
-static std::string stringify_instr(const LmnRuleInstr instr);
-static std::string stringify_atomlist(const AtomListEntry *atomlist);
+// input
 static std::pair<DebugCommand,std::vector<std::string>> parse_command(const std::string &command);
-static std::string get_membrane_tree(const LmnMembraneRef mem, std::string prefix, const LmnMembraneRef global, const LmnMembraneRef current);
-static LmnMembraneRef get_pointer_to_membrane_by_id(const LmnMembraneRef mem, unsigned long id);
+
+// output
 static bool print_section(const std::vector<std::string> &lines, size_t from_line, size_t screen_height, size_t screen_width);
 // prototype end
-
-const char* get_instr_name(int id) {
-  for (auto &p : instr_spec)
-    if (id == p.first)
-      return p.second.op_str;
-  return "unknown";
-}
-
-template <class T>
-static inline std::string to_hex_string(T value) {
-  std::ostringstream oss;
-  oss << std::showbase << std::hex << value;
-  return oss.str();
-}
-
-template <>
-inline std::string to_hex_string<unsigned char>(unsigned char value) {
-  if (value == 0) {
-    return "0x0";
-  } else {
-    std::ostringstream oss;
-    oss << std::showbase << std::hex << (unsigned int) value;
-    return oss.str();
-  }
-}
 
 static inline bool string_starts_with(const std::string &str1, const std::string &str2) {
   return str1.size() < str2.size() ? false : std::equal(str2.cbegin(), str2.cend(), str1.cbegin());
@@ -124,206 +83,6 @@ InteractiveDebugger::InteractiveDebugger() {
 }
 
 InteractiveDebugger::~InteractiveDebugger() {}
-
-// print register content
-static std::string stringify_register(const LmnRegisterRef reg) {
-  if (reg == nullptr) {
-    return "null";
-  }
-
-  LmnWord wt = reg->wt;
-  LmnByte at = reg->at;
-  LmnByte tt = reg->tt;
-
-  switch (tt) {
-    case TT_ATOM:
-      return slim::stringifier::lmn_stringify_atom((LmnAtomRef)wt, at);
-    case TT_MEM:
-      return to_hex_string(wt) + "(" + std::to_string(at) + ",mem)";
-    case TT_OTHER:
-      return to_hex_string(wt) + "(" + std::to_string(at) + ",other)";
-    default:
-      return "unknown tt type";
-  }
-}
-
-static std::string stringify_register_dev(const LmnRegisterRef reg) {
-  if (reg == nullptr) {
-    return "null";
-  }
-
-  std::ostringstream retVal;
-  LmnWord wt = reg->wt;
-  LmnByte at = reg->at;
-  LmnByte tt = reg->tt;
-
-  switch (tt) {
-    case TT_ATOM:
-      if (LMN_ATTR_IS_DATA(at)) {
-        retVal << "\n   " << slim::stringifier::lmn_stringify_atom((LmnAtomRef) wt, at);
-      } else {
-        retVal << slim::stringifier::lmn_stringify_atom((LmnAtomRef) wt, at) << "\n";
-        retVal << slim::stringifier::stringify_atom_dev((LmnSymbolAtomRef) wt);
-      }
-      break;
-    case TT_MEM: {
-      lmn_interned_str str = ((LmnMembraneRef) wt)->NAME_ID();
-      retVal << "Name[" << (str == ANONYMOUS ? "ANONYMOUS" : lmn_id_to_name(str)) << "], ";
-      retVal << "Addr[" << to_hex_string(wt) << "], ";
-      retVal << "ID[" << ((LmnMembraneRef) wt)->mem_id() << "]\n";
-      retVal << slim::stringifier::lmn_stringify_mem_dev((LmnMembraneRef) wt);
-      break;
-    }
-    case TT_OTHER:
-      retVal << "wt[" << to_hex_string(wt) << "], ";
-      retVal << "at[" << to_hex_string(at) << "], ";
-      retVal << "tt[other]";
-      break;
-    default:
-      retVal << "unknown tt type";
-      break;
-  }
-
-  return retVal.str();
-}
-
-static std::string stringify_regarray(const LmnRegisterArray *reg_array) {
-  if (reg_array == nullptr) {
-    return "null";
-  }
-
-  std::ostringstream retVal;
-
-  retVal << "[ ";
-  for (size_t i = 0, reg_len = reg_array->size(); i < reg_len; i++) {
-    retVal << stringify_register((LmnRegisterRef) &(reg_array->at(i)));
-    if (i != reg_len - 1) {
-      retVal << " | ";
-    }
-  }
-  retVal << " ]";
-
-  return retVal.str();
-}
-
-static std::string stringify_instr(const LmnRuleInstr instr) {
-  if (instr == nullptr) {
-    return "null";
-  }
-
-  std::ostringstream retVal;
-
-  LmnRuleInstr instr_copy = instr;
-  LmnInstrOp op;
-  READ_VAL(LmnInstrOp, instr_copy, op);
-
-  retVal << get_instr_name(op) << " ";
-  for (auto &p : instr_spec) {
-    if (op == p.first) {
-      for (size_t i = 0, argSize = p.second.args.size(); i < argSize; i++) {
-        ArgType argType = p.second.args.at(i);
-        if (op == INSTR_NEWATOM && argType == ArgFunctor) {
-          LmnLinkAttr at;
-          READ_VAL(LmnLinkAttr, instr_copy, at);
-          retVal << (unsigned int) at;
-          continue;
-        }
-        switch (argType) {
-          case InstrVar:
-            LmnInstrVar arg_instrvar;
-            READ_VAL(LmnInstrVar, instr_copy, arg_instrvar);
-            retVal << arg_instrvar;
-            break;
-          case Label:
-            LmnJumpOffset arg_label;
-            READ_VAL(LmnJumpOffset, instr_copy, arg_label);
-            retVal << arg_label;
-            break;
-          case InstrVarList:
-            retVal << "{ ";
-            int16_t num;
-            READ_VAL(int16_t, instr_copy, num);
-            while (num--) {
-              LmnInstrVar n;
-              READ_VAL(LmnInstrVar, instr_copy, n);
-              retVal << n;
-              if (num) {
-                retVal << ", ";
-              }
-            }
-            retVal << " }";
-            break;
-          case String:
-            LmnInstrVar arg_string;
-            READ_VAL(lmn_interned_str, instr_copy, arg_string);
-            retVal << "\"" << lmn_id_to_name(arg_string) << "\"";
-            break;
-          case LineNum:
-            LmnLineNum arg_linenum;
-            READ_VAL(LmnLineNum, instr_copy, arg_linenum);
-            retVal << arg_linenum;
-            break;
-          case ArgFunctor:
-            LmnLinkAttr arg_functor;
-            READ_VAL(LmnLinkAttr, instr_copy, arg_functor);
-            retVal << (unsigned int) arg_functor;
-            break;
-          case ArgRuleset:
-            LmnRulesetId arg_ruleset;
-            READ_VAL(LmnRulesetId, instr_copy, arg_ruleset);
-            retVal << arg_ruleset;
-            break;
-          case InstrList:
-            LmnSubInstrSize arg_instrlist;
-            READ_VAL(LmnSubInstrSize, instr_copy, arg_instrlist);
-            retVal << arg_instrlist;
-            break;
-          default:
-            break;
-        }
-
-        if (i != argSize - 1) {
-          retVal << ", ";
-        }
-      }
-      break;
-    }
-  }
-
-  if (op == INSTR_FINDATOM || op == INSTR_FINDATOM2 || op == INSTR_FINDATOMP || op == INSTR_NEWATOM) {
-    LmnFunctor func;
-    READ_VAL(LmnFunctor, instr_copy, func);
-    retVal << ", ";
-    retVal << lmn_id_to_name(lmn_functor_table->get_entry(func)->name);
-    retVal << "_";
-    retVal << (unsigned int) lmn_functor_table->get_entry(func)->arity;
-  }
-
-  return retVal.str();
-}
-
-static std::string stringify_atomlist(const AtomListEntry *atomlist) {
-  if(atomlist == nullptr) {
-    return "null";
-  }
-
-  std::ostringstream retVal;
-  auto begin = std::begin(*atomlist);
-  auto end = std::end(*atomlist);
-
-  retVal << "[ ";
-
-  while (begin != end) {
-    retVal << slim::stringifier::lmn_stringify_atom(*begin, LMN_ATTR_MAKE_LINK(0));
-    ++begin;
-    if (begin != end) {
-      retVal << " | ";
-    }
-  }
-
-  retVal << " ]";
-  return retVal.str();
-}
 
 static std::pair<DebugCommand,std::vector<std::string>> parse_command(const std::string &command) {
   if (command.empty()) {
@@ -396,14 +155,7 @@ static std::string get_membrane_tree(const LmnMembraneRef mem, std::string prefi
   }
 
   // 自身の名前の取得
-  std::string myname = "Membrane (Name[";
-  lmn_interned_str in_str = mem->NAME_ID();
-  myname += (in_str == ANONYMOUS ? "ANONYMOUS" : lmn_id_to_name(in_str));
-  myname += "], Addr[";
-  myname += to_hex_string(mem);
-  myname += "], ID[";
-  myname += std::to_string(mem->mem_id());
-  myname += "])";
+  std::string myname = "Membrane(" + slim::debug_printer::print_object_ids(mem->NAME_ID(), mem, mem->mem_id()) + ")";
 
   if (mem == global) {
     myname += " *global";
@@ -424,7 +176,7 @@ static std::string get_membrane_tree(const LmnMembraneRef mem, std::string prefi
     retVal += "\n";
   }
 
-  // 兄弟(？)があれば続けて表示
+  // 兄弟があれば続けて表示
   if (mem->next != nullptr) {
     // 間を調整
     if (mem->child_head != nullptr) {
@@ -482,7 +234,7 @@ void InteractiveDebugger::start_session_on_entry() {
         std::string s = "Breakpoints for instructions :\n";
         for (auto &i : breakpoints_on_instr) {
           s += "    ";
-          s += get_instr_name(i);
+          s += slim::debug_printer::to_string_instrop(i);
           s += "\n";
         }
 
@@ -497,6 +249,10 @@ void InteractiveDebugger::start_session_on_entry() {
       }
       // break instruction
       case DebugCommand::BREAK_INSTR: {
+        if (opt_argc == 0) {
+          std::cout << "Missing target instruction name.\n";
+          break;
+        }
         int instr_id = get_instr_id(opt_argv.at(0).c_str());
         if (instr_id == -1) {
           std::cout << "Unknown Instruction: breakpoint is not set.\n";
@@ -512,6 +268,10 @@ void InteractiveDebugger::start_session_on_entry() {
       }
       // break rule
       case DebugCommand::BREAK_RULE: {
+        if (opt_argc == 0) {
+          std::cout << "Missing target rule name.\n";
+          break;
+        }
         if (vector_contains(breakpoints_on_rule, opt_argv.at(0))) {
           std::cout << "Breakpoint is already set to rule: " << opt_argv.at(0) << "\n";
         } else {
@@ -522,6 +282,10 @@ void InteractiveDebugger::start_session_on_entry() {
       }
       // delete instruction
       case DebugCommand::DELETE_INSTR: {
+        if (opt_argc == 0) {
+          std::cout << "Missing target instruction name.\n";
+          break;
+        }
         int instr_id = get_instr_id(opt_argv.at(0).c_str());
         if (instr_id == -1) {
           std::cout << "Unknown Instruction: no breakpoint is deleted\n";
@@ -539,6 +303,10 @@ void InteractiveDebugger::start_session_on_entry() {
       }
       // delete rule
       case DebugCommand::DELETE_RULE: {
+        if (opt_argc == 0) {
+          std::cout << "Missing target rule name.\n";
+          break;
+        }
         auto end = breakpoints_on_rule.end();
         auto res = std::find(breakpoints_on_rule.begin(), end, opt_argv.at(0));
         if (res == end) {
@@ -600,7 +368,7 @@ void InteractiveDebugger::start_session_with_interpreter(const slim::vm::interpr
 
   std::cout << "Rule        : ";
   std::cout << (rule == nullptr ? "null" : rule->name == ANONYMOUS ? "ANONYMOUS" : lmn_id_to_name(rule->name)) << "\n";
-  std::cout << "Instruction : " << stringify_instr(instr) << "\n";
+  std::cout << "Instruction : " << slim::debug_printer::to_string_instr(instr) << "\n";
 
   bool continue_session = true;
   while (continue_session) {
@@ -649,7 +417,7 @@ void InteractiveDebugger::start_session_with_interpreter(const slim::vm::interpr
         }
         // info registers
         if (opt_argc == 0) {
-          print_feeding(stringify_regarray(&rc->work_array));
+          print_feeding(slim::debug_printer::to_string_regarray(&rc->work_array));
         }
         // info registers (dev) <N>...
         else {
@@ -671,11 +439,11 @@ void InteractiveDebugger::start_session_with_interpreter(const slim::vm::interpr
             s += std::to_string(l);
             s += "] : ";
             if (dev) {
-              s += stringify_register_dev(&rc->reg(l));
+              s += slim::debug_printer::to_string_dev_reg(&rc->reg(l));
             } else if (rc->tt(l) == TT_MEM) {
-              s += slim::stringifier::lmn_stringify_mem((LmnMembraneRef)rc->wt(l));
+              s += slim::debug_printer::to_string_mem((LmnMembraneRef)rc->wt(l));
             } else {
-              s += stringify_register(&rc->reg(l));
+              s += slim::debug_printer::to_string_reg(&rc->reg(l));
             }
             s += "\n";
           }
@@ -694,52 +462,32 @@ void InteractiveDebugger::start_session_with_interpreter(const slim::vm::interpr
         if (opt_argc == 0) {
           std::string s = "";
           for (auto &p : atom_lists) {
-            auto func_entry = lmn_functor_table->get_entry(p.first);
-            s += lmn_id_to_name(func_entry->name);
-            s += "_";
-            s += std::to_string(func_entry->arity);
+            s += slim::debug_printer::to_string_functor(p.first);
             s += "   : ";
-            s += stringify_atomlist(p.second);
+            s += slim::debug_printer::to_string_atomlist(p.second);
             s += "\n";
           }
           print_feeding(s);
         }
         // info atomlist <FUNCTOR>
         else if (opt_argc == 1) {
-          size_t underscore = opt_argv.at(0).find("_");
-          if (underscore != std::string::npos && underscore > 0 && underscore < opt_argv.at(0).size() - 1) {
-            unsigned int input_arity;
-            std::string input_name = opt_argv.at(0).substr(0, underscore);
-            AtomListEntryRef atomlist = nullptr;
-            try {
-              input_arity = std::stoul(opt_argv.at(0).substr(underscore + 1));
-            } catch (const std::invalid_argument& e) {
-              std::cout << "Invalid argument: Not a valid integer for arity.\n";
-              continue;
-            }
-            for (auto &p : atom_lists) {
-              auto func_entry = lmn_functor_table->get_entry(p.first);
-              std::string functor_name = lmn_id_to_name(func_entry->name);
-              auto functor_arity = func_entry->arity;
-              if (functor_name == input_name && functor_arity == input_arity) {
-                atomlist = p.second;
-                break;
-              }
-            }
-            if (atomlist == nullptr) {
-              std::cout << "Atomlist with specified functor could not be found.\n";
+          AtomListEntryRef atomlist = nullptr;
+          for (auto &p : atom_lists) {
+            if (slim::debug_printer::to_string_functor(p.first) == opt_argv.at(0)) {
+              atomlist = p.second;
               break;
-            } else {
-              std::string s = "  ";
-              s += opt_argv.at(0);
-              s += "   : ";
-              s += stringify_atomlist(atomlist);
-              s += "\n";
-              print_feeding(s);
             }
-          } else {
-            std::cout << "Malformed functor.\n";
+          }
+          if (atomlist == nullptr) {
+            std::cout << "Atomlist with specified functor could not be found.\n";
             break;
+          } else {
+            std::string s = "  ";
+            s += opt_argv.at(0);
+            s += "   : ";
+            s += slim::debug_printer::to_string_atomlist(atomlist);
+            s += "\n";
+            print_feeding(s);
           }
         }
         // info atomlist <FUNCTOR> <N> (dev)
@@ -753,48 +501,31 @@ void InteractiveDebugger::start_session_with_interpreter(const slim::vm::interpr
             break;
           }
           AtomListEntryRef atomlist = nullptr;
-          size_t underscore = opt_argv.at(1).find("_");
-          if (underscore != std::string::npos && underscore > 0 && underscore < opt_argv.at(1).size() - 1) {
-            unsigned int input_arity;
-            std::string input_name = opt_argv.at(1).substr(0, underscore);
-            try {
-              input_arity = std::stoul(opt_argv.at(1).substr(underscore + 1));
-            } catch (const std::invalid_argument& e) {
-              std::cout << "Invalid argument at 2: Not a valid integer for arity.\n";
-              continue;
-            }
-            for (auto &p : atom_lists) {
-              auto func_entry = lmn_functor_table->get_entry(p.first);
-              std::string functor_name = lmn_id_to_name(func_entry->name);
-              auto functor_arity = func_entry->arity;
-              if (functor_name == input_name && functor_arity == input_arity) {
-                atomlist = p.second;
-                break;
-              }
-            }
-            if (atomlist == nullptr) {
-              std::cout << "Atomlist with specified functor could not be found.\n";
+          for (auto &p : atom_lists) {
+            if (slim::debug_printer::to_string_functor(p.first) == opt_argv.at(1)) {
+              atomlist = p.second;
               break;
             }
-            size_t i = 0;
-            for (auto &s : *atomlist) {
-              if (i == input_n) {
-                std::string str = slim::stringifier::lmn_stringify_atom(s, LMN_ATTR_MAKE_LINK(input_arity));
-                if (dev) {
-                  str += "\n";
-                  str += slim::stringifier::stringify_atom_dev(s);
-                }
-                print_feeding(str);
-                break;
+          }
+          if (atomlist == nullptr) {
+            std::cout << "Atomlist with specified functor could not be found.\n";
+            break;
+          }
+          size_t i = 0;
+          for (auto &s : *atomlist) {
+            if (i == input_n) {
+              std::string str = slim::debug_printer::to_string_satom(s);
+              if (dev) {
+                str += "\n";
+                str += slim::debug_printer::to_string_dev_satom(s);
               }
-              i++;
-            }
-            if (i != input_n) {
-              std::cout << "Invalid argument: Exceeds length of atomlist.\n";
+              print_feeding(str);
               break;
             }
-          } else {
-            std::cout << "Malformed functor.\n";
+            i++;
+          }
+          if (i != input_n) {
+            std::cout << "Invalid argument: Exceeds length of atomlist.\n";
             break;
           }
         }
@@ -805,7 +536,7 @@ void InteractiveDebugger::start_session_with_interpreter(const slim::vm::interpr
         std::string s = "Breakpoints for instructions :\n";
         for (auto &i : breakpoints_on_instr) {
           s += "    ";
-          s += get_instr_name(i);
+          s += slim::debug_printer::to_string_instrop(i);
           s += "\n";
         }
 
@@ -837,18 +568,18 @@ void InteractiveDebugger::start_session_with_interpreter(const slim::vm::interpr
           // info membrane current
           if (string_starts_with("current", opt_argv.at(0))) {
             std::string s = "Current membrane (Addr[";
-            s += to_hex_string((LmnMembraneRef)rc->wt(0));
+            s += slim::debug_printer::to_hex_string((LmnMembraneRef)rc->wt(0));
             s += "]) :\n";
-            s += slim::stringifier::lmn_stringify_mem((LmnMembraneRef)rc->wt(0));
+            s += slim::debug_printer::to_string_mem((LmnMembraneRef)rc->wt(0));
             s += "\n";
             print_feeding(s);
           }
           // info membrane global
           else if (string_starts_with("global", opt_argv.at(0))) {
             std::string s = "Global root membrane (Addr[";
-            s += to_hex_string((LmnMembraneRef)rc->global_root);
+            s += slim::debug_printer::to_hex_string((LmnMembraneRef)rc->global_root);
             s += "]) :\n";
-            s += slim::stringifier::lmn_stringify_mem(rc->global_root);
+            s += slim::debug_printer::to_string_mem(rc->global_root);
             s += "\n";
             print_feeding(s);
           }
@@ -863,8 +594,7 @@ void InteractiveDebugger::start_session_with_interpreter(const slim::vm::interpr
             }
             LmnMembraneRef mem = get_pointer_to_membrane_by_id(rc->global_root, l);
             if (mem != nullptr) {
-              print_feeding("Membrane (Addr[" + to_hex_string(mem) + "], ID[" + std::to_string(l) + "]) : \n"
-                             + slim::stringifier::lmn_stringify_mem(mem) + "\n");
+              print_feeding("Membrane (" + slim::debug_printer::print_object_ids(mem, l) + ") : \n" + slim::debug_printer::to_string_mem(mem));
             } else {
               std::cout << "Invalid argument at 2: Membrane with specified ID could not be found in a tree rooted from global root membrane.\n";
               break;
@@ -886,7 +616,7 @@ void InteractiveDebugger::start_session_with_interpreter(const slim::vm::interpr
         // info statespace
         if (opt_argc == 0) {
           std::string s = "StateSpace (Addr[";
-          s += to_hex_string(statespace);
+          s += slim::debug_printer::to_hex_string(statespace);
           s += "])\n";
           auto states_vec = statespace->all_states();
           std::sort(states_vec.begin(), states_vec.end(),
@@ -902,7 +632,7 @@ void InteractiveDebugger::start_session_with_interpreter(const slim::vm::interpr
 
             // membrane
             LmnMembraneRef mem = state->restore_membrane_inner(FALSE);
-            s += slim::stringifier::lmn_stringify_mem(mem);
+            s += slim::debug_printer::to_string_mem(mem);
             if (state->is_binstr_user()) {
               mem->free_rec();
             }
@@ -947,14 +677,12 @@ void InteractiveDebugger::start_session_with_interpreter(const slim::vm::interpr
 
           State *state = *res;
           std::string s = "StateSpace (Addr[";
-          s += to_hex_string(statespace);
+          s += slim::debug_printer::to_hex_string(statespace);
           s += "])\n";
 
-          s += " State (Addr[";
-          s += to_hex_string(state);
-          s += "], ID[";
-          s += std::to_string(state_id(state));
-          s += "]) -> ";
+          s += " State (";
+          s += slim::debug_printer::print_object_ids(state, state_id(state));
+          s += ") -> ";
 
           for (unsigned int i = 0, max = state->successor_num; i < max; i++) {
             s += std::to_string(state_id(state_succ_state(state, i)));
@@ -966,13 +694,10 @@ void InteractiveDebugger::start_session_with_interpreter(const slim::vm::interpr
           s += "\n";
 
           LmnMembraneRef mem = state->restore_membrane_inner(FALSE);
-          s += "  Membrane (Name[";
-          lmn_interned_str str = mem->NAME_ID();
-          s += (str == ANONYMOUS ? "ANONYMOUS" : lmn_id_to_name(str));
-          s += "], ID[";
-          s += std::to_string(mem->mem_id());
-          s += "])\n   ";
-          s += slim::stringifier::lmn_stringify_mem(mem);
+          s += "  Membrane (";
+          s += slim::debug_printer::print_object_ids(mem->NAME_ID(), mem->mem_id());
+          s += ")\n   ";
+          s += slim::debug_printer::to_string_mem(mem);
           if (state->is_binstr_user()) {
             mem->free_rec();
           }
@@ -1181,7 +906,7 @@ void InteractiveDebugger::break_on_instruction(const slim::vm::interpreter *inte
   else {
     if (vector_contains(breakpoints_on_instr, (LmnInstruction)instr_op)) {
       esc_code_add(CODE__FORECOLOR_YELLOW);
-      printf("\nBreakpoint on instruction \"%s\" hit.\n", get_instr_name(instr_op));
+      printf("\nBreakpoint on instruction \"%s\" hit.\n", slim::debug_printer::to_string_instrop(instr_op).c_str());
       esc_code_clear();
       reset_step_execution();
       start_session_with_interpreter(interpreter);
