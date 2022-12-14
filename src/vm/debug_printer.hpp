@@ -34,8 +34,6 @@ constexpr char atomlist_prefix[] = "[ ";
 constexpr char atomlist_suffix[] = " ]";
 
 std::string to_string_atom(const LmnAtomRef atom, LmnLinkAttr attr);
-std::string to_string_satom(const LmnSymbolAtomRef atom);
-std::string to_string_datom(const LmnDataAtomRef atom);
 std::string to_string_reg(const LmnRegisterRef reg);
 std::string to_string_regarray(const LmnRegisterArray* reg_array);
 std::string to_string_instrop(LmnInstrOp op);
@@ -45,8 +43,6 @@ std::string to_string_mem(const LmnMembraneRef mem);
 std::string to_string_functor(LmnFunctor func);
 
 std::string to_string_dev_atom(const LmnAtomRef atom, LmnLinkAttr attr);
-std::string to_string_dev_satom(const LmnSymbolAtomRef atom);
-std::string to_string_dev_datom(const LmnDataAtomRef atom);
 std::string to_string_dev_reg(const LmnRegisterRef reg);
 std::string to_string_dev_regarray(const LmnRegisterArray* reg_array);
 std::string to_string_dev_atomlist(const AtomListEntry* atomlist);

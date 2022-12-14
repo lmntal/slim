@@ -505,7 +505,7 @@ void InteractiveDebugger::start_session_with_interpreter(const slim::vm::interpr
           auto end = atom_lists.end();
           auto res = std::find_if(atom_lists.begin(), end,
             [&opt_argv](std::pair<LmnFunctor,AtomListEntry*> p) {
-              return slim::debug_printer::to_string_functor(p.first) == opt_argv.at(1);
+              return slim::debug_printer::to_string_functor(p.first) == opt_argv.at(0);
             }
           );
           if (res == end) { // not found
@@ -515,9 +515,9 @@ void InteractiveDebugger::start_session_with_interpreter(const slim::vm::interpr
             std::string str = "";
             for (auto &s : *(*res).second) {
               if (i == input_n) {
-                str = slim::debug_printer::to_string_satom(s);
+                str = slim::debug_printer::to_string_atom(s, LMN_ATTR_MAKE_LINK(0));
                 if (dev) {
-                  str += "\n" + slim::debug_printer::to_string_dev_satom(s);
+                  str += "\n" + slim::debug_printer::to_string_dev_atom(s, LMN_ATTR_MAKE_LINK(0));
                 }
                 break;
               }
