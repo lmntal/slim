@@ -57,16 +57,17 @@ static const std::map<DebugCommand, std::vector<std::string>> debug_commands = {
 template <class T>
 static inline bool vector_contains(const std::vector<T> &vector, T value);
 
-// input
+// string
+static inline bool string_starts_with(const std::string &str1, const std::string &str2);
+
+// commands
 static std::pair<DebugCommand,std::vector<std::string>> parse_command(const std::string &command);
+static std::string get_membrane_tree(const LmnMembraneRef mem, std::string prefix, const LmnMembraneRef global, const LmnMembraneRef current);
+static LmnMembraneRef get_pointer_to_membrane_by_id(const LmnMembraneRef mem, ProcessID id);
 
 // output
 static bool print_section(const std::vector<std::string> &lines, size_t from_line, size_t screen_height, size_t screen_width);
 // prototype end
-
-static inline bool string_starts_with(const std::string &str1, const std::string &str2) {
-  return str1.size() < str2.size() ? false : std::equal(str2.cbegin(), str2.cend(), str1.cbegin());
-}
 
 template <class T>
 static inline bool vector_contains(const std::vector<T> &vector, T value) {
@@ -75,14 +76,9 @@ static inline bool vector_contains(const std::vector<T> &vector, T value) {
   return res != end;
 }
 
-InteractiveDebugger::InteractiveDebugger() {
-  struct winsize w;
-  ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
-  screen_height = w.ws_row;
-  screen_width = w.ws_col;
+static inline bool string_starts_with(const std::string &str1, const std::string &str2) {
+  return str1.size() < str2.size() ? false : std::equal(str2.cbegin(), str2.cend(), str1.cbegin());
 }
-
-InteractiveDebugger::~InteractiveDebugger() {}
 
 static std::pair<DebugCommand,std::vector<std::string>> parse_command(const std::string &command) {
   if (command.empty()) {
@@ -141,9 +137,9 @@ static std::pair<DebugCommand,std::vector<std::string>> parse_command(const std:
     }
   );
 
-  if (cmd_iter_found == cmd_iter_end) {
+  if (cmd_iter_found == cmd_iter_end) { // not found
     return {DebugCommand::__UNKNOWN, {}};
-  } else {
+  } else { // found
     command_vec.erase(command_vec.begin(), command_vec.begin() + (*cmd_iter_found).second.size());
     return {(*cmd_iter_found).first, command_vec};
   }
@@ -165,33 +161,27 @@ static std::string get_membrane_tree(const LmnMembraneRef mem, std::string prefi
   }
 
   // 自身の名前を追加
-  std::string retVal = prefix;
-  retVal += "|--";
-  retVal += myname;
-  retVal += "\n";
+  std::string retVal = prefix + "|--" + myname + "\n";
 
   // 子があれば先に取得
   if (mem->child_head != nullptr) {
-    retVal += get_membrane_tree(mem->child_head, prefix + "|  ", global, current);
-    retVal += "\n";
+    retVal += get_membrane_tree(mem->child_head, prefix + "|  ", global, current) + "\n";
   }
 
   // 兄弟があれば続けて表示
   if (mem->next != nullptr) {
     // 間を調整
     if (mem->child_head != nullptr) {
-      retVal += prefix;
-      retVal += "|";
+      retVal += prefix + "|";
     }
-    retVal += get_membrane_tree(mem->next, prefix, global, current);
-    retVal += "\n";
+    retVal += get_membrane_tree(mem->next, prefix, global, current) + "\n";
   }
 
   retVal.pop_back();
   return retVal;
 }
 
-static LmnMembraneRef get_pointer_to_membrane_by_id(const LmnMembraneRef mem, unsigned long id) {
+static LmnMembraneRef get_pointer_to_membrane_by_id(const LmnMembraneRef mem, ProcessID id) {
   if (mem == nullptr) {
     return nullptr;
   } else if (mem->mem_id() == id) {
@@ -202,7 +192,80 @@ static LmnMembraneRef get_pointer_to_membrane_by_id(const LmnMembraneRef mem, un
   }
 }
 
+InteractiveDebugger::InteractiveDebugger() {
+  struct winsize w;
+  ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
+  screen_height = w.ws_row;
+  screen_width = w.ws_col;
+}
+
+InteractiveDebugger::~InteractiveDebugger() {}
+
+void InteractiveDebugger::set_breakpoint_rule(std::string rule) {
+  if (vector_contains(breakpoints_on_rule, rule)) {
+    std::cout << "Breakpoint is already set to rule: " << rule << "\n";
+  } else {
+    breakpoints_on_rule.push_back(rule);
+    std::cout << "Breakpoint is set to rule: " << rule << "\n";
+  }
+}
+
+void InteractiveDebugger::set_breakpoint_instr(std::string instr) {
+  int instr_id = get_instr_id(instr.c_str());
+  if (instr_id == -1) {
+    std::cerr << "Unknown Instruction: breakpoint is not set.\n";
+  }
+  else if (vector_contains(breakpoints_on_instr, (LmnInstruction)instr_id)) {
+    std::cout << "Breakpoint is already set to instruction: " << instr << "\n";
+  } else {
+    breakpoints_on_instr.push_back((LmnInstruction) instr_id);
+    std::cout << "Breakpoint is set to instruction: " << instr << "\n";
+  }
+}
+
+void InteractiveDebugger::delete_breakpoint_rule(std::string rule) {
+  auto end = breakpoints_on_rule.end();
+  auto res = std::find(breakpoints_on_rule.begin(), end, rule);
+  if (res == end) {
+    std::cout << "Breakpoint is not set to rule: " << rule << "\n";
+  } else {
+    breakpoints_on_rule.erase(res);
+    std::cout << "Breakpoint is deleted for rule: " << rule << "\n";
+  }
+}
+
+void InteractiveDebugger::delete_breakpoint_instr(std::string instr) {
+  int instr_id = get_instr_id(instr.c_str());
+  if (instr_id == -1) {
+    std::cerr << "Unknown Instruction: no breakpoint is deleted\n";
+  } else {
+    auto end = breakpoints_on_instr.end();
+    auto res = std::find(breakpoints_on_instr.begin(), end, instr_id);
+    if (res == end) {
+      std::cout << "Breakpoint is not set to instruction: " << instr << "\n";
+    } else {
+      breakpoints_on_instr.erase(res);
+      std::cout << "Breakpoint is deleted for instruction: " << instr << "\n";
+    }
+  }
+}
+
+void InteractiveDebugger::list_breakpoints() {
+  std::string s = "Breakpoints for instructions :\n";
+  for (auto &i : breakpoints_on_instr) {
+    s += "    " + slim::debug_printer::to_string_instrop(i) + "\n";
+  }
+  s += "Breakpoints for rules :\n";
+  for (auto &str : breakpoints_on_rule) {
+    s += "    " + str + "\n";
+  }
+  print_feeding(s);
+}
+
 void InteractiveDebugger::start_session_on_entry() {
+  fflush(stdout);
+  std::flush(std::cout);
+
   bool continue_session = true;
   while (continue_session) {
     if (std::cin.eof()) {
@@ -224,96 +287,56 @@ void InteractiveDebugger::start_session_on_entry() {
       continue;
     }
     if (cmd == DebugCommand::__AMBIGUOUS) {
-      std::cerr << "Ambiguous input.\n";
+      std::cout << "Ambiguous command \"" << opt_argv.at(0) << "\": ";
+      for (size_t i = 1; i < opt_argc; i++) {
+        std::cout << opt_argv.at(i);
+        if (i != opt_argc - 1) {
+          std::cout << ", ";
+        }
+      }
+      std::cout << "\n";
       continue;
     }
 
     switch (cmd) {
       // info breakpoints
       case DebugCommand::INFO_BREAKPOINT: {
-        std::string s = "Breakpoints for instructions :\n";
-        for (auto &i : breakpoints_on_instr) {
-          s += "    ";
-          s += slim::debug_printer::to_string_instrop(i);
-          s += "\n";
-        }
-
-        s += "Breakpoints for rules :\n";
-        for (auto &str : breakpoints_on_rule) {
-          s += "    ";
-          s += str;
-          s += "\n";
-        }
-        print_feeding(s);
+        list_breakpoints();
         break;
       }
       // break instruction
       case DebugCommand::BREAK_INSTR: {
         if (opt_argc == 0) {
-          std::cout << "Missing target instruction name.\n";
-          break;
-        }
-        int instr_id = get_instr_id(opt_argv.at(0).c_str());
-        if (instr_id == -1) {
-          std::cout << "Unknown Instruction: breakpoint is not set.\n";
-          break;
-        }
-        if (vector_contains(breakpoints_on_instr, (LmnInstruction)instr_id)) {
-          std::cout << "Breakpoint is already set to instruction: " << opt_argv.at(0) << "\n";
+          std::cerr << "Missing target instruction name.\n";
         } else {
-          breakpoints_on_instr.push_back((LmnInstruction) instr_id);
-          std::cout << "Breakpoint is set to instruction: " << opt_argv.at(0) << "\n";
+          set_breakpoint_instr(opt_argv.at(0));
         }
         break;
       }
       // break rule
       case DebugCommand::BREAK_RULE: {
         if (opt_argc == 0) {
-          std::cout << "Missing target rule name.\n";
-          break;
-        }
-        if (vector_contains(breakpoints_on_rule, opt_argv.at(0))) {
-          std::cout << "Breakpoint is already set to rule: " << opt_argv.at(0) << "\n";
+          std::cerr << "Missing target rule name.\n";
         } else {
-          breakpoints_on_rule.push_back(opt_argv.at(0));
-          std::cout << "Breakpoint is set to rule: " << opt_argv.at(0) << "\n";
+          set_breakpoint_rule(opt_argv.at(0));
         }
         break;
       }
       // delete instruction
       case DebugCommand::DELETE_INSTR: {
         if (opt_argc == 0) {
-          std::cout << "Missing target instruction name.\n";
-          break;
-        }
-        int instr_id = get_instr_id(opt_argv.at(0).c_str());
-        if (instr_id == -1) {
-          std::cout << "Unknown Instruction: no breakpoint is deleted\n";
+          std::cerr << "Missing target instruction name.\n";
         } else {
-          auto end = breakpoints_on_instr.end();
-          auto res = std::find(breakpoints_on_instr.begin(), end, instr_id);
-          if (res == end) {
-            std::cout << "Breakpoint is not set to instruction: " << opt_argv.at(0) << "\n";
-          } else {
-            breakpoints_on_instr.erase(res);
-            std::cout << "Breakpoint is deleted for instruction: " << opt_argv.at(0) << "\n";
-          }
+          delete_breakpoint_instr(opt_argv.at(0));
         }
         break;
       }
       // delete rule
       case DebugCommand::DELETE_RULE: {
         if (opt_argc == 0) {
-          std::cout << "Missing target rule name.\n";
-          break;
-        }
-        auto end = breakpoints_on_rule.end();
-        auto res = std::find(breakpoints_on_rule.begin(), end, opt_argv.at(0));
-        if (res == end) {
-          std::cout << "Breakpoint is not set to rule: " << opt_argv.at(0) << "\n";
+          std::cerr << "Missing target rule name.\n";
         } else {
-          breakpoints_on_rule.erase(res);
-          std::cout << "Breakpoint is deleted for rule: " << opt_argv.at(0) << "\n";
+          delete_breakpoint_rule(opt_argv.at(0));
         }
         break;
       }
@@ -343,11 +366,11 @@ void InteractiveDebugger::start_session_on_entry() {
         break;
       }
       case DebugCommand::__UNKNOWN: {
-        std::cout << "Unknown command.\n";
+        std::cerr << "Unknown command.\n";
         break;
       }
       default: {
-        std::cout << "The command was not executed because program is not running.\n";
+        std::cerr << "The command was not executed because program is not running.\n";
         break;
       }
     }
@@ -390,7 +413,6 @@ void InteractiveDebugger::start_session_with_interpreter(const slim::vm::interpr
     if (cmd == DebugCommand::__EMPTY) {
       continue;
     }
-
     if (cmd == DebugCommand::__AMBIGUOUS) {
       std::cout << "Ambiguous command \"" << opt_argv.at(0) << "\": ";
       for (size_t i = 1; i < opt_argc; i++) {
@@ -412,7 +434,7 @@ void InteractiveDebugger::start_session_with_interpreter(const slim::vm::interpr
       // info registers
       case DebugCommand::INFO_REGISTER: {
         if (rc == nullptr) {
-          std::cout << "LmnReactCxtRef is null.\n";
+          std::cerr << "LmnReactCxtRef is null.\n";
           break;
         }
         // info registers
@@ -428,24 +450,14 @@ void InteractiveDebugger::start_session_with_interpreter(const slim::vm::interpr
             try {
               l = std::stoul(opt_argv.at(i));
             } catch (const std::invalid_argument& e) {
-              std::cout << "Invalid argument at " << i << ": Not a valid integer.\n";
+              std::cerr << "Invalid argument at " << i << ": Not a valid integer.\n";
               continue;
             }
             if (l >= rc->capacity()) {
-              std::cout << "Invalid argument at " << i << ": Exceeds length of register.\n";
+              std::cerr << "Invalid argument at " << i << ": Exceeds length of register.\n";
               continue;
             }
-            s += "Register[";
-            s += std::to_string(l);
-            s += "] : ";
-            if (dev) {
-              s += slim::debug_printer::to_string_dev_reg(&rc->reg(l));
-            } else if (rc->tt(l) == TT_MEM) {
-              s += slim::debug_printer::to_string_mem((LmnMembraneRef)rc->wt(l));
-            } else {
-              s += slim::debug_printer::to_string_reg(&rc->reg(l));
-            }
-            s += "\n";
+            s += "Register[" + std::to_string(l) + "] : " + (dev ? slim::debug_printer::to_string_dev_reg(&rc->reg(l)) : slim::debug_printer::to_string_reg(&rc->reg(l))) + "\n";
           }
           print_feeding(s);
         }
@@ -454,40 +466,30 @@ void InteractiveDebugger::start_session_with_interpreter(const slim::vm::interpr
       // info atomlist
       case DebugCommand::INFO_ATOMLIST: {
         if (rc == nullptr) {
-          std::cout << "LmnReactCxtRef is null.\n";
+          std::cerr << "LmnReactCxtRef is null.\n";
           break;
         }
-        auto atom_lists = ((LmnMembraneRef)rc->wt(0))->atom_lists(); 
+        auto atom_lists = ((LmnMembraneRef)rc->wt(0))->atom_lists();
         // info atomlist
         if (opt_argc == 0) {
           std::string s = "";
           for (auto &p : atom_lists) {
-            s += slim::debug_printer::to_string_functor(p.first);
-            s += "   : ";
-            s += slim::debug_printer::to_string_atomlist(p.second);
-            s += "\n";
+            s += slim::debug_printer::to_string_functor(p.first) + "   : " + slim::debug_printer::to_string_atomlist(p.second) + "\n";
           }
           print_feeding(s);
         }
         // info atomlist <FUNCTOR>
         else if (opt_argc == 1) {
-          AtomListEntryRef atomlist = nullptr;
-          for (auto &p : atom_lists) {
-            if (slim::debug_printer::to_string_functor(p.first) == opt_argv.at(0)) {
-              atomlist = p.second;
-              break;
+          auto end = atom_lists.end();
+          auto res = std::find_if(atom_lists.begin(), end,
+            [&opt_argv](std::pair<LmnFunctor, AtomListEntry*> p) -> bool {
+              return slim::debug_printer::to_string_functor(p.first) == opt_argv.at(0);
             }
-          }
-          if (atomlist == nullptr) {
-            std::cout << "Atomlist with specified functor could not be found.\n";
-            break;
-          } else {
-            std::string s = "  ";
-            s += opt_argv.at(0);
-            s += "   : ";
-            s += slim::debug_printer::to_string_atomlist(atomlist);
-            s += "\n";
-            print_feeding(s);
+          );
+          if (res == end) { // not found
+            std::cerr << "Atomlist with specified functor could not be found.\n";
+          } else { // found
+            print_feeding("  " + opt_argv.at(0) + "   : " + slim::debug_printer::to_string_atomlist((*res).second) + "\n");
           }
         }
         // info atomlist <FUNCTOR> <N> (dev)
@@ -497,108 +499,82 @@ void InteractiveDebugger::start_session_with_interpreter(const slim::vm::interpr
           try {
             input_n = std::stoul(opt_argv.at(1));
           } catch (const std::invalid_argument &e) {
-            std::cout << "Invalid argument at 3: Not a valid integer.\n";
+            std::cerr << "Invalid argument at 3: Not a valid integer.\n";
             break;
           }
-          AtomListEntryRef atomlist = nullptr;
-          for (auto &p : atom_lists) {
-            if (slim::debug_printer::to_string_functor(p.first) == opt_argv.at(1)) {
-              atomlist = p.second;
-              break;
+          auto end = atom_lists.end();
+          auto res = std::find_if(atom_lists.begin(), end,
+            [&opt_argv](std::pair<LmnFunctor,AtomListEntry*> p) {
+              return slim::debug_printer::to_string_functor(p.first) == opt_argv.at(1);
             }
-          }
-          if (atomlist == nullptr) {
-            std::cout << "Atomlist with specified functor could not be found.\n";
-            break;
-          }
-          size_t i = 0;
-          for (auto &s : *atomlist) {
-            if (i == input_n) {
-              std::string str = slim::debug_printer::to_string_satom(s);
-              if (dev) {
-                str += "\n";
-                str += slim::debug_printer::to_string_dev_satom(s);
+          );
+          if (res == end) { // not found
+            std::cerr << "Atomlist with specified functor could not be found.\n";
+          } else { // found
+            size_t i = 0;
+            std::string str = "";
+            for (auto &s : *(*res).second) {
+              if (i == input_n) {
+                str = slim::debug_printer::to_string_satom(s);
+                if (dev) {
+                  str += "\n" + slim::debug_printer::to_string_dev_satom(s);
+                }
+                break;
               }
-              print_feeding(str);
-              break;
+              i++;
             }
-            i++;
-          }
-          if (i != input_n) {
-            std::cout << "Invalid argument: Exceeds length of atomlist.\n";
-            break;
+            if (i != input_n) { // not found
+              std::cerr << "Invalid argument: Exceeds length of atomlist.\n";
+            } else { // found
+              print_feeding(str);
+            }
           }
         }
         break;
       }
       // info breakpoints
       case DebugCommand::INFO_BREAKPOINT: {
-        std::string s = "Breakpoints for instructions :\n";
-        for (auto &i : breakpoints_on_instr) {
-          s += "    ";
-          s += slim::debug_printer::to_string_instrop(i);
-          s += "\n";
-        }
-
-        s += "Breakpoints for rules :\n";
-        for (auto &str : breakpoints_on_rule) {
-          s += "    ";
-          s += str;
-          s += "\n";
-        }
-        print_feeding(s);
+        list_breakpoints();
         break;
       }
       // info membrane
       case DebugCommand::INFO_MEMBRANE: {
         if (rc == nullptr) {
-          std::cout << "LmnReactCxtRef is null.\n";
+          std::cerr << "LmnReactCxtRef is null.\n";
           break;
         }
         if (rc->global_root == nullptr) {
-          std::cout << "Global Root Membrane is null.\n";
+          std::cerr << "Global Root Membrane is null.\n";
           break;
         }
         // info membrane
         if (opt_argc == 0) {
           print_feeding(get_membrane_tree(rc->global_root, "", rc->global_root, (LmnMembraneRef) rc->wt(0)));
         }
-        // info membrane <ARG>...
+        // info membrane current
+        else if (string_starts_with("current", opt_argv.at(0))) {
+          print_feeding("Current membrane (Addr[" + slim::debug_printer::to_hex_string(rc->wt(0)) + "]) :\n"
+                        + slim::debug_printer::to_string_mem((LmnMembraneRef)rc->wt(0)) + "\n");
+        }
+        // info membrane global
+        else if (string_starts_with("global", opt_argv.at(0))) {
+          print_feeding("Global root membrane (Addr[" + slim::debug_printer::to_hex_string(rc->global_root) + "]) :\n"
+                        + slim::debug_printer::to_string_mem(rc->global_root) + "\n");
+        }
+        // info membrane <N>
         else {
-          // info membrane current
-          if (string_starts_with("current", opt_argv.at(0))) {
-            std::string s = "Current membrane (Addr[";
-            s += slim::debug_printer::to_hex_string((LmnMembraneRef)rc->wt(0));
-            s += "]) :\n";
-            s += slim::debug_printer::to_string_mem((LmnMembraneRef)rc->wt(0));
-            s += "\n";
-            print_feeding(s);
+          size_t l;
+          try {
+            l = std::stoul(opt_argv.at(0));
+          } catch (const std::invalid_argument& e) {
+            std::cerr << "Invalid argument at 2: Not a valid integer.\n";
+            break;
           }
-          // info membrane global
-          else if (string_starts_with("global", opt_argv.at(0))) {
-            std::string s = "Global root membrane (Addr[";
-            s += slim::debug_printer::to_hex_string((LmnMembraneRef)rc->global_root);
-            s += "]) :\n";
-            s += slim::debug_printer::to_string_mem(rc->global_root);
-            s += "\n";
-            print_feeding(s);
-          }
-          // info membrane <N>
-          else {
-            unsigned long l;
-            try {
-              l = std::stoul(opt_argv.at(0));
-            } catch (const std::invalid_argument& e) {
-              std::cout << "Invalid argument at 2: Not a valid integer.\n";
-              break;
-            }
-            LmnMembraneRef mem = get_pointer_to_membrane_by_id(rc->global_root, l);
-            if (mem != nullptr) {
-              print_feeding("Membrane (" + slim::debug_printer::print_object_ids(mem, l) + ") : \n" + slim::debug_printer::to_string_mem(mem));
-            } else {
-              std::cout << "Invalid argument at 2: Membrane with specified ID could not be found in a tree rooted from global root membrane.\n";
-              break;
-            }
+          LmnMembraneRef mem = get_pointer_to_membrane_by_id(rc->global_root, l);
+          if (mem == nullptr) {
+            std::cerr << "Invalid argument at 2: Membrane with specified ID could not be found in a tree rooted from global root membrane.\n";
+          } else {
+            print_feeding("Membrane (" + slim::debug_printer::print_object_ids(mem, l) + ") : \n" + slim::debug_printer::to_string_mem(mem));
           }
         }
         break;
@@ -606,18 +582,16 @@ void InteractiveDebugger::start_session_with_interpreter(const slim::vm::interpr
       // info statespace
       case DebugCommand::INFO_STATESPACE: {
         if (!lmn_env.nd) {
-          std::cout << "StateSpace could not be shown in normal execution.\n";
+          std::cerr << "StateSpace could not be shown in normal execution.\n";
           break;
         }
         if (statespace == nullptr) {
-          std::cout << "StateSpaceRef is null.\n";
+          std::cerr << "StateSpaceRef is null.\n";
           break;
         }
         // info statespace
         if (opt_argc == 0) {
-          std::string s = "StateSpace (Addr[";
-          s += slim::debug_printer::to_hex_string(statespace);
-          s += "])\n";
+          std::string str = "StateSpace (Addr[" + slim::debug_printer::to_hex_string(statespace) + "])\n";
           auto states_vec = statespace->all_states();
           std::sort(states_vec.begin(), states_vec.end(),
             [](State *state_l, State *state_r) -> bool {
@@ -626,33 +600,31 @@ void InteractiveDebugger::start_session_with_interpreter(const slim::vm::interpr
           );
           for (State *state : states_vec) {
             // state info
-            s += "   State[";
-            s += std::to_string(state_id(state));
-            s += "] : ";
+            str += "   State[" + std::to_string(state_id(state)) + "] : ";
 
             // membrane
             LmnMembraneRef mem = state->restore_membrane_inner(FALSE);
-            s += slim::debug_printer::to_string_mem(mem);
+            str += slim::debug_printer::to_string_mem(mem);
             if (state->is_binstr_user()) {
               mem->free_rec();
             }
 
-            s += " -> [";
+            str += " -> [";
             for (unsigned int i = 0, max = state->successor_num; i < max; i++) {
-              s += std::to_string(state_id(state_succ_state(state, i)));
+              str += std::to_string(state_id(state_succ_state(state, i)));
               if (i != max - 1) {
-                s += ",";
+                str += ",";
               }
             }
-            s += "]";
+            str += "]";
 
             if (state == expanding_state) {
-              s += " *expanding";
+              str += " *expanding";
             }
 
-            s += "\n";
+            str += "\n";
           }
-          print_feeding(s);
+          print_feeding(str);
         }
         // info statespace <N>
         else {
@@ -660,7 +632,7 @@ void InteractiveDebugger::start_session_with_interpreter(const slim::vm::interpr
           try {
             l = std::stoul(opt_argv.at(0));
           } catch (const std::invalid_argument &e) {
-            std::cout << "Invalid argument: Not a valid integer.\n";
+            std::cerr << "Invalid argument: Not a valid integer.\n";
             break;
           }
 
@@ -671,38 +643,29 @@ void InteractiveDebugger::start_session_with_interpreter(const slim::vm::interpr
           );
 
           if (res == end) {
-            std::cout << "State with given id could not be found in this statespace.\n";
-            break;
-          }
+            std::cerr << "State with given id could not be found in this statespace.\n";
+          } else {
+            State *state = *res;
+            std::string s = "StateSpace (Addr[" + slim::debug_printer::to_hex_string(statespace) + "])\n";
+            s += " State (" + slim::debug_printer::print_object_ids(state, state_id(state)) + ") -> ";
 
-          State *state = *res;
-          std::string s = "StateSpace (Addr[";
-          s += slim::debug_printer::to_hex_string(statespace);
-          s += "])\n";
-
-          s += " State (";
-          s += slim::debug_printer::print_object_ids(state, state_id(state));
-          s += ") -> ";
-
-          for (unsigned int i = 0, max = state->successor_num; i < max; i++) {
-            s += std::to_string(state_id(state_succ_state(state, i)));
-            if (i != max - 1) {
-              s += ",";
+            for (unsigned int i = 0, max = state->successor_num; i < max; i++) {
+              s += std::to_string(state_id(state_succ_state(state, i)));
+              if (i != max - 1) {
+                s += ",";
+              }
             }
+            s += "\n";
+
+            LmnMembraneRef mem = state->restore_membrane_inner(FALSE);
+            s += ("  Membrane (" + slim::debug_printer::print_object_ids(mem->NAME_ID(), mem->mem_id()) + ")\n   "
+                  + slim::debug_printer::to_string_mem(mem));
+            if (state->is_binstr_user()) {
+              mem->free_rec();
+            }
+
+            print_feeding(s);
           }
-
-          s += "\n";
-
-          LmnMembraneRef mem = state->restore_membrane_inner(FALSE);
-          s += "  Membrane (";
-          s += slim::debug_printer::print_object_ids(mem->NAME_ID(), mem->mem_id());
-          s += ")\n   ";
-          s += slim::debug_printer::to_string_mem(mem);
-          if (state->is_binstr_user()) {
-            mem->free_rec();
-          }
-
-          print_feeding(s);
         }
         break;
       }
@@ -711,13 +674,13 @@ void InteractiveDebugger::start_session_with_interpreter(const slim::vm::interpr
       case DebugCommand::STEP_RULE: {
         reset_step_execution();
 
-        long l = 1;
+        size_t l = 1;
         // step rule <N>
         if (opt_argc > 0) {
           try {
-            l = std::stol(opt_argv.at(0));
+            l = std::stoul(opt_argv.at(0));
           } catch (const std::invalid_argument& e) {
-            l = -1;
+            l = 0;
           }
         }
 
@@ -725,7 +688,7 @@ void InteractiveDebugger::start_session_with_interpreter(const slim::vm::interpr
           rule_reaction_stop_at = l;
           continue_session = false;
         } else {
-          std::cout << "Invalid argument: Not a valid integer.\n";
+          std::cerr << "Invalid argument: Not a valid integer.\n";
         }
         break;
       }
@@ -733,13 +696,13 @@ void InteractiveDebugger::start_session_with_interpreter(const slim::vm::interpr
       case DebugCommand::STEP_INSTR: {
         reset_step_execution();
 
-        long l = 1;
+        size_t l = 1;
         // step instruction <N>
         if (opt_argc > 0) {
           try {
-            l = std::stol(opt_argv.at(0));
+            l = std::stoul(opt_argv.at(0));
           } catch (const std::invalid_argument& e) {
-            l = -1;
+            l = 0;
           }
         }
 
@@ -747,87 +710,53 @@ void InteractiveDebugger::start_session_with_interpreter(const slim::vm::interpr
           instr_execution_stop_at = l;
           continue_session = false;
         } else {
-          std::cout << "Invalid argument: Not a valid integer.\n";
+          std::cerr << "Invalid argument: Not a valid integer.\n";
         }
         break;
       }
       // break rule <RULE>
       case DebugCommand::BREAK_RULE: {
         if (opt_argc == 0) {
-          std::cout << "Missing target rule name.\n";
-          break;
-        }
-        if (vector_contains(breakpoints_on_rule, opt_argv.at(0))) {
-          std::cout << "Breakpoint is already set to rule: " << opt_argv.at(0) << "\n";
+          std::cerr << "Missing target rule name.\n";
         } else {
-          breakpoints_on_rule.push_back(opt_argv.at(0));
-          std::cout << "Breakpoint is set to rule: " << opt_argv.at(0) << "\n";
+          set_breakpoint_rule(opt_argv.at(0));
         }
         break;
       }
       // break instruction <INSTR>
       case DebugCommand::BREAK_INSTR: {
         if (opt_argc == 0) {
-          std::cout << "Missing target instruction name.\n";
-          break;
-        }
-        int instr_id = get_instr_id(opt_argv.at(0).c_str());
-        if (instr_id == -1) {
-          std::cout << "Unknown Instruction: breakpoint is not set.\n";
-          break;
-        }
-        if (vector_contains(breakpoints_on_instr, (LmnInstruction)instr_id)) {
-          std::cout << "Breakpoint is already set to instruction: " << opt_argv.at(0) << "\n";
+          std::cerr << "Missing target instruction name.\n";
         } else {
-          breakpoints_on_instr.push_back((LmnInstruction) instr_id);
-          std::cout << "Breakpoint is set to instruction: " << opt_argv.at(0) << "\n";
+          set_breakpoint_instr(opt_argv.at(0));
         }
         break;
       }
       // delete rule <RULE>
       case DebugCommand::DELETE_RULE: {
         if (opt_argc == 0) {
-          std::cout << "Missing target rule name.\n";
-          break;
-        }
-        auto end = breakpoints_on_rule.end();
-        auto res = std::find(breakpoints_on_rule.begin(), end, opt_argv.at(0));
-        if (res == end) {
-          std::cout << "Breakpoint is not set to rule: " << opt_argv.at(0) << "\n";
+          std::cerr << "Missing target rule name.\n";
         } else {
-          breakpoints_on_rule.erase(res);
-          std::cout << "Breakpoint is deleted for rule: " << opt_argv.at(0) << "\n";
+          delete_breakpoint_rule(opt_argv.at(0));
         }
         break;
       }
       // delete instruction <INSTR>
       case DebugCommand::DELETE_INSTR: {
         if (opt_argc == 0) {
-          std::cout << "Missing target instruction name.\n";
-          break;
-        }
-        int instr_id = get_instr_id(opt_argv.at(0).c_str());
-        if (instr_id == -1) {
-          std::cout << "Unknown Instruction: no breakpoint is deleted\n";
+          std::cerr << "Missing target instruction name.\n";
         } else {
-          auto end = breakpoints_on_instr.end();
-          auto res = std::find(breakpoints_on_instr.begin(), end, instr_id);
-          if (res == end) {
-            std::cout << "Breakpoint is not set to instruction: " << opt_argv.at(0) << "\n";
-          } else {
-            breakpoints_on_instr.erase(res);
-            std::cout << "Breakpoint is deleted for instruction: " << opt_argv.at(0) << "\n";
-          }
+          delete_breakpoint_instr(opt_argv.at(0));
         }
         break;
       }
       case DebugCommand::FINISH: {
         if (*(LmnInstrOp*)instr == INSTR_PROCEED) {
-          std::cout << "Already at the end of current rule.\n";
-          break;
+          std::cerr << "Already at the end of current rule.\n";
+        } else {
+          finish_current_rule = true;
+          continue_session = false;
         }
-        finish_current_rule = true;
-        continue_session = false;
         break;
       }
       // help
@@ -862,16 +791,16 @@ void InteractiveDebugger::start_session_with_interpreter(const slim::vm::interpr
         break;
       }
       case DebugCommand::__UNKNOWN: {
-        std::cout << "Unknown command.\n";
+        std::cerr << "Unknown command.\n";
         break;
       }
       case DebugCommand::START:
       case DebugCommand::RUN: {
-        std::cout << "Program is already running.\n";
+        std::cerr << "Program is already running.\n";
         break;
       }
       default: {
-        std::cout << "Not implemented.\n";
+        std::cerr << "Not implemented.\n";
         break;
       }
     }
@@ -956,7 +885,7 @@ void InteractiveDebugger::finish_debugging() {
 static bool print_section(const std::vector<std::string> &lines, size_t from_line, size_t screen_height, size_t screen_width) {
   size_t line_count = lines.size();
   if (line_count < screen_height) {
-    for (auto s : lines) {
+    for (auto &s : lines) {
       std::cout << s << "\n";
     }
     return false;
@@ -979,7 +908,7 @@ static bool print_section(const std::vector<std::string> &lines, size_t from_lin
 }
 
 void InteractiveDebugger::print_feeding(const std::string &str) {
-  if (screen_height == -1) {
+  if (screen_height == -1 || screen_width == -1) {
     std::cout << str;
     return;
   }
@@ -1000,8 +929,7 @@ void InteractiveDebugger::print_feeding(const std::string &str) {
   }
 
   while(true) {
-    size_t len = lines.size();
-    if (len > 0 && lines.at(len - 1).empty()) {
+    if (lines.size() > 0 && lines.back().empty()) {
       lines.pop_back();
     } else {
       break;
@@ -1025,68 +953,42 @@ void InteractiveDebugger::print_feeding(const std::string &str) {
   while (feeding) {
     size_t new_line = current_line;
     int c = getchar();
-    switch (c) {
-      case EOF: // eof may not be returned
-        input_eof = true;
-        feeding = false;
-        break;
-      case 'q':
-        feeding = false;
-        std::cout << "\e[2K\e[0G";
-        break;
-      case '\n':
-      case 'j':
-        new_line += 1;
-        break;
-      case 'd':
-        new_line += screen_height / 2;
-        break;
-      case 'u':
-        if (new_line >= screen_height / 2) {
-          new_line -= screen_height / 2;
-        } else {
-          new_line = 0;
-        }
-        break;
-      case 'k':
-        if (new_line >= 1) {
-          new_line -= 1;
-        }
-        break;
-      case ' ':
-        new_line += (screen_height - 1);
-        break;
-      case '\e':
-        esc_pressed = true;
-        break;
-      case 'A': // up arrow
-        if (esc_pressed) {
-          if (new_line >= 1) {
-            new_line -= 1;
-          }
-          esc_pressed = false;
-        }
-        break;
-      case 'B': // down arrow
-        if (esc_pressed) {
-          new_line += 1;
-          esc_pressed = false;
-        }
-        break;
-      case 'H': // home
-        if (esc_pressed) {
-          new_line = 0;
-          esc_pressed = false;
-        }
-        break;
-      case 'F': // end
-        if (esc_pressed) {
-          new_line = max_line;
-          esc_pressed = false;
-        }
-        break;
-      default:
-        break;
+    if (c == EOF) { // eof may not be returned
+      input_eof = true;
+      feeding = false;
+    } else if (c == 'q') {
+      feeding = false;
+      std::cout << "\e[2K\e[0G";
+    } else if (c == '\n' || c == 'j') {
+      new_line += 1;
+    } else if (c == 'd') {
+      new_line += screen_height / 2;
+    } else if (c == 'u') {
+      if (new_line >= screen_height / 2) {
+        new_line -= screen_height / 2;
+      } else {
+        new_line = 0;
+      }
+    } else if (c == 'k' && new_line >= 1) {
+      new_line -= 1;
+    } else if (c == ' ') {
+      new_line += (screen_height - 1);
+    } else if (c == '\e') {
+      esc_pressed = true;
+    } else if (c == 'A' && esc_pressed) { // up arrow
+      if (new_line >= 1) {
+        new_line -= 1;
+      }
+      esc_pressed = false;
+    } else if (c == 'B' && esc_pressed) { // down arrow
+      new_line += 1;
+      esc_pressed = false;
+    } else if (c == 'H' && esc_pressed) { // home
+      new_line = 0;
+      esc_pressed = false;
+    } else if (c == 'F' && esc_pressed) { // end
+      new_line = max_line;
+      esc_pressed = false;
     }
 
     if (new_line > max_line) {

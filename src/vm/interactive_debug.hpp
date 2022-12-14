@@ -51,6 +51,12 @@ private:
     instr_execution_stop_at = 0;
   }
 
+  void set_breakpoint_rule(std::string rule);
+  void set_breakpoint_instr(std::string instr);
+  void delete_breakpoint_rule(std::string rule);
+  void delete_breakpoint_instr(std::string instr);
+  void list_breakpoints();
+
 public:
   InteractiveDebugger(const InteractiveDebugger&) = delete;
   InteractiveDebugger& operator=(const InteractiveDebugger&) = delete;
