@@ -26,26 +26,19 @@ inline std::string to_hex_string<unsigned char>(unsigned char value) {
   return to_hex_string((unsigned int) value);
 }
 
-constexpr char reg_array_delimiter[] = " | ";
-constexpr char atomlist_delimiter[] = " | ";
-constexpr char reg_array_prefix[] = "[ ";
-constexpr char reg_array_suffix[] = " ]";
-constexpr char atomlist_prefix[] = "[ ";
-constexpr char atomlist_suffix[] = " ]";
-
 std::string to_string_atom(const LmnAtomRef atom, LmnLinkAttr attr);
+std::string to_string_atom_short(const LmnAtomRef atom, LmnLinkAttr attr);
 std::string to_string_reg(const LmnRegisterRef reg);
 std::string to_string_regarray(const LmnRegisterArray* reg_array);
 std::string to_string_instrop(LmnInstrOp op);
 std::string to_string_instr(const LmnRuleInstr instr);
 std::string to_string_atomlist(const AtomListEntry* atomlist);
+std::string to_string_atomlists(std::map<LmnFunctor,AtomListEntry*> atomlists);
 std::string to_string_mem(const LmnMembraneRef mem);
 std::string to_string_functor(LmnFunctor func);
 
 std::string to_string_dev_atom(const LmnAtomRef atom, LmnLinkAttr attr);
 std::string to_string_dev_reg(const LmnRegisterRef reg);
-std::string to_string_dev_regarray(const LmnRegisterArray* reg_array);
-std::string to_string_dev_atomlist(const AtomListEntry* atomlist);
 std::string to_string_dev_mem(const LmnMembraneRef mem);
 
 inline std::string print_object_ids(const void *address, unsigned long id) {

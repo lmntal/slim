@@ -23,17 +23,25 @@ static PrintRecord& get_history_entry(dump_history_table &table, const LmnSymbol
 static int get_overall_links(dump_history_table &table);
 
 static std::string __to_string_atom(const LmnAtomRef atom, LmnLinkAttr attr, dump_history_table &ht, size_t call_depth);
+static std::string __to_string_atom_short(const LmnAtomRef atom, LmnLinkAttr attr, dump_history_table &ht, size_t call_depth);
+static std::string __to_string_satom_short(const LmnSymbolAtomRef atom, int link_position, dump_history_table &ht, size_t call_depth);
 static std::string __to_string_link(const LmnSymbolAtomRef atom, int link_position, dump_history_table &ht);
 static std::string __to_string_satom_arg(const LmnSymbolAtomRef atom, int arg_index, dump_history_table &ht, size_t call_depth);
 static std::string __to_string_satom_args(const LmnSymbolAtomRef atom, dump_history_table &ht, size_t call_depth);
+static std::string __to_string_satom_args_short(const LmnSymbolAtomRef atom, dump_history_table &ht, size_t call_depth);
 static bool __is_direct_printable(LmnFunctor f);
 static std::string __to_string_atom_name(const LmnSymbolAtomRef atom);
 static std::string __to_string_atom_name(LmnFunctor functor);
 static std::string __to_string_list(const LmnSymbolAtomRef atom, dump_history_table &ht, size_t call_depth);
 static std::string __to_string_satom(const LmnSymbolAtomRef atom, int link_position, dump_history_table &ht, size_t call_depth);
-std::string __to_string_datom(const LmnAtomRef data, LmnLinkAttr attr);
-std::string __to_string_mem(const LmnMembraneRef mem, dump_history_table &ht);
-std::string __to_string_dev_atom(const LmnAtomRef atom, LmnLinkAttr attr);
+static std::string __to_string_datom(const LmnAtomRef data, LmnLinkAttr attr);
+static std::string __to_string_dev_atom(const LmnAtomRef atom, LmnLinkAttr attr);
+
+static std::string __to_string_atomlist(const AtomListEntry* atomlist, dump_history_table &ht);
+
+
+static std::string __to_string_cell_internal(const LmnMembraneRef mem, dump_history_table &ht);
+static std::string __to_string_mem_internal(const LmnMembraneRef mem, dump_history_table &ht);
 
 // テーブルから PrintRecord の参照を取得
 static PrintRecord& get_history_entry(dump_history_table &table, const LmnSymbolAtomRef atom) {
@@ -73,6 +81,23 @@ static std::string __to_string_atom(const LmnAtomRef atom, LmnLinkAttr attr, dum
   }
 }
 
+// アトムを表示。リンク先とその最終リンクで繋がっていても，アトムとしては表示しない。
+static std::string __to_string_atom_short(const LmnAtomRef atom, LmnLinkAttr attr, dump_history_table &ht, size_t call_depth) {
+  if (LMN_ATTR_IS_DATA(attr)) {
+    return __to_string_datom(atom, attr);
+  } else {
+    LmnSymbolAtomRef satom = (LmnSymbolAtomRef)atom;
+    LmnFunctor f = satom->get_functor();
+    return __to_string_satom_short(satom, LMN_ATTR_GET_VALUE(attr), ht, call_depth);
+  }
+}
+
+// アトムを表示。リンク先とその最終リンクで繋がっていても，アトムとしては表示しない。
+std::string to_string_atom_short(const LmnAtomRef atom, LmnLinkAttr attr) {
+  dump_history_table ht;
+  return __to_string_atom_short(atom, attr, ht, 0);
+}
+
 // シンボルアトムのリンクのうち1つをリンクとして表示。すでにリンクに名前がついていればその名前を使用。
 static std::string __to_string_link(const LmnSymbolAtomRef atom, int link_position, dump_history_table &ht) {
   PrintRecord &record = get_history_entry(ht, atom);
@@ -80,9 +105,17 @@ static std::string __to_string_link(const LmnSymbolAtomRef atom, int link_positi
   auto res = record.table.find(link_position);
 
   if (res == record.table.end()) { // not found
-    std::string name = LINK_PREFIX + std::to_string(get_overall_links(ht));
-    record.table.emplace(link_position, name);
-    return name;
+    LmnLinkAttr dst_attr = atom->get_attr(link_position);
+    if (LMN_ATTR_IS_DATA(dst_attr)) {
+      return __to_string_datom(atom->get_link(link_position), dst_attr);
+    } else {
+      LmnSymbolAtomRef dst_atom = (LmnSymbolAtomRef)atom->get_link(link_position);
+      int l = LMN_ATTR_GET_VALUE(dst_attr);
+      std::string name = LINK_PREFIX + std::to_string(get_overall_links(ht) / 2);
+      record.table.emplace(link_position, name);
+      get_history_entry(ht, dst_atom).table.emplace(l, name);
+      return name;
+    }
   } else { // found
     return (*res).second;
   }
@@ -102,7 +135,7 @@ static std::string __to_string_satom_arg(const LmnSymbolAtomRef atom, int arg_in
   }
 }
 
-// アトムのリンク全体を表示。リンクがなければ丸括弧は表示しない。
+// アトムのリンク全体を表示。リンクがなければ丸括弧は表示しない。リンク先がシンボルアトムならたどるかもしれない。
 static std::string __to_string_satom_args(const LmnSymbolAtomRef atom, dump_history_table &ht, size_t call_depth) {
   int link_num = atom->get_link_num();
 
@@ -197,9 +230,9 @@ static std::string __to_string_satom(const LmnSymbolAtomRef atom, int link_posit
     return __to_string_link(atom, link_position, ht);
   }
 
-  //if (record.done) { // ダンプ済み
-   // return "";
-  //}
+  if (record.done) { // ダンプ済み
+    return "";
+  }
 
   // リストならリスト用の表示
   if (/* call_depth == 0 &&  */functor == LMN_LIST_FUNCTOR) {
@@ -209,6 +242,34 @@ static std::string __to_string_satom(const LmnSymbolAtomRef atom, int link_posit
   record.done = true;
 
   return __to_string_atom_name(functor) + __to_string_satom_args(atom, ht, call_depth);
+}
+
+// アトムを表示。リンク先とその最終リンクで繋がっていても，アトムとしては表示しない。
+static std::string __to_string_satom_short(const LmnSymbolAtomRef atom, int link_position, dump_history_table &ht, size_t call_depth) {
+  LmnFunctor functor = atom->get_functor();
+  return __to_string_atom_name(functor) + __to_string_satom_args_short(atom, ht, call_depth);
+}
+
+// アトムのリンク全体をリンク先をたどらずに表示。
+static std::string __to_string_satom_args_short(const LmnSymbolAtomRef atom, dump_history_table &ht, size_t call_depth) {
+  int link_num = atom->get_link_num();
+
+  if (link_num == 0) { // if atom has no links, do not show parenthes
+    return "";
+  } else {
+    std::string retVal = "";
+    retVal += "(";
+
+    for (int i = 0; i < link_num; i++) {
+      if (i > 0) {
+        retVal += ",";
+      }
+      retVal += __to_string_link(atom, i, ht);
+    }
+
+    retVal += ")";
+    return retVal;
+  }
 }
 
 // 名前が /[a-z][a-zA-Z_]*/ ならtrue
@@ -282,14 +343,11 @@ std::string to_string_regarray(const LmnRegisterArray* reg_array) {
     return "null";
   }
 
-  std::string retVal = reg_array_prefix;
+  std::string retVal = "";
   for (size_t i = 0, reg_len = reg_array->size(); i < reg_len; i++) {
-    if (i > 0) {
-      retVal += reg_array_delimiter;
-    }
     retVal += to_string_reg((LmnRegisterRef) &(reg_array->at(i)));
+    retVal += ". ";
   }
-  retVal += reg_array_suffix;
 
   return retVal;
 }
@@ -412,23 +470,35 @@ std::string to_string_atomlist(const AtomListEntry* atomlist) {
   if(atomlist == nullptr) {
     return "null";
   }
-
-  auto begin = std::begin(*atomlist);
-  auto end = std::end(*atomlist);
   dump_history_table ht;
+  return __to_string_atomlist(atomlist, ht);
+}
 
-  std::string retVal = atomlist_prefix;
-  while (begin != end) {
-    // TODO check if attribute is appropriate
-    retVal += to_string_atom(*begin, LMN_ATTR_MAKE_LINK(0));
-    // retVal += __to_string_atom(*begin, LMN_ATTR_MAKE_LINK(0), ht, 0);
-    ++begin;
-    if (begin != end) {
-      retVal += atomlist_delimiter;
+static std::string __to_string_atomlist(const AtomListEntry* atomlist, dump_history_table &ht) {
+  size_t len = 0;
+  std::string list = "";
+  for (auto begin = std::begin(*atomlist), end = std::end(*atomlist); begin != end; ++begin) {
+    std::string s = __to_string_atom_short(*begin, LMN_ATTR_MAKE_LINK(0), ht, 0);
+    if (!s.empty()) {
+      list += s;
+      list += ". ";
     }
+    len++;
   }
-  retVal += atomlist_suffix;
+  LmnFunctor functor = (*(atomlist->begin()))->get_functor();
+  std::string header = to_string_functor(functor) + " (" + std::to_string(len) + ")  : ";
 
+  return header + list;
+}
+
+// アトムリストのリストを表示
+std::string to_string_atomlists(std::map<LmnFunctor,AtomListEntry*> atomlists) {
+  dump_history_table ht;
+  std::string retVal = "";
+  for (auto &p : atomlists) {
+    retVal += __to_string_atomlist(p.second, ht);
+    retVal += "\n";
+  }
   return retVal;
 }
 
@@ -441,8 +511,8 @@ std::string to_string_functor(LmnFunctor func) {
   return std::string(lmn_id_to_name(entry->name)) + "_" + std::to_string(entry->arity);
 }
 
-// 膜を表示
-std::string __to_string_mem(const LmnMembraneRef mem, dump_history_table &ht) {
+// 膜を表示。先頭と最後に中括弧を表示しない。
+static std::string __to_string_cell_internal(const LmnMembraneRef mem, dump_history_table &ht) {
   enum { P0, P1, P2, P3, PROXY, PRI_NUM };
   std::array<std::vector<LmnSymbolAtomRef>,PRI_NUM> pred_atoms;
 
@@ -484,7 +554,7 @@ std::string __to_string_mem(const LmnMembraneRef mem, dump_history_table &ht) {
   std::string retVal = "{";
   for (auto &v : pred_atoms) {
     for (auto &atom : v) {
-      // TODO complete
+      // TODO top-level
       std::string s = __to_string_satom(atom, 0, ht, 0);
       retVal += s;
       if (!s.empty()) {
@@ -496,11 +566,12 @@ std::string __to_string_mem(const LmnMembraneRef mem, dump_history_table &ht) {
   // 子
   bool dumped = false;
   for (LmnMembraneRef m = mem->mem_child_head(); m != nullptr; m = m->mem_next()) {
-    // TODO complete
-    std::string s = __to_string_mem(m, ht);
+    std::string s = __to_string_mem_internal(m, ht);
     retVal += s;
-    dumped = !s.empty();
-    if (dumped && m->mem_next() != nullptr) {
+    if (!s.empty()) {
+      dumped = true;
+    }
+    if (dumped && m->mem_next() != nullptr && ht.find((LmnSymbolAtomRef)m->mem_next()) == ht.end()) {
       retVal += ", ";
     }
   }
@@ -512,13 +583,29 @@ std::string __to_string_mem(const LmnMembraneRef mem, dump_history_table &ht) {
   return retVal;
 }
 
+// 膜を表示。先頭と最後に中括弧を表示しない。
+static std::string __to_string_mem_internal(const LmnMembraneRef mem, dump_history_table &ht) {
+  if (ht.find((LmnSymbolAtomRef)mem) != ht.end()) {
+    return "";
+  }
+  ht.emplace((LmnSymbolAtomRef)mem, PrintRecord({false,{}}));
+  std::string retVal = "";
+  if (mem->NAME_ID() != ANONYMOUS) {
+    retVal += lmn_id_to_name(mem->NAME_ID());
+  }
+  retVal += "{";
+  retVal += __to_string_cell_internal(mem, ht);
+  retVal += "}";
+  return retVal;
+}
+
 // 膜を表示
 std::string to_string_mem(const LmnMembraneRef mem) {
   if (mem == nullptr) {
     return "null";
   }
   dump_history_table ht;
-  return __to_string_mem(mem, ht);
+  return "{" + __to_string_cell_internal(mem, ht) + "}";
 }
 
 // データアトムならデータと属性を，シンボルアトムならアドレス・ID・ファンクタ・価数・接続先リンクの番号を表示
@@ -577,22 +664,6 @@ std::string to_string_dev_reg(const LmnRegisterRef reg) {
     default:
       return "unknown tt type";
   }
-}
-
-// TODO implement
-std::string to_string_dev_regarray(const LmnRegisterArray* reg_array) {
-  if (reg_array == nullptr) {
-    return "null";
-  }
-  return "Dev!" + to_string_regarray(reg_array);
-}
-
-// TODO implement
-std::string to_string_dev_atomlist(const AtomListEntry* atomlist) {
-  if (atomlist == nullptr) {
-    return "null";
-  }
-  return "Dev!" + to_string_atomlist(atomlist);
 }
 
 // TODO implement

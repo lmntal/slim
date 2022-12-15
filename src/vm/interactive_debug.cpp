@@ -472,11 +472,7 @@ void InteractiveDebugger::start_session_with_interpreter(const slim::vm::interpr
         auto atom_lists = ((LmnMembraneRef)rc->wt(0))->atom_lists();
         // info atomlist
         if (opt_argc == 0) {
-          std::string s = "";
-          for (auto &p : atom_lists) {
-            s += slim::debug_printer::to_string_functor(p.first) + "   : " + slim::debug_printer::to_string_atomlist(p.second) + "\n";
-          }
-          print_feeding(s);
+          print_feeding(slim::debug_printer::to_string_atomlists(atom_lists));
         }
         // info atomlist <FUNCTOR>
         else if (opt_argc == 1) {
@@ -489,7 +485,7 @@ void InteractiveDebugger::start_session_with_interpreter(const slim::vm::interpr
           if (res == end) { // not found
             std::cerr << "Atomlist with specified functor could not be found.\n";
           } else { // found
-            print_feeding("  " + opt_argv.at(0) + "   : " + slim::debug_printer::to_string_atomlist((*res).second) + "\n");
+            print_feeding(slim::debug_printer::to_string_atomlist((*res).second) + "\n");
           }
         }
         // info atomlist <FUNCTOR> <N> (dev)
@@ -515,9 +511,10 @@ void InteractiveDebugger::start_session_with_interpreter(const slim::vm::interpr
             std::string str = "";
             for (auto &s : *(*res).second) {
               if (i == input_n) {
-                str = slim::debug_printer::to_string_atom(s, LMN_ATTR_MAKE_LINK(0));
                 if (dev) {
-                  str += "\n" + slim::debug_printer::to_string_dev_atom(s, LMN_ATTR_MAKE_LINK(0));
+                  str = slim::debug_printer::to_string_dev_atom(s, LMN_ATTR_MAKE_LINK(0));
+                } else {
+                  str = slim::debug_printer::to_string_atom(s, LMN_ATTR_MAKE_LINK(0));
                 }
                 break;
               }

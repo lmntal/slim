@@ -28,5 +28,4 @@ liblmn_vm_a_SOURCES =                              \
 	trace_log.h              trace_log.cpp                 \
 	simply_trace_log.h       simply_trace_log.cpp \
 	interactive_debug.hpp interactive_debug.cpp \
-	stringifier.hpp stringifier.cpp \
 	debug_printer.hpp debug_printer.cpp
