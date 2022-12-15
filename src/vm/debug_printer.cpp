@@ -573,7 +573,7 @@ std::string to_string_functor(LmnFunctor func) {
 
 static std::string __to_string_cell_internal(const LmnMembraneRef mem, dump_history_table &ht) {
   enum { P0, P1, P2, P3, PROXY, PRI_NUM };
-  std::array<std::vector<LmnSymbolAtomRef>,PRI_NUM> pred_atoms;
+  std::vector<std::vector<LmnSymbolAtomRef>> pred_atoms(PRI_NUM);
 
   // アトムリストごとに処理
   for (auto &pair : mem->atom_lists()) {
