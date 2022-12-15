@@ -666,7 +666,6 @@ void InteractiveDebugger::start_session_with_interpreter(const slim::vm::interpr
         }
         break;
       }
-      // FIXME 1ステップ余分に進んでいるかも
       // step rule
       case DebugCommand::STEP_RULE: {
         reset_step_execution();
@@ -807,7 +806,12 @@ void InteractiveDebugger::start_session_with_interpreter(const slim::vm::interpr
 }
 
 void InteractiveDebugger::break_on_instruction(const slim::vm::interpreter *interpreter) {
-  if (input_eof || reacting_system_ruleset) {
+  if (input_eof) {
+    return;
+  }
+  // ignore system ruleset
+  if (interpreter != nullptr && interpreter->rule != nullptr
+      && std::find(system_ruleset->begin(), system_ruleset->end(), interpreter->rule) != system_ruleset->end()) {
     return;
   }
   instr_execution_count++;
@@ -843,7 +847,12 @@ void InteractiveDebugger::break_on_instruction(const slim::vm::interpreter *inte
 }
 
 void InteractiveDebugger::break_on_rule(const slim::vm::interpreter *interpreter) {
-  if (input_eof || reacting_system_ruleset) {
+  if (input_eof) {
+    return;
+  }
+  // ignore system ruleset
+  if (interpreter != nullptr && interpreter->rule != nullptr
+      && std::find(system_ruleset->begin(), system_ruleset->end(), interpreter->rule) != system_ruleset->end()) {
     return;
   }
   // break on entry

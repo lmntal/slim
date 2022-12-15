@@ -344,13 +344,7 @@ BOOL Task::react_all_rulesets(LmnReactCxtRef rc, LmnMembraneRef cur_mem) {
 
   /* 通常実行では, 適用が発生しなかった場合にシステムルールの適用を行う
    * ndではokはFALSEなので, system_rulesetが適用される. */
-  if (lmn_env.interactive_debug) {
-    InteractiveDebugger::get_instance().set_system_ruleset_reacting(true);
-  }
   ok = ok || react_ruleset(rc, cur_mem, system_ruleset);
-  if (lmn_env.interactive_debug) {
-    InteractiveDebugger::get_instance().set_system_ruleset_reacting(false);
-  }
 
 #ifdef USE_FIRSTCLASS_RULE
   lmn_rc_execute_insertion_events(rc);

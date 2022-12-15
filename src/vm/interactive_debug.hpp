@@ -42,7 +42,6 @@ private:
   // for other controls
   bool break_on_entry = false;
   bool finish_current_rule = false;
-  bool reacting_system_ruleset = false;
 
   void reset_step_execution() {
     rule_reaction_count = 0;
@@ -80,10 +79,6 @@ public:
 
   void register_expanding_state(State* state) {
     expanding_state = state;
-  }
-
-  void set_system_ruleset_reacting(bool flag) {
-    reacting_system_ruleset = flag;
   }
 };
 
