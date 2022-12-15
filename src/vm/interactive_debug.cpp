@@ -457,7 +457,7 @@ void InteractiveDebugger::start_session_with_interpreter(const slim::vm::interpr
               std::cerr << "Invalid argument at " << i << ": Exceeds length of register.\n";
               continue;
             }
-            s += "Register[" + std::to_string(l) + "] : " + (dev ? slim::debug_printer::to_string_dev_reg(&rc->reg(l)) : slim::debug_printer::to_string_reg(&rc->reg(l))) + "\n";
+            s += "Register[" + std::to_string(l) + "] : " + (dev ? "\n" + slim::debug_printer::to_string_dev_reg(&rc->reg(l)) : slim::debug_printer::to_string_reg(&rc->reg(l))) + "\n";
           }
           print_feeding(s);
         }
