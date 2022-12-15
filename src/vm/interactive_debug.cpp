@@ -608,10 +608,10 @@ void InteractiveDebugger::start_session_with_interpreter(const slim::vm::interpr
 
             str += " -> [";
             for (unsigned int i = 0, max = state->successor_num; i < max; i++) {
-              str += std::to_string(state_id(state_succ_state(state, i)));
-              if (i != max - 1) {
+              if (i > 0) {
                 str += ",";
               }
+              str += std::to_string(state_id(state_succ_state(state, i)));
             }
             str += "]";
 
