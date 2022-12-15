@@ -66,7 +66,7 @@ static std::string get_membrane_tree(const LmnMembraneRef mem, std::string prefi
 static LmnMembraneRef get_pointer_to_membrane_by_id(const LmnMembraneRef mem, ProcessID id);
 
 // output
-static bool print_section(const std::vector<std::string> &lines, size_t from_line, size_t screen_height, size_t screen_width);
+static void print_section(const std::string &string, size_t from_pos, size_t end_pos, int screen_height, int screen_width);
 // prototype end
 
 template <class T>
@@ -879,66 +879,44 @@ void InteractiveDebugger::finish_debugging() {
   std::flush(std::cout);
 }
 
-static bool print_section(const std::vector<std::string> &lines, size_t from_line, size_t screen_height, size_t screen_width) {
-  size_t line_count = lines.size();
-  if (line_count < screen_height) {
-    for (auto &s : lines) {
-      std::cout << s << "\n";
-    }
-    return false;
-  }
-
-  if (from_line > line_count - (screen_height - 1)) {
-    from_line = line_count - (screen_height - 1);
-  }
-
+static void print_section(const std::string &string, size_t from_pos, size_t end_pos, int screen_height, int screen_width) {
   std::cout << "\e[2J\e[0;0H"; // delete screen and move cursor to top left
-
-  for (size_t i = from_line; i < from_line + (screen_height - 1); i++) {
-    std::cout << lines.at(i) << "\n";
-  }
-
-  std::cout << "(" << from_line << "-" << (from_line + (screen_height - 1)) << "/" << line_count << ") :";
-
+  std::cout << string.substr(from_pos, end_pos - from_pos);
+  std::cout << "(" << std::to_string(end_pos * 100 / string.size()) << "%) :";
   std::flush(std::cout);
-  return true;
 }
 
-void InteractiveDebugger::print_feeding(const std::string &str) {
+void InteractiveDebugger::print_feeding(std::string str) {
   if (screen_height == -1 || screen_width == -1) {
     std::cout << str;
     return;
   }
 
-  std::vector<std::string> lines;
+  while(str.back() == '\n') {
+    str.pop_back();
+  }
+  str.push_back('\n');
 
+  std::vector<size_t> points;
+  points.push_back(0);
   for (size_t start = 0, i = 0, max = str.size(); i < max; i++) {
     if (str[i] == '\n') {
-      lines.push_back(str.substr(start, i - start));
+      points.push_back(i + 1);
       start = i + 1;
     } else if (i - start + 1 == screen_width) {
-      lines.push_back(str.substr(start, i - start + 1));
+      points.push_back(i + 1);
       start = i + 1;
-    } else if (i == max - 1) {
-      lines.push_back(str.substr(start));
-      break;
     }
   }
 
-  while(true) {
-    if (lines.size() > 0 && lines.back().empty()) {
-      lines.pop_back();
-    } else {
-      break;
-    }
-  }
-
-  size_t current_line = 0, max_line = lines.size() - (screen_height - 1);
-  bool feeding = print_section(lines, current_line, screen_height, screen_width);
-
-  if (!feeding) {
+  if (points.size() < screen_height) {
+    std::cout << str;
     return;
   }
+
+  size_t current_line = 0;
+  size_t max_line = points.size() - screen_height;
+  print_section(str, points.at(0), points.at(screen_height - 1), screen_height, screen_width);
 
   struct termios old_termios, new_termios;
   tcgetattr(STDIN_FILENO, &old_termios);
@@ -947,15 +925,15 @@ void InteractiveDebugger::print_feeding(const std::string &str) {
   tcsetattr(STDIN_FILENO, TCSANOW, &new_termios);
 
   bool esc_pressed = false;
-  while (feeding) {
+  while (true) {
     size_t new_line = current_line;
     int c = getchar();
     if (c == EOF) { // eof may not be returned
       input_eof = true;
-      feeding = false;
+      break;
     } else if (c == 'q') {
-      feeding = false;
       std::cout << "\e[2K\e[0G";
+      break;
     } else if (c == '\n' || c == 'j') {
       new_line += 1;
     } else if (c == 'd') {
@@ -993,7 +971,7 @@ void InteractiveDebugger::print_feeding(const std::string &str) {
     }
     if (new_line != current_line) {
       current_line = new_line;
-      feeding = print_section(lines, current_line, screen_height, screen_width);
+      print_section(str, points.at(current_line), points.at(current_line + screen_height - 1), screen_height, screen_width);
     }
   }
 

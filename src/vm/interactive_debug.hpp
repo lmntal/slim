@@ -33,7 +33,7 @@ private:
   // for feeding outputs
   int screen_height = -1;
   int screen_width = -1;
-  void print_feeding(const std::string &str);
+  void print_feeding(std::string str);
 
   // for non-deterministic execution
   StateSpaceRef statespace = nullptr;

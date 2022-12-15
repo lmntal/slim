@@ -330,7 +330,7 @@ static std::string __to_string_satom_args_short(const LmnSymbolAtomRef atom, dum
 }
 
 static bool __is_direct_printable(LmnFunctor f) {
-  if (LMN_IS_PROXY_FUNCTOR(f) || f == LMN_NIL_FUNCTOR) {
+  if (LMN_IS_PROXY_FUNCTOR(f)/*  || f == LMN_NIL_FUNCTOR */) {
     return true;
   }
   std::string s = LMN_FUNCTOR_STR(f);
@@ -347,8 +347,22 @@ static bool __is_direct_printable(LmnFunctor f) {
 }
 
 static std::string __to_string_atom_name(LmnFunctor functor) {
+  std::string retVal = "";
+  if (LMN_FUNCTOR_MODULE_ID(lmn_functor_table, functor) != ANONYMOUS) {
+    retVal += lmn_id_to_name(LMN_FUNCTOR_MODULE_ID(lmn_functor_table, functor));
+    retVal += ".";
+  }
+
   std::string str = LMN_FUNCTOR_STR(functor);
-  return __is_direct_printable(functor) ? str : "'" + str + "'";
+  if (__is_direct_printable(functor)) {
+    retVal += LMN_FUNCTOR_STR(functor);
+  } else {
+    retVal += "'";
+    retVal += LMN_FUNCTOR_STR(functor);
+    retVal += "'";
+  }
+
+  return retVal;
 }
 
 std::string __to_string_datom(const LmnAtomRef data, LmnLinkAttr attr) {
@@ -554,7 +568,7 @@ std::string to_string_functor(LmnFunctor func) {
     return "Functor table is null.\n";
   }
   auto entry = lmn_functor_table->get_entry(func);
-  return std::string(lmn_id_to_name(entry->name)) + "_" + std::to_string(entry->arity);
+  return __to_string_atom_name(func) + "_" + std::to_string(entry->arity);
 }
 
 static std::string __to_string_cell_internal(const LmnMembraneRef mem, dump_history_table &ht) {
