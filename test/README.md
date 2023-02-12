@@ -34,7 +34,6 @@ Automake の TAP を用いて，自動的にテストを行います．
 
 1. [system_check](system_check) ディレクトリ以下に，
    新しくディレクトリ `<dirname>` を作って，または既存のディレクトリの中に，
-
    1. `<testname>.lmntest` ファイル（テストスクリプト）を新たに作成してください．
       - E.g., [testsuite/basic/append1.lmntest](testsuite/basic/append1.lmntest)
         ```prolog
@@ -64,8 +63,9 @@ Automake の TAP を用いて，自動的にテストを行います．
       - `check.sh` ファイルでは，
         [`./check.pl`](system_check/check.pl) を呼び出し，
         その引数として，
-        テストしたい `<testname>.lmntest` ファイルのパスから `.lmntest` を除いたものを全て与えてください．
-
+        テストしたい `<testname>.lmntest` ファイルのパスから `.lmntest` を除いたもの
+        (e.g., `/testsuite/basic/append1`)
+        を全て与えてください．
 2. [system_check/Makefile.am](system_check/Makefile.am) の
    1. `TESTS` 変数に，
       追加した `check.sh` スクリプトへのパス
