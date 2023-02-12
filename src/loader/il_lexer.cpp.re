@@ -147,6 +147,10 @@ start:
       yylval->as<int>() = (int)id_global;
       return parser::token::RULESET_ID;
     }
+    '@' [a-zA-Z_0-9]+ {
+      yylval->as<lmn_interned_str>() = lmn_intern(get_token().substr(1).c_str());
+      return parser::token::SUBRULE_ID;
+    }
 
     "null" { // name of anonymous membrane
        yylval->as<lmn_interned_str>() = ANONYMOUS;
@@ -171,6 +175,7 @@ start:
     "Compiled Ruleset"   { return parser::token::KW_COMPILED_RULESET; }
     "Compiled Uniq Rule" { return parser::token::KW_COMPILED_UNIQ_RULE; }
     "Compiled Rule"      { return parser::token::KW_COMPILED_RULE; }
+    "Compiled Subrule"      { return parser::token::KW_COMPILED_SUBRULE; }
     "--atommatch"        { return parser::token::KW_ATOMMATCH; }
     "--memmatch"         { return parser::token::KW_MEMMATCH; }
     "--guard"            { return parser::token::KW_GUARD; }
