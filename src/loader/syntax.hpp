@@ -172,13 +172,22 @@ struct Rule {
         body(std::move(body)) {}
 };
 
+struct Subrule {
+  lmn_interned_str name;
+  InstBlock body;
+
+  Subrule();
+  Subrule(lmn_interned_str name, InstBlock &&body)
+    : name(name), body(std::move(body)) {}
+};
+
 struct RuleSet {
   BOOL is_system_ruleset;
   int id;
-  std::vector<Rule> rules;
+  std::vector<il::c17::variant<Rule, Subrule>> rules;
 
   RuleSet() {}
-  RuleSet(int id, std::vector<Rule> &&rules, BOOL is_system_ruleset)
+  RuleSet(int id, std::vector<il::c17::variant<Rule, Subrule>> &&rules, BOOL is_system_ruleset)
       : id(id), rules(std::move(rules)), is_system_ruleset(is_system_ruleset) {}
 };
 

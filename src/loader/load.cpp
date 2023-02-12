@@ -68,6 +68,7 @@ void build_cmd(char *buf, char *file_name);
 #include <set>
 
 using loader_error = slim::loader::exception;
+namespace c17 = slim::element;
 
 /*
  *  Instruction Format
@@ -114,6 +115,15 @@ using loader_error = slim::loader::exception;
  *
  */
 
+struct load_rule_func {
+  std::unique_ptr<LmnRule> operator()(Rule const &rule) {
+    return ByteEncoder::encode_rule_ast(rule);
+  }
+  std::unique_ptr<LmnRule> operator()(Subrule const &rule) {
+    return ByteEncoder::encode_rule_ast(rule);
+  }
+};
+
 std::unique_ptr<LmnRule> load_rule(Rule const &rule) {
   return ByteEncoder::encode_rule_ast(rule);
 }
@@ -121,8 +131,9 @@ std::unique_ptr<LmnRule> load_rule(Rule const &rule) {
 static LmnRuleSetRef load_ruleset(const RuleSet &rs) {
   auto runtime_ruleset = new LmnRuleSet(rs.id, 10);
 
-  for (auto &r : rs.rules)
-    runtime_ruleset->put(load_rule(r));
+  for (auto &r : rs.rules) {
+    runtime_ruleset->put(c17::visit(load_rule_func(), r));
+  }
 
   LmnRuleSetTable::add(runtime_ruleset, rs.id);
 
