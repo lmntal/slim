@@ -58,7 +58,7 @@ namespace c17 = slim::element;
 %define api.value.type variant
 %token <int> INT
 %token <double> FLOAT
-%token <lmn_interned_str> ID
+%token <lmn_interned_str> ID SUBRULE_ID
 %token <LmnInstruction> INST_NAME
 %token <int> LABEL
 %token <lmn_interned_str> DQUOTED_STRING
@@ -66,7 +66,7 @@ namespace c17 = slim::element;
 %token <int> RULESET_ID
 %token COMMA PERIOD COLON UNDERBAR LBRACE RBRACE LBRACKET RBRACKET
 %token INSIDE_PROXY OUTSIDE_PROXY
-%token KW_COMPILED_RULESET KW_COMPILED_SYSTEM_RULESET KW_COMPILED_UNIQ_RULE KW_COMPILED_RULE KW_ATOMMATCH KW_MEMMATCH
+%token KW_COMPILED_RULESET KW_COMPILED_SYSTEM_RULESET KW_COMPILED_UNIQ_RULE KW_COMPILED_RULE KW_ATOMMATCH KW_MEMMATCH KW_COMPILED_SUBRULE
 %token KW_GUARD KW_BODY KW_INLINE KW_MODULE
 
 %token <LmnInstruction> INST_TK_LOOP
@@ -79,27 +79,27 @@ namespace c17 = slim::element;
 
 %start start
 %type <IL *> world
+%type <InstBlock> atommatch
+%type <InstBlock> body
+%type <InstBlock> guard
+%type <InstBlock> memmatch
+%type <Instruction> instruction
+%type <c17::variant<Rule, Subrule>> rule
+%type <RuleSet> ruleSet
+%type <il::Functor> functor
+%type <il::InstrArg> arg
+%type <il::InstrArg> var_list_arg;
+%type <int> label
+%type <std::vector<Instruction>> instructions
 %type <std::vector<Module>> module_def;
 %type <std::vector<Module>> modules;
+%type <std::vector<c17::variant<Rule, Subrule>>> ruleList
 %type <std::vector<RuleSet>> ruleSetList
-%type <RuleSet> ruleSet
-%type <Rule> rule
-%type <InstBlock> atommatch
-%type <InstBlock> memmatch
-%type <InstBlock> guard
-%type <InstBlock> body
-%type <Instruction> instruction
-%type <std::vector<Instruction>> instructions
-%type <std::vector<Rule>> ruleList
-%type <int> label
-%type <il::InstrArg> arg
-%type <il::Functor> functor
-%type <std::vector<il::InstrArg>> var_list;
-%type <std::vector<il::InstrArg>> var_list_;
-%type <il::InstrArg> var_list_arg;
 %type <std::vector<il::InstrArg>> args
 %type <std::vector<il::InstrArg>> args_
 %type <std::vector<il::InstrArg>> inst_list_arg
+%type <std::vector<il::InstrArg>> var_list;
+%type <std::vector<il::InstrArg>> var_list_;
 %type <std::vector<lmn_interned_str>> inlines;
 
 
@@ -107,7 +107,7 @@ namespace c17 = slim::element;
 
 start:
   world _EOF { *ret_il = std::unique_ptr<IL>($1); }   /* 中間言語全体のパース */
-| rule { *ret_rule = std::unique_ptr<Rule>(new Rule(std::move($1))); }  /* ルールのみの入力をパース */
+| rule { *ret_rule = std::unique_ptr<Rule>(new Rule(c17::get<Rule>($1))); }  /* ルールのみの入力をパース */
 ;
 
 world:
@@ -146,7 +146,7 @@ ruleSet:
 ;
 
 ruleList:
-  rule { $$.push_back(std::move($1)); }
+  rule { $$.push_back($1); }
 | ruleList rule { $1.push_back(std::move($2)); $$ = std::move($1); }
 ;
 
@@ -156,6 +156,9 @@ rule:
   }
 | KW_COMPILED_RULE atommatch memmatch guard body {
     $$ = Rule(false, std::move($2), std::move($3), std::move($4), std::move($5));
+  }
+| KW_COMPILED_SUBRULE SUBRULE_ID instructions {
+    $$ = Subrule($2, InstBlock(std::move($3)));
   }
 ;
 

@@ -56,9 +56,10 @@ struct interpreter {
 
   // stack frameのcallbackが返す値
   // Trial: callbackをstackからpopしないで続ける
+  // Continue: callbackをstackからpopして続ける
   // Failure, Success: 命令列の結果を失敗/成功で上書きしてcallbackをstackからpopする
   enum class command_result {
-    Trial, Failure, Success
+    Trial, Failure, Success, Continue,
   };
 
   struct stack_frame {
