@@ -20,7 +20,7 @@
       plugin: autotools
       # install-via: prefix
       source: .
-      configflags: ["--datadir=/snap/$SNAPCRAFT_PROJECT_NAME/current/share"]
+      autotools-configure-parameters: ["--datadir=/snap/$SNAPCRAFT_PROJECT_NAME/current/share"]
       organize:
         snap/$SNAPCRAFT_PROJECT_NAME/current/share: share
       build-environment:
