@@ -24,6 +24,12 @@ Automake の TAP を用いて，自動的にテストを行います．
   作成された il ファイルを slim に与えて実行し，
   結果に `ok` があるかどうかを検査します．
 
+## Advanced Usage
+
+それぞれのディレクトリの中のテストのみ実行する．
+
+- `library_check` などのディレクトリに入って，`make check-TESTS` を実行する．
+
 ## 新たなテストを作成する手順
 
 [system_check](system_check) にテストを追加する場合について，解説します．
