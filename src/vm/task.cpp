@@ -3505,8 +3505,8 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     READ_VAL(LmnInstrVar, instr, atom1);
     READ_VAL(LmnInstrVar, instr, atom2);
     rc->reg(dstatom) = {
-        static_cast<LmnWord>(((long)rc->wt(atom1) + (long)rc->wt(atom2))),
-        LMN_INT_ATTR, TT_ATOM};
+      static_cast<LmnWord>(((long)rc->wt(atom1) + (long)rc->wt(atom2))),
+      LMN_INT_ATTR, TT_ATOM};
     break;
   }
   case INSTR_ISUB: {
@@ -3514,10 +3514,9 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     READ_VAL(LmnInstrVar, instr, dstatom);
     READ_VAL(LmnInstrVar, instr, atom1);
     READ_VAL(LmnInstrVar, instr, atom2);
-
     rc->reg(dstatom) = {
-        static_cast<LmnWord>(((long)rc->wt(atom1) - (long)rc->wt(atom2))),
-        LMN_INT_ATTR, TT_ATOM};
+      static_cast<LmnWord>(((long)rc->wt(atom1) - (long)rc->wt(atom2))),
+      LMN_INT_ATTR, TT_ATOM};
     break;
   }
   case INSTR_IMUL: {
@@ -3525,10 +3524,9 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     READ_VAL(LmnInstrVar, instr, dstatom);
     READ_VAL(LmnInstrVar, instr, atom1);
     READ_VAL(LmnInstrVar, instr, atom2);
-
     rc->reg(dstatom) = {
-        static_cast<LmnWord>(((long)rc->wt(atom1) * (long)rc->wt(atom2))),
-        LMN_INT_ATTR, TT_ATOM};
+      static_cast<LmnWord>(((long)rc->wt(atom1) * (long)rc->wt(atom2))),
+      LMN_INT_ATTR, TT_ATOM};
     break;
   }
   case INSTR_IDIV: {
@@ -3536,19 +3534,18 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     READ_VAL(LmnInstrVar, instr, dstatom);
     READ_VAL(LmnInstrVar, instr, atom1);
     READ_VAL(LmnInstrVar, instr, atom2);
-
     rc->reg(dstatom) = {
-        static_cast<LmnWord>(((long)rc->wt(atom1) / (long)rc->wt(atom2))),
-        LMN_INT_ATTR, TT_ATOM};
-
+      static_cast<LmnWord>(((long)rc->wt(atom1) / (long)rc->wt(atom2))),
+      LMN_INT_ATTR, TT_ATOM};;
     break;
   }
   case INSTR_INEG: {
     LmnInstrVar dstatom, atomi;
     READ_VAL(LmnInstrVar, instr, dstatom);
     READ_VAL(LmnInstrVar, instr, atomi);
-    rc->reg(dstatom) = {static_cast<LmnWord>((-(long)rc->wt(atomi))),
-                        LMN_INT_ATTR, TT_ATOM};
+    rc->reg(dstatom) = {
+      static_cast<LmnWord>((-(long)rc->wt(atomi))),
+      LMN_INT_ATTR, TT_ATOM};
     break;
   }
   case INSTR_IMOD: {
@@ -3556,29 +3553,37 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     READ_VAL(LmnInstrVar, instr, dstatom);
     READ_VAL(LmnInstrVar, instr, atom1);
     READ_VAL(LmnInstrVar, instr, atom2);
-
     rc->reg(dstatom) = {
-        static_cast<LmnWord>(((long)rc->wt(atom1) % (long)rc->wt(atom2))),
-        LMN_INT_ATTR, TT_ATOM};
+      static_cast<LmnWord>(((long)rc->wt(atom1) % (long)rc->wt(atom2))),
+      LMN_INT_ATTR, TT_ATOM};
     break;
   }
-  // case INSTR_INOT: {
-  //   LmnInstrVar dstatom, atomi;
-  //   READ_VAL(LmnInstrVar, instr, dstatom);
-  //   READ_VAL(LmnInstrVar, instr, atomi);
-  //   rc->reg(dstatom) = {static_cast<LmnWord>((~(int)rc->wt(atomi))),
-  //                       LMN_INT_ATTR, TT_ATOM};
-  //   break;
-  // }
+  case INSTR_IABS: {
+    LmnInstrVar dstatom, atomi;
+    READ_VAL(LmnInstrVar, instr, dstatom);
+    READ_VAL(LmnInstrVar, instr, atomi);
+    rc->reg(dstatom) = {
+      static_cast<LmnWord>(abs((long)rc->wt(atomi))),
+      LMN_INT_ATTR, TT_ATOM};
+    break;
+  }
+  case INSTR_INOT: {
+    LmnInstrVar dstatom, atomi;
+    READ_VAL(LmnInstrVar, instr, dstatom);
+    READ_VAL(LmnInstrVar, instr, atomi);
+    rc->reg(dstatom) = {
+      static_cast<LmnWord>((~(long)rc->wt(atomi))),
+      LMN_INT_ATTR, TT_ATOM};
+    break;
+  }
   case INSTR_IAND: {
     LmnInstrVar dstatom, atom1, atom2;
     READ_VAL(LmnInstrVar, instr, dstatom);
     READ_VAL(LmnInstrVar, instr, atom1);
     READ_VAL(LmnInstrVar, instr, atom2);
-
     rc->reg(dstatom) = {
-        static_cast<LmnWord>(((long)rc->wt(atom1) & (long)rc->wt(atom2))),
-        LMN_INT_ATTR, TT_ATOM};
+      static_cast<LmnWord>(((long)rc->wt(atom1) & (long)rc->wt(atom2))),
+      LMN_INT_ATTR, TT_ATOM};
     break;
   }
   case INSTR_IOR: {
@@ -3586,11 +3591,9 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     READ_VAL(LmnInstrVar, instr, dstatom);
     READ_VAL(LmnInstrVar, instr, atom1);
     READ_VAL(LmnInstrVar, instr, atom2);
-
     rc->reg(dstatom) = {
-        static_cast<LmnWord>(((long)rc->wt(atom1) | (long)rc->wt(atom2))),
-        LMN_INT_ATTR, TT_ATOM};
-
+      static_cast<LmnWord>(((long)rc->wt(atom1) | (long)rc->wt(atom2))),
+      LMN_INT_ATTR, TT_ATOM};
     break;
   }
   case INSTR_IXOR: {
@@ -3598,10 +3601,9 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     READ_VAL(LmnInstrVar, instr, dstatom);
     READ_VAL(LmnInstrVar, instr, atom1);
     READ_VAL(LmnInstrVar, instr, atom2);
-
     rc->reg(dstatom) = {
-        static_cast<LmnWord>(((long)rc->wt(atom1) ^ (long)rc->wt(atom2))),
-        LMN_INT_ATTR, TT_ATOM};
+      static_cast<LmnWord>(((long)rc->wt(atom1) ^ (long)rc->wt(atom2))),
+      LMN_INT_ATTR, TT_ATOM};
     break;
   }
   case INSTR_ISAL: {
@@ -3614,8 +3616,8 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     long tmp1 = (long)rc->wt(atom1);
     long tmp2 = (long)rc->wt(atom2);
     rc->reg(dstatom) = {
-	static_cast<LmnWord>((tmp2 >= 0) ? tmp1 << tmp2 : tmp1 >> -tmp2),
-        LMN_INT_ATTR, TT_ATOM};
+      static_cast<LmnWord>((tmp2 >= 0) ? tmp1 << tmp2 : tmp1 >> -tmp2),
+      LMN_INT_ATTR, TT_ATOM};
     break;
   }
   case INSTR_ILT: {
