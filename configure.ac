@@ -51,7 +51,7 @@ AC_PROG_CC([$c_compilers])
 AC_PROG_CPP
 AC_PROG_YACC
 AC_PROG_BISON([3.0])
-AC_PROG_LEX(noyywrap)
+AC_PROG_LEX(yywrap)
 AM_PROG_LEX
 AC_PROG_RANLIB
 AC_PROG_AWK
@@ -60,6 +60,8 @@ AC_INCLUDES_DEFAULT
 
 AC_SUBST(CFLAGS)
 AM_CONDITIONAL(GCC, test "$GCC" = "yes")   # let the Makefile know if we're gcc
+
+AC_CHECK_TOOL(AR, ar)
 
 # ----------------------------------------------------------
 # Setting Options
@@ -534,16 +536,19 @@ case $host_os in
     # around the executables it builds.  Such scripts have caused failures on
     # MinGW.  Using this option means an extra link step is executed during
     # "make install".
-    LT_INIT(disable-fast-install)
+    lt_init_opt=disable-fast-install
 
     ;;
    *)
-    LT_INIT(fast-install)
+    lt_init_opt=fast-install
     
     ;;
 esac
 
-AC_SUBST(LIBTOOL_DEPS)
+# todo: how to pass $lt_init_opt??
+LT_INIT
+
+AC_SUBST([LIBTOOL_DEPS])
 AM_CONDITIONAL(USE_LIBTOOL, test "x$LIBTOOL" != "x")
 
 AX_C___ATTRIBUTE__
