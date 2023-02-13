@@ -195,8 +195,8 @@ check_DATA = \
 	testsuite/uniq/case5.il \
 	testsuite/uniq/case6.il \
 	testsuite/cslmntal/skiplist1.il \
-	testsuite/cslmntal/append2.il \
-	testsuite/cslmntal/append3.il \
+	testsuite/cslmntal/skiplist2.il \
+	testsuite/cslmntal/skiplist3.il \
 	testsuite/cslmntal/append4.il
 
 CLEANFILES = $(check_DATA)
@@ -205,8 +205,7 @@ LMNC = $(LMNTAL_HOME)/bin/lmntal
 LMNCFLAGS = --hl-opt --slimcode -O3
 
 %.il: %.lmntest
-	perl -pe 's/\\\\\s*\n//' $< | \
-	awk -f create_testdata.awk | \
+	awk -f create_testdata.awk $< | \
 	$(LMNC) --stdin-lmn $(LMNCFLAGS) >$@
 %.il: %.lmn
 	$(LMNC) $(LMNCFLAGS) $< >$@

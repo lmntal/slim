@@ -20,21 +20,18 @@ Automake の TAP を用いて，自動的にテストを行います．
 
   ```make
   %.il: %.lmntest
-    perl -pe 's/\\\\\s*\n//' $< | \       ## Delete '\\' followed by a new line.
     awk -f create_testdata.awk | \        ## Create a test program.
     $(LMNC) --stdin-lmn $(LMNCFLAGS) >$@  ## Compile with a compiler.
   ```
 
   によって，
 
-  1. perl のコマンドにより，`\\` の後に改行がある場合は，それらが消去されます．
-
-  2. [create_testdata.awk](system_check/create_testdata.awk)
+  1. [create_testdata.awk](system_check/create_testdata.awk)
      スクリプトによって，
      テストが成功した場合に最終状態のプロセスに `ok` を含むような，
      LMNtal プログラムへと作り替えられます．
 
-  3. プログラムに変更があった場合は，
+  2. プログラムに変更があった場合は，
      コンパイラによってこの LMNtal プログラムは il ファイルにコンパイルされます．
 
 - [check.pl](system_check/check.pl) は，
@@ -78,8 +75,6 @@ Automake の TAP を用いて，自動的にテストを行います．
         ```
       - 構成
         1. 1 行目にテストしたい LMNtal プログラム，
-           - 改行がしたい場合は，`\\` の後に改行してください．
-           - `\\` の後に改行がある場合は，それらは，自動的に消去されます．
         2. 2 行目に LMNtal プログラムの予想される出力，
         3. 3 行目に `ok` または `ng` を記述してください．
            - `ok` ならば， 1 行目の結果が 2 行目と等しいとき，
