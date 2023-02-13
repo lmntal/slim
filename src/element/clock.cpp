@@ -42,7 +42,7 @@
 #include "lmntal.h" // config.h
 #include <stdio.h>
 
-#if defined(TIME_WITH_SYS_TIME)
+#if defined(HAVE_SYS_TIME_H)
 #include <sys/time.h>
 #include <time.h>
 #define ENABLE_TIME_PROFILE

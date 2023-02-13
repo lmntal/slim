@@ -2,13 +2,13 @@
 # Process this file with autoconf to produce a configure script.
 # $Id: configure.ac,v 1.13 2008/10/05 11:22:41 riki Exp $
 
-AC_PREREQ(2.61)
-AC_INIT([SLIM], [2.5.0], [lmntal@ueda.info.waseda.ac.jp], [slim])
+AC_PREREQ([2.71])
+AC_INIT([SLIM],[2.5.0],[lmntal@ueda.info.waseda.ac.jp],[slim])
 # AC_REVISION($Revision: 1.13 $)
 # AC_COPYRIGHT (copyright-notice)
 AC_CANONICAL_TARGET
 AC_CONFIG_SRCDIR([src/main.cpp])
-AC_CONFIG_HEADER([src/config.h])
+AC_CONFIG_HEADERS([src/config.h])
 AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE([subdir-objects -Wno-portability])
 AM_SILENT_RULES([no])
@@ -48,12 +48,10 @@ esac
 AC_LANG(C++)
 AC_PROG_CXX([$cxx_compilers])
 AC_PROG_CC([$c_compilers])
-AM_PROG_CC_C_O
-AC_PROG_CC_STDC
 AC_PROG_CPP
 AC_PROG_YACC
 AC_PROG_BISON([3.0])
-AC_PROG_LEX
+AC_PROG_LEX(noyywrap)
 AM_PROG_LEX
 AC_PROG_RANLIB
 AC_PROG_AWK
@@ -316,9 +314,14 @@ AC_CHECK_LIB(z, main)
 AC_CHECK_LIB(rt, main)
 AC_CHECK_LIB(gomp, main)
 AC_CHECK_LIB(m, main)
-# Checks for header files.
-AC_HEADER_STDC
-AC_HEADER_TIME
+
+# Autoupdate added the next two lines to ensure that your configure
+# script's behavior did not change.  They are probably safe to remove.
+AC_CHECK_INCLUDES_DEFAULT
+AC_PROG_EGREP
+
+AC_CHECK_HEADERS_ONCE([sys/time.h])
+
 # AC_CHECK_HEADERS(sys/time.h sys/types.h glob.h dlfcn.h getopt.h sched.h unistd.h)
 # AC_CHECK_HEADERS(stdint.h inttypes.h rpc/types.h)
 # AC_CHECK_HEADERS(syslog.h crypt.h)
@@ -346,17 +349,14 @@ AC_CHECK_TYPES([__int64])
 AC_MSG_CHECKING(for builtin __thread)
 AC_CACHE_VAL(
   ac_cv_c___thread,
-  AC_TRY_RUN(
-    [
+  AC_RUN_IFELSE([AC_LANG_SOURCE([[
       __thread int x;
       int main(void)
       {
         return 0;
       }
-    ],
-    ac_cv_c___thread=yes,
-    ac_cv_c___thread=no
-  )
+    ]])],[ac_cv_c___thread=yes],[ac_cv_c___thread=no
+  ],[])
 )
 AC_MSG_RESULT($ac_cv_c___thread)
 if test "$ac_cv_c___thread" = "yes"; then
@@ -370,18 +370,15 @@ fi
 AC_MSG_CHECKING(for builtin compare_and_swap)
 AC_CACHE_VAL(
   ac_cv_func_cas,
-  AC_TRY_RUN(
-    [
+  AC_RUN_IFELSE([AC_LANG_SOURCE([[
       int main(void)
       {
         int x = 0, y = 0, z = 0;
         __sync_bool_compare_and_swap_4(&x, y, z);
         return 0;
       }
-    ],
-    ac_cv_func_cas=yes,
-    ac_cv_func_cas=no
-  )
+    ]])],[ac_cv_func_cas=yes],[ac_cv_func_cas=no
+  ],[])
 )
 AC_MSG_RESULT($ac_cv_func_cas)
 if test "$ac_cv_func_cas" = "yes"; then
@@ -391,18 +388,15 @@ fi
 AC_MSG_CHECKING(for builtin atomic_add)
 AC_CACHE_VAL(
   ac_cv_func_add,
-  AC_TRY_RUN(
-    [
+  AC_RUN_IFELSE([AC_LANG_SOURCE([[
       int main(void)
       {
         int x = 0, y = 0;
         __sync_add_and_fetch(&x, y);
         return 0;
       }
-    ],
-    ac_cv_func_add=yes,
-    ac_cv_func_add=no
-  )
+    ]])],[ac_cv_func_add=yes],[ac_cv_func_add=no
+  ],[])
 )
 AC_MSG_RESULT($ac_cv_func_add)
 if test "$ac_cv_func_add" = "yes"; then
@@ -412,18 +406,15 @@ fi
 AC_MSG_CHECKING(for builtin atomic_sub)
 AC_CACHE_VAL(
   ac_cv_func_sub,
-  AC_TRY_RUN(
-    [
+  AC_RUN_IFELSE([AC_LANG_SOURCE([[
       int main(void)
       {
         int x = 0, y = 0;
         __sync_sub_and_fetch(&x, y);
         return 0;
       }
-    ],
-    ac_cv_func_sub=yes,
-    ac_cv_func_sub=no
-  )
+    ]])],[ac_cv_func_sub=yes],[ac_cv_func_sub=no
+  ],[])
 )
 AC_MSG_RESULT($ac_cv_func_sub)
 if test "$ac_cv_func_sub" = "yes"; then
@@ -433,18 +424,15 @@ fi
 AC_MSG_CHECKING(for builtin atomic_logical_and)
 AC_CACHE_VAL(
   ac_cv_func_logical_and,
-  AC_TRY_RUN(
-    [
+  AC_RUN_IFELSE([AC_LANG_SOURCE([[
        int main(void)
        {
           int x = 2, y = 1;
           __sync_and_and_fetch(&x, y);
           return 0;
        }
-    ],
-    ac_cv_func_logical_and=yes,
-    ac_cv_func_logical_and=no
-  )
+    ]])],[ac_cv_func_logical_and=yes],[ac_cv_func_logical_and=no
+  ],[])
 )
 AC_MSG_RESULT($ac_cv_func_logical_and)
 if test "$ac_cv_func_logical_and" = "yes"; then
@@ -454,18 +442,15 @@ fi
 AC_MSG_CHECKING(for builtin atomic_logical_or)
 AC_CACHE_VAL(
   ac_cv_func_logical_or,
-  AC_TRY_RUN(
-    [
+  AC_RUN_IFELSE([AC_LANG_SOURCE([[
       int main(void)
       {
         int x = 1, y = 0;
         __sync_or_and_fetch(&x, y);
         return 0;
       }
-    ],
-    ac_cv_func_logical_or=yes,
-    ac_cv_func_logical_or=no
-  )
+    ]])],[ac_cv_func_logical_or=yes],[ac_cv_func_logical_or=no
+  ],[])
 )
 AC_MSG_RESULT($ac_cv_func_logical_or)
 if test "$ac_cv_func_logical_or" = "yes"; then
@@ -475,8 +460,7 @@ fi
 AC_MSG_CHECKING(for builtin memory barrier)
 AC_CACHE_VAL(
   ac_cv_func_synchronize,
-  AC_TRY_RUN(
-    [
+  AC_RUN_IFELSE([AC_LANG_SOURCE([[
       int main(void)
       {
         int x, y;
@@ -485,10 +469,8 @@ AC_CACHE_VAL(
         y = 1;
         return 0;
       }
-    ],
-    ac_cv_func_synchronize=yes,
-    ac_cv_func_synchronize=no
-  )
+    ]])],[ac_cv_func_synchronize=yes],[ac_cv_func_synchronize=no
+  ],[])
 )
 AC_MSG_RESULT($ac_cv_func_synchronize)
 if test "$ac_cv_func_synchronize" = "yes"; then
@@ -498,18 +480,15 @@ fi
 AC_MSG_CHECKING(for pthread_barrier)
 AC_CACHE_VAL(
   ac_cv_func_pthread_barrier,
-  AC_TRY_RUN(
-    [
+  AC_RUN_IFELSE([AC_LANG_SOURCE([[
       #include <pthread.h>
       int main(void)
       {
         pthread_barrier_t t;
         return 0;
       }
-    ],
-    ac_cv_func_pthread_barrier=yes,
-    ac_cv_func_pthread_barrier=no
-  )
+    ]])],[ac_cv_func_pthread_barrier=yes],[ac_cv_func_pthread_barrier=no
+  ],[])
 )
 AC_MSG_RESULT($ac_cv_func_pthread_barrier)
 if test "$ac_cv_func_pthread_barrier" = "yes"; then
@@ -555,14 +534,15 @@ case $host_os in
     # around the executables it builds.  Such scripts have caused failures on
     # MinGW.  Using this option means an extra link step is executed during
     # "make install".
-    AC_DISABLE_FAST_INSTALL
+    LT_INIT(disable-fast-install)
+
     ;;
    *)
-    AC_ENABLE_FAST_INSTALL
+    LT_INIT(fast-install)
+    
     ;;
 esac
 
-AC_PROG_LIBTOOL
 AC_SUBST(LIBTOOL_DEPS)
 AM_CONDITIONAL(USE_LIBTOOL, test "x$LIBTOOL" != "x")
 
@@ -633,12 +613,9 @@ esac
 # If AtomicWord != Atomic32, we need to define two versions of all the
 # atomicops functions.  If they're the same, we want to define only one.
 AC_MSG_CHECKING([if int32_t is the same type as intptr_t])
-AC_TRY_COMPILE([#include <stdint.h>],
-         [int32_t v1 = 0; intptr_t v2 = 0; return (&v1 - &v2)],
-               [AC_DEFINE(INT32_EQUALS_INTPTR, 1,
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <stdint.h>]], [[int32_t v1 = 0; intptr_t v2 = 0; return (&v1 - &v2)]])],[AC_DEFINE(INT32_EQUALS_INTPTR, 1,
                           Define to 1 if int32_t is equivalent to intptr_t)
-                AC_MSG_RESULT([yes])],
-               [AC_MSG_RESULT([no])])
+                AC_MSG_RESULT([yes])],[AC_MSG_RESULT([no])])
 
 # We want to access the "PC" (Program Counter) register from a struct
 # ucontext.  Every system has its own way of doing that.  We try all the
@@ -856,7 +833,7 @@ AM_CONDITIONAL(WITH_STACK_TRACE, test "$enable_cpu_profiler" = yes -o \
 # Create output files
 #
 echo $SLIM_VERSION > VERSION
-AC_OUTPUT(Makefile \
+AC_CONFIG_FILES([Makefile \
           src/Makefile \
           src/genconfig \
           src/element/Makefile \
@@ -874,4 +851,5 @@ AC_OUTPUT(Makefile \
           third_party/Makefile \
           third_party/zdelta-2.1/Makefile \
           doc/Makefile \
-          doc/slim.1)
+          doc/slim.1])
+AC_OUTPUT
