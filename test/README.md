@@ -129,6 +129,14 @@ Runtime option は，
   $options = $ENV{slim_CHECK_OPTIONS};
   ```
 
+- 例えば，`--history-management` を用いながらテストしたい場合は，
+
+  ```bash
+  export slim_CHECK_OPTIONS="--history-management"
+  ```
+
+  してから `make check` する．
+
 ## Directory Structure
 
 [system_check](system_check)/testsuite
