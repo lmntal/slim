@@ -181,6 +181,10 @@ check_DATA = \
 	testsuite/guard_ground_multi/case15.il \
 	testsuite/guard_ground_multi/case16.il \
 	testsuite/hyperlink/case1.il \
+	testsuite/hyperlink/case2.il \
+	testsuite/hyperlink/case3.il \
+	testsuite/hyperlink/case4.il \
+	testsuite/hyperlink/case5.il \
 	testsuite/simpagation/case1.il \
 	testsuite/simpagation/case2.il \
 	testsuite/count/case1.il \
