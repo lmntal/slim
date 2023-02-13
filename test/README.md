@@ -110,7 +110,7 @@ Automake の TAP を用いて，自動的にテストを行います．
 
 ## Directory Structure
 
-[system_check](system_check)
+[system_check](system_check)/testsuite
 
 1. [append](system_check/testsuite/append)
    - Appending a list to a list.
@@ -153,7 +153,7 @@ Automake の TAP を用いて，自動的にテストを行います．
 20. [uniq](system_check/testsuite/uniq)
     - ???
 
-[library_check](library_check)
+[library_check](library_check)/testsuite
 
 1. [integer](library_check/testsuite/integer)
    - ???
@@ -162,7 +162,7 @@ Automake の TAP を用いて，自動的にテストを行います．
 3. [statespace](library_check/testsuite/statespace)
    - ???
 
-[statespace](statespace)
+[statespace](statespace)/testsuite
 
 1. [advanced](statespace/testsuite/advanced)
    - ???

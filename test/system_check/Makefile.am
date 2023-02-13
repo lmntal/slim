@@ -197,7 +197,6 @@ check_DATA = \
 	testsuite/cslmntal/skiplist1.il \
 	testsuite/cslmntal/skiplist2.il \
 	testsuite/cslmntal/skiplist3.il \
-	testsuite/cslmntal/append4.il
 
 CLEANFILES = $(check_DATA)
 
