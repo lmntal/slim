@@ -118,7 +118,7 @@ Automake の TAP を用いて，自動的にテストを行います．
    - 簡単な LMNtal プログラム
 3. [count](system_check/testsuite/count)
    - ???
-4. [cslmntal](system_check/testsuite/cslmtal)
+4. [cslmntal](system_check/testsuite/cslmntal)
    - Test some CSLMNtal programs. E.g., Skiplists.
 5. [guard_float](system_check/testsuite/guard_float)
    - ???
