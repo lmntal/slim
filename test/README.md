@@ -118,37 +118,39 @@ Automake の TAP を用いて，自動的にテストを行います．
    - 簡単な LMNtal プログラム
 3. [count](system_check/testsuite/count)
    - ???
-4. [guard_float](system_check/testsuite/guard_float)
+4. [cslmntal](system_check/testsuite/cslmtal)
+   - Test some CSLMNtal programs. E.g., Skiplists.
+5. [guard_float](system_check/testsuite/guard_float)
    - ???
-5. [guard_ground](system_check/testsuite/guard_ground)
+6. [guard_ground](system_check/testsuite/guard_ground)
    - ???
-6. [guard_ground_multi](system_check/testsuite/guard_ground_multi)
+7. [guard_ground_multi](system_check/testsuite/guard_ground_multi)
    - ???
-7. [guard_int](system_check/testsuite/guard_int)
+8. [guard_int](system_check/testsuite/guard_int)
    - ???
-8. [guard_string](system_check/testsuite/guard_string)
+9. [guard_string](system_check/testsuite/guard_string)
    - ???
-9. [guard_unary](system_check/testsuite/guard_unary)
-   - ???
-10. [hyperlink](system_check/testsuite/hyperlink)
+10. [guard_unary](system_check/testsuite/guard_unary)
     - ???
-11. [mem_name](system_check/testsuite/mem_name)
+11. [hyperlink](system_check/testsuite/hyperlink)
     - ???
-12. [miscellaneous](system_check/testsuite/miscellaneous)
+12. [mem_name](system_check/testsuite/mem_name)
     - ???
-13. [proccxt](system_check/testsuite/proccxt)
+13. [miscellaneous](system_check/testsuite/miscellaneous)
     - ???
-14. [proccxt_free](system_check/testsuite/proccxt_free)
+14. [proccxt](system_check/testsuite/proccxt)
     - ???
-15. [proxyatom](system_check/testsuite/proxyatom)
+15. [proccxt_free](system_check/testsuite/proccxt_free)
     - ???
-16. [rulecxt](system_check/testsuite/rulecxt)
+16. [proxyatom](system_check/testsuite/proxyatom)
     - ???
-17. [simpagation](system_check/testsuite/simpagation)
+17. [rulecxt](system_check/testsuite/rulecxt)
     - ???
-18. [unification](system_check/testsuite/unification)
+18. [simpagation](system_check/testsuite/simpagation)
     - ???
-19. [uniq](system_check/testsuite/uniq)
+19. [unification](system_check/testsuite/unification)
+    - ???
+20. [uniq](system_check/testsuite/uniq)
     - ???
 
 [library_check](library_check)
