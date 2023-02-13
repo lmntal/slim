@@ -82,6 +82,45 @@ Automake の TAP を用いて，自動的にテストを行います．
       を追加してください．
       - E.g., `check_DATA = testsuite/<dirname>/<testname>.lmntest`
 
+## Directory Structure
+
+system_check
+
+2. atom
+   - 簡単な LMNtal プログラム
+3. basic
+   - Appending a list to a list.
+4. count
+5. guard_float
+6. guard_ground
+7. guard_ground_multi
+8. guard_int
+9. guard_string
+10. guard_unary
+11. hyperlink
+12. mem_name
+13. memo.md
+14. miscellaneous
+15. proccxt
+16. proccxt_free
+17. proxyatom
+18. rulecxt
+19. simpagation
+20. unification
+21. uniq
+
+library_check
+
+1. integer
+2. set
+3. statespace
+
+statespace
+
+1. advanced
+2. basic
+3. hyperlink
+
 ## 歴史的経緯
 
 元々のテストスクリプトは LMNtal 処理系用のテストスクリプトを流用したもので，

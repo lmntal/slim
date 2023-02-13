@@ -3,8 +3,8 @@ LOG_DRIVER = env AM_TAP_AWK='$(AWK)' $(SHELL) \
                   $(top_srcdir)/test/tap-driver.sh
 
 TESTS = \
+	testsuite/append/check.sh \
 	testsuite/basic/check.sh \
-	testsuite/atom/check.sh \
 	testsuite/unification/check.sh \
 	testsuite/proxyatom/check.sh \
 	testsuite/proccxt/check.sh \
@@ -25,15 +25,15 @@ TESTS = \
 
 
 check_DATA = \
-	testsuite/basic/append1.il \
-	testsuite/basic/append2.il \
-	testsuite/basic/append3.il \
-	testsuite/basic/append4.il \
-	testsuite/atom/atom1.il \
-	testsuite/atom/atom2.il \
-	testsuite/atom/atom3.il \
-	testsuite/atom/atom4.il \
-	testsuite/atom/atom5.il \
+	testsuite/append/append1.il \
+	testsuite/append/append2.il \
+	testsuite/append/append3.il \
+	testsuite/append/append4.il \
+	testsuite/basic/basic1.il \
+	testsuite/basic/basic2.il \
+	testsuite/basic/basic3.il \
+	testsuite/basic/basic4.il \
+	testsuite/basic/basic5.il \
 	testsuite/unification/case1.il \
 	testsuite/unification/case2.il \
 	testsuite/unification/case3.il \
