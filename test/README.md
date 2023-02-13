@@ -67,7 +67,7 @@ Automake の TAP を用いて，自動的にテストを行います．
 1. [system_check](system_check) ディレクトリ以下に，
    新しくディレクトリ `<dirname>` を作って，または既存のディレクトリの中に，
    1. `<testname>.lmntest` ファイル（テストスクリプト）を新たに作成してください．
-      - E.g., [testsuite/basic/append1.lmntest](testsuite/basic/append1.lmntest)
+      - E.g., [system_check/testsuite/append/append1.lmntest](system_check/testsuite/append/append1.lmntest)
         ```prolog
         append(c(1,c(2,c(3,n))),c(4,c(5,n)),result), ( append(X,Y,Z), n(X) :- Y=Z ), ( append(X,Y,Z), c(A,X1,X) :- c(A,Z1,Z), append(X1,Y,Z1) ).
         result(c(1,c(2,c(3,c(4,c(5,n))))))
@@ -83,7 +83,7 @@ Automake の TAP を用いて，自動的にテストを行います．
    2. `check.sh` （テストを実行するプログラム）を新たに生成，
       または既存のファイルに変更を加えてください．
       - TAP に従って結果を出力するシェルスクリプトです．
-      - E.g., [testsuite/append/check.sh](testsuite/append/check.sh)
+      - E.g., [system_check/testsuite/append/check.sh](system_check/testsuite/append/check.sh)
         ```bash
         #!/bin/sh
         ./check.pl \
