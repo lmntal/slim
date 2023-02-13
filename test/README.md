@@ -10,19 +10,50 @@ Run `make check` at the root directory of the project.
 
 Automake の TAP を用いて，自動的にテストを行います．
 
+[system_check](system_check) では，
+
 - `<testname>.lmntest` ファイルは，LMNtal のプログラムだけでなく，
   実行結果の予想などを含みます．
   - そのままではコンパイルできません．
 - `<testname>.lmntest` ファイルは，
-  [create_testdata.awk](system_check/create_testdata.awk)
-  スクリプトによって，
-  テストが成功した場合に最終状態のプロセスに `ok` を含むような，
-  LMNtal プログラムへと作り替えられます．
-- プログラムに変更があった場合は，
-  コンパイラによってこの LMNtal プログラムは il ファイルにコンパイルされます．
+  [system_check/Makefile.am](system_check/Makefile.am)
+
+  ```make
+  %.il: %.lmntest
+    perl -pe 's/\\\\\s*\n//' $< | \       ## Delete '\\' followed by a new line.
+    awk -f create_testdata.awk | \        ## Create a test program.
+    $(LMNC) --stdin-lmn $(LMNCFLAGS) >$@  ## Compile with a compiler.
+  ```
+
+  によって，
+
+  1. perl のコマンドにより，`\\` の後に改行がある場合は，それらが消去されます．
+
+  2. [create_testdata.awk](system_check/create_testdata.awk)
+     スクリプトによって，
+     テストが成功した場合に最終状態のプロセスに `ok` を含むような，
+     LMNtal プログラムへと作り替えられます．
+
+  3. プログラムに変更があった場合は，
+     コンパイラによってこの LMNtal プログラムは il ファイルにコンパイルされます．
+
 - [check.pl](system_check/check.pl) は，
   作成された il ファイルを slim に与えて実行し，
   結果に `ok` があるかどうかを検査します．
+
+[statespace](statespace) では，
+
+- 非決定実行したい LMNtal プログラムをおいておき，
+  そのまま il ファイルにコンパイルします．
+- [check.pl](statespace/check.pl) が，
+  コンパイルされた il ファイルと，全状態数と，最終状態数を受け取り，状態空間をチェックします．
+
+[library_check](library_check) では，
+
+- `--use-builtin-rule` をつけて実行したい LMNtal プログラムをおいておき，
+  単にそれがそのまま実行されます．
+- 実行結果の検査などは現在行っていません．
+  - TODO: `system_check` を参考に，実行結果の確認まで行うようにする．
 
 ## Advanced Usage
 
@@ -33,8 +64,6 @@ Automake の TAP を用いて，自動的にテストを行います．
 ## 新たなテストを作成する手順
 
 [system_check](system_check) にテストを追加する場合について，解説します．
-
-- 他のテストも同様に出来るはず．
 
 新たなテストが必要な場合は，
 
@@ -49,6 +78,8 @@ Automake の TAP を用いて，自動的にテストを行います．
         ```
       - 構成
         1. 1 行目にテストしたい LMNtal プログラム，
+           - 改行がしたい場合は，`\\` の後に改行してください．
+           - `\\` の後に改行がある場合は，それらは，自動的に消去されます．
         2. 2 行目に LMNtal プログラムの予想される出力，
         3. 3 行目に `ok` または `ng` を記述してください．
            - `ok` ならば， 1 行目の結果が 2 行目と等しいとき，
