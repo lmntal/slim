@@ -83,7 +83,7 @@ Automake の TAP を用いて，自動的にテストを行います．
    2. `check.sh` （テストを実行するプログラム）を新たに生成，
       または既存のファイルに変更を加えてください．
       - TAP に従って結果を出力するシェルスクリプトです．
-      - E.g., [testsuite/basic/check.sh](testsuite/basic/check.sh)
+      - E.g., [testsuite/append/check.sh](testsuite/append/check.sh)
         ```bash
         #!/bin/sh
         ./check.pl \
