@@ -200,8 +200,9 @@ LMNC = $(LMNTAL_HOME)/bin/lmntal
 LMNCFLAGS = --hl-opt --slimcode -O3
 
 %.il: %.lmntest
-	awk -f create_testdata.awk $< | \
-	$(LMNC) --stdin-lmn $(LMNCFLAGS) >$@
+	perl -pe 's/\\\\\s*\n//' $< | \       ## Delete '\\' followed by a new line.
+	awk -f create_testdata.awk | \        ## Create a test program.
+	$(LMNC) --stdin-lmn $(LMNCFLAGS) >$@  ## Compile with a compiler.
 %.il: %.lmn
 	$(LMNC) $(LMNCFLAGS) $< >$@
 
