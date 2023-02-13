@@ -46,6 +46,7 @@
 #include "symbol.h"
 #include "verifier/runtime_status.h"
 #include "verifier/verifier.h"
+#include "interactive_debug.hpp"
 
 #ifdef USE_FIRSTCLASS_RULE
 #include "firstclass_rule.h"
@@ -198,6 +199,13 @@ void Task::lmn_run(Vector *start_rulesets) {
   react_start_rulesets(mem, start_rulesets);
   mrc->memstack_reconstruct(mem);
 
+  if (lmn_env.interactive_debug) {
+    esc_code_add(CODE__FORECOLOR_GREEN);
+    std::cout << "Launched interactive debug shell on normal execution start.\n";
+    esc_code_clear();
+    InteractiveDebugger::get_instance().start_session_on_entry();
+  }
+
   if (lmn_env.trace) {
     if (lmn_env.show_laststep_only) {
       mrc->increment_reaction_count();
@@ -218,6 +226,10 @@ void Task::lmn_run(Vector *start_rulesets) {
   if (lmn_env.profile_level >= 1) {
     profile_finish_exec_thread();
     profile_finish_exec();
+  }
+
+  if (lmn_env.interactive_debug) {
+    InteractiveDebugger::get_instance().finish_debugging();
   }
 
   if (lmn_env
@@ -389,6 +401,11 @@ BOOL Task::react_rule(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule) {
   /* まず、トランスレート済みの関数を実行する
    * それがない場合、命令列をinterpretで実行する */
   slim::vm::interpreter in(rc, rule, inst_seq);
+
+  if (lmn_env.interactive_debug) {
+    InteractiveDebugger::get_instance().break_on_rule(&in);
+  }
+
   result = (translated && translated(rc, mem, rule)) || (inst_seq && in.run());
 
   if (lmn_env.enable_parallel && !lmn_env.nd && normal_parallel_flag)
@@ -1050,6 +1067,10 @@ struct exec_subinstructions_branch {
  */
 bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
                                          bool &stop) {
+  if (lmn_env.interactive_debug) {
+    InteractiveDebugger::get_instance().break_on_instruction(this);
+  }
+
   LmnInstrOp op;
   READ_VAL(LmnInstrOp, instr, op);
   stop = true;

@@ -328,6 +328,8 @@ struct LmnEnv {
   BOOL shuffle_rule;
   BOOL shuffle_atom;
   
+  BOOL interactive_debug;
+  
   BOOL show_laststep_only;
 
   enum OutputFormat output_format;
