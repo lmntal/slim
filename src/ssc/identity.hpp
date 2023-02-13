@@ -1,7 +1,7 @@
 /*
- * element.h
+ * identity.hpp
  *
- *   Copyright (c) 2016, Ueda Laboratory LMNtal Group
+ *   Copyright (c) 2019, Ueda Laboratory LMNtal Group
  * <lmntal@ueda.info.waseda.ac.jp> All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
@@ -32,45 +32,52 @@
  *   THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  *   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * $Id$
  */
 
-#ifndef LMN_ELEMENT_H
-#define LMN_ELEMENT_H
+#ifndef SSC_IDENTITY_HPP
+#define SSC_IDENTITY_HPP
 
-/**
- * @defgroup Element
- */
+#include "check_result.hpp"
+#include "state_space.hpp"
 
-#include "clock.h"
-#include "conditional_ostream.hpp"
-#include "error.h"
-#include "exception.hpp"
-#include "file_util.h"
-#include "instruction.hpp"
-#include "internal_hash.h"
-#include "life_time.hpp"
-#include "lmnstring.h"
-#include "lmntal_thread.h"
-#include "memory_pool.h"
-#include "optional.hpp"
-#include "port.h"
-#include "process_util.h"
-#include "queue.h"
-#include "range_remove_if.hpp"
-#include "re2c/buffer.hpp"
-#include "re2c/cfstream_buffer.hpp"
-#include "re2c/file_buffer.hpp"
-#include "scope.hpp"
-#include "st.h"
-#include "stack_trace.hpp"
-#include "util.h"
-#include "variant.hpp"
-#include "vector.h"
+#include <unordered_map>
 
-#include "json/conv.hpp"
-#include "json/exception.hpp"
-#include "json/value.hpp"
+namespace ssc {
 
-#endif /* LMN_ELEMENT_H */
+// idが全く同じかどうかで等価性を判定する
+template <class Comparator>
+check_result identity_check(const slim::element::json_t &json1,
+                            const slim::element::json_t &json2,
+                            Comparator cmp) {
+  const state_space ss1(json1);
+  const state_space ss2(json2);
+
+  if (ss1.states.size() != ss2.states.size())
+    return check_result::fail("number of states are different");
+
+  if (!cmp(ss1.states.at(ss1.init), ss2.states.at(ss2.init)))
+    return check_result::fail("initial states are different");
+
+  for (state_space::state_id_t id = 0; id < ss1.states.size(); id++) {
+    auto &s1 = ss1.states[id];
+    auto &s2 = ss2.states[id];
+    if (!cmp(s1, s2))
+      return check_result::fail("state " + ss1.id_to_key[id] + " and state " +
+                                ss2.id_to_key[id] + " are different");
+  }
+
+  if (ss1.transitions != ss2.transitions)
+    return check_result::fail("transition sets are different");
+
+  std::unordered_map<state_space::state_id_t, state_space::state_id_t>
+      isomorphism;
+  for (state_space::state_id_t id = 0; id < ss1.states.size(); id++) {
+    isomorphism[id] = id;
+  }
+
+  return check_result::success(isomorphism);
+}
+
+} // namespace ssc
+
+#endif /* SSC_IDENTITY_HPP */

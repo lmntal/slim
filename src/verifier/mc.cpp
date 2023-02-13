@@ -173,14 +173,14 @@ static void mc_dump(LmnWorkerGroup *wp) {
     auto out = ss->output();
     if (wp->workers_are_do_search()) {
       mc_dump_all_errors(wp, out);
-    } else if (lmn_env.end_dump && lmn_env.mc_dump_format == CUI) {
+    } else if (lmn_env.end_dump && lmn_env.mc_dump_format == MCdumpFormat::CUI) {
       /* とりあえず最終状態集合の出力はCUI限定。(LaViTに受付フォーマットがない)
        */
       ss->dump_ends();
     }
 
     /* CUIモードの場合状態数などのデータも標準出力 */
-    if (lmn_env.mc_dump_format == CUI) {
+    if (lmn_env.mc_dump_format == MCdumpFormat::CUI) {
       fprintf(out, "\'# of States\'(stored)   = %lu.\n",
               ss->num());
       fprintf(out, "\'# of States\'(end)      = %lu.\n",
@@ -835,13 +835,13 @@ void mc_print_vec_states(StateSpaceRef ss, Vector *v, State *seed) {
 void mc_dump_all_errors(LmnWorkerGroup *wp, FILE *f) {
   if (!wp->workers_have_error()) {
     fprintf(f, "%s\n",
-            lmn_env.mc_dump_format == CUI
+            lmn_env.mc_dump_format == MCdumpFormat::CUI
                 ? "No Accepting Cycle (or Invalid State) exists."
                 : "");
   } else {
     switch (lmn_env.mc_dump_format) {
-    case LaViT:
-    case CUI: {
+    case MCdumpFormat::LaViT:
+    case MCdumpFormat::CUI: {
       st_table_t invalids_graph;
       unsigned int i, j;
       BOOL cui_dump;
@@ -850,7 +850,7 @@ void mc_dump_all_errors(LmnWorkerGroup *wp, FILE *f) {
               lmn_env.sp_dump_format == LMN_SYNTAX ? "counter_exapmle."
                                                    : "CounterExamplePaths");
 
-      cui_dump = (lmn_env.mc_dump_format == CUI);
+      cui_dump = (lmn_env.mc_dump_format == MCdumpFormat::CUI);
       invalids_graph = cui_dump ? NULL : st_init_ptrtable();
 
       /* state property */
@@ -929,7 +929,7 @@ void mc_dump_all_errors(LmnWorkerGroup *wp, FILE *f) {
       break;
     }
 
-    case Dir_DOT: /* TODO:
+    case MCdumpFormat::Dir_DOT: /* TODO:
                      反例パスをサブグラフとして指定させたら分かりやすくなりそう
                    */;
     default:
