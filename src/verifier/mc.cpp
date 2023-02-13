@@ -51,6 +51,7 @@
 #include "state.h"
 #include "state.hpp"
 #include "state_dumper.h"
+#include "../vm/interactive_debug.hpp"
 
 /** =======================================
  *  ==== Entrance for model checking ======
@@ -88,6 +89,10 @@ void run_mc(Vector *start_rulesets, AutomataRef a, Vector *psyms) {
     delete mem;
   }
 
+  if (lmn_env.interactive_debug) {
+    InteractiveDebugger::get_instance().finish_debugging();
+  }
+
   delete start_rulesets;
 }
 
@@ -118,6 +123,14 @@ static inline void do_mc(LmnMembraneRef world_mem_org, AutomataRef a,
   states->set_init_state(init_s);
   if (lmn_env.enable_compress_mem)
     init_s->free_mem();
+  
+  if (lmn_env.interactive_debug) {
+    InteractiveDebugger::get_instance().register_statespace(states);
+    esc_code_add(CODE__FORECOLOR_GREEN);
+    printf("Launched interactive debug shell on non-deterministic execution start.\n");
+    esc_code_clear();
+    InteractiveDebugger::get_instance().start_session_on_entry();
+  }
 
   /** START
    */
@@ -134,6 +147,9 @@ static inline void do_mc(LmnMembraneRef world_mem_org, AutomataRef a,
     mem->free_rec();
   /** FINALIZE
    */
+  if (lmn_env.interactive_debug) {
+    InteractiveDebugger::get_instance().finish_debugging();
+  }
   profile_statespace(wp);
   mc_dump(wp);
   delete wp;
@@ -211,6 +227,10 @@ void mc_expand(const StateSpaceRef ss, State *s, AutomataStateRef p_s,
 
   /** restore : 膜の復元 */
   mem = state_restore_mem(s);
+
+  if (lmn_env.interactive_debug) {
+    InteractiveDebugger::get_instance().register_expanding_state(s);
+  }
 
   /** expand  : 状態の展開 */
   if (p_s) {

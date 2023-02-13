@@ -120,6 +120,8 @@ start:
     sstr = "'"  [^']* "'";
     dstr = "\"" ([^"]|"\\\"")* "\"";
 
+    linecomment = ("//"|"%"|"#") .* [\n];
+
     "\x00" { return parser::token::_EOF; }
     blank { goto start; }
 
@@ -158,6 +160,7 @@ start:
       yylval->as<int>() = stol(get_token().substr(1));
       return parser::token::LABEL;
     }
+    '/*'                   {goto comment;}
     ','                    { return parser::token::COMMA; }
     '\.'                   { return parser::token::PERIOD; }
     ':'                    { return parser::token::COLON; }
@@ -213,6 +216,17 @@ start:
       yylval->as<lmn_interned_str>() = lmn_intern(t2.c_str());
       return parser::token::SQUOTED_STRING;
     }
+
+    linecomment{
+      goto start;
+    }
+    
+  */
+comment:
+  /*!re2c
+    '*/'  {goto start;}
+    '\n'  {goto comment;}
+    .     {goto comment;}
   */
   }
 }
