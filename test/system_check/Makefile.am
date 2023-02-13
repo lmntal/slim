@@ -21,7 +21,8 @@ TESTS = \
 	testsuite/simpagation/check.sh \
 	testsuite/count/check.sh \
 	testsuite/mem_name/check.sh \
-	testsuite/uniq/check.sh
+	testsuite/uniq/check.sh \
+	testsuite/cslmntal/check.sh
 
 
 check_DATA = \
@@ -192,7 +193,11 @@ check_DATA = \
 	testsuite/uniq/case3.il \
 	testsuite/uniq/case4.il \
 	testsuite/uniq/case5.il \
-	testsuite/uniq/case6.il
+	testsuite/uniq/case6.il \
+	testsuite/cslmntal/skiplist1.il \
+	testsuite/cslmntal/append2.il \
+	testsuite/cslmntal/append3.il \
+	testsuite/cslmntal/append4.il
 
 CLEANFILES = $(check_DATA)
 

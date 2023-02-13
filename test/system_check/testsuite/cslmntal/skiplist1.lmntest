@@ -1,0 +1,11 @@
+typedef skiplist(R1, R2) { \\
+    R2 = nil(R1). \\
+    R2 = a(A, B, R1) :- skiplist(B, A). \\
+    R2 = b(A) :- skiplist(R1, A). \\
+  }. \\
+  isSkiplist @@ skiplistp(N, $x[T],T) :- skiplist($x) | yes(N). \\
+  skiplistp(1, a(b(b(a(a(nil(L0),L0,L1),L1,L2))),L2,R1),R1). \\
+  skiplistp(2, b(a(b(b(a(b(a(a(b(a(b(a(b(b(b(nil(L3)))),L3,L4)),L4,L5)),L5,L6),L6,L7)),L7,L8))),L8,R2)),R2). \\
+  skiplistp(3, [1,2,3|T],T).
+skiplistp(1, yes), skiplistp(2, yes), skiplistp(3, [1,2,3|T],T).
+ok
