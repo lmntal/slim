@@ -10,19 +10,47 @@ Run `make check` at the root directory of the project.
 
 Automake の TAP を用いて，自動的にテストを行います．
 
+[system_check](system_check) では，
+
 - `<testname>.lmntest` ファイルは，LMNtal のプログラムだけでなく，
   実行結果の予想などを含みます．
   - そのままではコンパイルできません．
 - `<testname>.lmntest` ファイルは，
-  [create_testdata.awk](system_check/create_testdata.awk)
-  スクリプトによって，
-  テストが成功した場合に最終状態のプロセスに `ok` を含むような，
-  LMNtal プログラムへと作り替えられます．
-- プログラムに変更があった場合は，
-  コンパイラによってこの LMNtal プログラムは il ファイルにコンパイルされます．
+  [system_check/Makefile.am](system_check/Makefile.am)
+
+  ```make
+  %.il: %.lmntest
+    awk -f create_testdata.awk | \        ## Create a test program.
+    $(LMNC) --stdin-lmn $(LMNCFLAGS) >$@  ## Compile with a compiler.
+  ```
+
+  によって，
+
+  1. [create_testdata.awk](system_check/create_testdata.awk)
+     スクリプトによって，
+     テストが成功した場合に最終状態のプロセスに `ok` を含むような，
+     LMNtal プログラムへと作り替えられます．
+
+  2. プログラムに変更があった場合は，
+     コンパイラによってこの LMNtal プログラムは il ファイルにコンパイルされます．
+
 - [check.pl](system_check/check.pl) は，
   作成された il ファイルを slim に与えて実行し，
   結果に `ok` があるかどうかを検査します．
+
+[statespace](statespace) では，
+
+- 非決定実行したい LMNtal プログラムをおいておき，
+  そのまま il ファイルにコンパイルします．
+- [check.pl](statespace/check.pl) が，
+  コンパイルされた il ファイルと，全状態数と，最終状態数を受け取り，状態空間をチェックします．
+
+[library_check](library_check) では，
+
+- `--use-builtin-rule` をつけて実行したい LMNtal プログラムをおいておき，
+  単にそれがそのまま実行されます．
+- 実行結果の検査などは現在行っていません．
+  - TODO: `system_check` を参考に，実行結果の確認まで行うようにする．
 
 ## Advanced Usage
 
@@ -34,14 +62,12 @@ Automake の TAP を用いて，自動的にテストを行います．
 
 [system_check](system_check) にテストを追加する場合について，解説します．
 
-- 他のテストも同様に出来るはず．
-
 新たなテストが必要な場合は，
 
 1. [system_check](system_check) ディレクトリ以下に，
    新しくディレクトリ `<dirname>` を作って，または既存のディレクトリの中に，
    1. `<testname>.lmntest` ファイル（テストスクリプト）を新たに作成してください．
-      - E.g., [testsuite/basic/append1.lmntest](testsuite/basic/append1.lmntest)
+      - E.g., [system_check/testsuite/append/append1.lmntest](system_check/testsuite/append/append1.lmntest)
         ```prolog
         append(c(1,c(2,c(3,n))),c(4,c(5,n)),result), ( append(X,Y,Z), n(X) :- Y=Z ), ( append(X,Y,Z), c(A,X1,X) :- c(A,Z1,Z), append(X1,Y,Z1) ).
         result(c(1,c(2,c(3,c(4,c(5,n))))))
@@ -57,7 +83,7 @@ Automake の TAP を用いて，自動的にテストを行います．
    2. `check.sh` （テストを実行するプログラム）を新たに生成，
       または既存のファイルに変更を加えてください．
       - TAP に従って結果を出力するシェルスクリプトです．
-      - E.g., [testsuite/basic/check.sh](testsuite/basic/check.sh)
+      - E.g., [system_check/testsuite/append/check.sh](system_check/testsuite/append/check.sh)
         ```bash
         #!/bin/sh
         ./check.pl \
@@ -84,7 +110,7 @@ Automake の TAP を用いて，自動的にテストを行います．
 
 ## Directory Structure
 
-[system_check](system_check)
+[system_check](system_check)/testsuite
 
 1. [append](system_check/testsuite/append)
    - Appending a list to a list.
@@ -92,40 +118,42 @@ Automake の TAP を用いて，自動的にテストを行います．
    - 簡単な LMNtal プログラム
 3. [count](system_check/testsuite/count)
    - ???
-4. [guard_float](system_check/testsuite/guard_float)
+4. [cslmntal](system_check/testsuite/cslmntal)
+   - Test some CSLMNtal programs. E.g., Skiplists.
+5. [guard_float](system_check/testsuite/guard_float)
    - ???
-5. [guard_ground](system_check/testsuite/guard_ground)
+6. [guard_ground](system_check/testsuite/guard_ground)
    - ???
-6. [guard_ground_multi](system_check/testsuite/guard_ground_multi)
+7. [guard_ground_multi](system_check/testsuite/guard_ground_multi)
    - ???
-7. [guard_int](system_check/testsuite/guard_int)
+8. [guard_int](system_check/testsuite/guard_int)
    - ???
-8. [guard_string](system_check/testsuite/guard_string)
+9. [guard_string](system_check/testsuite/guard_string)
    - ???
-9. [guard_unary](system_check/testsuite/guard_unary)
-   - ???
-10. [hyperlink](system_check/testsuite/hyperlink)
+10. [guard_unary](system_check/testsuite/guard_unary)
     - ???
-11. [mem_name](system_check/testsuite/mem_name)
+11. [hyperlink](system_check/testsuite/hyperlink)
     - ???
-12. [miscellaneous](system_check/testsuite/miscellaneous)
+12. [mem_name](system_check/testsuite/mem_name)
     - ???
-13. [proccxt](system_check/testsuite/proccxt)
+13. [miscellaneous](system_check/testsuite/miscellaneous)
     - ???
-14. [proccxt_free](system_check/testsuite/proccxt_free)
+14. [proccxt](system_check/testsuite/proccxt)
     - ???
-15. [proxyatom](system_check/testsuite/proxyatom)
+15. [proccxt_free](system_check/testsuite/proccxt_free)
     - ???
-16. [rulecxt](system_check/testsuite/rulecxt)
+16. [proxyatom](system_check/testsuite/proxyatom)
     - ???
-17. [simpagation](system_check/testsuite/simpagation)
+17. [rulecxt](system_check/testsuite/rulecxt)
     - ???
-18. [unification](system_check/testsuite/unification)
+18. [simpagation](system_check/testsuite/simpagation)
     - ???
-19. [uniq](system_check/testsuite/uniq)
+19. [unification](system_check/testsuite/unification)
+    - ???
+20. [uniq](system_check/testsuite/uniq)
     - ???
 
-[library_check](library_check)
+[library_check](library_check)/testsuite
 
 1. [integer](library_check/testsuite/integer)
    - ???
@@ -134,7 +162,7 @@ Automake の TAP を用いて，自動的にテストを行います．
 3. [statespace](library_check/testsuite/statespace)
    - ???
 
-[statespace](statespace)
+[statespace](statespace)/testsuite
 
 1. [advanced](statespace/testsuite/advanced)
    - ???
