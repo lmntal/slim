@@ -1,0 +1,3 @@
+leq(!A, !B). leq(!X, !X) :- ng. leq(!X, !Y) :- X \= Y | ok.
+ok.
+ok
