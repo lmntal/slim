@@ -108,6 +108,27 @@ Automake の TAP を用いて，自動的にテストを行います．
       を追加してください．
       - E.g., `check_DATA = testsuite/<dirname>/<testname>.lmntest`
 
+### オプションの指定
+
+Compiler option は `<testdir>/Makefile.am` で，
+`LMNCFLAGS` で指定している．
+
+- E.g., [system_check/Makefile.am](system_check/Makefile.am)
+
+  ```bash
+  LMNCFLAGS = --hl-opt --slimcode -O3
+  ```
+
+Runtime option は，
+`<testdir>/check.pl` で，
+`slim_CHECK_OPTIONS` 環境変数を読み込んで指定している．
+
+- E.g., [system_check/check.pl](system_check/check.pl)
+
+  ```perl
+  $options = $ENV{slim_CHECK_OPTIONS};
+  ```
+
 ## Directory Structure
 
 [system_check](system_check)/testsuite
