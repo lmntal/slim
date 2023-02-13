@@ -84,42 +84,64 @@ Automake の TAP を用いて，自動的にテストを行います．
 
 ## Directory Structure
 
-system_check
+[system_check](system_check)
 
-2. atom
-   - 簡単な LMNtal プログラム
-3. basic
+1. [append](system_check/testsuite/append)
    - Appending a list to a list.
-4. count
-5. guard_float
-6. guard_ground
-7. guard_ground_multi
-8. guard_int
-9. guard_string
-10. guard_unary
-11. hyperlink
-12. mem_name
-13. memo.md
-14. miscellaneous
-15. proccxt
-16. proccxt_free
-17. proxyatom
-18. rulecxt
-19. simpagation
-20. unification
-21. uniq
+2. [basic](system_check/testsuite/basic)
+   - 簡単な LMNtal プログラム
+3. [count](system_check/testsuite/count)
+   - ???
+4. [guard_float](system_check/testsuite/guard_float)
+   - ???
+5. [guard_ground](system_check/testsuite/guard_ground)
+   - ???
+6. [guard_ground_multi](system_check/testsuite/guard_ground_multi)
+   - ???
+7. [guard_int](system_check/testsuite/guard_int)
+   - ???
+8. [guard_string](system_check/testsuite/guard_string)
+   - ???
+9. [guard_unary](system_check/testsuite/guard_unary)
+   - ???
+10. [hyperlink](system_check/testsuite/hyperlink)
+    - ???
+11. [mem_name](system_check/testsuite/mem_name)
+    - ???
+12. [miscellaneous](system_check/testsuite/miscellaneous)
+    - ???
+13. [proccxt](system_check/testsuite/proccxt)
+    - ???
+14. [proccxt_free](system_check/testsuite/proccxt_free)
+    - ???
+15. [proxyatom](system_check/testsuite/proxyatom)
+    - ???
+16. [rulecxt](system_check/testsuite/rulecxt)
+    - ???
+17. [simpagation](system_check/testsuite/simpagation)
+    - ???
+18. [unification](system_check/testsuite/unification)
+    - ???
+19. [uniq](system_check/testsuite/uniq)
+    - ???
 
-library_check
+[library_check](library_check)
 
-1. integer
-2. set
-3. statespace
+1. [integer](library_check/testsuite/integer)
+   - ???
+2. [set](library_check/testsuite/set)
+   - Test set module.
+3. [statespace](library_check/testsuite/statespace)
+   - ???
 
-statespace
+[statespace](statespace)
 
-1. advanced
-2. basic
-3. hyperlink
+1. [advanced](statespace/testsuite/advanced)
+   - ???
+2. [basic](statespace/testsuite/basic)
+   - ???
+3. [hyperlink](statespace/testsuite/hyperlink)
+   - Test hyperlinks
 
 ## 歴史的経緯
 
