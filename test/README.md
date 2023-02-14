@@ -87,16 +87,18 @@ Automake の TAP を用いて，自動的にテストを行います．
         ```bash
         #!/bin/sh
         ./check.pl \
-            /testsuite/basic/append1 \
-            /testsuite/basic/append2 \
-            /testsuite/basic/append3 \
-            /testsuite/basic/append4
+            /testsuite/append/append1 \
+            /testsuite/append/append2 \
+            /testsuite/append/append3 \
+            /testsuite/append/append4
         ```
       - `check.sh` ファイルでは，
         [`./check.pl`](system_check/check.pl) を呼び出し，
         その引数として，
-        テストしたい `<testname>.lmntest` ファイルのパスから `.lmntest` を除いたもの
-        (e.g., `/testsuite/basic/append1`)
+        テストしたい `<testname>.lmntest` ファイルのパス
+        (e.g., `/testsuite/append/append1.lmntest`)
+        から `.lmntest` を除いたもの
+        (e.g., `/testsuite/append/append1`)
         を全て与えてください．
 2. [system_check/Makefile.am](system_check/Makefile.am) の
    1. `TESTS` 変数に，
@@ -107,6 +109,35 @@ Automake の TAP を用いて，自動的にテストを行います．
       追加した `<testname>.lmntest` ファイルへのパス
       を追加してください．
       - E.g., `check_DATA = testsuite/<dirname>/<testname>.lmntest`
+
+### オプションの指定
+
+Compiler option は `<testdir>/Makefile.am` で，
+`LMNCFLAGS` で指定している．
+
+- E.g., [system_check/Makefile.am](system_check/Makefile.am)
+
+  ```bash
+  LMNCFLAGS = --hl-opt --slimcode -O3
+  ```
+
+Runtime option は，
+`<testdir>/check.pl` で，
+`slim_CHECK_OPTIONS` 環境変数を読み込んで指定している．
+
+- E.g., [system_check/check.pl](system_check/check.pl)
+
+  ```perl
+  $options = $ENV{slim_CHECK_OPTIONS};
+  ```
+
+- 例えば，`--history-management` を用いながらテストしたい場合は，
+
+  ```bash
+  export slim_CHECK_OPTIONS="--history-management"
+  ```
+
+  してから `make check` する．
 
 ## Directory Structure
 
