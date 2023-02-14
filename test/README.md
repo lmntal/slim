@@ -87,16 +87,18 @@ Automake の TAP を用いて，自動的にテストを行います．
         ```bash
         #!/bin/sh
         ./check.pl \
-            /testsuite/basic/append1 \
-            /testsuite/basic/append2 \
-            /testsuite/basic/append3 \
-            /testsuite/basic/append4
+            /testsuite/append/append1 \
+            /testsuite/append/append2 \
+            /testsuite/append/append3 \
+            /testsuite/append/append4
         ```
       - `check.sh` ファイルでは，
         [`./check.pl`](system_check/check.pl) を呼び出し，
         その引数として，
-        テストしたい `<testname>.lmntest` ファイルのパスから `.lmntest` を除いたもの
-        (e.g., `/testsuite/basic/append1`)
+        テストしたい `<testname>.lmntest` ファイルのパス
+        (e.g., `/testsuite/append/append1.lmntest`)
+        から `.lmntest` を除いたもの
+        (e.g., `/testsuite/append/append1`)
         を全て与えてください．
 2. [system_check/Makefile.am](system_check/Makefile.am) の
    1. `TESTS` 変数に，
