@@ -14,7 +14,7 @@ run ()
 # makeshift
 autoheader=autoheader
 autoreconf=autoreconf
-autoconf --version | grep 2.69
+autoconf --version | grep 2.69 &>/dev/null
 if test $? != 0 ; then
   echo "autoconf 2.69 is not installed."
   echo "Trying to use autoconf2.69 instead."
