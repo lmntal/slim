@@ -74,6 +74,7 @@ LmnSymbolAtomRef lmn_new_atom(LmnFunctor f) {
   ap->set_functor(f);
   ap->set_id(0);
 
+  ap->record_flag = false;
   return ap;
 }
 
