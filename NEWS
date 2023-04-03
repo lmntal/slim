@@ -1,3 +1,7 @@
+SLIM (2.6.0) -- 2023/04/03
+  * new feature
+    + compatible to CSLMNtal
+
 SLIM (2.5.0) -- 2021/04/19
   * new feature
     + add --history-management
