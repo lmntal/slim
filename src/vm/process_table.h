@@ -41,7 +41,8 @@
 
 #include "element/element.h"
 
-typedef struct ProcessTbl *ProcessTableRef;
+struct ProcessTbl;
+using ProcessTableRef = ProcessTbl*;
 
 #include "hyperlink.h"
 

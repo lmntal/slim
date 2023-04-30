@@ -44,10 +44,10 @@
  * @defgroup Rule
  * @{
  */
-
-typedef struct LmnRule *LmnRuleRef;
-
-typedef struct LmnRuleSet *LmnRuleSetRef;
+struct LmnRule;
+struct LmnRuleSet;
+using LmnRuleRef = LmnRule*;
+using LmnRuleSetRef = LmnRuleSet*;
 
 #include "element/element.h"
 #include "lmntal.h"

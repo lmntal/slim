@@ -40,6 +40,7 @@
 
 #include "arch.h"
 #include "element/element.h"
+#include "lmntal.h"
 #include "load.h"
 #include "so.h"
 #include "syntax.hpp"
@@ -232,7 +233,7 @@ BOOL tr_instr_jump(LmnTranslated f, LmnReactCxtRef rc,
   auto tmp = std::move(rc->work_array);
   rc->warray_set(std::move(v));
 
-  auto ret = (*f)(rc, thisisrootmembutnotused, rule);
+  auto ret = f(rc, thisisrootmembutnotused, rule);
 
   rc->warray_set(std::move(tmp));
 
@@ -484,7 +485,7 @@ static void translate_ruleset(LmnRuleSetRef ruleset, const char *header)
   buf = (char *)lmn_malloc(buf_len + 1);
   if (ruleset->size() > 0)
   {
-    rule_names = LMN_CALLOC(lmn_interned_str, ruleset->size());
+    rule_names = LMN_CALLOC<lmn_interned_str>(ruleset->size());
   }
   else
   {

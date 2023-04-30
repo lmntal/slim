@@ -69,7 +69,7 @@ static FILE *run_lmntal_system(int dummy, ... );
 
 void add_arg(Vector *args, const char *arg)
 {
-  args->push((vec_data_t)LMN_CALLOC(char, strlen(arg) + 1));
+  args->push((vec_data_t)LMN_CALLOC<char>(strlen(arg) + 1));
   sprintf((char *)args->get(args->get_num()-1), "%s", arg);
 }
 
@@ -83,7 +83,7 @@ void lmntal_build_cmd(char **program, char **ret_args[], va_list opt_args)
   const char *lmntal_home = getenv(ENV_LMNTAL_HOME);
   Vector *args = new Vector(16);
 
-  *program = LMN_CALLOC(char,
+  *program = LMN_CALLOC<char>(
                         strlen(lmntal_home) + strlen(LMNTAL_BIN_REL_PATH) + 1);
   sprintf(*program, "%s%s", lmntal_home, LMNTAL_BIN_REL_PATH);
 
@@ -112,7 +112,7 @@ void lmntal_build_cmd(char **program, char **ret_args[], va_list opt_args)
   args->push(0);
   { /* vectorの要素をコピー */
     unsigned int i;
-    *ret_args = LMN_CALLOC(char *, args->get_num());
+    *ret_args = LMN_CALLOC<char*>(args->get_num());
     for (i = 0; i < args->get_num(); i++) {
       (*ret_args)[i] = (char *)args->get(i);
     }

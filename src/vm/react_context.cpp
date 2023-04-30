@@ -159,7 +159,7 @@ struct LRCInsertEvent {
   LmnSymbolAtomRef satom;
   LmnMembraneRef mem;
 };
-typedef struct LRCInsertEvent *LRCInsertEventRef;
+using LRCInsertEventRef = LRCInsertEvent*;
 
 #ifdef USE_FIRSTCLASS_RULE
 BOOL lmn_rc_has_insertion(LmnReactCxtRef rc) {
@@ -169,7 +169,7 @@ BOOL lmn_rc_has_insertion(LmnReactCxtRef rc) {
 void lmn_rc_push_insertion(LmnReactCxtRef rc, LmnSymbolAtomRef satom,
                            LmnMembraneRef mem) {
   LMN_ASSERT(satom && mem);
-  LRCInsertEventRef e = LMN_MALLOC(struct LRCInsertEvent);
+  LRCInsertEventRef e = LMN_MALLOC<struct LRCInsertEvent>();
   e->satom = satom;
   e->mem = mem;
   rc->insertion_events->push((LmnWord)e);

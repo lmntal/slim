@@ -47,7 +47,7 @@ template <typename Function, typename InputIterator> struct range_remove_if {
     using value_type = typename std::iterator_traits<InputIterator>::value_type;
     using pointer = typename std::iterator_traits<InputIterator>::pointer;
     using reference = typename std::iterator_traits<InputIterator>::reference;
-    typedef typename std::input_iterator_tag iterator_category;
+    using iterator_category = typename std::input_iterator_tag;
 
     remove_if_iterator(InputIterator iterator, InputIterator end_, Function f)
         : it(iterator), end_(end_), f(f) {}

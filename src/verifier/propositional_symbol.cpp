@@ -39,7 +39,7 @@
 
 #ifndef YY_TYPEDEF_YY_SCANNER_T
 #define YY_TYPEDEF_YY_SCANNER_T
-typedef void *yyscan_t;
+using yyscan_t = void*;
 #endif
 #include "propositional_symbol.h"
 #include "../lmntal.h"
@@ -65,7 +65,7 @@ static int propsym_parse(FILE *in, AutomataRef a, PVector *definitions);
 
 PropositionRef proposition_make(const char *head, const char *guard,
                                 const char *body) {
-  PropositionRef p = LMN_MALLOC(struct Proposition);
+  PropositionRef p = LMN_MALLOC<struct Proposition>();
   char *rule_str;
   BYTE optimization_level_org;
 
@@ -107,7 +107,7 @@ static char *rule_str_for_compile(const char *head, const char *guard,
   const char *body_s = (body == NULL ? head : body);
 
   buf =
-      LMN_NALLOC(char, strlen(head_s) + strlen(guard_s) + strlen(body_s) + 32);
+      LMN_NALLOC<char>(strlen(head_s) + strlen(guard_s) + strlen(body_s) + 32);
   buf[0] = '\0';
   strcat(buf, head_s);
   strcat(buf, " :- ");
@@ -124,7 +124,7 @@ static char *rule_str_for_compile(const char *head, const char *guard,
  */
 
 SymbolDefinitionRef propsym_make(unsigned int sym_id, PropositionRef p) {
-  SymbolDefinitionRef s = LMN_MALLOC(struct SymbolDefinition);
+  SymbolDefinitionRef s = LMN_MALLOC<struct SymbolDefinition>();
 
   s->sym_id = sym_id;
   s->prop = p;

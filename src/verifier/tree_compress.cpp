@@ -42,6 +42,7 @@
  */
 #include "tree_compress.h"
 #include <math.h>
+#include "lmntal.h"
 
 #define atomic_fetch_and_inc(t) __sync_fetch_and_add(t, 1)
 #define atomic_fetch_and_dec(t) __sync_fetch_and_sub(t, 1)
@@ -52,7 +53,7 @@
 #define TREE_THRESHOLD 10
 #define TREE_CACHE_LINE 8
 
-typedef struct TreeNodeStr *TreeNodeStrRef;
+using TreeNodeStrRef = struct TreeNodeStr*;
 
 struct TreeNodeStr {
   TreeNodeElement *nodes;
@@ -153,15 +154,15 @@ BOOL tree_node_equal(TreeNodeRef node1, TreeNodeElement left,
 
 LmnBinStrRef binstr_make(unsigned int len) {
   int real_len = ((len + 1) / TAG_IN_BYTE);
-  LmnBinStrRef bs = LMN_MALLOC(struct LmnBinStr);
+  LmnBinStrRef bs = LMN_MALLOC<struct LmnBinStr>();
   bs->len = len;
   bs->type = 0x00U;
-  bs->v = LMN_NALLOC(BYTE, real_len);
+  bs->v = LMN_NALLOC<BYTE>(real_len);
   memset(bs->v, 0x0U, sizeof(BYTE) * real_len);
   return bs;
 }
 TreeNodeRef tree_node_make(TreeNodeElement left, TreeNodeElement right) {
-  TreeNodeRef node=LMN_MALLOC(struct TreeNode);
+  TreeNodeRef node=LMN_MALLOC<struct TreeNode>();
   node->left = left;
   node->right = right;
   return node;
@@ -209,7 +210,7 @@ redo:
 }
 
 TreeDatabase::TreeDatabase(size_t size){
-  this->nodes = LMN_CALLOC(TreeNodeRef, size);
+  this->nodes = LMN_CALLOC<TreeNodeRef>(size);
   this->mask = size - 1;
   this->node_count = 0;
 }

@@ -38,6 +38,7 @@
  */
 #include "mc_generator.h"
 #include "element/element.h"
+#include "lmntal.h"
 #include "mc.h"
 #include "mc_explorer.h"
 #include "mc_worker.h"
@@ -130,16 +131,16 @@ static inline LmnWord dfs_work_stealing(LmnWorker *w);
 static inline void dfs_handoff_all_task(LmnWorker *me, Vector *tasks);
 static inline void dfs_handoff_task(LmnWorker *me, LmnWord task);
 
-typedef struct McExpandDFS {
+struct McExpandDFS {
   struct Vector stack;
   Deque deq;
   unsigned int cutoff_depth;
   Queue *q;
-} McExpandDFS;
+};
 
 /* LmnWorker wにDFSのためのデータを割り当てる */
 void dfs_worker_init(LmnWorker *w) {
-  McExpandDFS *mc = LMN_MALLOC(McExpandDFS);
+  McExpandDFS *mc = LMN_MALLOC<McExpandDFS>();
   mc->cutoff_depth = lmn_env.cutoff_depth;
 
   if (!worker_on_parallel(w)) {
@@ -696,7 +697,7 @@ static inline void mcdfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss,
     // cyan flag用の領域を確保
     if (!s->local_flags) {
       n = worker_group(w)->workers_get_entried_num();
-      s->local_flags = LMN_NALLOC(BYTE, n);
+      s->local_flags = LMN_NALLOC<BYTE>(n);
       memset(s->local_flags, 0, sizeof(BYTE) * n);
     }
 
@@ -843,10 +844,10 @@ void costed_dfs_loop(LmnWorker *w, Deque *deq, Vector *new_ss, AutomataRef a,
  *  Layer Synchronized Breadth First Search
  */
 
-typedef struct McExpandBFS {
+struct McExpandBFS {
   Queue *cur; /* 現在のFront Layer */
   Queue *nxt; /* 次のLayer */
-} McExpandBFS;
+};
 
 #define BFS_WORKER_OBJ(W) ((McExpandBFS *)worker_generator_obj(W))
 #define BFS_WORKER_OBJ_SET(W, O) (worker_generator_obj_set(W, O))
@@ -865,7 +866,7 @@ static inline void bfs_loop(LmnWorker *w, Vector *new_states, AutomataRef a,
 
 /* LmnWorker wにBFSのためのデータを割り当てる */
 void bfs_worker_init(LmnWorker *w) {
-  McExpandBFS *mc = LMN_MALLOC(McExpandBFS);
+  McExpandBFS *mc = LMN_MALLOC<McExpandBFS>();
 
   if (!worker_on_parallel(w)) {
     mc->cur = new Queue();

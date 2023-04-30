@@ -71,6 +71,14 @@ typedef void (*callback_5)(LmnReactCxtRef, LmnMembraneRef, LmnAtomRef,
                            LmnLinkAttr, LmnAtomRef, LmnLinkAttr, LmnAtomRef,
                            LmnLinkAttr);
 
+// Left here waiting for hash table's refactoring
+// using callback_0 = std::function<void(LmnReactCxtRef, LmnMembraneRef)>;
+// using callback_1 = std::function<void(LmnReactCxtRef, LmnMembraneRef, LmnAtomRef, LmnLinkAttr)>;
+// using callback_2 = std::function<void(LmnReactCxtRef, LmnMembraneRef, LmnAtomRef, LmnLinkAttr, LmnAtomRef, LmnLinkAttr)>;
+// using callback_3 = std::function<void(LmnReactCxtRef, LmnMembraneRef, LmnAtomRef, LmnLinkAttr, LmnAtomRef, LmnLinkAttr, LmnAtomRef, LmnLinkAttr)>;
+// using callback_4 = std::function<void(LmnReactCxtRef, LmnMembraneRef, LmnAtomRef, LmnLinkAttr, LmnAtomRef, LmnLinkAttr, LmnAtomRef, LmnLinkAttr, LmnAtomRef, LmnLinkAttr)>;
+// using callback_5 = std::function<void(LmnReactCxtRef, LmnMembraneRef, LmnAtomRef, LmnLinkAttr, LmnAtomRef, LmnLinkAttr, LmnAtomRef, LmnLinkAttr, LmnAtomRef, LmnLinkAttr, LmnAtomRef, LmnLinkAttr)>;
+
 struct Vector user_system_rulesets; /* system ruleset defined by user */
 
 /**

@@ -44,15 +44,12 @@
 #include "lmntal.h"
 #include "vm/vm.h"
 
-typedef struct normal_prof normal_prof;
-
 struct normal_prof {
   unsigned long wakeup;
   unsigned long backtrack_num;
   unsigned long findatom_num;
 };
 
-typedef struct arginfo arginfo;
 struct arginfo {
   int id;     // thread id
   BOOL judge; // whether react atom or not

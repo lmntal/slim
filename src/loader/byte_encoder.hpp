@@ -71,7 +71,7 @@ public:
 
 private:
   ByteEncoder(const Rule &rule)
-      : loc(0), cap(256), byte_seq(LMN_NALLOC(BYTE, cap)), hasuniq(rule.hasuniq) {
+      : loc(0), cap(256), byte_seq(LMN_NALLOC<BYTE>(cap)), hasuniq(rule.hasuniq) {
     /* load(rule.amatch); */
     load(rule.mmatch);
     load(rule.guard);
@@ -80,7 +80,7 @@ private:
   }
 
   ByteEncoder(const Subrule &rule)
-      : loc(0), cap(256), byte_seq(LMN_NALLOC(BYTE, cap)), hasuniq(false) {
+      : loc(0), cap(256), byte_seq(LMN_NALLOC<BYTE>(cap)), hasuniq(false) {
     /* load(rule.amatch); */
     load(rule.body);
     name = rule.name;
@@ -123,7 +123,7 @@ private:
 
   void expand_byte_sec() {
     cap *= 2;
-    byte_seq = LMN_REALLOC(BYTE, byte_seq, cap);
+    byte_seq = LMN_REALLOC<BYTE>(byte_seq, cap);
   }
 
   struct loader {

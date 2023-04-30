@@ -70,7 +70,7 @@ static inline void lmn_TLS_destroy(LmnTLS *p) { /* nothing now */ }
 
 static inline LmnTLS *lmn_TLS_make(unsigned int thread_id) LMN_UNUSED;
 static inline LmnTLS *lmn_TLS_make(unsigned int thread_id) {
-  struct LmnTLS *p = LMN_MALLOC(struct LmnTLS);
+  struct LmnTLS *p = LMN_MALLOC<struct LmnTLS>();
   lmn_TLS_init(p, thread_id);
   return p;
 }

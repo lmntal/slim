@@ -63,16 +63,16 @@ char* run_cygpath(const char* option, const char* arg)
   char *cmd, *result, buf[128];
   FILE *fp;
 
-  cmd = LMN_CALLOC(char, strlen(JNI_CYGPATH) + strlen(option) + strlen(arg) + 3);
+  cmd = LMN_CALLOC<char>(strlen(JNI_CYGPATH) + strlen(option) + strlen(arg) + 3);
   sprintf(cmd, "%s %s %s", JNI_CYGPATH, option, arg);
   if ((fp = popen(cmd, "r")) == NULL) {
     result = NULL;
   } else {
     size = 128;
-    result = LMN_CALLOC(char, size);
+    result = LMN_CALLOC<char>(size);
     while((fgets(buf, 128, fp)) != NULL){
       size+=128;
-      result = LMN_REALLOC(char, result, size);
+      result = LMN_REALLOC<char>(result, size);
       strcat(result, buf);
     }
   }
@@ -222,17 +222,17 @@ static BOOL jni_initialize_lmntal()
   // TODO: cygwin以外での動作確認
 
   /* -Djava.class.pathオプション */
-  arg = LMN_CALLOC(char, strlen(lmntal_home) + strlen(JNI_LMNTAL_JAR_REL_PATH) + 2 + 1);
+  arg = LMN_CALLOC<char>(strlen(lmntal_home) + strlen(JNI_LMNTAL_JAR_REL_PATH) + 2 + 1);
   sprintf(arg, "%s%s%s", lmntal_home, JNI_LMNTAL_JAR_REL_PATH, ":.");
 #ifdef __CYGWIN__
   path = run_cygpath("-wp", arg);
 #else
-  path = LMN_CALLOC(char, strlen(arg) + 1);
+  path = LMN_CALLOC<char>(strlen(arg) + 1);
   strcpy(path, arg);
 #endif
   LMN_FREE(arg);
 
-  options[0].optionString = LMN_CALLOC(char, strlen(JNI_OPTION_JAVA_CLASS_PATH) + strlen(path) + 1);
+  options[0].optionString = LMN_CALLOC<char>(strlen(JNI_OPTION_JAVA_CLASS_PATH) + strlen(path) + 1);
   sprintf(options[0].optionString, "%s%s", JNI_OPTION_JAVA_CLASS_PATH, path);
   LMN_FREE(path);
 
@@ -240,10 +240,10 @@ static BOOL jni_initialize_lmntal()
 #ifdef __CYGWIN__
   path = run_cygpath("-wp", lmntal_home);
 #else
-  path = LMN_CALLOC(char, strlen(lmntal_home) + 1);
+  path = LMN_CALLOC<char>(strlen(lmntal_home) + 1);
   strcpy(path, lmntal_home);
 #endif
-  options[1].optionString = LMN_CALLOC(char, strlen(JNI_OPTION_LMNTAL_HOME) + strlen(path) + 1);
+  options[1].optionString = LMN_CALLOC<char>(strlen(JNI_OPTION_LMNTAL_HOME) + strlen(path) + 1);
   sprintf(options[1].optionString, "%s%s", JNI_OPTION_LMNTAL_HOME, path);
   LMN_FREE(path);
 
@@ -324,7 +324,7 @@ static BOOL jni_lmntal_compile(char **result, const char *code)
   jstring slimcode = (*env)->CallObjectMethod(env, jc_lmntal.byteArray, jc_lmntal.m_ByteArrayOutputStream_toString);
   (*env)->CallObjectMethod(env, jc_lmntal.byteArray, jc_lmntal.m_ByteArrayOutputStream_reset);
   const char *r = (*env)->GetStringUTFChars(env, slimcode, NULL);
-  *result = (char*)LMN_CALLOC(char, strlen(r)+1);
+  *result = (char*)LMN_CALLOC<char>(strlen(r)+1);
   strcpy(*result, r);
   (*env)->ReleaseStringUTFChars(env, slimcode, r);
 

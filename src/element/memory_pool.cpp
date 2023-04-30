@@ -48,7 +48,7 @@
   (((X + sizeof(void *) - 1) / sizeof(void *)) * sizeof(void *))
 
 memory_pool *memory_pool_new(int s) {
-  memory_pool *res = LMN_MALLOC(memory_pool);
+  memory_pool *res = LMN_MALLOC<memory_pool>();
 
   res->sizeof_element = ALIGNED_SIZE(s);
   res->block_head = 0;

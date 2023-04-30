@@ -47,8 +47,8 @@
 
 #include "membrane.hpp"
 
-typedef struct AtomListEntry *AtomListEntryRef;
-typedef struct LinkObj *LinkObjRef;
+using AtomListEntryRef = struct AtomListEntry*;
+using LinkObjRef = struct LinkObj*;
 
 #include "atom.h"
 #include "element/element.h"
@@ -213,7 +213,7 @@ struct membrane_iterator {
   using value_type = LmnMembrane;
   using pointer = LmnMembrane *;
   using reference = LmnMembrane &;
-  typedef typename std::input_iterator_tag iterator_category;
+  using iterator_category = std::input_iterator_tag;
 
   membrane_iterator() : mem_(nullptr) {}
   membrane_iterator(LmnMembrane *mem) : mem_(mem) {}

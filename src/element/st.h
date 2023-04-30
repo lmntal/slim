@@ -32,8 +32,8 @@
 #endif
 #endif
 
-typedef unsigned long st_data_t;
-typedef struct st_table *st_table_t;
+using st_data_t = unsigned long;
+using st_table_t = struct st_table*;
 
 typedef int (*st_cmp_func)(void *, void *);
 typedef long (*st_hash_func)(void *);

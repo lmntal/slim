@@ -97,7 +97,7 @@ static void lmn_dump_link_json(LmnSymbolAtomRef atom, int index);
 static void lmn_dump_mem_json(LmnMembraneRef mem);
 
 static struct AtomRec *atomrec_make() {
-  struct AtomRec *a = LMN_MALLOC(struct AtomRec);
+  struct AtomRec *a = LMN_MALLOC<struct AtomRec>();
   a->done = FALSE;
   hashtbl_init(&a->args, 16);
   a->link_num = -1;

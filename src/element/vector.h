@@ -50,8 +50,8 @@
 #include "util.h"
 
 
-typedef struct Vector *PVector;
-typedef LmnWord vec_data_t;
+using PVector = struct Vector*;
+using vec_data_t = LmnWord;
 
 class Vector {
   LmnWord *tbl;

@@ -45,7 +45,7 @@
 
 #include <string>
 
-typedef struct LmnString *LmnStringRef;
+using LmnStringRef = struct LmnString*;
 struct LmnString : LmnSPAtomHeader {
   static int string_atom_type;
   std::string str;

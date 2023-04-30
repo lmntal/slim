@@ -38,6 +38,7 @@
  */
 
 #include "automata.h"
+#include "lmntal.h"
 #include "propositional_symbol.h"
 #include "nc_lexer.hpp"
 #include "nc_parser.hpp"
@@ -267,7 +268,7 @@ void Automata::analysis() {
 
   LMN_ASSERT(this->states.get_num() > 0);
   init_s = this->get_state((unsigned int)this->get_init_state());
-  on_stack_list = LMN_CALLOC(BYTE, this->states.get_num());
+  on_stack_list = LMN_CALLOC<BYTE>(this->states.get_num());
   on_stack_list[(unsigned int)init_s->get_id()] = 0xffU;
 
   automata_analysis_dfs1(this, on_stack_list, init_s);
@@ -396,7 +397,6 @@ int never_claim_load(FILE *f, AutomataRef *a) { return nc_parse(f, a); }
  */
 
 enum PLNode { N_AND, N_OR, N_NEGATION, N_SYMBOL, N_TRUE, N_FALSE };
-typedef enum PLNode PLNode;
 
 struct PLFormula {
   PLNode node_type;
@@ -408,7 +408,7 @@ struct PLFormula {
 };
 
 static PLFormulaRef make_unary_op(PLNode node_type, PLFormulaRef f0) {
-  PLFormulaRef f = LMN_MALLOC(struct PLFormula);
+  PLFormulaRef f = LMN_MALLOC<struct PLFormula>();
 
   f->node_type = node_type;
   f->arg0 = f0;
@@ -417,7 +417,7 @@ static PLFormulaRef make_unary_op(PLNode node_type, PLFormulaRef f0) {
 
 static PLFormulaRef make_binary_op(PLNode node_type, PLFormulaRef f0,
                                    PLFormulaRef f1) {
-  PLFormulaRef f = LMN_MALLOC(struct PLFormula);
+  PLFormulaRef f = LMN_MALLOC<struct PLFormula>();
 
   f->node_type = node_type;
   f->arg0 = f0;
@@ -444,7 +444,7 @@ void free_formula(PLFormulaRef f) {
 }
 
 static PLFormulaRef ltl_formula_make(PLNode node_type) {
-  PLFormulaRef f = LMN_MALLOC(struct PLFormula);
+  PLFormulaRef f = LMN_MALLOC<struct PLFormula>();
 
   f->node_type = node_type;
   return f;

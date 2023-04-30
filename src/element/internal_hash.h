@@ -46,23 +46,23 @@
  */
 
 /* HashMap */
-typedef unsigned long HashKeyType;
-typedef unsigned long HashValueType;
+using HashKeyType = unsigned long;
+using HashValueType = unsigned long;
 
-typedef struct HashEntry {
+struct HashEntry {
   HashKeyType key;
   HashValueType data;
-} HashEntry;
+};
 
-typedef struct SimpleHashtbl {
+struct SimpleHashtbl {
   struct HashEntry *tbl;
   unsigned int cap, num;
-}SimpleHashtbl;
+};
 
-typedef struct HashIterator {
+struct HashIterator {
   SimpleHashtbl *ht;
   unsigned int i;
-} HashIterator;
+};
 
 void hashtbl_init(SimpleHashtbl *ht, unsigned int init_size);
 SimpleHashtbl *hashtbl_make(unsigned int init_size);
@@ -94,10 +94,10 @@ struct HashSet {
   HashKeyType *get_p(HashKeyType key, unsigned long dummykey);
 };
 
-typedef struct HashSetItrator {
+struct HashSetIterator {
   HashSet *set;
   unsigned int i;
-} HashSetIterator;
+};
 
 HashSetIterator hashset_iterator(HashSet *set);
 void hashsetiter_next(HashSetIterator *it);

@@ -59,7 +59,7 @@ char *int_to_str(long n) {
     }
   }
 
-  s = LMN_NALLOC(char, keta + 1);
+  s = LMN_NALLOC<char>(keta + 1);
   sprintf(s, "%ld", n);
 
   return s;

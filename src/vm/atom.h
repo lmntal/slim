@@ -54,12 +54,12 @@ struct LmnMembrane;
  * @interface LmnAtom
  * @brief Represents all kinds of atoms.
  */
-typedef void *LmnAtomRef;
+using LmnAtomRef = void*;
 /**
  * @struct LmnDataAtom
  * @implements LmnAtom
  */
-typedef LmnWord LmnDataAtomRef;
+using LmnDataAtomRef = LmnWord;
 /**
  * @struct LmnSymbolAtom
  * @implements LmnAtom
@@ -98,7 +98,7 @@ typedef LmnWord LmnDataAtomRef;
  *     But, incompletely-specified.
  *
  */
-typedef struct LmnSymbolAtom *LmnSymbolAtomRef;
+using LmnSymbolAtomRef = struct LmnSymbolAtom*;
 
 /* プロキシの3番目の引数番号の領域を remove_proxy, insert_proxyで利用中。
  * 所属する膜へのポインタを持っている */

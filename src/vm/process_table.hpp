@@ -70,7 +70,7 @@ public:
     this->n = 0;
     this->size = size ? size : 1;
     this->num_buckets = size / buckets_size + 1;
-    this->tbl = LMN_CALLOC(value_type *, this->num_buckets);
+    this->tbl = LMN_CALLOC<value_type *>(this->num_buckets);
   }
 
   ~ProcessTable() {
@@ -248,7 +248,7 @@ private:
       this->size *= 2;
     this->num_buckets = this->size / buckets_size + 1;
     if (org_n < this->num_buckets) {
-      this->tbl = LMN_REALLOC(value_type *, this->tbl, this->num_buckets);
+      this->tbl = LMN_REALLOC<value_type *>(this->tbl, this->num_buckets);
       memset(this->tbl + org_n, 0,
              sizeof(value_type *) * (this->num_buckets - org_n));
     }
@@ -256,7 +256,7 @@ private:
     unsigned int b = n / buckets_size;
     if (b < this->num_buckets && this->tbl[b])
       return;
-    this->tbl[b] = LMN_NALLOC(value_type, buckets_size);
+    this->tbl[b] = LMN_NALLOC<value_type>(buckets_size);
     for (int i = 0; i < buckets_size; i++)
       this->tbl[b][i] = unused;
   }

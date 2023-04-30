@@ -342,7 +342,7 @@ void LmnSet::cb_set_to_list(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0
   lmn_mem_newlink(mem, a1, t1, LMN_ATTR_GET_VALUE(t1), cons,
                   LMN_ATTR_MAKE_LINK(2), 2);
   st_table_t tbl = ((LmnSet::LmnSetRef)a0)->tbl;
-  InnerToList::InnerToListRef itl = LMN_MALLOC(struct InnerToList);
+  InnerToList::InnerToListRef itl = LMN_MALLOC<struct InnerToList>();
   itl->set_cons_as(cons);
   itl->set_mem_as(mem);
   itl->set_ht_as(tbl->type);

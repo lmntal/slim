@@ -44,7 +44,7 @@
 #include "verifier/verifier.h"
 #include "vm/vm.h"
 class LmnSet {
-  typedef class LmnSet *LmnSetRef;
+  using LmnSetRef = class LmnSet*;
   LMN_SP_ATOM_HEADER;
   st_table_t tbl; /* hash table */
   LmnSet(struct st_hash_type *ht);
@@ -120,7 +120,7 @@ class InnerToList {
   LmnAtomRef prev_data;
   struct st_hash_type *ht_data;
   public:
-  typedef class InnerToList *InnerToListRef;
+  using InnerToListRef = class InnerToList*;
   LmnMembraneRef mem();
   void set_mem_as(LmnMembraneRef data);
   LmnAtomRef cons();

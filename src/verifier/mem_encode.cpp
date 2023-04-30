@@ -120,6 +120,7 @@
 #include "binstr_compress.h"
 #include "delta_membrane.h"
 #include "element/element.h"
+#include "lmntal.h"
 #include "mem_encode/binstr.hpp"
 #include "mem_encode/decoder.hpp"
 #include "mem_encode/dumper.hpp"
@@ -160,10 +161,10 @@ void set_functor_priority(LmnFunctor f, int priority) {
  * Binary String
  */
 LmnBinStrRef lmn_binstr_make(unsigned int real_len) {
-  LmnBinStrRef bs = LMN_MALLOC(struct LmnBinStr);
+  LmnBinStrRef bs = LMN_MALLOC<struct LmnBinStr>();
   bs->len = real_len * TAG_IN_BYTE;
   bs->type = 0x00U;
-  bs->v = LMN_NALLOC(BYTE, real_len);
+  bs->v = LMN_NALLOC<BYTE>(real_len);
   memset(bs->v, 0x0U, sizeof(BYTE) * real_len);
   return bs;
 }

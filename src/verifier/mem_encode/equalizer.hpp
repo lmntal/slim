@@ -481,7 +481,7 @@ private:
       }
     } break;
     case TAG_DBL_DATA: {
-      double *n = LMN_MALLOC(double);
+      double *n = LMN_MALLOC<double>();
 
       *n = binstr_get_dbl(bs->v, *i_bs);
       *i_bs += BS_DBL_SIZE;

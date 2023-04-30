@@ -73,8 +73,8 @@
  * バックトラック時にログをバックトラック前の状態に元に戻すことができる.
  */
 
-typedef struct VisitLog *VisitLogRef;
-typedef struct Checkpoint *CheckpointRef;
+using VisitLogRef = struct VisitLog*;
+using CheckpointRef = struct Checkpoint*;
 
 /* VisitLogに記録された変更のスナップショット */
 struct Checkpoint {

@@ -53,7 +53,6 @@
 #include "../lmntal.h"
 #include "lmntal_thread.h"
 
-typedef struct Queue Queue;
 struct Node {
   LmnWord v;
   Node *next;
@@ -96,8 +95,7 @@ struct Queue {
  *  DeQue (KaWaBaTa code)
  */
 
-typedef struct Deque Deque;
-typedef LmnWord deq_data_t;
+using deq_data_t = LmnWord;
 
 #define DEQ_DEC(X, C) (X = X != 0 ? X - 1 : C - 1)
 #define DEQ_INC(X, C) (X = X != C - 1 ? X + 1 : 0)

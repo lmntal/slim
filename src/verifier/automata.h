@@ -50,12 +50,12 @@
 #include "element/element.h"
 #include "vm/vm.h"
 
-typedef struct Automata *AutomataRef;
-typedef struct AutomataState *AutomataStateRef;
-typedef struct AutomataTransition *AutomataTransitionRef;
-typedef struct AutomataSCC AutomataSCC;
+using AutomataRef = struct Automata*;
+using AutomataStateRef = struct AutomataState*;
+using AutomataTransitionRef = struct AutomataTransition*;
+using AutomataSCC = struct AutomataSCC;
 
-typedef BYTE atmstate_id_t; /* 性質ラベル(状態)数は256個まで */
+using atmstate_id_t = BYTE; /* 性質ラベル(状態)数は256個まで */
 
 struct Automata {
   atmstate_id_t init_state;
@@ -100,7 +100,7 @@ struct AutomataState {
 };
 
 /* Propositional Logic Formula */
-typedef struct PLFormula *PLFormulaRef;
+using PLFormulaRef = struct PLFormula*;
 
 struct AutomataTransition {
   atmstate_id_t next;

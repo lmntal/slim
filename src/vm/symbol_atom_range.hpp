@@ -60,7 +60,7 @@ class symbol_atom_range {
     using value_type = LmnSymbolAtomRef;
     using pointer = LmnSymbolAtomRef *;
     using reference = LmnSymbolAtomRef &;
-    typedef typename std::input_iterator_tag iterator_category;
+    using iterator_category = std::input_iterator_tag;
     
     static symbol_atom_iterator begin(LmnMembrane *mem) {
       symbol_atom_iterator result;

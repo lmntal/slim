@@ -340,7 +340,7 @@ unsigned long transition_space(TransitionRef t) {
 }
 
 TransitionRef transition_make(State *s, lmn_interned_str rule_name) {
-  struct Transition *t = LMN_MALLOC(struct Transition);
+  struct Transition *t = LMN_MALLOC<struct Transition>();
 
   t->s = s;
   t->id = 0;

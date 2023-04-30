@@ -45,11 +45,11 @@
  * @{
  */
 
-typedef struct memory_pool_ {
+struct memory_pool {
   int sizeof_element;
   void *block_head;
   void *free_head;
-} memory_pool;
+};
 
 /* 要素サイズsのメモリプールを作成 */
 memory_pool *memory_pool_new(int s);

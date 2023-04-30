@@ -48,7 +48,7 @@
 
 #include <random>
 
-typedef BOOL (*LmnTranslated)(LmnReactCxtRef, LmnMembraneRef, LmnRuleRef);
+using LmnTranslated = std::function<BOOL(LmnReactCxtRef, LmnMembraneRef, LmnRuleRef)>;
 
 /* 実行時のルールの表現。ルールの処理は中間語命令列を変換したバイナリ表
    現をinst_seqに持つか、関数をtranslatedに持つ。関数は,トランスレータ
@@ -88,7 +88,7 @@ public:
   LmnRule(const LmnRule &rule)
       : latest_history_(ANONYMOUS), is_unique_(false) {
     if (rule.inst_seq) {
-      inst_seq = LMN_NALLOC(BYTE, rule.inst_seq_len);
+      inst_seq = LMN_NALLOC<BYTE>(rule.inst_seq_len);
       inst_seq = (BYTE *)memcpy(inst_seq, rule.inst_seq, rule.inst_seq_len);
     } else {
       inst_seq = nullptr;

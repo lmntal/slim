@@ -71,7 +71,7 @@ struct HyperLink;
  *   '!'アトムのポインタをIDとして利用しているが、出力（とuniqの履歴生成）の際には
  *   idの値を見かけ上のIDとして利用している
  */
-typedef struct HyperLink {
+struct HyperLink {
   LmnSymbolAtomRef
       atom; /* 対応する'!'アトムのポインタ、atomが開放されているときはNULL */
   LmnHlinkRank rank;
@@ -102,7 +102,7 @@ typedef struct HyperLink {
   void get_children_without(Vector *tree, HyperLink *without);
   void get_elements(Vector *tree);
   unsigned long hash();
-} HyperLink;
+};
 
 #define LMN_HL_EMPTY_ATTR (0)
 

@@ -43,6 +43,7 @@
 
 #include "queue.h"
 #include "error.h"
+#include "lmntal.h"
 #include <errno.h>
 #include <pthread.h>
 
@@ -260,7 +261,7 @@ unsigned long Queue::entry_num() {
 
 /*init*/
 void Deque::init(unsigned int init_size) {
-  this->tbl = LMN_NALLOC(LmnWord, init_size);
+  this->tbl = LMN_NALLOC<LmnWord>(init_size);
   this->head = 0;
   this->tail = 1;
   this->cap = init_size;
@@ -294,7 +295,7 @@ BOOL Deque::is_empty() {
 void Deque::extend() {
   unsigned int old = this->cap;
   this->cap *= 2;
-  this->tbl = LMN_REALLOC(LmnWord, this->tbl, this->cap);
+  this->tbl = LMN_REALLOC<LmnWord>(this->tbl, this->cap);
   if (this->tail <= this->head) {
     unsigned int i;
     for (i = 0; i < this->tail; i++) {

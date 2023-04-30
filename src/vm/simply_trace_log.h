@@ -34,7 +34,7 @@
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-
+#pragma once
 #ifndef SIMPLY_TRACE_LOG_H
 #define SIMPLY_TRACE_LOG_H
 
@@ -45,7 +45,7 @@
  *  SimpleTraceLog
  */
 
-typedef struct SimpleTraceLog *SimplyLog;
+using SimplyLog = struct SimpleTraceLog*;
 
 /**
  * Function ProtoTypes

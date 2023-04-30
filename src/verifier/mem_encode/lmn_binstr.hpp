@@ -39,7 +39,7 @@
 
 #include <cstdint>
 
-typedef struct LmnBinStr *LmnBinStrRef;
+using LmnBinStrRef = struct LmnBinStr*;
 
 /* 最終的なエンコード結果を表すバイナリストリング */
 struct LmnBinStr {

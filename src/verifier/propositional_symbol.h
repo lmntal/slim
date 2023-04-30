@@ -51,9 +51,9 @@
 #include "vm/vm.h"
 #include <stdio.h>
 
-typedef struct SymbolDefinition *SymbolDefinitionRef;
-typedef struct Proposition *PropositionRef;
-typedef Vector *PropSyms;
+using SymbolDefinitionRef = struct SymbolDefinition*;
+using PropositionRef = struct Proposition*;
+using PropSyms = Vector*;
 
 /* propositional symbol definition */
 

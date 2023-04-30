@@ -58,7 +58,7 @@
 #define MHASH_CALCULATING_MEM (1)
 #define MHASH_TREE_D (2)
 
-typedef unsigned long mhash_t;
+using mhash_t = unsigned long;
 
 static mhash_t mhash_sub(LmnMembraneRef mem, unsigned long tbl_size);
 static inline mhash_t mhash_membrane(LmnMembraneRef mem,

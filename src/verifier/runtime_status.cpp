@@ -78,7 +78,7 @@ static const char *profile_time_id_to_name(int type);
  *  Rule Profiler
  */
 RuleProfiler *rule_profiler_make(LmnRulesetId id, LmnRuleRef src) {
-  RuleProfiler *p = LMN_MALLOC(RuleProfiler);
+  RuleProfiler *p = LMN_MALLOC<RuleProfiler>();
   time_profiler_init(&p->trial);
   p->src = src;
   p->backtrack = 0;
@@ -249,9 +249,9 @@ void lmn_profiler_init(unsigned int nthreads) {
   lmn_prof.end_cpu_time = 0.0;
   lmn_prof.start_wall_time_main = 0.0;
   lmn_prof.end_wall_time_main = 0.0;
-  lmn_prof.start_cpu_time_main = LMN_NALLOC(double, nthreads);
-  lmn_prof.end_cpu_time_main = LMN_NALLOC(double, nthreads);
-  lmn_prof.thread_cpu_time_main = LMN_NALLOC(double, nthreads);
+  lmn_prof.start_cpu_time_main = LMN_NALLOC<double>(nthreads);
+  lmn_prof.end_cpu_time_main = LMN_NALLOC<double>(nthreads);
+  lmn_prof.thread_cpu_time_main = LMN_NALLOC<double>(nthreads);
   for (i = 0; i < nthreads; i++) {
     lmn_prof.thread_cpu_time_main[i] = 0.0;
   }
@@ -264,7 +264,7 @@ void lmn_profiler_init(unsigned int nthreads) {
 
   if (lmn_env.nd) {
     if (lmn_env.profile_level >= 3) {
-      lmn_prof.lv3 = LMN_NALLOC(MCProfiler3, nthreads);
+      lmn_prof.lv3 = LMN_NALLOC<MCProfiler3>(nthreads);
       for (i = 0; i < nthreads; i++) {
         mc_profiler3_init(&lmn_prof.lv3[i]);
       }
@@ -433,10 +433,10 @@ void profile_statespace(LmnWorkerGroup *wp) {
     MCProfiler2 *total;
     unsigned int i;
 
-    total = LMN_MALLOC(MCProfiler2);
+    total = LMN_MALLOC<MCProfiler2>();
     total->hashes = NULL;
 
-    lmn_prof.lv2 = LMN_NALLOC(MCProfiler2, lmn_prof.thread_num);
+    lmn_prof.lv2 = LMN_NALLOC<MCProfiler2>(lmn_prof.thread_num);
     for (i = 0; i < lmn_prof.thread_num; i++) {
       mc_profiler2_init(&lmn_prof.lv2[i]);
     }

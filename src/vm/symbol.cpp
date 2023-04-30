@@ -57,7 +57,7 @@ void sym_tbl_init() {
   sym_tbl = st_init_strtable();
   sym_rev_tbl = st_init_numtable();
   n = lmn_env.core_num;
-  next_sym_id = LMN_NALLOC(lmn_interned_str, n);
+  next_sym_id = LMN_NALLOC<lmn_interned_str>(n);
   for (i = 0; i < n; i++) {
     next_sym_id[i] = i + 1; /* 0はIDに使わない */
   }

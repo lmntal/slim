@@ -37,6 +37,7 @@
  */
 
 #include "rule.h"
+#include "lmntal.h"
 #include "rule.hpp"
 #include "system_ruleset.h"
 
@@ -88,7 +89,7 @@ bool lmn_rulesets_equals(const std::vector<LmnRuleSetRef> &rs_v1, const std::vec
   BOOL *rs2v_matched;
   bool is_ok;
 
-  rs2v_matched = LMN_NALLOC(BOOL, rs_v1.size());
+  rs2v_matched = LMN_NALLOC<BOOL>(rs_v1.size());
   memset(rs2v_matched, 0U, sizeof(BOOL) * rs_v1.size());
 
   for (unsigned int i = 0; i < rs_v1.size(); i++) {

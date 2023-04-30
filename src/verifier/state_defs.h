@@ -42,8 +42,8 @@
 
 #include "lmntal.h"
 
-typedef void *succ_data_t;
-typedef void *state_data_t;
+using succ_data_t = void*;
+using state_data_t = void*;
 
 /* unionで書く方が良い? どうしよっかな */
 // typedef union succ_data_t  succ_data_t;
@@ -58,11 +58,11 @@ typedef void *state_data_t;
 //  compress_mem;    /*  8(4)byte: 膜memをエンコードしたバイナリストリング */
 //}
 
-typedef BYTE TreeRootRef[6];
+using TreeRootRef = BYTE[6];
 
-typedef struct TreeCompressData {
+struct TreeCompressData {
   TreeRootRef root_ref;
   unsigned short byte_length;
-} TreeCompressData;
+};
 
 #endif /* STATE_DEFS_H */

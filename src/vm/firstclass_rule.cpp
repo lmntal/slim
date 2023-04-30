@@ -55,7 +55,7 @@ struct LinkConnection {
 int linkconnection_push(Vector *link_connections, LmnSymbolAtomRef satom,
                         int link_p, HyperLink *hl) {
   int link_name = link_connections->get_num();
-  struct LinkConnection *c = LMN_MALLOC(struct LinkConnection);
+  struct LinkConnection *c = LMN_MALLOC<struct LinkConnection>();
   c->atom = satom;
   c->hl = hl;
   c->link_pos = link_p;

@@ -64,13 +64,13 @@
 #define LMN_SP_ATOM_TYPE(X) (LMN_SP_ATOM(X)->type)
 #define LMN_SP_ATOM_SET_TYPE(obj, t) (LMN_SP_ATOM((obj))->type = (t))
 
-typedef void *(*f_copy)(void *);
-typedef BOOL (*f_eq)(void *, void *);
-typedef void (*f_free)(void *);
-typedef void (*f_dump)(void *, LmnPortRef);
-typedef BOOL (*f_is_ground)(void *);
-typedef std::vector<uint8_t> (*f_encode)(void *);
-typedef void *(*f_decode)(std::vector<uint8_t> const &);
+using f_copy = std::function<void *(void *)>;
+using f_eq = std::function<BOOL(void *, void *)>;
+using f_free = std::function<void(void *)>;
+using f_dump = std::function<void(void *, LmnPortRef)>;
+using f_is_ground = std::function<BOOL(void *)>;
+using f_encode = std::function<std::vector<uint8_t>(void *)>;
+using f_decode = std::function<void *(std::vector<uint8_t> const &)>;
 
 struct SpecialAtomCallback {
   lmn_interned_str name;

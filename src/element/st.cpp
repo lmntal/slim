@@ -128,11 +128,11 @@ st_table_t st_init_table_with_size(struct st_hash_type *type, int size) {
 
   size = new_size(size); /* round up to prime number */
 
-  tbl = LMN_MALLOC(struct st_table);
+  tbl = LMN_MALLOC<struct st_table>();
   tbl->type = type;
   tbl->num_entries = 0;
   tbl->num_bins = size;
-  tbl->bins = LMN_CALLOC(st_table_entry *, size);
+  tbl->bins = LMN_CALLOC<st_table_entry *>(size);
   return tbl;
 }
 
@@ -272,7 +272,7 @@ int st_contains(st_table_t table, st_data_t key) {
 
 #define ADD_DIRECT(table, key, value, hash_val, bin_pos)                       \
   do {                                                                         \
-    st_table_entry *entry = LMN_MALLOC(st_table_entry);                        \
+    st_table_entry *entry = LMN_MALLOC<st_table_entry>();                        \
     entry->hash = hash_val;                                                    \
     entry->key = key;                                                          \
     entry->record = value;                                                     \
@@ -359,7 +359,7 @@ static void rehash(st_table_t table) {
   unsigned long hash_val;
 
   new_num_bins = new_size(old_num_bins + 1);
-  new_bins = LMN_CALLOC(st_table_entry *, new_num_bins);
+  new_bins = LMN_CALLOC<st_table_entry *>(new_num_bins);
 
   for (i = 0; i < old_num_bins; i++) {
     ptr = table->bins[i];
@@ -383,10 +383,10 @@ st_table_t st_copy(st_table_t old_table) {
 
   num_bins = st_cap(old_table);
 
-  new_table = LMN_MALLOC(struct st_table);
+  new_table = LMN_MALLOC<struct st_table>();
 
   *new_table = *old_table;
-  new_table->bins = LMN_CALLOC(st_table_entry *, num_bins);
+  new_table->bins = LMN_CALLOC<st_table_entry *>(num_bins);
 
   if (new_table->bins == 0) {
     LMN_FREE(new_table);
@@ -397,7 +397,7 @@ st_table_t st_copy(st_table_t old_table) {
     new_table->bins[i] = 0;
     ptr = old_table->bins[i];
     while (ptr != 0) {
-      entry = LMN_MALLOC(st_table_entry);
+      entry = LMN_MALLOC<st_table_entry>();
       if (entry == 0) {
         LMN_FREE(new_table->bins);
         LMN_FREE(new_table);

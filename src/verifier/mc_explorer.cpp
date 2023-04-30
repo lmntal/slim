@@ -111,7 +111,6 @@ static BOOL ndfs_loop(State *seed, Vector *search, Vector *postordered);
 static void ndfs_found_accepting_cycle(LmnWorker *w, State *seed,
                                        Vector *cycle_path);
 
-typedef struct McSearchNDFS McSearchNDFS;
 struct McSearchNDFS {
   Vector *open;
   Vector *path;
@@ -128,7 +127,7 @@ struct McSearchNDFS {
   } while (0)
 
 void ndfs_worker_init(LmnWorker *w) {
-  McSearchNDFS *mc = LMN_MALLOC(McSearchNDFS);
+  McSearchNDFS *mc = LMN_MALLOC<McSearchNDFS>();
   mc->open = new Vector(1024);
   mc->path = new Vector(512);
   NDFS_WORKER_OBJ_SET(w, mc);
@@ -235,8 +234,6 @@ static BOOL ndfs_loop(State *seed, Vector *search, Vector *path) {
  *  === One Way Catch Them Young =====
  *  ==================================
  */
-
-typedef struct McSearchOWCTY McSearchOWCTY;
 struct McSearchOWCTY {
   Queue *accepts1;
   Queue *accepts2;
@@ -261,7 +258,7 @@ static inline void owcty_termination_detection(LmnWorker *w);
 static void owcty_found_accepting_cycle(LmnWorker *w, AutomataRef a);
 
 void owcty_worker_init(LmnWorker *w) {
-  McSearchOWCTY *mc = LMN_MALLOC(McSearchOWCTY);
+  McSearchOWCTY *mc = LMN_MALLOC<McSearchOWCTY>();
 
   /* 全ワーカでオブジェクトを共有 */
 
@@ -526,7 +523,6 @@ static void owcty_found_accepting_cycle(LmnWorker *w, AutomataRef a) {
  */
 #include <stdarg.h>
 
-typedef struct McSearchMAP McSearchMAP;
 struct McSearchMAP {
   Queue *propagate;
   Queue *waitingSeed;
@@ -549,7 +545,7 @@ static State *map_ordering_propagate_state(LmnWorker *w, State *u,
                                            AutomataRef a);
 
 void map_worker_init(LmnWorker *w) {
-  McSearchMAP *mc = LMN_MALLOC(McSearchMAP);
+  McSearchMAP *mc = LMN_MALLOC<McSearchMAP>();
 
   if (worker_id(w) == LMN_PRIMARY_ID) {
     if (worker_group(w)->workers_get_entried_num() > 1) {
@@ -817,7 +813,6 @@ static void map_found_accepting_cycle(LmnWorker *w, State *s) {
  *  ==================================
  */
 
-typedef struct McSearchBLE McSearchBLE;
 struct McSearchBLE {
   Queue *layer;
   Vector *path;
@@ -845,7 +840,7 @@ void bledge_env_set(LmnWorker *w) {
 }
 
 void bledge_worker_init(LmnWorker *w) {
-  McSearchBLE *mc = LMN_MALLOC(McSearchBLE);
+  McSearchBLE *mc = LMN_MALLOC<McSearchBLE>();
   if (worker_id(w) == LMN_PRIMARY_ID) {
     if (worker_group(w)->workers_get_entried_num() > 1) {
       mc->layer = new Queue(LMN_Q_MRMW);
@@ -974,7 +969,6 @@ static void mapndfs_found_accepting_cycle(LmnWorker *w, State *seed,
 /* McSearchMapを変更したらこっちも変更する必要あり */
 /* MAP系関数・マクロを使い回したかったので、こんな構造にしたが、色々と問題がありそうな構造なので要修正
  */
-typedef struct McSearchMAPNDFS McSearchMAPNDFS;
 struct McSearchMAPNDFS {
 #ifdef MAPNDFS_USE_MAP
   Queue *propagate;
@@ -996,7 +990,7 @@ struct McSearchMAPNDFS {
   } while (0)
 
 void mapndfs_worker_init(LmnWorker *w) {
-  McSearchMAPNDFS *mc = LMN_MALLOC(McSearchMAPNDFS);
+  McSearchMAPNDFS *mc = LMN_MALLOC<McSearchMAPNDFS>();
   mc->open = new Vector(1024);
   mc->path = new Vector(512);
 
@@ -1158,7 +1152,7 @@ static void mcndfs_found_accepting_cycle(LmnWorker *w, State *seed,
                                          Vector *cycle_path) LMN_UNUSED;
 
 void mcndfs_worker_init(LmnWorker *w) {
-  McSearchMAPNDFS *mc = LMN_MALLOC(McSearchMAPNDFS);
+  McSearchMAPNDFS *mc = LMN_MALLOC<McSearchMAPNDFS>();
   mc->open = new Vector(1024);
   mc->path = new Vector(512);
 

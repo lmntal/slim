@@ -132,7 +132,7 @@ LmnFunctorTable::LmnFunctorTable() {
   this->functor_id_tbl = st_init_table(&type_functorhash);
 
   this->size = predefined_size;
-  this->entry = LMN_NALLOC(LmnFunctorEntry, size);
+  this->entry = LMN_NALLOC<LmnFunctorEntry>(size);
   this->next_id = predefined_size;
 
   /* 予約されたファンクタを順番に登録していく */
@@ -165,7 +165,7 @@ LmnFunctorEntry *LmnFunctorTable::lmn_id_to_functor(int functor_id) const{
 
 void LmnFunctorTable::register_functor(int id, BOOL special, lmn_interned_str module,
                              lmn_interned_str name, int arity) {
-  struct LmnFunctorEntry *entry = LMN_MALLOC(struct LmnFunctorEntry);
+  struct LmnFunctorEntry *entry = LMN_MALLOC<struct LmnFunctorEntry>();
 
   entry->special = special;
   entry->module = module;
@@ -197,8 +197,7 @@ LmnFunctor LmnFunctorTable::functor_intern(BOOL special, lmn_interned_str module
     /* 必要ならばサイズを拡張 */
     while (this->next_id >= this->size) {
       this->size *= 2;
-      this->entry = LMN_REALLOC(
-          LmnFunctorEntry, this->entry, this->size);
+      this->entry = LMN_REALLOC<LmnFunctorEntry>(this->entry, this->size);
     }
 
     /* idはデータを格納する配列のインデックス */
@@ -207,7 +206,7 @@ LmnFunctor LmnFunctorTable::functor_intern(BOOL special, lmn_interned_str module
     this->entry[id] = entry;
 
     /* ファンクタとIDの対応をテーブルに格納する */
-    new_entry = LMN_MALLOC(struct LmnFunctorEntry);
+    new_entry = LMN_MALLOC<struct LmnFunctorEntry>();
     *new_entry = entry;
     st_insert(this->functor_id_tbl, (st_data_t)new_entry, (st_data_t)id);
 

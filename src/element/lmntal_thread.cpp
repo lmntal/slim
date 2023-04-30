@@ -87,12 +87,12 @@ void thread_yield_CPU() { sched_yield(); }
   this->wlock_num = w_num;
   this->wlock = NULL;
 
-  this->elock = LMN_NALLOC(lmn_mutex_t, e_num);
+  this->elock = LMN_NALLOC<lmn_mutex_t>(e_num);
   for (i = 0; i < e_num; i++) {
     lmn_mutex_init(&(this->elock[i]));
   }
 
-  this->wlock = LMN_NALLOC(pthread_mutex_t, w_num);
+  this->wlock = LMN_NALLOC<pthread_mutex_t>(w_num);
   for (i = 0; i < w_num; i++) {
     lmn_mutex_init_onthefly(this->wlock[i]);
   }

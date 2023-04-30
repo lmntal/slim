@@ -37,6 +37,7 @@
  * $Id$
  */
 
+#pragma once
 #ifndef LMN_VM_H
 #define LMN_VM_H
 

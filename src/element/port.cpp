@@ -60,7 +60,7 @@ static LmnPortRef port_copy_sub(LmnPortRef port);
  */
 static LmnPortRef make_port(LmnPortDirection dir, LmnPortType type,
                             const char *name) {
-  struct LmnPort *port = LMN_MALLOC(struct LmnPort);
+  struct LmnPort *port = LMN_MALLOC<struct LmnPort>();
   LMN_SP_ATOM_SET_TYPE(port, port_atom_type);
   port->direction = dir;
   port->type = type;
@@ -119,7 +119,7 @@ LmnPortRef lmn_port_copy(LmnPortRef port, BOOL owner) {
 }
 
 static LmnPortRef port_copy_sub(LmnPortRef port) {
-  LmnPortRef result = LMN_MALLOC(struct LmnPort);
+  LmnPortRef result = LMN_MALLOC<struct LmnPort>();
   memcpy(result, port, sizeof(struct LmnPort));
   return result;
 }
@@ -148,7 +148,7 @@ LmnPortRef lmn_make_file_port(FILE *file, const char *name,
 LmnPortRef lmn_make_input_string_port(LmnStringRef s) {
   LmnPortRef port =
       make_port(LMN_PORT_INPUT, LMN_PORT_ISTR, "input string port");
-  struct IStrPortData *d = LMN_MALLOC(struct IStrPortData);
+  struct IStrPortData *d = LMN_MALLOC<struct IStrPortData>();
 
   d->s = s;
   d->i = 0;

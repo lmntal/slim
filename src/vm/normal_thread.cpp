@@ -38,6 +38,7 @@
  */
 
 #include "normal_thread.h"
+#include <pthread.h>
 #include "interpret/interpreter.hpp"
 
 #include "verifier/runtime_status.h"
@@ -124,10 +125,10 @@ void normal_profile_init(normal_prof *profile) {
 
 void normal_parallel_init(void) {
   int i;
-  findthread = LMN_NALLOC(pthread_t, lmn_env.core_num);
-  thread_info = LMN_NALLOC(arginfo *, lmn_env.core_num);
+  findthread = LMN_NALLOC<pthread_t>(lmn_env.core_num);
+  thread_info = LMN_NALLOC<arginfo *>(lmn_env.core_num);
   for (i = 0; i < lmn_env.core_num; i++) {
-    thread_info[i] = LMN_MALLOC(arginfo);
+    thread_info[i] = LMN_MALLOC<arginfo>();
     thread_info[i]->rc = new LmnReactCxt();
     thread_info[i]->rc->warray_set(
         LmnRegisterArray(thread_info[i]->rc->capacity()));
@@ -135,10 +136,10 @@ void normal_parallel_init(void) {
     thread_info[i]->id = i;
     thread_info[i]->next_atom = NULL;
     thread_info[i]->exec_flag = 1;
-    thread_info[i]->exec = LMN_MALLOC(pthread_mutex_t);
+    thread_info[i]->exec = LMN_MALLOC<pthread_mutex_t>();
     pthread_mutex_init(thread_info[i]->exec, NULL);
     pthread_mutex_lock(thread_info[i]->exec);
-    thread_info[i]->profile = LMN_MALLOC(normal_prof);
+    thread_info[i]->profile = LMN_MALLOC<normal_prof>();
     normal_profile_init(thread_info[i]->profile);
   }
   for (i = 0; i < lmn_env.core_num; i++) {

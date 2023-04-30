@@ -37,6 +37,7 @@
  */
 
 #include "vector.h"
+#include "lmntal.h"
 
 
 Vector::Vector(){
@@ -61,13 +62,13 @@ Vector::~Vector(){
   }
 }
 void Vector::init(unsigned int init_size){
-  this->tbl = LMN_NALLOC(LmnWord, init_size);
+  this->tbl = LMN_NALLOC<LmnWord>(init_size);
   this->num = 0;
   this->cap = init_size;
 }
 void Vector::extend(){
   this->cap *= 2;
-  this->tbl = LMN_REALLOC(LmnWord, this->tbl, this->cap);
+  this->tbl = LMN_REALLOC<LmnWord>(this->tbl, this->cap);
 }
 void Vector::set_num(unsigned int n){
   this->num = n;
@@ -93,7 +94,7 @@ void Vector::push(LmnWord keyp){
 }
 void Vector::reduce(){
   this->cap /= 2;
-  this->tbl = LMN_REALLOC(LmnWord, this->tbl, this->cap);
+  this->tbl = LMN_REALLOC<LmnWord>(this->tbl, this->cap);
 }
 LmnWord Vector::pop(){
   LmnWord ret;

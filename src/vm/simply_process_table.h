@@ -35,6 +35,7 @@
  *
  */
 
+#pragma once
 #ifndef LMN_SIMPLY_PROCESS_TABLE_H
 #define LMN_SIMPLY_PROCESS_TABLE_H
 
@@ -43,12 +44,12 @@
  *  プロセスIDをkeyにしたBYTEサイズテーブル
  */
 
-typedef struct SimpleProcessTable *SimplyProcessTableRef;
 
 #include "element/element.h"
 #include "vm/vm.h"
-
 #include "vm/process_table.hpp"
+
+using SimplyProcessTableRef = struct SimpleProcessTable*;
 
 struct SimpleProcessTable : ProcessTable<BYTE> {
   SimpleProcessTable() : ProcessTable<BYTE>(){};

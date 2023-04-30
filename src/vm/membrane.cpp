@@ -74,7 +74,7 @@ static void lmn_mem_copy_cells_sub(LmnMembraneRef destmem,
                                    LmnMembraneRef srcmem, ProcessTableRef atoms,
                                    BOOL hl_nd);
 
-typedef int AtomListIter;
+using AtomListIter = int;
 #define atomlist_iter_initializer(AS) (0)
 #define atomlist_iter_condition(Mem, Iter) ((Iter) < Mem->mem_max_functor())
 #define atomlist_iter_next(Iter) ((Iter)++)
@@ -123,7 +123,7 @@ static inline void free_atomlist(AtomListEntry *as);
 
 /* 新しいアトムリストを作る */
 static inline AtomListEntry *make_atomlist() {
-  AtomListEntry *as = LMN_MALLOC(struct AtomListEntry);
+  AtomListEntry *as = LMN_MALLOC<struct AtomListEntry>();
   as->record =
       NULL; /* 全てのアトムの種類に対してfindatom2用ハッシュ表が必要なわけではないので動的にmallocさせる
              */
@@ -156,7 +156,7 @@ LmnMembrane::LmnMembrane(){
   this->atom_data_num = 0U;
   this->name = ANONYMOUS;
   this->id = 0UL;
-  this->atomset = LMN_CALLOC(struct AtomListEntry *, this->atomset_size);
+  this->atomset = LMN_CALLOC<struct AtomListEntry *>(this->atomset_size);
   this->set_id(env_gen_next_id());
 }
 const char *LmnMembrane::MEM_NAME() {
@@ -341,8 +341,7 @@ void mem_push_symbol_atom(LmnMembraneRef mem, LmnSymbolAtomRef atom) {
         int org_size = mem->atomset_size;
         mem->atomset_size *= 2;
         LMN_ASSERT(mem->atomset_size > 0);
-        mem->atomset = LMN_REALLOC(struct AtomListEntry *, mem->atomset,
-                                   mem->atomset_size);
+        mem->atomset = LMN_REALLOC<struct AtomListEntry *>(mem->atomset, mem->atomset_size);
         memset(mem->atomset + org_size, 0,
                (mem->atomset_size - org_size) * sizeof(struct AtomListEntry *));
       }
@@ -1129,7 +1128,7 @@ LinkObj::LinkObj(LmnAtomRef ap, LmnLinkAttr pos) {
   this->pos = pos;
 }
 LinkObjRef LinkObj_make(LmnAtomRef ap, LmnLinkAttr pos) {
-  LinkObjRef ret = LMN_MALLOC(struct LinkObj);
+  LinkObjRef ret = LMN_MALLOC<struct LinkObj>();
   ret->ap = ap;
   ret->pos = pos;
   return ret;
@@ -3483,10 +3482,12 @@ static void mem_mk_sorted_children(Vector *vec) {
  * Step 3.1: アトム起点のグラフトレース (old)
  */
 
-typedef struct AtomVecData {
+struct AtomVecData {
   LmnFunctor fid;
   Vector *atom_ptrs;
-} atomvec_data;
+};
+
+using atomvec_data = AtomVecData;
 
 static Vector *mem_mk_matching_vec(LmnMembraneRef mem);
 static void free_atomvec_data(Vector *vec);
@@ -3878,7 +3879,7 @@ static Vector *mem_mk_matching_vec(LmnMembraneRef mem) {
   EACH_ATOMLIST_WITH_FUNC(mem, ent, f, ({
                             atomvec_data *ad;
 
-                            ad = LMN_MALLOC(atomvec_data);
+                            ad = LMN_MALLOC<atomvec_data>();
                             ad->fid = f;
                             ad->atom_ptrs = new Vector(1);
 

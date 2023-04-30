@@ -312,7 +312,7 @@ class BinStr {
 public:
   BinStr() {
     size = BS_TBL_SIZE * TAG_IN_BYTE;
-    v = LMN_NALLOC(BYTE, size / TAG_IN_BYTE);
+    v = LMN_NALLOC<BYTE>(size / TAG_IN_BYTE);
     memset(v, 0x0U, sizeof(BYTE) * BS_TBL_SIZE);
     cur = 0;
   }
@@ -366,8 +366,8 @@ public:
   LmnBinStr *to_lmn_binstr() const {
     struct LmnBinStr *ret_bs;
     int size = (this->cur + 1) / 2;
-    ret_bs = LMN_MALLOC(struct LmnBinStr);
-    ret_bs->v = LMN_NALLOC(BYTE, size);
+    ret_bs = LMN_MALLOC<struct LmnBinStr>();
+    ret_bs->v = LMN_NALLOC<BYTE>(size);
     ret_bs->type = 0x00U;
     memcpy(ret_bs->v, this->v, size);
     ret_bs->len = this->cur;
@@ -388,7 +388,7 @@ private:
     if (org_size >= size)
       return;
     
-    v = LMN_REALLOC(BYTE, v, size / TAG_IN_BYTE);
+    v = LMN_REALLOC<BYTE>(v, size / TAG_IN_BYTE);
   }
 };
 

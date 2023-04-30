@@ -393,7 +393,7 @@ void LmnWorkerGroup::workers_free(unsigned int worker_num) {
 
 void LmnWorkerGroup::workers_gen(unsigned int worker_num, AutomataRef a, Vector *psyms, BOOL flags) {
   unsigned int i;
-  workers = LMN_NALLOC(LmnWorker *, worker_num);
+  workers = LMN_NALLOC<LmnWorker *>(worker_num);
   for (i = 0; i < worker_num; i++) {
     LmnWorker *w;
     StateSpaceRef states;

@@ -49,7 +49,7 @@
 class LmnStateMap {
   LMN_SP_ATOM_HEADER;
   static int state_map_atom_type;
-  typedef class LmnStateMap *LmnStateMapRef;
+  using LmnStateMapRef = class LmnStateMap*;
   StateSpaceRef states;
   LmnStateMap(LmnMembraneRef mem);
   ~LmnStateMap();

@@ -414,7 +414,7 @@ LmnDataAtomRef lmn_create_double_atom(double d) {
 #ifdef LMN_DOUBLE_IS_IMMEDIATE
   return *(LmnDataAtomRef *)&d; // forward bit pattern
 #else
-  double *result = (double *)LMN_MALLOC(double);
+  double *result = (double *)LMN_MALLOC<double>();
   *result = d;
   return (LmnDataAtomRef)result;
 #endif

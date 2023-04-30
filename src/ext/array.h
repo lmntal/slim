@@ -50,7 +50,7 @@
  */
 class LmnArray {
   LMN_SP_ATOM_HEADER;
-  typedef class LmnArray *LmnArrayRef;
+  using LmnArrayRef = class LmnArray*;
   /**
   * @memberof LmnArray
   * @private

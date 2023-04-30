@@ -58,9 +58,8 @@ struct StateSpace;
 #//define OPT_WORKERS_SYNC /* とってもbuggyなのでcomment out */
 #endif
 
-typedef struct LmnWorkerGroup LmnWorkerGroup;
-typedef struct LmnMCObj LmnMCObj;
-typedef struct LmnWorker LmnWorker;
+struct LmnWorker;
+
 
 /**
  *  Worker Group

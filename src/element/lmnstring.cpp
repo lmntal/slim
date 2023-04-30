@@ -224,7 +224,7 @@ void cb_string_substr(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
     int len = strlen(src);
     if (end > len)
       end = len;
-    s = LMN_NALLOC(char, end - begin + 1);
+    s = LMN_NALLOC<char>(end - begin + 1);
     snprintf(s, end - begin + 1, "%s", src + begin);
   } else {
     s = strdup("");
@@ -251,7 +251,7 @@ void cb_string_substr_right(LmnReactCxtRef rc, LmnMembraneRef mem,
 
   if (begin > len)
     begin = len;
-  s = LMN_NALLOC(char, len - begin + 1);
+  s = LMN_NALLOC<char>(len - begin + 1);
   snprintf(s, len - begin + 1, "%s", src + begin);
 
   ret = new LmnString(s);

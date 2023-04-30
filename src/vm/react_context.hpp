@@ -47,7 +47,8 @@
 #include <bitset>
 #include <unordered_map>
 
-typedef struct LmnRegister *LmnRegisterRef;
+struct LmnRegister;
+using LmnRegisterRef = LmnRegister*;
 
 struct LmnReactCxt;
 using LmnReactCxtRef = LmnReactCxt *;

@@ -54,12 +54,12 @@
 
 #define TREE_DB_DEFAULT_SIZE (1024 * 1024 * 128)
 
-typedef uint64_t TreeNodeElement;
-typedef TreeNodeElement TreeNodeID;
-typedef TreeNodeElement TreeNodeUnit;
+using TreeNodeElement = uint64_t;
+using TreeNodeID = TreeNodeElement;
+using TreeNodeUnit = TreeNodeElement;
 
-typedef struct TreeDatabase *TreeDatabaseRef;
-typedef struct TreeNode *TreeNodeRef;
+using TreeDatabaseRef = struct TreeDatabase*;
+using TreeNodeRef = struct TreeNode*;
 struct TreeNodeStr;
 
 struct TreeDatabase {

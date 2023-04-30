@@ -51,13 +51,6 @@
 #include "mc_worker.h"
 #include "vm/vm.h"
 
-typedef struct MCProfiler2 MCProfiler2;
-typedef struct MCProfiler3 MCProfiler3;
-typedef struct MemoryProfiler MemoryProfiler;
-typedef struct TimeProfiler TimeProfiler;
-typedef struct RuleProfiler RuleProfiler;
-typedef struct PeakCounter PeakCounter;
-
 enum PROFILE_SPACE {
   PROFILE_SPACE__TOTAL,          /* トータル */
   PROFILE_SPACE__STATE_BINSTR,   /* バイナリストリング */

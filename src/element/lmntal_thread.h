@@ -109,8 +109,7 @@ void thread_yield_CPU(void);
 #define lmn_thread_yield_CPU()
 #endif
 
-typedef struct EWLock EWLock;
-typedef unsigned long mtx_data_t;
+using mtx_data_t = unsigned long;
 
 /* 2のべき乗を使うと, &演算で剰余を求めることができる.
  * というわけで, wlockの数は2のべき乗でないと, 困る */

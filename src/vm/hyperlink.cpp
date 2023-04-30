@@ -838,7 +838,7 @@ void hs_print(HashSet *hs) {
 //
 // void lmn_sameproccxt_init2()
 //{
-//  findproccxt = LMN_MALLOC(FindProcCxt);
+//  findproccxt = LMN_MALLOC<FindProcCxt>();
 //  findproccxt = NULL;
 //  commit      = FALSE;
 //}

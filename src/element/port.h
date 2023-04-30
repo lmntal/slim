@@ -50,7 +50,7 @@
  * @{
  */
 
-typedef struct LmnPort *LmnPortRef;
+using LmnPortRef = struct LmnPort *;
 
 #include "../lmntal.h"
 #include "lmnstring.h"
@@ -76,17 +76,17 @@ struct IStrPortData {
 
 #define LMN_PORT(obj) ((LmnPortRef)(obj))
 
-typedef enum LmnPortDirection {
+enum LmnPortDirection {
   LMN_PORT_INPUT, /* 入力ポート */
   LMN_PORT_OUTPUT /* 出力ポート */
-} LmnPortDirection;
+};
 
-typedef enum LmnPortType {
+enum LmnPortType {
   LMN_PORT_FILE, /* CのFILE*の代替のポート */
   LMN_PORT_ISTR, /* 文字列からの入力ポート */
   LMN_PORT_OSTR, /* 文字列からの出力ポート */
   /*   LMN_PORT_PROC /\* virtual port *\/ */
-} LmnPortType;
+};
 
 void port_init(void);
 void port_finalize(void);

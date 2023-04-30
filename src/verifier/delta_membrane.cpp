@@ -1591,7 +1591,7 @@ void dmem_root_finish(struct MemDeltaRoot *d) { d->next_id = env_next_id(); }
 static struct MemDelta *mem_delta_make(struct MemDeltaRoot *root_d,
                                        LmnMembraneRef m,
                                        unsigned long next_id) {
-  struct MemDelta *p = LMN_MALLOC(struct MemDelta);
+  struct MemDelta *p = LMN_MALLOC<struct MemDelta>();
 
   p->root_d = root_d;
   p->mem = m;

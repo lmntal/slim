@@ -98,7 +98,7 @@ LmnArray::LmnArrayRef LmnArray::lmn_array_copy() {
   if (!LMN_ARRAY_OWNER(this))
     lmn_fatal("attempt to copy old array");
 
-  LmnArrayRef a = LMN_MALLOC(class LmnArray);
+  LmnArrayRef a = LMN_MALLOC<class LmnArray>();
   memcpy(a, this, sizeof(class LmnArray));
   /*
      LMN_SP_ATOM_SET_TYPE(a, array_atom_type);

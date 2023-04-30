@@ -101,7 +101,7 @@ struct ContextC2 {
 };
 
 static ContextC1Ref contextC1_make(MemDeltaRoot *d, unsigned int id) {
-  ContextC1Ref c = LMN_MALLOC(struct ContextC1);
+  ContextC1Ref c = LMN_MALLOC<struct ContextC1>();
   c->d = d;
   c->LHS_procs = new ProcessTbl(32);
   c->RHS_procs = new ProcessTbl(32);
@@ -350,7 +350,7 @@ static void contextC1_expand_RHS(McDporData *mc, ContextC1Ref c,
 }
 
 static McDporData *dpor_data_make() {
-  McDporData *d = LMN_MALLOC(McDporData);
+  McDporData *d = LMN_MALLOC<McDporData>();
   d->wt_gatoms = new Vector(4);
   d->wt_flags = new ProcessTbl();
   d->ample_cand = new Vector(8);
@@ -400,7 +400,7 @@ void dpor_env_init(void) {
   } else {
     unsigned int i, n;
     n = lmn_env.core_num;
-    dpor_data = LMN_NALLOC(McDporData *, n);
+    dpor_data = LMN_NALLOC<McDporData *>(n);
     for (i = 0; i < n; i++) {
       dpor_data[i] = dpor_data_make();
     }

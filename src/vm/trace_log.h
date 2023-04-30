@@ -224,7 +224,7 @@ public:
   void continue_trace() { tracker.pop(); }
 };
 
-typedef struct TraceLog *TraceLogRef;
+using TraceLogRef = struct TraceLog*;
 
 #define TLOG_MATCHED_ID_NONE (0U)
 

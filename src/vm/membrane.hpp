@@ -53,8 +53,8 @@
 
 struct LmnMembrane;
 struct LmnRuleSet;
-typedef struct LmnMembrane *LmnMembraneRef;
-typedef struct AtomListEntry **AtomSet;
+using LmnMembraneRef = struct LmnMembrane*;
+using AtomSet = struct AtomListEntry**;
 
 struct LmnMembrane {
   AtomSet atomset;

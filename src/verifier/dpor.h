@@ -59,8 +59,8 @@
 #define POR_DEBUG(V)
 #endif
 
-typedef struct ContextC2 *ContextC2Ref;
-typedef struct ContextC1 *ContextC1Ref;
+using ContextC2Ref = struct ContextC2*;
+using ContextC1Ref = struct ContextC1*;
 
 struct McDporData {
   unsigned int cur_depth;
