@@ -58,7 +58,6 @@ libtool
 **/.deps/
 **/.libs/
 config.h
-config.h.in~
 genconfig
 stamp-h1
 test-driver
@@ -94,3 +93,6 @@ il_parser.hpp
 src/loader/interpret_generated.cpp
 src/loader/translate_generated.cpp
 third_party/google-perftools-1.8.3/test-suite.log
+build/
+compile_commands.json
+.cache/
