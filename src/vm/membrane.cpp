@@ -327,6 +327,8 @@ void mem_push_symbol_atom(LmnMembraneRef mem, LmnSymbolAtomRef atom) {
   LmnFunctor f = atom->get_functor();
 
   if (atom->get_id() == 0) { /* 膜にpushしたならばidを割り当てる */
+    printf("%s:%d\n", __FUNCTION__, __LINE__);
+    printf("%d\n", lmn_id_pool->get_num());
     atom->set_id(env_gen_next_id());
   }
 

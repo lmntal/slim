@@ -44,7 +44,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
+#include <thread>
 #ifdef WITH_DMALLOC
 #include <dmalloc.h>
 #endif
@@ -60,6 +60,8 @@
 #else
 #define LMN_UNUSED
 #endif
+
+extern thread_local int int_thread_id;
 
 /*------------------------------------------------------------------------
  *  Some useful macros

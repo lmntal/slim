@@ -171,6 +171,7 @@ class LmnRuleSet {
   bool is_copied;
   bool has_uniqrule;
   bool is_0step;
+  bool is_para;
   std::vector<LmnRule *> rules;
   std::vector<LmnRule *> subrules;
 
@@ -183,11 +184,12 @@ public:
 
   LmnRuleSet(LmnRulesetId id, int init_size)
       : id(id), is_copied(false),
-        has_uniqrule(false), is_0step(false) {}
+        has_uniqrule(false), is_0step(false), is_para(false) {}
 
   LmnRuleSet(const LmnRuleSet &rs) : LmnRuleSet(rs.id, rs.rules.capacity()) {
     is_copied = true;
     is_0step = rs.is_0step;
+    is_para = rs.is_para;
 
     /* ルール単位のオブジェクト複製 */
     for (auto r : rs.rules)
@@ -268,6 +270,9 @@ public:
 
   void validate_zerostep() { is_0step = true; }
   bool is_zerostep() const { return is_0step; }
+
+  void validate_para_ruleset() { is_para = true; }
+  bool is_para_ruleset() const { return is_para; }
 
   bool is_copy() const { return is_copied; }
   bool has_unique() const { return has_uniqrule; }

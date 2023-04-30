@@ -1,7 +1,7 @@
 /*
- * init_exts.c - String API
+ * thread.cpp
  *
- *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
+ *   Copyright (c) 2017, Ueda Laboratory LMNtal Group
  *                                         <lmntal@ueda.info.waseda.ac.jp>
  *   All rights reserved.
  *
@@ -37,37 +37,36 @@
  * $Id$
  */
 
-#include "../lmntal.h"
-#include "array.h"
-#include "membrane.h"
-#include "set.h"
-#include "state_map.h"
-void init_integer(void);
-void init_float(void);
-void init_nlmem(void);
-void init_initial_ruleset(void);
-void init_nd_conf(void);
-void init_time(void);
-void init_atom(void);
-void init_react_rule(void);
-void init_zerostep(void);
-void init_builtin_extensions(void);
-void init_thread(void);
+#include "lmntal.h"
+#include "vm/vm.h"
 
-void init_builtin_extensions(void)
-{
-  init_integer();
-  init_float();
-  init_nlmem();
-  init_initial_ruleset();
-  init_nd_conf();
-  init_time();
-  LmnArray::init_array();
-  init_atom();
-  init_react_rule();
-  LmnSet::init_set();
-  LmnStateMap::init_state_map();
-  Membrane::init_membrane();
-  init_zerostep();
-  init_thread();
+/**
+ * @brief threadルールセットを登録するためのコールバック
+ *
+ * @details
+ *   膜の中に入っているルールセットを親膜に移動し、元々の膜を削除する。
+ *   ただし、callback命令が終わった際、'$callback'アトムがdeleteされるため、
+ *   膜のメモリを解放してしまうとメモリアクセス違反が起きる。
+ *   現状ではメモリを解放せず親膜からの削除だけ行う。（これはメモリリークになる）
+ * @todo
+ *   メモリアクセス違反が起きないように膜のメモリを解放できるような仕様にする。
+ */
+void cb_create_thread(LmnReactCxtRef rc, LmnMembraneRef mem) {
+  LmnMembraneRef parent = mem->mem_parent();
+
+  for (int i = 0; i < mem->ruleset_num(); i++) {
+    LmnRuleSetRef rs = lmn_mem_get_ruleset(mem, i);
+    rs->validate_para_ruleset();
+    lmn_mem_add_ruleset(parent, new LmnRuleSet(*rs));
+  }
+
+  if (rc->has_mode(REACT_MEM_ORIENTED)) {
+    ((MemReactContext *)rc)->memstack_remove(mem);
+  }
+  // lmn_mem_delete_mem(parent, mem); //< may cause memory error
+  parent->remove_mem(mem);
+}
+
+void init_thread(void) {
+  CCallback::lmn_register_c_fun("thread", (void *)cb_create_thread, 0);
 }
