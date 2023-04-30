@@ -81,3 +81,9 @@ add_subdirectory(ffi)
 add_subdirectory(loader)
 add_subdirectory(verifier)
 add_subdirectory(vm)
+
+set_property(
+  TARGET lmn_verifier
+  APPEND
+  PROPERTY ADDITIONAL_CLEAN_FILES ${CMAKE_CURRENT_SOURCE_DIR}/arch.h ${CMAKE_CURRENT_SOURCE_DIR}/config.h
+)
