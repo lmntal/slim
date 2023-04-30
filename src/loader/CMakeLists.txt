@@ -5,6 +5,11 @@ set(LEXER_INPUT ${CMAKE_CURRENT_SOURCE_DIR}/il_lexer.cpp.re)
 set(PARSER_OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/il_parser.cpp)
 set(PARSER_DEF ${CMAKE_CURRENT_SOURCE_DIR}/il_parser.hpp)
 
+set(TRANSLATION_GENERATOR ${CMAKE_CURRENT_SOURCE_DIR}/translate_generator.rb)
+set(TRANSLATION_INPUT ${CMAKE_CURRENT_SOURCE_DIR}/translate_generator.in)
+set(TRANSLATION_OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/translate_generated.cpp)
+set(INTERPRETATION_OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/interpret_generated.cpp)
+
 bison_target(
     PARSER ${CMAKE_CURRENT_SOURCE_DIR}/il_parser.ypp ${PARSER_OUTPUT}
     DEFINES_FILE ${PARSER_DEF}
@@ -44,16 +49,22 @@ execute_process(
 
 execute_process(
     COMMAND
-    ${Ruby_EXECUTABLE} --encoding=utf-8 -i translate_generator.rb
+    ${Ruby_EXECUTABLE} --encoding=utf-8 -i ${TRANSLATION_GENERATOR}
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    INPUT_FILE ./translate_generator.in
-    OUTPUT_FILE ./interpret_generated.cpp
+    INPUT_FILE ${TRANSLATION_INPUT}
+    OUTPUT_FILE ${INTERPRETATION_OUTPUT}
 )
 
 execute_process(
     COMMAND
-    ${Ruby_EXECUTABLE} --encoding=utf-8 translate_generator.rb
+    ${Ruby_EXECUTABLE} --encoding=utf-8 ${TRANSLATION_GENERATOR}
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    INPUT_FILE ./translate_generator.in
-    OUTPUT_FILE ./translate_generated.cpp
+    INPUT_FILE ${TRANSLATION_INPUT}
+    OUTPUT_FILE ${TRANSLATION_OUTPUT}
+)
+
+set_property(
+  TARGET lmn_loader
+  APPEND
+  PROPERTY ADDITIONAL_CLEAN_FILES ${LEXER_OUTPUT} ${PARSER_OUTPUT} ${PARSER_DEF} ${TRANSLATION_OUTPUT} ${INTERPRETATION_OUTPUT}
 )

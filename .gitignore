@@ -92,6 +92,9 @@ il_parser.cpp
 il_parser.hpp
 src/loader/interpret_generated.cpp
 src/loader/translate_generated.cpp
+src/loader/location.hh
+src/loader/position.hh
+src/loader/stack.hh
 third_party/google-perftools-1.8.3/test-suite.log
 build/
 compile_commands.json
