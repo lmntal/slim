@@ -1,0 +1,64 @@
+---
+Checks: "
+  bugprone-*,
+  clang-analyzer-*,
+  concurrency-*,
+  llvm-*,
+  modernize-*,
+  performance-*,
+  portability-*,
+  readability-*,
+  misc-*,
+  -readability-magic-numbers,
+  -readability-identifier-length,
+  -misc-no-recursion,
+  -misc-unused-parameters,
+  -misc-non-private-member-variables-in-classes,
+  -bugprone-easily-swappable-parameters,
+  -google-build-using-namespace,
+  -google-readability-braces-around-statements,
+  -modernize-use-trailing-return-type,
+  -modernize-use-equals-delete,
+  "
+
+# 一応、全てどのケースでもいいように設定しておく
+CheckOptions:
+  - key: readability-identifier-naming.ClassCase
+    value: aNy_CasE
+  - key: readability-identifier-naming.ClassMemberCase
+    value: aNy_CasE
+  - key: readability-identifier-naming.ConstexprVariableCase
+    value: aNy_CasE
+  - key: readability-identifier-naming.EnumCase
+    value: aNy_CasE
+  - key: readability-identifier-naming.EnumConstantCase
+    value: aNy_CasE
+  - key: readability-identifier-naming.FunctionCase
+    value: lower_case
+  - key: readability-identifier-naming.GlobalConstantCase
+    value: aNy_CasE
+  - key: readability-identifier-naming.StaticConstantCase
+    value: aNy_CasE
+  - key: readability-identifier-naming.StaticVariableCase
+    value: aNy_CasE
+  - key: readability-identifier-naming.MacroDefinitionCase
+    value: aNy_CasE
+  - key: readability-identifier-naming.MemberCase
+    value: aNy_CasE
+  - key: readability-identifier-naming.NamespaceCase
+    value: aNy_CasE
+  - key: readability-identifier-naming.ParameterCase
+    value: aNy_CasE
+  - key: readability-identifier-naming.TypeAliasCase
+    value: aNy_CasE
+  - key: readability-identifier-naming.TypedefCase
+    value: aNy_CasE
+  - key: readability-identifier-naming.VariableCase
+    value: aNy_CasE
+  - key: readability-identifier-naming.IgnoreMainLikeFunctions
+    value: 1
+
+WarningsAsErrors: "*"
+HeaderFilterRegex: "src/*.(h|hpp)"
+AnalyzeTemporaryDtors: true
+FormatStyle: LLVM
