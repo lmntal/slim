@@ -44,7 +44,7 @@
 #include "queue.h"
 #include "error.h"
 #include "lmntal.h"
-#include <errno.h>
+#include <cerrno>
 #include <pthread.h>
 
 #define Q_DEQ 0
@@ -53,10 +53,10 @@
 /*parallel_queue*/
 Queue::Queue(BOOL lock_type) {
   Node *sentinel = new Node(0);
-  this->head = sentinel;
-  this->tail = sentinel;
-  this->enq_num = 0UL;
-  this->deq_num = 0UL;
+  this->head     = sentinel;
+  this->tail     = sentinel;
+  this->enq_num  = 0UL;
+  this->deq_num  = 0UL;
 
   switch (lock_type) {
   case LMN_Q_SRSW:
@@ -85,11 +85,11 @@ Queue::Queue(BOOL lock_type) {
 
 Queue::Queue(void) {
   Node *sentinel = new Node(0);
-  this->head = sentinel;
-  this->tail = sentinel;
-  this->qlock = FALSE;
-  this->enq_num = 0UL;
-  this->deq_num = 0UL;
+  this->head     = sentinel;
+  this->tail     = sentinel;
+  this->qlock    = FALSE;
+  this->enq_num  = 0UL;
+  this->deq_num  = 0UL;
 }
 
 Queue::~Queue() {
@@ -115,7 +115,6 @@ Queue::~Queue() {
   }
 }
 
-
 /*{tail, last}
  *     ↓
  *   ..○→NULL
@@ -127,8 +126,8 @@ void Queue::enqueue(LmnWord v) {
     this->lock(Q_ENQ);
     /*this->lock(Q_DEQ);*/
   }
-  last = this->tail;
-  node = new Node(v);
+  last       = this->tail;
+  node       = new Node(v);
   last->next = node;
   this->tail = node;
   this->enq_num++;
@@ -145,8 +144,8 @@ void Queue::enqueue_push_head(LmnWord v) {
     this->lock(Q_ENQ);
     this->lock(Q_DEQ);
   }
-  head = this->head;
-  node = new Node(v);
+  head       = this->head;
+  node       = new Node(v);
   node->next = head->next;
   head->next = node;
   // q->tail = node;
@@ -169,10 +168,10 @@ LmnWord Queue::dequeue() {
   if (!this->is_empty()) {
     Node *sentinel, *next;
     sentinel = this->head;
-    next = sentinel->next;
+    next     = sentinel->next;
     if (next) {
-      ret = next->v;
-      next->v = 0;
+      ret        = next->v;
+      next->v    = 0;
       this->head = next;
       free(sentinel);
       this->deq_num++;
@@ -185,22 +184,18 @@ LmnWord Queue::dequeue() {
   return ret;
 }
 
-
-
 /* キューqが空なら真を返す.*/
-BOOL Queue::is_empty() {
-  return (this->head == this->tail) && (this->enq_num == this->deq_num);
-}
+BOOL Queue::is_empty() { return (this->head == this->tail) && (this->enq_num == this->deq_num); }
 /** ----
  *  static functions
  */
 
 Node::Node(LmnWord v) {
-  this->v = v;
+  this->v    = v;
   this->next = NULL;
 }
 
-Node::~Node() {};
+Node::~Node(){};
 
 void Queue::lock(BOOL is_enq) {
   if (is_enq) { /* for enqueue */
@@ -251,9 +246,7 @@ void Queue::clear() {
     ;
 }
 
-unsigned long Queue::entry_num() {
-  return this->enq_num - this->deq_num;
-}
+unsigned long Queue::entry_num() { return this->enq_num - this->deq_num; }
 
 /**=====================
  *  DeQue
@@ -261,10 +254,10 @@ unsigned long Queue::entry_num() {
 
 /*init*/
 void Deque::init(unsigned int init_size) {
-  this->tbl = LMN_NALLOC<LmnWord>(init_size);
+  this->tbl  = LMN_NALLOC<LmnWord>(init_size);
   this->head = 0;
   this->tail = 1;
-  this->cap = init_size;
+  this->cap  = init_size;
 }
 
 Deque::Deque(unsigned int init_size) {
@@ -276,26 +269,21 @@ Deque::Deque(unsigned int init_size) {
 void Deque::destroy() { LMN_FREE(this->tbl); }
 
 /* free */
-Deque::~Deque() {
-  this->destroy();
-}
+Deque::~Deque() { this->destroy(); }
 
 /* num */
-int Deque::num(){                                                             
-  return this->tail > this->head ? 
-    this->tail - this->head - 1 : this->cap - this->head + this->tail - 1;
+int Deque::num() {
+  return this->tail > this->head ? this->tail - this->head - 1 : this->cap - this->head + this->tail - 1;
 }
 
 /* is_empty */
-BOOL Deque::is_empty() {
-  return (this->num() == 0);
-}
+BOOL Deque::is_empty() { return (this->num() == 0); }
 
 /* extend (static) */
 void Deque::extend() {
   unsigned int old = this->cap;
-  this->cap *= 2;
-  this->tbl = LMN_REALLOC<LmnWord>(this->tbl, this->cap);
+  this->cap        *= 2;
+  this->tbl        = LMN_REALLOC<LmnWord>(this->tbl, this->cap);
   if (this->tail <= this->head) {
     unsigned int i;
     for (i = 0; i < this->tail; i++) {
@@ -341,21 +329,19 @@ LmnWord Deque::pop_tail() {
 }
 
 /* peek */
-LmnWord Deque::peek_head()const {
+LmnWord Deque::peek_head() const {
   unsigned int x = this->head;
   return this->tbl[DEQ_INC(x, this->cap)];
 }
 
 /* */
-LmnWord Deque::peek_tail()const {
+LmnWord Deque::peek_tail() const {
   unsigned int x = this->tail;
   return this->tbl[DEQ_DEC(x, this->cap)];
 }
 
 /* peek (no assertion) */
-LmnWord Deque::get(unsigned int i)const {
-  return this->tbl[i];
-}
+LmnWord Deque::get(unsigned int i) const { return this->tbl[i]; }
 
 /* pop all elements from deq */
 void Deque::clear() {
@@ -363,26 +349,21 @@ void Deque::clear() {
   this->tail = 1;
 }
 
-unsigned long Deque::space_inner() {
-  return this->cap * sizeof(deq_data_t);
-}
+unsigned long Deque::space_inner() { return this->cap * sizeof(deq_data_t); }
 
-unsigned long Deque::space() {
-  return sizeof(struct Deque) + this->space_inner();
-}
+unsigned long Deque::space() { return sizeof(struct Deque) + this->space_inner(); }
 
 void Deque::print() {
   unsigned int i;
-  FILE *f = stdout;
-  fprintf(f, "cap=%u, head=%u, tail=%u, num=%u\n[", this->cap, this->head,
-          this->tail, this->num());
+  FILE        *f = stdout;
+  fprintf(f, "cap=%u, head=%u, tail=%u, num=%u\n[", this->cap, this->head, this->tail, this->num());
   for (i = 0; i < this->cap; i++)
     fprintf(f, "%lu, ", this->tbl[i]);
   fprintf(f, "]\n");
 }
 
 /* contains */
-BOOL Deque::contains(LmnWord keyp)const {
+BOOL Deque::contains(LmnWord keyp) const {
   unsigned int i = this->tail;
   while (i != this->head) {
     DEQ_DEC(i, this->cap);
@@ -395,9 +376,9 @@ BOOL Deque::contains(LmnWord keyp)const {
 
 Deque *Deque::copy() {
   unsigned int i;
-  Deque *new_deq;
+  Deque       *new_deq;
 
-  i = this->tail;
+  i       = this->tail;
   new_deq = new Deque(this->num() > 0 ? this->num() : 1);
 
   while (i != this->head) {

@@ -39,16 +39,16 @@
 
 #include <cstdint>
 
-using LmnBinStrRef = struct LmnBinStr*;
+using LmnBinStrRef = struct LmnBinStr *;
 
 /* 最終的なエンコード結果を表すバイナリストリング */
 struct LmnBinStr {
-  bool type; /* バイト列への記録方式を記録しておくためのbit field.
-              * 圧縮方式のメモ用に用いる.
-              * (64bit環境ではアラインメントの隙間に配置されるのでメモリ使用量は増えないはず)
-              */
+  bool type;        /* バイト列への記録方式を記録しておくためのbit field.
+                     * 圧縮方式のメモ用に用いる.
+                     * (64bit環境ではアラインメントの隙間に配置されるのでメモリ使用量は増えないはず)
+                     */
   unsigned int len; /* 確保したbyte型の数(列の長さ) */
-  uint8_t *v;          /* 1byte(8bit)の可変列へのポインタ */
+  uint8_t     *v;   /* 1byte(8bit)の可変列へのポインタ */
 };
 
 #endif /* SLIM_VERIFIER_MEM_ENCODE_BINSTR_HPP */

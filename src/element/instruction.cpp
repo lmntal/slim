@@ -43,8 +43,7 @@ const std::map<LmnInstruction, InstrSpec> instr_spec = {
     {INSTR_DEREFATOM, {"derefatom", {InstrVar, InstrVar, InstrVar}}},
     {INSTR_DEREFLINK, {"dereflink", {InstrVar, InstrVar, InstrVar}}},
     {INSTR_FINDATOM, {"findatom", {InstrVar, InstrVar, ArgFunctor}}},
-    {INSTR_FINDATOM2,
-     {"findatom2", {InstrVar, InstrVar, InstrVar, ArgFunctor}}},
+    {INSTR_FINDATOM2, {"findatom2", {InstrVar, InstrVar, InstrVar, ArgFunctor}}},
 
     {INSTR_LOCKMEM, {"lockmem", {InstrVar, InstrVar, String}}},
     {INSTR_ANYMEM, {"anymem", {InstrVar, InstrVar, InstrVar, String}}},
@@ -77,8 +76,7 @@ const std::map<LmnInstruction, InstrSpec> instr_spec = {
     {INSTR_REMOVEATOM, {"removeatom", {InstrVar, InstrVar, ArgFunctor}}},
     {INSTR_REMOVEATOM, {"removeatom", {InstrVar, InstrVar}}},
     {INSTR_NEWATOM, {"newatom", {InstrVar, InstrVar, ArgFunctor}}},
-    {INSTR_NEWATOMINDIRECT,
-     {"newatomindirect", {InstrVar, InstrVar, InstrVar}}},
+    {INSTR_NEWATOMINDIRECT, {"newatomindirect", {InstrVar, InstrVar, InstrVar}}},
     {INSTR_ENQUEUEATOM, {"enqueueatom", {InstrVar}}},
     {INSTR_DEQUEUEATOM, {"dequeueatom", {InstrVar}}},
     {INSTR_FREEATOM, {"freeatom", {InstrVar}}},
@@ -115,15 +113,11 @@ const std::map<LmnInstruction, InstrSpec> instr_spec = {
     {INSTR_HYPERGETLINK, {"hypergetlink", {InstrVar, InstrVar, InstrVar}}},
     {INSTR_ALLOCLINK, {"alloclink", {InstrVar, InstrVar, InstrVar}}},
 
-    {INSTR_NEWLINK,
-     {"newlink", {InstrVar, InstrVar, InstrVar, InstrVar, InstrVar}}},
-    {INSTR_RELINK,
-     {"relink", {InstrVar, InstrVar, InstrVar, InstrVar, InstrVar}}},
+    {INSTR_NEWLINK, {"newlink", {InstrVar, InstrVar, InstrVar, InstrVar, InstrVar}}},
+    {INSTR_RELINK, {"relink", {InstrVar, InstrVar, InstrVar, InstrVar, InstrVar}}},
     {INSTR_SWAPLINK, {"swaplink", {InstrVar, InstrVar, InstrVar, InstrVar}}},
-    {INSTR_UNIFY,
-     {"unify", {InstrVar, InstrVar, InstrVar, InstrVar, InstrVar}}},
-    {INSTR_INHERITLINK,
-     {"inheritlink", {InstrVar, InstrVar, InstrVar, InstrVar}}},
+    {INSTR_UNIFY, {"unify", {InstrVar, InstrVar, InstrVar, InstrVar, InstrVar}}},
+    {INSTR_INHERITLINK, {"inheritlink", {InstrVar, InstrVar, InstrVar, InstrVar}}},
     {INSTR_UNIFYLINKS, {"unifylinks", {InstrVar, InstrVar, InstrVar}}},
 
     {INSTR_REMOVEPROXIES, {"removeproxies", {InstrVar}}},
@@ -141,24 +135,19 @@ const std::map<LmnInstruction, InstrSpec> instr_spec = {
     {INSTR_COPYCELLS, {"copycells", {InstrVar, InstrVar, InstrVar}}},
     {INSTR_DROPMEM, {"dropmem", {InstrVar}}},
     {INSTR_LOOKUPLINK, {"lookuplink", {InstrVar, InstrVar, InstrVar}}},
-    {INSTR_INSERTCONNECTORS,
-     {"insertconnectors", {InstrVar, InstrVarList, InstrVar}}},
-    {INSTR_INSERTCONNECTORSINNULL,
-     {"insertconnectorsinnull", {InstrVar, InstrVarList}}},
+    {INSTR_INSERTCONNECTORS, {"insertconnectors", {InstrVar, InstrVarList, InstrVar}}},
+    {INSTR_INSERTCONNECTORSINNULL, {"insertconnectorsinnull", {InstrVar, InstrVarList}}},
     {INSTR_DELETECONNECTORS, {"deleteconnectors", {InstrVar, InstrVar}}},
 
-    {INSTR_REACT,
-     {"react", {InstrVar, InstrVarList, InstrVarList, InstrVarList}}},
+    {INSTR_REACT, {"react", {InstrVar, InstrVarList, InstrVarList, InstrVarList}}},
     {INSTR_JUMP, {"jump", {Label, InstrVarList, InstrVarList, InstrVarList}}},
 #ifdef KWBT_OPT
     {INSTR_COMMIT, {"commit", {String, LineNum, InstrVar}}},
 #else
     {INSTR_COMMIT, {"commit", {String, LineNum}}},
 #endif
-    {INSTR_RESETVARS,
-     {"resetvars", {InstrVarList, InstrVarList, InstrVarList}}},
-    {INSTR_CHANGEVARS,
-     {"changevars", {InstrVarList, InstrVarList, InstrVarList}}},
+    {INSTR_RESETVARS, {"resetvars", {InstrVarList, InstrVarList, InstrVarList}}},
+    {INSTR_CHANGEVARS, {"changevars", {InstrVarList, InstrVarList, InstrVarList}}},
     {INSTR_SPEC, {"spec", {InstrVar, InstrVar}}},
     {INSTR_PROCEED, {"proceed", {}}},
     {INSTR_STOP, {"stop", {}}},
@@ -169,9 +158,7 @@ const std::map<LmnInstruction, InstrSpec> instr_spec = {
     {INSTR_INLINE, {"inline", {InstrVar, String, InstrVar}}},
     {INSTR_CALLBACK, {"callback", {InstrVar, InstrVar}}},
     {INSTR_UNIFYHLINKS, {"unifyhlinks", {InstrVar, InstrVar}}},
-    {INSTR_FINDPROCCXT,
-     {"findproccxt",
-      {InstrVar, InstrVar, InstrVar, InstrVar, InstrVar, InstrVar}}},
+    {INSTR_FINDPROCCXT, {"findproccxt", {InstrVar, InstrVar, InstrVar, InstrVar, InstrVar, InstrVar}}},
 
     /* special */
     {INSTR_GROUP, {"group", {InstrList}}},
@@ -180,25 +167,18 @@ const std::map<LmnInstruction, InstrSpec> instr_spec = {
     /* guard */
     {INSTR_EQGROUND, {"eqground", {InstrVar, InstrVar}}},
     {INSTR_NEQGROUND, {"neqground", {InstrVar, InstrVar}}},
-    {INSTR_COPYHLGROUND,
-     {"copyhlground", {InstrVar, InstrVar, InstrVar, InstrVarList}}},
-    {INSTR_COPYHLGROUNDINDIRECT,
-     {"copyhlgroundindirect", {InstrVar, InstrVar, InstrVar, InstrVarList}}},
+    {INSTR_COPYHLGROUND, {"copyhlground", {InstrVar, InstrVar, InstrVar, InstrVarList}}},
+    {INSTR_COPYHLGROUNDINDIRECT, {"copyhlgroundindirect", {InstrVar, InstrVar, InstrVar, InstrVarList}}},
     {INSTR_COPYGROUND, {"copyground", {InstrVar, InstrVar, InstrVar}}},
     {INSTR_REMOVEGROUND, {"removeground", {InstrVar, InstrVar}}},
-    {INSTR_REMOVEHLGROUND,
-     {"removehlground", {InstrVar, InstrVar, InstrVarList}}},
-    {INSTR_REMOVEHLGROUNDINDIRECT,
-     {"removehlgroundindirect", {InstrVar, InstrVar, InstrVarList}}},
+    {INSTR_REMOVEHLGROUND, {"removehlground", {InstrVar, InstrVar, InstrVarList}}},
+    {INSTR_REMOVEHLGROUNDINDIRECT, {"removehlgroundindirect", {InstrVar, InstrVar, InstrVarList}}},
     {INSTR_FREEGROUND, {"freeground", {InstrVar}}},
     {INSTR_FREEHLGROUND, {"freehlground", {InstrVar, InstrVarList}}},
-    {INSTR_FREEHLGROUNDINDIRECT,
-     {"freehlgroundindirect", {InstrVar, InstrVarList}}},
+    {INSTR_FREEHLGROUNDINDIRECT, {"freehlgroundindirect", {InstrVar, InstrVarList}}},
     {INSTR_ISGROUND, {"isground", {InstrVar, InstrVar, InstrVar}}},
-    {INSTR_ISHLGROUND,
-     {"ishlground", {InstrVar, InstrVar, InstrVar, InstrVarList}}},
-    {INSTR_ISHLGROUNDINDIRECT,
-     {"ishlgroundindirect", {InstrVar, InstrVar, InstrVar, InstrVarList}}},
+    {INSTR_ISHLGROUND, {"ishlground", {InstrVar, InstrVar, InstrVar, InstrVarList}}},
+    {INSTR_ISHLGROUNDINDIRECT, {"ishlgroundindirect", {InstrVar, InstrVar, InstrVar, InstrVarList}}},
     {INSTR_ISUNARY, {"isunary", {InstrVar}}},
     {INSTR_ISINT, {"isint", {InstrVar}}},
     {INSTR_ISINTFUNC, {"isintfunc", {InstrVar}}},
@@ -216,8 +196,7 @@ const std::map<LmnInstruction, InstrSpec> instr_spec = {
     /* guard: hyperlink */
     {INSTR_NEWHLINK, {"newhlink", {InstrVar}}},
     {INSTR_NEWHLINKWITHATTR, {"newhlinkwithattr", {InstrVar, InstrVar}}},
-    {INSTR_NEWHLINKWITHATTRINDIRECT,
-     {"newhlinkwithattrindirect", {InstrVar, InstrVar}}},
+    {INSTR_NEWHLINKWITHATTRINDIRECT, {"newhlinkwithattrindirect", {InstrVar, InstrVar}}},
     {INSTR_MAKEHLINK, {"makehlink", {InstrVar}}},
     {INSTR_ISHLINK, {"ishlink", {InstrVar}}},
     {INSTR_GETATTRATOM, {"getattratom", {InstrVar, InstrVar}}},
@@ -287,7 +266,7 @@ const std::map<LmnInstruction, InstrSpec> instr_spec = {
     /* etc */
     {INSTR_CELLDUMP, {"celldump", {}}}};
 
-int get_instr_id(const char *name) {
+int get_instr_id(char const *name) {
   for (auto &p : instr_spec)
     if (!strcmp(name, p.second.op_str))
       return p.first;

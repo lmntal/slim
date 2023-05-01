@@ -53,7 +53,7 @@ struct LmnBinStr;
 
 struct statespace_type {
   int (*compare)(State *, State *); /* 状態の等価性判定を行う関数 */
-  LmnBinStr *(*compress)(State *); /* 状態sの圧縮バイト列を計算して返す関数 */
+  LmnBinStr *(*compress)(State *);  /* 状態sの圧縮バイト列を計算して返す関数 */
 };
 
 struct StateTable {
@@ -63,10 +63,8 @@ struct StateTable {
   /* 1バケットあたりの平均長がこの値を越えた場合にresizeする */
   static constexpr size_t TABLE_DEFAULT_MAX_DENSITY = 5U;
 
-  StateTable(int thread_num)
-      : StateTable(thread_num, TABLE_DEFAULT_INIT_SIZE, nullptr) {}
-  StateTable(int thread_num, StateTable *rehash_tbl)
-      : StateTable(thread_num, TABLE_DEFAULT_INIT_SIZE, rehash_tbl) {}
+  StateTable(int thread_num) : StateTable(thread_num, TABLE_DEFAULT_INIT_SIZE, nullptr) {}
+  StateTable(int thread_num, StateTable *rehash_tbl) : StateTable(thread_num, TABLE_DEFAULT_INIT_SIZE, rehash_tbl) {}
   StateTable(int thread_num, unsigned long size, StateTable *rehash_tbl);
   ~StateTable();
 
@@ -78,32 +76,26 @@ struct StateTable {
 
   unsigned long cap() const { return cap_; }
   unsigned long num_by_me() const { return this->num[env_my_thread_id()]; }
-  unsigned long all_num() const {
-    return std::accumulate(std::begin(num), std::end(num), 0);
-  }
-  unsigned long all_num_dummy() const {
-    return std::accumulate(num_dummy_.begin(), num_dummy_.end(), 0);
-  }
+  unsigned long all_num() const { return std::accumulate(std::begin(num), std::end(num), 0); }
+  unsigned long all_num_dummy() const { return std::accumulate(num_dummy_.begin(), num_dummy_.end(), 0); }
   unsigned long cap_density() const { return cap_density_; }
   unsigned long space() const;
-  void resize(unsigned long);
-  State *insert(State *ins, unsigned long *col = nullptr);
-  void add_direct(State *s);
-  void format_states();
-  void memid_rehash(unsigned long hash);
-  bool need_resize() const {
-    return ((num_by_me() / cap_density()) > TABLE_DEFAULT_MAX_DENSITY);
-  }
-  void resize_if_needed() {
+  void          resize(unsigned long);
+  State        *insert(State *ins, unsigned long *col = nullptr);
+  void          add_direct(State *s);
+  void          format_states();
+  void          memid_rehash(unsigned long hash);
+  bool          need_resize() const { return ((num_by_me() / cap_density()) > TABLE_DEFAULT_MAX_DENSITY); }
+  void          resize_if_needed() {
     if (this->need_resize()) {
       this->resize(this->cap());
     }
   }
 
 private:
-  void num_increment() { num[env_my_thread_id()]++; }
-  void num_dummy_increment() { num_dummy_[env_my_thread_id()]++; }
-  bool use_rehasher() const { return rehash_tbl_; }
+  void       num_increment() { num[env_my_thread_id()]++; }
+  void       num_dummy_increment() { num_dummy_[env_my_thread_id()]++; }
+  bool       use_rehasher() const { return rehash_tbl_; }
   LmnBinStr *compress_state(State *s, LmnBinStr *bs);
 
   void memid_rehash(State *s);
@@ -111,22 +103,20 @@ private:
 public:
   class iterator {
     StateTable &table;
-    size_t table_index;
-    State *ptr;
-    State *next;
+    size_t      table_index;
+    State      *ptr;
+    State      *next;
 
   public:
-    using difference_type = intptr_t;
-    using value_type = State *;
-    using pointer = State **;
-    using reference = State *&;
+    using difference_type   = intptr_t;
+    using value_type        = State *;
+    using pointer           = State **;
+    using reference         = State *&;
     using iterator_category = std::input_iterator_tag;
 
     iterator(StateTable &t, State *ptr) : table(t), ptr(ptr), next(nullptr) {}
-    iterator(const iterator &itr)
-        : table(itr.table), table_index(itr.table_index), ptr(itr.ptr), next(nullptr) {}
-    iterator(StateTable &t)
-        : table(t), table_index(0), ptr(table.tbl[table_index]), next(nullptr) {
+    iterator(iterator const &itr) : table(itr.table), table_index(itr.table_index), ptr(itr.ptr), next(nullptr) {}
+    iterator(StateTable &t) : table(t), table_index(0), ptr(table.tbl[table_index]), next(nullptr) {
       while (!ptr && table_index + 1 < table.cap())
         ptr = table.tbl[++table_index];
       if (ptr)
@@ -148,23 +138,23 @@ public:
     }
     State *&operator*() { return ptr; };
 
-    bool operator==(const iterator &itr) const { return ptr == itr.ptr; };
-    bool operator!=(const iterator &itr) const { return !(*this == itr); };
+    bool operator==(iterator const &itr) const { return ptr == itr.ptr; };
+    bool operator!=(iterator const &itr) const { return !(*this == itr); };
   };
   iterator begin() { return iterator(*this); }
   iterator end() { return iterator(*this, nullptr); }
 
 private:
-  uint8_t thread_num;
-  bool use_rehasher_;
-  struct statespace_type *type;
+  uint8_t                    thread_num;
+  bool                       use_rehasher_;
+  struct statespace_type    *type;
   std::vector<unsigned long> num;
-  unsigned long cap_;
+  unsigned long              cap_;
   std::vector<unsigned long> num_dummy_;
-  unsigned long cap_density_;
-  std::vector<State *> tbl;
-  EWLock *lock;
-  StateTable *rehash_tbl_; /* rehashした際に登録するテーブル */
+  unsigned long              cap_density_;
+  std::vector<State *>       tbl;
+  EWLock                    *lock;
+  StateTable                *rehash_tbl_; /* rehashした際に登録するテーブル */
 };
 
 #endif /* SLIM_VERIFIER_STATE_TABLE_HPP */

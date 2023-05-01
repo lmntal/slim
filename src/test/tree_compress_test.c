@@ -37,24 +37,22 @@
  * $Id$
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
 #include "tree_compress_test.h"
+#include <cstdio.h>
+#include <cstdlib.h>
+#include <ctime.h>
 #include <tree_compress.h>
 
 TreeDatabaseRef treedb = NULL;
 
-int test_tree_init()
-{
+int test_tree_init() {
   if (treedb == NULL) {
     treedb = tree_make(TREE_DB_DEFAULT_SIZE);
   }
   return 0;
 }
 
-int test_tree_clean()
-{
+int test_tree_clean() {
 
   if (treedb != NULL) {
     tree_free(treedb);
@@ -63,9 +61,7 @@ int test_tree_clean()
   return 0;
 }
 
-
-void print_bs(LmnBinStrRef bs)
-{
+void print_bs(LmnBinStrRef bs) {
   int k;
   for (k = 0; k < lmn_binstr_byte_size(bs); k++)
     printf("%2x ", bs->v[k]);
@@ -75,16 +71,15 @@ void print_bs(LmnBinStrRef bs)
 #define TEST_1_STR_SIZE (8 * 4 + 6)
 #define TEST_1_STR_COUNT 2
 
-void test_tree_001()
-{
+void test_tree_001() {
   LmnBinStrRef strings[TEST_1_STR_COUNT];
-  BOOL found;
-  int i, j;
+  BOOL         found;
+  int          i, j;
 
   for (i = 0; i < TEST_1_STR_COUNT; i++) {
     strings[i] = lmn_binstr_make(TEST_1_STR_SIZE);
     for (j = 0; j < TEST_1_STR_SIZE; j++) {
-        strings[i]->v[j] = j + 1;
+      strings[i]->v[j] = j + 1;
     }
   }
 
@@ -100,13 +95,12 @@ void test_tree_001()
 
 #define TEST_2_STR_SIZE (8 * 4 + 4)
 
-void test_tree_002()
-{
+void test_tree_002() {
   LmnBinStrRef string;
   LmnBinStrRef ret;
-  BOOL found;
-  TreeNodeID ref;
-  int i, j;
+  BOOL         found;
+  TreeNodeID   ref;
+  int          i, j;
 
   string = lmn_binstr_make(TEST_2_STR_SIZE);
   for (i = 0; i < TEST_2_STR_SIZE; i++)
@@ -122,22 +116,21 @@ void test_tree_002()
   treedb->clear();
 }
 
-void test_tree_003()
-{
+void test_tree_003() {
   LmnBinStrRef bs;
   LmnBinStrRef bs_ret;
-  TreeNodeID ref;
-  BOOL found;
-  int i, j, k;
+  TreeNodeID   ref;
+  BOOL         found;
+  int          i, j, k;
 
   srand((unsigned)time(NULL));
-  for(i = 0; i < 100; i++) {
+  for (i = 0; i < 100; i++) {
     int size = 24 + rand() % 50;
-    bs = lmn_binstr_make(size);
+    bs       = lmn_binstr_make(size);
     for (j = 0; j < size; j++)
       bs->v[j] = (rand() % 0xFF);
 
-    ref = treedb->tree_find_or_put(bs, &found);
+    ref    = treedb->tree_find_or_put(bs, &found);
     bs_ret = treedb->get(treedb, ref, bs->len);
     CU_ASSERT(binstr_compare(bs, bs_ret) == 0);
     lmn_binstr_free(bs);

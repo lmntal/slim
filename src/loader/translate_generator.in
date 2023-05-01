@@ -43,7 +43,7 @@
  #include "vm/vm.h"
  #include "element/element.h"
  #include "verifier/verifier.h"
- #include <stdio.h>
+ #include <cstdio>
 
 #__echo_t
 # トランスレータ用の関数宣言

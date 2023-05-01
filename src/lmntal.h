@@ -39,10 +39,10 @@
 #ifndef LMNTAL_H
 #define LMNTAL_H
 
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cstdint>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 
 #include "config.h"
 
@@ -51,7 +51,7 @@
 #endif
 
 #ifdef HAVE_INTTYPES_H
-#include <inttypes.h>
+#include <cinttypes>
 #endif
 
 #define LMN_EXTERN extern
@@ -66,9 +66,9 @@
  *  Some useful macros
  */
 
-using BOOL = unsigned char;
-constexpr BOOL TRUE = 1;
-constexpr BOOL FALSE = !TRUE;
+using BOOL           = unsigned char;
+constexpr BOOL TRUE  = 1;
+constexpr BOOL FALSE = 0;
 
 /* This defines several auxiliary routines that are useful for debugging */
 #ifndef LMN_DEBUG_HELPER
@@ -88,17 +88,15 @@ constexpr BOOL FALSE = !TRUE;
 #endif
 
 using LmnWord = uintptr_t;
-using BYTE = unsigned char;
+using BYTE    = unsigned char;
 using LmnByte = unsigned char;
 
-constexpr auto LMN_WORD_BYTES = SIZEOF_LONG;
-constexpr auto LMN_WORD_BITS = LMN_WORD_BYTES * 8;
-template <typename T>
-constexpr auto LMN_WORD(T X) {
-  return (LmnWord)((X));
-}
+// Word size
+constexpr auto                       LMN_WORD_BYTES = SIZEOF_LONG;
+constexpr auto                       LMN_WORD_BITS  = LMN_WORD_BYTES * 8;
+template <typename T> constexpr auto LMN_WORD(T X) { return (LmnWord)((X)); }
 
-using LmnAtom = LmnWord;
+using LmnAtom  = LmnWord;
 using LmnSAtom = void *;
 /**
  * @struct LmnLinkAttr
@@ -108,35 +106,31 @@ using LmnLinkAttr = uint8_t;
 // using ProcessID = uint16_t;
 using ProcessID = LmnWord;
 
-using LmnCost = LmnWord;
+using LmnCost   = LmnWord;
 
 /* uint16_t is not defined if there is no 2Byte data type */
-using LmnFunctor = uint16_t;
-constexpr auto LMN_FUNCTOR_BYTES = sizeof(LmnFunctor);
-constexpr auto LMN_FUNCTOR_BITS = LMN_FUNCTOR_BYTES * 8;
-template <typename T>
-constexpr auto LMN_FUNCTOR(T X) {
-  return (LmnFunctor)((X));
-}
+using LmnFunctor                                       = uint16_t;
+constexpr auto                       LMN_FUNCTOR_BYTES = sizeof(LmnFunctor);
+constexpr auto                       LMN_FUNCTOR_BITS  = LMN_FUNCTOR_BYTES * 8;
+template <typename T> constexpr auto LMN_FUNCTOR(T X) { return (LmnFunctor)((X)); }
 
 /* this type must be enough to represent arity */
-using LmnArity = uint8_t;
+using LmnArity         = uint8_t;
 
 using lmn_interned_str = unsigned int;
 
-using LmnRuleInstr = BYTE *;
-using LmnInstrOp = uint16_t;
-using LmnInstrVar = uint16_t;
-using LmnJumpOffset = uint16_t;
-using LmnLineNum = uint32_t;
-using LmnRulesetId = int16_t;
-using LmnSubInstrSize = uint32_t;
+using LmnRuleInstr     = BYTE *;
+using LmnInstrOp       = uint16_t;
+using LmnInstrVar      = uint16_t;
+using LmnJumpOffset    = uint16_t;
+using LmnLineNum       = uint32_t;
+using LmnRulesetId     = int16_t;
+using LmnSubInstrSize  = uint32_t;
 
 // using LmnMembrane = struct LmnMembrane;
 // using DeltaMembrane = struct DeltaMembrane;
 
-static_assert(LMN_WORD_BYTES == 4 || LMN_WORD_BYTES == 8,
-              "Word size is not 2^N");
+static_assert(LMN_WORD_BYTES == 4 || LMN_WORD_BYTES == 8, "Word size is not 2^N");
 constexpr auto LMN_WORD_SHIFT = LMN_WORD_BYTES == 4 ? 2 : 3;
 
 #ifndef HAVE___INT64
@@ -153,7 +147,7 @@ using __int64 = long long;
 struct LmnSPAtomHeader {
   LmnByte type;
 
-  LmnSPAtomHeader() {}
+  LmnSPAtomHeader() = default;
   LmnSPAtomHeader(LmnByte type) : type(type) {}
 };
 
@@ -179,11 +173,11 @@ using Vector = struct Vector;
  */
 
 using StateSpaceRef = struct StateSpace *;
-using StateTable = struct StateTable;
-using State = struct State;
+using StateTable    = struct StateTable;
+using State         = struct State;
 using TransitionRef = struct Transition *;
-using McDporData = struct McDporData;
-using MemDeltaRoot = struct MemDeltaRoot;
+using McDporData    = struct McDporData;
+using MemDeltaRoot  = struct MemDeltaRoot;
 
 /*----------------------------------------------------------------------
  * Utility
@@ -194,36 +188,21 @@ using MemDeltaRoot = struct MemDeltaRoot;
 LMN_EXTERN void *lmn_calloc(size_t num, size_t size);
 LMN_EXTERN void *lmn_malloc(size_t num);
 LMN_EXTERN void *lmn_realloc(void *p, size_t num);
-LMN_EXTERN void lmn_free(void *p);
+LMN_EXTERN void  lmn_free(void *p);
 
-template <typename T>
-auto LMN_NALLOC(size_t num) -> T * {
-  return (T *)lmn_malloc(sizeof(T) * (num));
-}
+template <typename T> auto LMN_NALLOC(size_t num) -> T * { return (T *)lmn_malloc(sizeof(T) * (num)); }
 
-template <typename T>
-auto LMN_CALLOC(size_t num) -> T * {
-  return (T *)lmn_calloc((num), sizeof(T));
-}
+template <typename T> auto LMN_CALLOC(size_t num) -> T * { return (T *)lmn_calloc((num), sizeof(T)); }
 
-template <typename T>
-auto LMN_MALLOC() -> T * {
-  return (T *)lmn_malloc(sizeof(T));
-}
+template <typename T> auto LMN_MALLOC() -> T * { return (T *)lmn_malloc(sizeof(T)); }
 
-template <typename T>
-auto LMN_REALLOC(T *p, size_t num) -> T * {
-  return (T *)lmn_realloc((p), (num) * sizeof(T));
-}
+template <typename T> auto LMN_REALLOC(T *p, size_t num) -> T * { return (T *)lmn_realloc((p), (num) * sizeof(T)); }
 
-template <typename T>
-void LMN_FREE(T p) {
-  lmn_free((void *)(p));
-}
+template <typename T> void LMN_FREE(T p) { lmn_free((void *)(p)); }
 
 /* Assertion */
 #ifdef DEBUG
-#include <assert.h>
+#include <cassert>
 #define LMN_ASSERT(expr) assert(expr)
 #else
 #define LMN_ASSERT(expr) ((void)0) /* nothing */
@@ -235,14 +214,7 @@ void LMN_FREE(T p) {
 
 /* 階層グラフ構造の出力形式 */
 enum OutputFormat { DEFAULT = 1, DEV, DOT, JSON };
-enum MCdumpFormat {
-  CUI,
-  LaViT,
-  Dir_DOT,
-  LMN_FSM_GRAPH,
-  LMN_FSM_GRAPH_MEM_NODE,
-  LMN_FSM_GRAPH_HL_NODE
-};
+enum MCdumpFormat { CUI, LaViT, Dir_DOT, LMN_FSM_GRAPH, LMN_FSM_GRAPH_MEM_NODE, LMN_FSM_GRAPH_HL_NODE };
 enum SPdumpFormat { SP_NONE, INCREMENTAL, LMN_SYNTAX };
 
 /* 最適化実行 */
@@ -318,9 +290,9 @@ struct LmnEnv {
   BOOL benchmark;
 
   BOOL hash_compaction;
-  int hash_depth;
+  int  hash_depth;
 
-  BOOL tree_compress;
+  BOOL         tree_compress;
   unsigned int tree_compress_table_size;
 
   // #ifdef PROFILE
@@ -359,11 +331,11 @@ struct LmnEnv {
   enum SPdumpFormat sp_dump_format;
   enum OptimizeMode opt_mode;
 
-  int load_path_num;
-  const char *load_path[256];
-  char *automata_file;        /* never claim file */
-  char *propositional_symbol; /* file for propositional symbol definitions */
-  char *ltl_exp;
+  int         load_path_num;
+  char const *load_path[256];
+  char       *automata_file;        /* never claim file */
+  char       *propositional_symbol; /* file for propositional symbol definitions */
+  char       *ltl_exp;
 
   // member methods
   LmnEnv();
@@ -405,9 +377,9 @@ static inline auto lmn_OMP_get_my_id() { return omp_get_thread_num(); }
 #
 #else /* defined (HAVE_LIBPTHREAD) */
 #
-using lmn_thread_t = pthread_t;
-using lmn_mutex_t = pthread_mutex_t;
-using lmn_key_t = pthread_key_t;
+using lmn_thread_t  = pthread_t;
+using lmn_mutex_t   = pthread_mutex_t;
+using lmn_key_t     = pthread_key_t;
 #
 #ifdef HAVE_PTHREAD_BARRIER
 using lmn_barrier_t = pthread_barrier_t;
@@ -415,19 +387,17 @@ using lmn_barrier_t = pthread_barrier_t;
 #
 using lmn_barrier_t = struct LmnBarrier;
 struct LmnBarrier {
-  unsigned int thread_num;
-  unsigned int reach_num;
+  unsigned int    thread_num;
+  unsigned int    reach_num;
   pthread_mutex_t mutex;
-  pthread_cond_t cond;
+  pthread_cond_t  cond;
 };
 #
 #endif /* HAVE_PTHREAD_BARRIER */
-#define lmn_thread_create(Pth, Pfunc, Parg) \
-  pthread_create(Pth, NULL, (void *(*)(void *))Pfunc, (void *)Parg)
+#define lmn_thread_create(Pth, Pfunc, Parg) pthread_create(Pth, NULL, (void *(*)(void *))(Pfunc), (void *)(Parg))
 #define lmn_thread_join(Th) pthread_join(Th, NULL)
 #define lmn_mutex_init(Pm) pthread_mutex_init(Pm, NULL)
-#define lmn_mutex_init_onthefly(Pm) \
-  (Pm) = (pthread_mutex_t)PTHREAD_MUTEX_INITIALIZER
+#define lmn_mutex_init_onthefly(Pm) (Pm) = (pthread_mutex_t)PTHREAD_MUTEX_INITIALIZER
 #define lmn_mutex_destroy(Pm) pthread_mutex_destroy(Pm)
 #define lmn_mutex_lock(Pm) pthread_mutex_lock(Pm)
 #define lmn_mutex_unlock(Pm) pthread_mutex_unlock(Pm)
@@ -443,9 +413,9 @@ struct LmnBarrier {
 #else
 static inline void lmn_barrier_init(lmn_barrier_t *b, unsigned int num) {
   b->thread_num = num;
-  b->reach_num = 0;
-  b->mutex = (pthread_mutex_t)PTHREAD_MUTEX_INITIALIZER;
-  b->cond = (pthread_cond_t)PTHREAD_COND_INITIALIZER;
+  b->reach_num  = 0;
+  b->mutex      = (pthread_mutex_t)PTHREAD_MUTEX_INITIALIZER;
+  b->cond       = (pthread_cond_t)PTHREAD_COND_INITIALIZER;
 }
 #
 static inline void lmn_barrier_destroy(lmn_barrier_t *b) {
@@ -491,27 +461,28 @@ static inline void lmn_barrier_wait(lmn_barrier_t *b) {
 
 using LmnTLS = struct LmnTLS;
 struct LmnTLS {
-  unsigned int thread_num;
-  unsigned int thread_id;
+  unsigned int  thread_num;
+  unsigned int  thread_id;
   unsigned long state_id;
-  ProcessID proc_next_id;
+  ProcessID     proc_next_id;
 };
 
 extern struct Vector *lmn_id_pool;
-extern struct LmnEnv lmn_env;
+extern struct LmnEnv  lmn_env;
 extern LMN_TLS_TYPE(LmnTLS) lmn_tls;
 
 void env_my_TLS_init(unsigned int th_id);
-void env_my_TLS_finalize(void);
-void lmn_stream_init(void);
-void lmn_stream_destroy(void);
+void env_my_TLS_finalize();
+void lmn_stream_init();
+void lmn_stream_destroy();
 
 #define LMN_PRIMARY_ID (0U)
 
 #define env_proc_id_pool() (lmn_id_pool)
 #define env_set_proc_id_pool(V) (lmn_id_pool = (V))
-#define env_return_id(N) \
-  if (lmn_id_pool) lmn_id_pool->push((vec_data_t)(N))
+#define env_return_id(N)                                                                                               \
+  if (lmn_id_pool)                                                                                                     \
+  lmn_id_pool->push((vec_data_t)(N))
 
 #if /**/ !defined(ENABLE_PARALLEL) || defined(USE_TLS_KEYWORD)
 static inline auto env_gen_state_id() {
@@ -524,14 +495,12 @@ static inline auto env_threads_num() { return lmn_tls.thread_num; }
 static inline auto env_set_threads_num(unsigned int N) { lmn_tls.thread_num = N; }
 static inline auto env_reset_proc_ids() { lmn_tls.proc_next_id = 1U; }
 static inline auto env_set_next_id(ProcessID N) { lmn_tls.proc_next_id = N; }
-#define env_gen_next_id()                                           \
-  ((lmn_id_pool && lmn_id_pool->get_num() > 0) ? lmn_id_pool->pop() \
-                                               : lmn_tls.proc_next_id++)
+#define env_gen_next_id() ((lmn_id_pool && lmn_id_pool->get_num() > 0) ? lmn_id_pool->pop() : lmn_tls.proc_next_id++)
 static inline auto env_next_id() { return lmn_tls.proc_next_id; }
 #
 #elif /**/ defined(USE_TLS_PTHREAD_KEY)
 static inline unsigned long env_gen_state_id() {
-  LmnTLS *p = (LmnTLS *)lmn_TLS_get_value(lmn_tls);
+  LmnTLS *p   = (LmnTLS *)lmn_TLS_get_value(lmn_tls);
   p->state_id += p->thread_num;
   return p->state_id;
 }
@@ -542,7 +511,7 @@ static inline unsigned int env_my_thread_id() {
 }
 #
 static inline void env_set_my_thread_id(unsigned int n) {
-  LmnTLS *p = (LmnTLS *)lmn_TLS_get_value(lmn_tls);
+  LmnTLS *p    = (LmnTLS *)lmn_TLS_get_value(lmn_tls);
   p->thread_id = n;
 }
 #
@@ -552,24 +521,23 @@ static inline unsigned int env_threads_num() {
 }
 #
 static inline void env_set_threads_num(unsigned int n) {
-  LmnTLS *p = (LmnTLS *)lmn_TLS_get_value(lmn_tls);
+  LmnTLS *p     = (LmnTLS *)lmn_TLS_get_value(lmn_tls);
   p->thread_num = n;
 }
 #
 static inline void env_reset_proc_ids() {
-  LmnTLS *p = (LmnTLS *)lmn_TLS_get_value(lmn_tls);
+  LmnTLS *p       = (LmnTLS *)lmn_TLS_get_value(lmn_tls);
   p->proc_next_id = 1UL;
 }
 #
 static inline void env_set_next_id(unsigned long n) {
-  LmnTLS *p = (LmnTLS *)lmn_TLS_get_value(lmn_tls);
+  LmnTLS *p       = (LmnTLS *)lmn_TLS_get_value(lmn_tls);
   p->proc_next_id = n;
 }
 #
-#define env_gen_next_id()                      \
-  ((lmn_id_pool && lmn_id_pool->get_num() > 0) \
-       ? lmn_id_pool->pop()                    \
-       : ((LmnTLS *)lmn_TLS_get_value(lmn_tls))->proc_next_id++)
+#define env_gen_next_id()                                                                                              \
+  ((lmn_id_pool && lmn_id_pool->get_num() > 0) ? lmn_id_pool->pop()                                                    \
+                                               : ((LmnTLS *)lmn_TLS_get_value(lmn_tls))->proc_next_id++)
 
 static inline unsigned long env_next_id() {
   LmnTLS *p = (LmnTLS *)lmn_TLS_get_value(lmn_tls);
@@ -578,14 +546,12 @@ static inline unsigned long env_next_id() {
 
 #endif
 
-namespace slim {
-namespace config {
+namespace slim::config {
 #ifdef PROFILE
 static constexpr bool profile = true;
 #else
 static constexpr bool profile = false;
 #endif
-}  // namespace config
-}  // namespace slim
+} // namespace slim::config
 
 #endif /* LMNTAL_H */

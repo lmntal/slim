@@ -44,17 +44,14 @@
 /**
  * 失敗駆動ループの候補を返すためのfunctional object
  */
-template <typename InputIterator, typename value_type>
-struct false_driven_enumerator_get_candidate;
+template <typename InputIterator, typename value_type> struct false_driven_enumerator_get_candidate;
 
-template <typename InputIterator>
-struct false_driven_enumerator_get_candidate<InputIterator, LmnRegister> {
+template <typename InputIterator> struct false_driven_enumerator_get_candidate<InputIterator, LmnRegister> {
   LmnRegister operator()(InputIterator &iter) { return (*iter); }
 };
 
 template <typename InputIterator>
-struct false_driven_enumerator_get_candidate<InputIterator,
-                                             std::function<LmnRegister(void)>> {
+struct false_driven_enumerator_get_candidate<InputIterator, std::function<LmnRegister(void)>> {
   LmnRegister operator()(InputIterator &iter) { return (*iter)(); }
 };
 
@@ -66,10 +63,10 @@ struct false_driven_enumerator_get_candidate<InputIterator,
  */
 template <typename InputIterator> struct false_driven_enumerator {
   using value_type = typename InputIterator::value_type;
-  size_t reg_idx;
+  size_t        reg_idx;
   InputIterator begin;
   InputIterator end;
-  LmnRuleInstr instr;
+  LmnRuleInstr  instr;
 
   /**
    * コンストラクタ
@@ -79,90 +76,90 @@ template <typename InputIterator> struct false_driven_enumerator {
    * @param begin 列挙する候補の最初の要素を指すイテレータ
    * @param end 最終候補の次の要素を指すイテレータ
    */
-  false_driven_enumerator(LmnRuleInstr instr, size_t reg_idx,
-                          InputIterator begin, InputIterator end)
+  false_driven_enumerator(LmnRuleInstr instr, size_t reg_idx, InputIterator begin, InputIterator end)
       : instr(instr), reg_idx(reg_idx), begin(begin), end(end) {}
 
   slim::vm::interpreter::command_result operator()(slim::vm::interpreter &itr, bool result) {
 
-    if(!lmn_env.history_management || record_list.atoms.size() == 0) {
+    if (!lmn_env.history_management || record_list.atoms.size() == 0) {
       // 成功ならループしないで終了
       if (result)
         return slim::vm::interpreter::command_result::Success;
-      
+
       // 候補がなくなったら終了
       if (this->begin == this->end)
         return slim::vm::interpreter::command_result::Failure;
-      
+
       // 命令列の巻き戻し
       itr.instr = this->instr;
-      
+
       // 候補を再設定
-      itr.rc->reg(this->reg_idx) =
-        false_driven_enumerator_get_candidate<InputIterator, value_type>()(this->begin);
-      
+      itr.rc->reg(this->reg_idx) = false_driven_enumerator_get_candidate<InputIterator, value_type>()(this->begin);
+
       // 次の候補の準備
       ++this->begin;
     } else { // else内が履歴管理用アトムを用いた場合の挙動になる.
       int rule_number = record_list.get_rule_number();
-      if(result) {
-        if(record_list.get_delete_flag(record_list.get_rule_number())) {
+      if (result) {
+        if (record_list.get_delete_flag(record_list.get_rule_number())) {
           // delete
         } else {
           record_list.loop_back(rule_number, this->reg_idx);
         }
         /*
-	  ここを変える(TO DO)
-	  ルールが適用したらループを一回増やすのではなく, アトムが追加されたらループを一回増やすようにしたい-> NEWATOMなどで追加できるが.... 
-	  --use-swaplinkを用いると, 中間命令でそのようなことが起きないので実行が失敗に終わってしまう. ゆえに放置
-	 */
-        record_list.loop_flag[rule_number][reg_idx-1] = true;
+          ここを変える(TO DO)
+          ルールが適用したらループを一回増やすのではなく, アトムが追加されたらループを一回増やすようにしたい->
+          NEWATOMなどで追加できるが....
+          --use-swaplinkを用いると, 中間命令でそのようなことが起きないので実行が失敗に終わってしまう. ゆえに放置
+         */
+        record_list.loop_flag[rule_number][reg_idx - 1] = true;
         return slim::vm::interpreter::command_result::Success;
       }
 
       // 候補がなくなったら終了
-      if(this->begin == this->end) {
-        if(record_list.get_delete_flag(record_list.get_rule_number())) {
+      if (this->begin == this->end) {
+        if (record_list.get_delete_flag(record_list.get_rule_number())) {
           // delete
         } else {
-          if(record_list.loop_flag[rule_number][reg_idx-1]) {
-            record_list.loop_flag[rule_number][reg_idx-1] = false;
-            record_list.atoms[rule_number][this->reg_idx-1]->go_head();
+          if (record_list.loop_flag[rule_number][reg_idx - 1]) {
+            record_list.loop_flag[rule_number][reg_idx - 1] = false;
+            record_list.atoms[rule_number][this->reg_idx - 1]->go_head();
             return slim::vm::interpreter::command_result::Success;
           }
-          if(this->reg_idx != 1) record_list.atoms[rule_number][this->reg_idx-1]->go_head();
+          if (this->reg_idx != 1)
+            record_list.atoms[rule_number][this->reg_idx - 1]->go_head();
         }
         return slim::vm::interpreter::command_result::Failure;
       }
 
       // 命令列の巻き戻し
       itr.instr = this->instr;
-      
+
       // findatomoptを使うときだけiteratorを移動させる
       // 候補を再設定
-      itr.rc->reg(this->reg_idx) =
-        false_driven_enumerator_get_candidate<InputIterator, value_type>()(this->begin);
-      
+      itr.rc->reg(this->reg_idx) = false_driven_enumerator_get_candidate<InputIterator, value_type>()(this->begin);
+
       // 次の候補の準備
       ++this->begin;
-      if(!record_list.get_delete_flag(record_list.get_rule_number())){
-        record_list.atoms[rule_number][this->reg_idx-1]->record_forward();
-	
-        while(record_list.atoms[rule_number][this->reg_idx-1]->get_record()->next->record_flag) {
-          if(this->begin == this->end) {
-            if(record_list.loop_flag[rule_number][reg_idx-1]) {
-              record_list.loop_flag[rule_number][reg_idx-1] = false;
-              record_list.atoms[rule_number][this->reg_idx-1]->go_head();
+      if (!record_list.get_delete_flag(record_list.get_rule_number())) {
+        record_list.atoms[rule_number][this->reg_idx - 1]->record_forward();
+
+        while (record_list.atoms[rule_number][this->reg_idx - 1]->get_record()->next->record_flag) {
+          if (this->begin == this->end) {
+            if (record_list.loop_flag[rule_number][reg_idx - 1]) {
+              record_list.loop_flag[rule_number][reg_idx - 1] = false;
+              record_list.atoms[rule_number][this->reg_idx - 1]->go_head();
               record_list.start_flag[rule_number] = true;
               return slim::vm::interpreter::command_result::Success;
             }
-	    
-            if(this->reg_idx != 1) record_list.atoms[rule_number][this->reg_idx-1]->go_head();
- 
+
+            if (this->reg_idx != 1)
+              record_list.atoms[rule_number][this->reg_idx - 1]->go_head();
+
             return slim::vm::interpreter::command_result::Failure;
           }
           ++this->begin;
-          record_list.atoms[rule_number][this->reg_idx-1]->record_forward();
+          record_list.atoms[rule_number][this->reg_idx - 1]->record_forward();
         }
       }
     }
@@ -175,9 +172,9 @@ template <typename InputIterator> struct false_driven_enumerator {
  * 既存のイテレータから失敗駆動ループを作る
  */
 template <typename InputIterator, typename... Args>
-false_driven_enumerator<InputIterator>
-make_false_driven_enumerator(slim::vm::interpreter &iter, LmnRuleInstr instr, size_t reg_idx,
-                             InputIterator begin, InputIterator end) {
+false_driven_enumerator<InputIterator> make_false_driven_enumerator(slim::vm::interpreter &iter, LmnRuleInstr instr,
+                                                                    size_t reg_idx, InputIterator begin,
+                                                                    InputIterator end) {
   return false_driven_enumerator<InputIterator>(instr, reg_idx, begin, end);
 }
 

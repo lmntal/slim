@@ -42,56 +42,49 @@ namespace element {
 
 template <typename Function, typename InputIterator> struct range_remove_if {
   struct remove_if_iterator {
-    using difference_type =
-        typename std::iterator_traits<InputIterator>::difference_type;
-    using value_type = typename std::iterator_traits<InputIterator>::value_type;
-    using pointer = typename std::iterator_traits<InputIterator>::pointer;
-    using reference = typename std::iterator_traits<InputIterator>::reference;
+    using difference_type   = typename std::iterator_traits<InputIterator>::difference_type;
+    using value_type        = typename std::iterator_traits<InputIterator>::value_type;
+    using pointer           = typename std::iterator_traits<InputIterator>::pointer;
+    using reference         = typename std::iterator_traits<InputIterator>::reference;
     using iterator_category = typename std::input_iterator_tag;
 
-    remove_if_iterator(InputIterator iterator, InputIterator end_, Function f)
-        : it(iterator), end_(end_), f(f) {}
-    remove_if_iterator(const remove_if_iterator &i)
-        : it(i.it), end_(i.end_), f(i.f) {}
+    remove_if_iterator(InputIterator iterator, InputIterator end_, Function f) : it(iterator), end_(end_), f(f) {}
+    remove_if_iterator(remove_if_iterator const &i) : it(i.it), end_(i.end_), f(i.f) {}
 
-    reference operator*() { return *it; }
+    reference           operator*() { return *it; }
     remove_if_iterator &operator++() {
       do
         ++it;
       while (it != end_ && f(*it));
       return *this;
     }
-    pointer operator->() { return it; }
+    pointer            operator->() { return it; }
     remove_if_iterator operator++(int i_) {
       auto i = *this;
       ++i;
       return i;
     }
 
-    bool operator==(const remove_if_iterator &i) const { return i.it == it; }
-    bool operator!=(const remove_if_iterator &i) const { return !(i.it == it); }
+    bool operator==(remove_if_iterator const &i) const { return i.it == it; }
+    bool operator!=(remove_if_iterator const &i) const { return !(i.it == it); }
 
   private:
     InputIterator it;
     InputIterator end_;
-    Function f;
+    Function      f;
   };
 
-  using difference_type =
-      typename std::iterator_traits<remove_if_iterator>::difference_type;
-  using value_type =
-      typename std::iterator_traits<remove_if_iterator>::value_type;
-  using pointer = typename std::iterator_traits<remove_if_iterator>::pointer;
-  using reference =
-      typename std::iterator_traits<remove_if_iterator>::reference;
-  using iterator_category =
-      typename std::iterator_traits<remove_if_iterator>::iterator_category;
+  using difference_type   = typename std::iterator_traits<remove_if_iterator>::difference_type;
+  using value_type        = typename std::iterator_traits<remove_if_iterator>::value_type;
+  using pointer           = typename std::iterator_traits<remove_if_iterator>::pointer;
+  using reference         = typename std::iterator_traits<remove_if_iterator>::reference;
+  using iterator_category = typename std::iterator_traits<remove_if_iterator>::iterator_category;
 
-  range_remove_if(InputIterator begin_, InputIterator end_, const Function &f)
-      : begin_(begin_), end_(end_), f(f) {}
+  range_remove_if(InputIterator begin_, InputIterator end_, Function const &f) : begin_(begin_), end_(end_), f(f) {}
 
   remove_if_iterator begin() {
-    if (begin_ == end_) return end();
+    if (begin_ == end_)
+      return end();
     auto r = remove_if_iterator(begin_, end_, f);
     return !f(*begin_) ? r : ++r;
   }
@@ -100,13 +93,12 @@ template <typename Function, typename InputIterator> struct range_remove_if {
 private:
   InputIterator begin_;
   InputIterator end_;
-  Function f;
+  Function      f;
 };
 
 template <typename Function, typename InputIterator>
-range_remove_if<Function, InputIterator>
-make_range_remove_if(InputIterator begin_, InputIterator end_,
-                     const Function &f) {
+range_remove_if<Function, InputIterator> make_range_remove_if(InputIterator begin_, InputIterator end_,
+                                                              Function const &f) {
   return range_remove_if<Function, InputIterator>(begin_, end_, f);
 }
 

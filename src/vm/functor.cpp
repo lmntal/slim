@@ -43,10 +43,10 @@
 #include "symbol.h"
 
 struct PredefinedFunctor {
-  LmnFunctor id;
-  BOOL special;
-  const char *name;
-  LmnArity arity;
+  LmnFunctor  id;
+  BOOL        special;
+  char const *name;
+  LmnArity    arity;
 };
 
 /* 予約されたファンクタの定義 */
@@ -81,27 +81,18 @@ struct PredefinedFunctor predefined_functors[] = {
 #endif
 };
 
-LmnFunctorTable * lmn_functor_table;
+LmnFunctorTable *lmn_functor_table;
 
-  LmnFunctorEntry *LmnFunctorTable::get_entry(unsigned int f){
-    return &entry[f];
-  }
+LmnFunctorEntry *LmnFunctorTable::get_entry(unsigned int f) { return &entry[f]; }
 
-  unsigned int LmnFunctorTable::get_size(){
-    return size;
-  }
+unsigned int LmnFunctorTable::get_size() { return size; }
 
-  unsigned int LmnFunctorTable::get_next_id(){
-    return next_id;
-  }
+unsigned int LmnFunctorTable::get_next_id() { return next_id; }
 /* ファンクタの比較 */
 int LmnFunctorTable::functor_cmp(LmnFunctorEntry *x, LmnFunctorEntry *y) {
-  return !(x->module == y->module && x->name == y->name &&
-           x->arity == y->arity);
+  return !(x->module == y->module && x->name == y->name && x->arity == y->arity);
 }
-long LmnFunctorTable::functor_hash(LmnFunctorEntry *x) {
-  return x->module * 31 * 31 + x->name * 31 + x->arity;
-}
+long LmnFunctorTable::functor_hash(LmnFunctorEntry *x) { return x->module * 31 * 31 + x->name * 31 + x->arity; }
 
 static struct st_hash_type type_functorhash = {(st_cmp_func)LmnFunctorTable::functor_cmp,
                                                (st_hash_func)LmnFunctorTable::functor_hash};
@@ -114,32 +105,31 @@ void LmnFunctorTable::print() {
   fprintf(stdout, "next_id==%u\n", next_id);
   n = this->size;
   for (i = 0; i < n; i++) {
-    fprintf(stdout, "entry[%2d]== %s_%d\n", i,
-            lmn_id_to_name(LMN_FUNCTOR_NAME_ID(lmn_functor_table, i)), LMN_FUNCTOR_ARITY(lmn_functor_table, i));
+    fprintf(stdout, "entry[%2d]== %s_%d\n", i, lmn_id_to_name(LMN_FUNCTOR_NAME_ID(lmn_functor_table, i)),
+            LMN_FUNCTOR_ARITY(lmn_functor_table, i));
   }
 }
 
 void LmnFunctorTable::functor_printer(LmnFunctor f) {
-  fprintf(stdout, "fid=%d[ %s_%d ]\n", f,
-          lmn_id_to_name(LMN_FUNCTOR_NAME_ID(lmn_functor_table, f)), LMN_FUNCTOR_ARITY(lmn_functor_table, f));
+  fprintf(stdout, "fid=%d[ %s_%d ]\n", f, lmn_id_to_name(LMN_FUNCTOR_NAME_ID(lmn_functor_table, f)),
+          LMN_FUNCTOR_ARITY(lmn_functor_table, f));
 }
 #endif
 
 LmnFunctorTable::LmnFunctorTable() {
-  int i;
-  const int predefined_size = ARY_SIZEOF(predefined_functors);
+  int       i;
+  int const predefined_size = ARY_SIZEOF(predefined_functors);
 
   this->functor_id_tbl = st_init_table(&type_functorhash);
 
-  this->size = predefined_size;
-  this->entry = LMN_NALLOC<LmnFunctorEntry>(size);
+  this->size    = predefined_size;
+  this->entry   = LMN_NALLOC<LmnFunctorEntry>(size);
   this->next_id = predefined_size;
 
   /* 予約されたファンクタを順番に登録していく */
   for (i = 0; i < predefined_size; i++) {
     struct PredefinedFunctor *f = &predefined_functors[i];
-    register_functor(f->id, f->special, ANONYMOUS, lmn_intern(f->name),
-                     f->arity);
+    register_functor(f->id, f->special, ANONYMOUS, lmn_intern(f->name), f->arity);
   }
 }
 
@@ -154,7 +144,7 @@ LmnFunctorTable::~LmnFunctorTable() {
   LMN_FREE(entry);
 }
 
-LmnFunctorEntry *LmnFunctorTable::lmn_id_to_functor(int functor_id) const{
+LmnFunctorEntry *LmnFunctorTable::lmn_id_to_functor(int functor_id) const {
   LmnFunctorEntry *entry;
 
   if (st_lookup(this->functor_id_tbl, (st_data_t)functor_id, (st_data_t *)&entry))
@@ -163,14 +153,14 @@ LmnFunctorEntry *LmnFunctorTable::lmn_id_to_functor(int functor_id) const{
     return NULL;
 }
 
-void LmnFunctorTable::register_functor(int id, BOOL special, lmn_interned_str module,
-                             lmn_interned_str name, int arity) {
+void LmnFunctorTable::register_functor(int id, BOOL special, lmn_interned_str module, lmn_interned_str name,
+                                       int arity) {
   struct LmnFunctorEntry *entry = LMN_MALLOC<struct LmnFunctorEntry>();
 
   entry->special = special;
-  entry->module = module;
-  entry->name = name;
-  entry->arity = arity;
+  entry->module  = module;
+  entry->name    = name;
+  entry->arity   = arity;
 
   st_insert(this->functor_id_tbl, (st_data_t)entry, (st_data_t)id);
   /* idの位置にファンクタのデータをコピー */
@@ -178,15 +168,14 @@ void LmnFunctorTable::register_functor(int id, BOOL special, lmn_interned_str mo
 }
 
 /* ファンクタのIDを返す */
-LmnFunctor LmnFunctorTable::functor_intern(BOOL special, lmn_interned_str module,
-                                 lmn_interned_str name, int arity) {
-  st_data_t id;
+LmnFunctor LmnFunctorTable::functor_intern(BOOL special, lmn_interned_str module, lmn_interned_str name, int arity) {
+  st_data_t       id;
   LmnFunctorEntry entry;
 
   entry.special = special;
-  entry.module = module;
-  entry.name = name;
-  entry.arity = arity;
+  entry.module  = module;
+  entry.name    = name;
+  entry.arity   = arity;
 
   /* すでにテーブル内にあるならそれを返す */
   if (st_lookup(this->functor_id_tbl, (st_data_t)&entry, &id))
@@ -196,7 +185,7 @@ LmnFunctor LmnFunctorTable::functor_intern(BOOL special, lmn_interned_str module
 
     /* 必要ならばサイズを拡張 */
     while (this->next_id >= this->size) {
-      this->size *= 2;
+      this->size  *= 2;
       this->entry = LMN_REALLOC<LmnFunctorEntry>(this->entry, this->size);
     }
 
@@ -206,7 +195,7 @@ LmnFunctor LmnFunctorTable::functor_intern(BOOL special, lmn_interned_str module
     this->entry[id] = entry;
 
     /* ファンクタとIDの対応をテーブルに格納する */
-    new_entry = LMN_MALLOC<struct LmnFunctorEntry>();
+    new_entry  = LMN_MALLOC<struct LmnFunctorEntry>();
     *new_entry = entry;
     st_insert(this->functor_id_tbl, (st_data_t)new_entry, (st_data_t)id);
 
@@ -214,7 +203,6 @@ LmnFunctor LmnFunctorTable::functor_intern(BOOL special, lmn_interned_str module
   }
 }
 
-LmnFunctor LmnFunctorTable::intern(lmn_interned_str module, lmn_interned_str name,
-                              int arity) {
+LmnFunctor LmnFunctorTable::intern(lmn_interned_str module, lmn_interned_str name, int arity) {
   return functor_intern(FALSE, module, name, arity);
 }

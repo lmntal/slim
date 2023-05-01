@@ -46,75 +46,72 @@
  */
 
 #include "../lmntal.h"
-#include <vector>
 #include "util.h"
+#include <vector>
 
-
-using PVector = struct Vector*;
+using PVector    = struct Vector *;
 using vec_data_t = LmnWord;
 
 class Vector {
-  LmnWord *tbl;
+  LmnWord     *tbl;
   unsigned int num, cap;
+
 public:
   Vector();
   Vector(unsigned int init_size);
-  template <class T> Vector(const std::vector<T> &v);
-  Vector(const Vector &vec);
+  template <class T> Vector(std::vector<T> const &v);
+  Vector(Vector const &vec);
   ~Vector();
-  void init(unsigned int init_size);
-  void extend();
-  unsigned int get_num() const{
-    return this->num;
-  }
-  void set_num(unsigned int n);
+  void         init(unsigned int init_size);
+  void         extend();
+  unsigned int get_num() const { return this->num; }
+  void         set_num(unsigned int n);
   unsigned int get_cap() const;
-  void set_cap(unsigned int c);
-  void memset_tbl(int ch, std::size_t count);
-  bool is_empty() const;
-  void push(LmnWord keyp);
-  void reduce();
-  LmnWord pop();
-  //pop Nth element
+  void         set_cap(unsigned int c);
+  void         memset_tbl(int ch, std::size_t count);
+  bool         is_empty() const;
+  void         push(LmnWord keyp);
+  void         reduce();
+  LmnWord      pop();
+  // pop Nth element
   LmnWord pop_n(unsigned int n);
   LmnWord peek() const;
-  void set(unsigned int index, LmnWord keyp);
-  void set_list(LmnWord *w);
+  void    set(unsigned int index, LmnWord keyp);
+  void    set_list(LmnWord *w);
   LmnWord get(unsigned int index) const {
     LMN_ASSERT(index < this->num);
     return (this->tbl[index]);
   }
   LmnWord last() const;
-/* pop all elements from vec */
-  void clear();
-  void destroy();
+  /* pop all elements from vec */
+  void          clear();
+  void          destroy();
   unsigned long space_inner() const;
-  BOOL contains(LmnWord keyp) const;
-  void reverse();
-  void resize(unsigned int size, vec_data_t val);
-  void sort(int (*compare)(const void *, const void *));
+  BOOL          contains(LmnWord keyp) const;
+  void          reverse();
+  void          resize(unsigned int size, vec_data_t val);
+  void          sort(int (*compare)(void const *, void const *));
 };
 
-template <class T> Vector::Vector(const std::vector<T> &v){
-  static_assert(std::is_scalar<T>::value && sizeof(T) <= sizeof(LmnWord),
-              "vector elements must be scalars.");
+template <class T> Vector::Vector(std::vector<T> const &v) {
+  static_assert(std::is_scalar<T>::value && sizeof(T) <= sizeof(LmnWord), "vector elements must be scalars.");
   LMN_ASSERT(v.size() > 0);
   this->init(v.size());
   memcpy(this->tbl, v.data(), sizeof(T) * v.size());
   this->num = v.size();
 }
 
-//namespace slim {
-//namespace element {
-//template <class T> std::vector<T> make_vector(Vector *v) {
-//  if (!v)
-//    return std::vector<T>();
-//  return std::vector<T>(
-//      raw_pointer_iterator<T>(reinterpret_cast<T *>(v->tbl)),
-//      raw_pointer_iterator<T>(reinterpret_cast<T *>(v->tbl + v->num)));
-//}
-//}
-//}
+// namespace slim {
+// namespace element {
+// template <class T> std::vector<T> make_vector(Vector *v) {
+//   if (!v)
+//     return std::vector<T>();
+//   return std::vector<T>(
+//       raw_pointer_iterator<T>(reinterpret_cast<T *>(v->tbl)),
+//       raw_pointer_iterator<T>(reinterpret_cast<T *>(v->tbl + v->num)));
+// }
+// }
+// }
 
 /* @} */
 

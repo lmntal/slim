@@ -54,7 +54,7 @@ struct LmnMembrane;
  * @interface LmnAtom
  * @brief Represents all kinds of atoms.
  */
-using LmnAtomRef = void*;
+using LmnAtomRef = void *;
 /**
  * @struct LmnDataAtom
  * @implements LmnAtom
@@ -79,11 +79,11 @@ using LmnDataAtomRef = LmnWord;
  *  * Link Attribute
  *     リンク属性は, 先頭1ビットが立っていない場合は,
  * 下位7bitが接続先リンクの番号を記録しており, 先頭1ビットが立っている場合は,
- * Primitiveデータの種類を記録する。 
- * [Link Number]  0------- 
- * [int]          1000 0000 
- * [double]       1000 0001 
- * [special]      1000 0011 
+ * Primitiveデータの種類を記録する。
+ * [Link Number]  0-------
+ * [int]          1000 0000
+ * [double]       1000 0001
+ * [special]      1000 0011
  * [string]       1000 0011
  * [const string] 1000 0100
  * [const double] 1000 0101
@@ -98,7 +98,7 @@ using LmnDataAtomRef = LmnWord;
  *     But, incompletely-specified.
  *
  */
-using LmnSymbolAtomRef = struct LmnSymbolAtom*;
+using LmnSymbolAtomRef = struct LmnSymbolAtom *;
 
 /* プロキシの3番目の引数番号の領域を remove_proxy, insert_proxyで利用中。
  * 所属する膜へのポインタを持っている */
@@ -118,15 +118,13 @@ using LmnSymbolAtomRef = struct LmnSymbolAtom*;
  * ハイパーリンクアトムはプロキシと同様シンボルアトムとしても扱われることに注意
  */
 enum LmnLinkAttribute {
-  LMN_INT_ATTR = LMN_ATTR_FLAG | 0x00U,     /**< integer literal */
-  LMN_DBL_ATTR = LMN_ATTR_FLAG | 0x01U,     /**< double literal */
-  LMN_SP_ATOM_ATTR = LMN_ATTR_FLAG | 0x03U, /**< special atom */
-  LMN_STRING_ATTR = LMN_SP_ATOM_ATTR,       /**< string literal */
-  LMN_CONST_STR_ATTR =
-      LMN_ATTR_FLAG | 0x04U, /**< @deprecated constant string literal */
-  LMN_CONST_DBL_ATTR =
-      LMN_ATTR_FLAG | 0x05U, /**< @deprecated constant double literal */
-  LMN_HL_ATTR = LMN_ATTR_FLAG | 0x0aU /**< exclamation atom */
+  LMN_INT_ATTR       = LMN_ATTR_FLAG | 0x00U, /**< integer literal */
+  LMN_DBL_ATTR       = LMN_ATTR_FLAG | 0x01U, /**< double literal */
+  LMN_SP_ATOM_ATTR   = LMN_ATTR_FLAG | 0x03U, /**< special atom */
+  LMN_STRING_ATTR    = LMN_SP_ATOM_ATTR,      /**< string literal */
+  LMN_CONST_STR_ATTR = LMN_ATTR_FLAG | 0x04U, /**< @deprecated constant string literal */
+  LMN_CONST_DBL_ATTR = LMN_ATTR_FLAG | 0x05U, /**< @deprecated constant double literal */
+  LMN_HL_ATTR        = LMN_ATTR_FLAG | 0x0aU  /**< exclamation atom */
 };
 
 #include "element/element.h"
@@ -137,12 +135,12 @@ enum LmnLinkAttribute {
 struct LmnSymbolAtom {
   LmnSymbolAtomRef prev;
   LmnSymbolAtomRef next;
-  LmnWord procId;
-  bool record_flag = false;
-  int rule_number = -1;
+  LmnWord          procId;
+  bool             record_flag = false;
+  int              rule_number = -1;
   union {
     struct {
-      LmnFunctor functor;
+      LmnFunctor  functor;
       LmnLinkAttr attr[0];
     };
     LmnAtomRef links[0];
@@ -237,7 +235,7 @@ struct LmnSymbolAtom {
    * @brief アトムATOMのN番目のリンク情報のフィールドへのポインタを取得する
    * @memberof LmnSymbolAtom
    */
-  const LmnAtomRef *get_plink(int n) const;
+  LmnAtomRef const *get_plink(int n) const;
 
   /**
    * @brief check whether an atom is a proxy atom.
@@ -249,7 +247,7 @@ struct LmnSymbolAtom {
    * @brief get a string representation of a symbol atom.
    * @memberof LmnSymbolAtom
    */
-  const char *str() const;
+  char const *str() const;
 
   /* 以下, 履歴管理用アトム(nakata)の追加関数*/
   void atom_swap_forward();
@@ -338,7 +336,7 @@ BOOL LMN_IS_SYMBOL_FUNCTOR(LmnFunctor FUNC);
  * @brief get a string representation of a functor.
  * @memberof LmnFunctor
  */
-const char *LMN_FUNCTOR_STR(LmnFunctor F);
+char const *LMN_FUNCTOR_STR(LmnFunctor F);
 
 /**
  * @brief check whether a link attribute is for data except an exclamation atom.
@@ -387,8 +385,7 @@ LmnDataAtomRef lmn_copy_data_atom(LmnDataAtomRef atom, LmnLinkAttr attr);
  * @memberof LmnSymbolAtom
  * @sa free_symbol_atom_with_buddy_data
  */
-LmnSymbolAtomRef lmn_copy_satom_with_data(LmnSymbolAtomRef atom,
-                                          BOOL is_new_hl);
+LmnSymbolAtomRef lmn_copy_satom_with_data(LmnSymbolAtomRef atom, BOOL is_new_hl);
 /**
  * @brief free an atom which \e attr indicates the kind of \e atom.
  * @memberof LmnAtom
@@ -404,8 +401,7 @@ void free_symbol_atom_with_buddy_data(LmnSymbolAtomRef atom);
  * @brief check whether two atoms have the same functors.
  * @memberof LmnAtom
  */
-BOOL lmn_eq_func(LmnAtomRef atom0, LmnLinkAttr attr0, LmnAtomRef atom1,
-                 LmnLinkAttr attr1);
+BOOL lmn_eq_func(LmnAtomRef atom0, LmnLinkAttr attr0, LmnAtomRef atom1, LmnLinkAttr attr1);
 /**
  * @brief check whether a data atom is ground.
  * @memberof LmnDataAtom
@@ -413,14 +409,12 @@ BOOL lmn_eq_func(LmnAtomRef atom0, LmnLinkAttr attr0, LmnAtomRef atom1,
  * @details A data atom is usually ground, while for a special atom it depends
  * on its user callback.
  */
-BOOL lmn_data_atom_is_ground(LmnDataAtomRef atom, LmnLinkAttr attr,
-                             ProcessTbl **hlinks);
+BOOL lmn_data_atom_is_ground(LmnDataAtomRef atom, LmnLinkAttr attr, ProcessTbl **hlinks);
 /**
  * @brief check whether two data atoms equal.
  * @memberof LmnDataAtom
  */
-BOOL lmn_data_atom_eq(LmnDataAtomRef atom1, LmnLinkAttr attr1,
-                      LmnDataAtomRef atom2, LmnLinkAttr attr2);
+BOOL lmn_data_atom_eq(LmnDataAtomRef atom1, LmnLinkAttr attr1, LmnDataAtomRef atom2, LmnLinkAttr attr2);
 /**
  * @brief get double value from a data atom.
  * @memberof LmnDataAtom
@@ -451,9 +445,9 @@ BOOL lmn_is_string(LmnAtomRef atom, LmnLinkAttr attr);
 #define LMN_GETREF_DOUBLE(Atom) ((double *)Atom)
 #endif
 
-#define LMN_COPY_DBL_ATOM(Dst, Src)                                            \
-  do {                                                                         \
-    (Dst) = lmn_create_double_atom(lmn_get_double(Src));                       \
+#define LMN_COPY_DBL_ATOM(Dst, Src)                                                                                    \
+  do {                                                                                                                 \
+    (Dst) = lmn_create_double_atom(lmn_get_double(Src));                                                               \
   } while (0)
 
 /* @} */

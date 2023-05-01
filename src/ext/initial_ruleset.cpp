@@ -39,24 +39,22 @@
 
 #include "element/element.h"
 #include "vm/vm.h"
-#include <stdio.h>
+#include <cstdio>
 
 #define INITIAL_RULESET_MEM_NAME "initial_ruleset"
 #define INITIAL_SYSTEM_RULESET_MEM_NAME "initial_system_ruleset"
 
-const char *initial_modules[] = {"nd_conf"};
+char const *initial_modules[] = {"nd_conf"};
 
-BOOL register_initial_rulesets(LmnReactCxtRef rc, LmnMembraneRef mem,
-                               LmnRuleRef rule) {
+BOOL register_initial_rulesets(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule) {
   LmnMembraneRef m, next;
-  BOOL ok = FALSE;
+  BOOL           ok = FALSE;
 
   for (m = mem->mem_child_head(); m; m = next) {
     next = m->mem_next();
     if ((m->NAME_ID() == lmn_intern(INITIAL_RULESET_MEM_NAME) ||
          m->NAME_ID() == lmn_intern(INITIAL_SYSTEM_RULESET_MEM_NAME)) &&
-        m->nfreelinks(0) && m->atom_num() == 0 &&
-	m->child_mem_num() == 0) {
+        m->nfreelinks(0) && m->atom_num() == 0 && m->child_mem_num() == 0) {
       int i, j;
 
       for (i = 0; i < m->ruleset_num(); i++) {
@@ -65,8 +63,7 @@ BOOL register_initial_rulesets(LmnReactCxtRef rc, LmnMembraneRef mem,
         for (auto r : *rs) {
           if (m->NAME_ID() == lmn_intern(INITIAL_RULESET_MEM_NAME)) {
             lmn_add_initial_rule(new LmnRule(*r));
-          } else if (m->NAME_ID() ==
-                     lmn_intern(INITIAL_SYSTEM_RULESET_MEM_NAME)) {
+          } else if (m->NAME_ID() == lmn_intern(INITIAL_SYSTEM_RULESET_MEM_NAME)) {
             lmn_add_initial_system_rule(new LmnRule(*r));
           }
         }
@@ -84,10 +81,9 @@ BOOL register_initial_rulesets(LmnReactCxtRef rc, LmnMembraneRef mem,
   return ok;
 }
 
-BOOL register_initial_module(LmnReactCxtRef rc, LmnMembraneRef mem,
-                             LmnRuleRef rule) {
+BOOL register_initial_module(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule) {
   static int done = 0;
-  int i, j;
+  int        i, j;
 
   if (done == 1)
     return FALSE;
@@ -105,8 +101,6 @@ BOOL register_initial_module(LmnReactCxtRef rc, LmnMembraneRef mem,
 }
 
 void init_initial_ruleset(void) {
-  lmn_add_initial_rule(new LmnRule(register_initial_rulesets,
-                                   lmn_intern("register_initial_ruleset")));
-  lmn_add_initial_rule(new LmnRule(register_initial_module,
-                                   lmn_intern("register_initial_module")));
+  lmn_add_initial_rule(new LmnRule(register_initial_rulesets, lmn_intern("register_initial_ruleset")));
+  lmn_add_initial_rule(new LmnRule(register_initial_module, lmn_intern("register_initial_module")));
 }

@@ -63,14 +63,14 @@
  */
 
 enum StateFlags {
-  ON_STACK_MASK = 0x01U,
-  FOR_MC_MASK = 0x01U << 1,
-  ON_CYCLE_MASK = 0x01U << 2,
-  EXPANDED_MASK = 0x01U << 3,
+  ON_STACK_MASK     = 0x01U,
+  FOR_MC_MASK       = 0x01U << 1,
+  ON_CYCLE_MASK     = 0x01U << 2,
+  EXPANDED_MASK     = 0x01U << 3,
   DUMMY_SYMBOL_MASK = 0x01U << 4,
-  TRANS_OBJ_MASK = 0x01U << 5,
-  MEM_ENCODED_MASK = 0x01U << 6,
-  MEM_DIRECT_MASK = 0x01U << 7
+  TRANS_OBJ_MASK    = 0x01U << 5,
+  MEM_ENCODED_MASK  = 0x01U << 6,
+  MEM_DIRECT_MASK   = 0x01U << 7
 };
 
 /** Flags2 (8bit)
@@ -82,61 +82,57 @@ enum StateFlags {
  */
 
 enum StateFlags2 {
-  STATE_REDUCED_MASK = 0x01U,
-  STATE_DELTA_MASK = 0x01U << 1,
-  STATE_UPDATE_MASK = 0x01U << 2,
-  EXPLORER_VISIT_MASK = 0x01U << 3,
-  GENERATOR_VISIT_MASK = 0x01U << 4,
-  STATE_BLUE_MASK = 0x01U << 5,
-  STATE_RED_MASK = 0x01U << 6,
+  STATE_REDUCED_MASK     = 0x01U,
+  STATE_DELTA_MASK       = 0x01U << 1,
+  STATE_UPDATE_MASK      = 0x01U << 2,
+  EXPLORER_VISIT_MASK    = 0x01U << 3,
+  GENERATOR_VISIT_MASK   = 0x01U << 4,
+  STATE_BLUE_MASK        = 0x01U << 5,
+  STATE_RED_MASK         = 0x01U << 6,
   STATE_VIS_VISITED_MASK = 0x01U << 7
 };
 
 /* Descriptor */
-struct State {                /* Total:72(36)byte */
-  unsigned int successor_num; /*  4(4)byte: サクセッサの数 */
-  BYTE state_name; /*  1(1)byte: 同期積オートマトンの性質ラベル */
-  BYTE flags;      /*  1(1)byte: フラグ管理用ビットフィールド */
-  BYTE flags2;     /*  1(1)byte: フラグ管理用ビットフィールド2 */
-  BYTE flags3; /*  1(1)byte: アラインメントの隙間(一時的にdpor_naiveで使用中) */
-  unsigned long hash; /*  8(4)byte: 通常時: 膜memのハッシュ値, --mem-enc時:
-                         膜の一意なバイト列のハッシュ値  */
-  state_data_t data; /*  8(4)byte: 膜, バイナリストリングのどちらか */
-  TreeCompressData
-      tcd; /*  8(8)byte: Tree Compression 用のデータ無理やり8 Byteにしている */
-  succ_data_t *successors; /*  8(4)byte: サクセッサポインタの配列 */
-  State *next; /*  8(4)byte: 状態管理表に登録する際に必要なポインタ */
-  State *parent; /*  8(4)byte: 自身を生成した状態へのポインタを持たせておく */
-  unsigned long state_id; /*  8(4)byte: 生成順に割り当てる状態の整数ID */
-  State *map; /*  8(4)byte: MAP値 or 最適化実行時の前状態 */
+struct State {                 /* Total:72(36)byte */
+  unsigned int  successor_num; /*  4(4)byte: サクセッサの数 */
+  BYTE          state_name;    /*  1(1)byte: 同期積オートマトンの性質ラベル */
+  BYTE          flags;         /*  1(1)byte: フラグ管理用ビットフィールド */
+  BYTE          flags2;        /*  1(1)byte: フラグ管理用ビットフィールド2 */
+  BYTE          flags3;        /*  1(1)byte: アラインメントの隙間(一時的にdpor_naiveで使用中) */
+  unsigned long hash;          /*  8(4)byte: 通常時: 膜memのハッシュ値, --mem-enc時:
+                                  膜の一意なバイト列のハッシュ値  */
+  state_data_t     data;       /*  8(4)byte: 膜, バイナリストリングのどちらか */
+  TreeCompressData tcd;        /*  8(8)byte: Tree Compression 用のデータ無理やり8 Byteにしている */
+  succ_data_t     *successors; /*  8(4)byte: サクセッサポインタの配列 */
+  State           *next;       /*  8(4)byte: 状態管理表に登録する際に必要なポインタ */
+  State           *parent;     /*  8(4)byte: 自身を生成した状態へのポインタを持たせておく */
+  unsigned long    state_id;   /*  8(4)byte: 生成順に割り当てる状態の整数ID */
+  State           *map;        /*  8(4)byte: MAP値 or 最適化実行時の前状態 */
 
 #ifndef MINIMAL_STATE
-  BYTE *
-      local_flags; /*  8(4)byte:
-                      並列実行時、スレッド事に保持しておきたいフラグ(mcndfsのcyanフラグ等)
-                    */
+  BYTE *local_flags; /*  8(4)byte:
+                        並列実行時、スレッド事に保持しておきたいフラグ(mcndfsのcyanフラグ等)
+                      */
   pthread_mutex_t expand_lock;
-  unsigned long expander_id;
-  void state_set_expander_id(unsigned long id) { expander_id = id; }
-  unsigned long state_expander_id() { return expander_id; }
-  void state_expand_lock_init() { lmn_mutex_init(&(expand_lock)); }
-  void state_expand_lock_destroy() { lmn_mutex_destroy(&(expand_lock)); }
-  void state_expand_lock() { lmn_mutex_lock(&(expand_lock)); }
-  void state_expand_unlock() { lmn_mutex_unlock(&(expand_lock)); }
+  unsigned long   expander_id;
+  void            state_set_expander_id(unsigned long id) { expander_id = id; }
+  unsigned long   state_expander_id() { return expander_id; }
+  void            state_expand_lock_init() { lmn_mutex_init(&(expand_lock)); }
+  void            state_expand_lock_destroy() { lmn_mutex_destroy(&(expand_lock)); }
+  void            state_expand_lock() { lmn_mutex_lock(&(expand_lock)); }
+  void            state_expand_unlock() { lmn_mutex_unlock(&(expand_lock)); }
 
   /* manipulation for local flags */
   void s_set_cyan(int i) { local_flags[i] |= STATE_CYAN_MASK; }
   void s_unset_cyan(int i) { local_flags[i] &= (~STATE_CYAN_MASK); }
-  BOOL s_is_cyan(int i) {
-    return (local_flags && (local_flags[i] & STATE_CYAN_MASK));
-  }
+  BOOL s_is_cyan(int i) { return (local_flags && (local_flags[i] & STATE_CYAN_MASK)); }
 #else
-  void state_set_expander_id(unsigned long id) {}
+  void          state_set_expander_id(unsigned long id) {}
   unsigned long state_expander_id() { return 0; }
-  void state_expand_lock_init() {}
-  void state_expand_lock_destroy() {}
-  void state_expand_lock() {}
-  void state_expand_unlock() {}
+  void          state_expand_lock_init() {}
+  void          state_expand_lock_destroy() {}
+  void          state_expand_lock() {}
+  void          state_expand_unlock() {}
 #endif
 
   BOOL has_trans_obj() { return flags & TRANS_OBJ_MASK; }
@@ -182,9 +178,9 @@ struct State {                /* Total:72(36)byte */
 #ifdef KWBT_OPT
   LmnCost cost; /*  8(4)byte: cost */
 #endif
-  
+
   unsigned int get_id() const { return state_id; }
-  
+
   LmnBinStrRef state_binstr() {
     if (is_binstr_user()) {
       return (LmnBinStrRef)data;
@@ -268,18 +264,17 @@ struct State {                /* Total:72(36)byte */
     return dst;
   }
 
-  void succ_set(const std::vector<void *> &v) {
+  void succ_set(std::vector<void *> const &v) {
     if (!v.empty() && !successors) {
       unsigned int i;
       successor_num = v.size();
-      successors = LMN_NALLOC<succ_data_t>(successor_num);
+      successors    = LMN_NALLOC<succ_data_t>(successor_num);
       for (i = 0; i < successor_num; i++) {
         successors[i] = (succ_data_t)v.at(i);
       }
 #ifdef PROFILE
       if (lmn_env.profile_level >= 3) {
-        profile_add_space(PROFILE_SPACE__TRANS_OBJECT,
-          sizeof(succ_data_t) * v.size());
+        profile_add_space(PROFILE_SPACE__TRANS_OBJECT, sizeof(succ_data_t) * v.size());
         profile_remove_space(PROFILE_SPACE__TRANS_OBJECT, 0);
       }
 #endif
@@ -307,14 +302,13 @@ struct State {                /* Total:72(36)byte */
 
 #ifdef PROFILE
     if (lmn_env.profile_level >= 3) {
-      profile_remove_space(PROFILE_SPACE__TRANS_OBJECT,
-                           sizeof(succ_data_t) * this->successor_num);
+      profile_remove_space(PROFILE_SPACE__TRANS_OBJECT, sizeof(succ_data_t) * this->successor_num);
       profile_add_space(PROFILE_SPACE__TRANS_OBJECT, 0);
     }
 #endif
 
     LMN_FREE(this->successors);
-    this->successors = NULL;
+    this->successors    = NULL;
     this->successor_num = 0;
     this->unset_trans_obj();
   }
@@ -323,8 +317,7 @@ struct State {                /* Total:72(36)byte */
     if (this->state_mem()) {
 #ifdef PROFILE
       if (lmn_env.profile_level >= 3) {
-        profile_remove_space(PROFILE_SPACE__STATE_MEMBRANE,
-                             (this->state_mem())->space());
+        profile_remove_space(PROFILE_SPACE__STATE_MEMBRANE, (this->state_mem())->space());
       }
 #endif
       (this->state_mem())->free_rec();
@@ -439,7 +432,7 @@ struct State {                /* Total:72(36)byte */
       } else if (this->state_binstr()) {
         LmnMembraneRef m;
 
-        m = lmn_binstr_decode(this->state_binstr());
+        m   = lmn_binstr_decode(this->state_binstr());
         mid = lmn_mem_encode(m);
         this->free_binstr();
         m->free_rec();
@@ -467,8 +460,7 @@ struct State {                /* Total:72(36)byte */
 
   /* バイナリストリングorgと状態ref_sのバイナリストリングとの差分バイナリストリングを返す.
    * orgのメモリ管理は呼出し側で行う. */
-  static inline LmnBinStrRef state_binstr_D_compress(LmnBinStrRef org,
-                                                     State *ref_s) {
+  static inline LmnBinStrRef state_binstr_D_compress(LmnBinStrRef org, State *ref_s) {
     LmnBinStrRef ref, dif;
 
     ref = state_D_fetch(ref_s);
@@ -509,9 +501,7 @@ struct State {                /* Total:72(36)byte */
   /* 状態sに対応する階層グラフ構造memへのアドレスを返す.
    * memがエンコードされている場合は, デコードしたオブジェクトのアドレスを返す.
    * デコードが発生した場合のメモリ管理は呼び出し側で行う. */
-  LmnMembraneRef restore_membrane() {
-    return this->restore_membrane_inner(TRUE);
-  }
+  LmnMembraneRef restore_membrane() { return this->restore_membrane_inner(TRUE); }
 
   /* delta-compression用のinner関数.
    * flagが真の場合, デコード済みのバイナリストリングをキャッシュから取得する.
@@ -522,8 +512,7 @@ struct State {                /* Total:72(36)byte */
       return this->state_mem();
 
     if (this->s_is_d()) {
-      LmnBinStrRef b =
-          (flag) ? state_D_fetch(this) : this->reconstruct_binstr();
+      LmnBinStrRef b = (flag) ? state_D_fetch(this) : this->reconstruct_binstr();
       return lmn_binstr_decode(b);
     }
 
@@ -533,8 +522,7 @@ struct State {                /* Total:72(36)byte */
       tcd_get_root_ref(&this->tcd, &ref);
       LMN_ASSERT(ref);
       LMN_ASSERT(tcd_get_byte_length(&this->tcd) != 0);
-      b = lmn_bscomp_tree_decode((TreeNodeID)ref,
-                                 tcd_get_byte_length(&this->tcd));
+      b = lmn_bscomp_tree_decode((TreeNodeID)ref, tcd_get_byte_length(&this->tcd));
     }
 
     LMN_ASSERT(b);
@@ -543,9 +531,8 @@ struct State {                /* Total:72(36)byte */
 
 public:
   State()
-      : data(NULL), state_name(0x00U), flags(0x00U), flags2(0x00U),
-        flags3(0x00U), hash(0), next(NULL), successors(NULL), successor_num(0),
-        parent(NULL), state_id(0), map(NULL) {
+      : data(NULL), state_name(0x00U), flags(0x00U), flags2(0x00U), flags3(0x00U), hash(0), next(NULL),
+        successors(NULL), successor_num(0), parent(NULL), state_id(0), map(NULL) {
     memset(&tcd, 0x00, sizeof(TreeCompressData));
 #ifndef MINIMAL_STATE
     state_set_expander_id(LONG_MAX);
@@ -586,8 +573,7 @@ public:
     if (successors) {
 #ifdef PROFILE
       if (lmn_env.profile_level >= 3)
-        profile_remove_space(PROFILE_SPACE__TRANS_OBJECT,
-                             sizeof(succ_data_t) * this->successor_num);
+        profile_remove_space(PROFILE_SPACE__TRANS_OBJECT, sizeof(succ_data_t) * this->successor_num);
 #endif
       if (has_trans_obj()) {
         for (int i = 0; i < successor_num; i++) {

@@ -64,7 +64,7 @@ class scope {
 
 public:
   explicit scope(std::function<void()> f) : f(f) {}
-  scope(scope const &) = delete;
+  scope(scope const &)          = delete;
   void operator=(scope const &) = delete;
 
   ~scope() { f(); }

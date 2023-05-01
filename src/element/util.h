@@ -53,26 +53,26 @@
  *  ASCII code for printer
  */
 enum ESC_CODE {
-  CODE__HIGH_LIGHT = 0x01,
-  CODE__UNDER_LINE = 0x04,
-  CODE__DASH_LINE = 0x05,
-  CODE__REVERSAL = 0x07,
-  CODE__FORECOLOR_BLACK = 0x1e,
-  CODE__FORECOLOR_RED = 0x1f,
-  CODE__FORECOLOR_GREEN = 0x20,
-  CODE__FORECOLOR_YELLOW = 0x21,
-  CODE__FORECOLOR_DEEPBLUE = 0x22,
-  CODE__FORECOLOR_PURPLE = 0x23,
+  CODE__HIGH_LIGHT          = 0x01,
+  CODE__UNDER_LINE          = 0x04,
+  CODE__DASH_LINE           = 0x05,
+  CODE__REVERSAL            = 0x07,
+  CODE__FORECOLOR_BLACK     = 0x1e,
+  CODE__FORECOLOR_RED       = 0x1f,
+  CODE__FORECOLOR_GREEN     = 0x20,
+  CODE__FORECOLOR_YELLOW    = 0x21,
+  CODE__FORECOLOR_DEEPBLUE  = 0x22,
+  CODE__FORECOLOR_PURPLE    = 0x23,
   CODE__FORECOLOR_LIGHTBLUE = 0x24,
-  CODE__FORECOLOR_WHITE = 0x25,
-  CODE__BACKCOLOR_BLACK = 0x28,
-  CODE__BACKCOLOR_RED = 0x29,
-  CODE__BACKCOLOR_GREEN = 0x2a,
-  CODE__BACKCOLOR_YELLOW = 0x2b,
-  CODE__BACKCOLOR_DEEPBLUE = 0x2c,
-  CODE__BACKCOLOR_PURPLE = 0x2d,
+  CODE__FORECOLOR_WHITE     = 0x25,
+  CODE__BACKCOLOR_BLACK     = 0x28,
+  CODE__BACKCOLOR_RED       = 0x29,
+  CODE__BACKCOLOR_GREEN     = 0x2a,
+  CODE__BACKCOLOR_YELLOW    = 0x2b,
+  CODE__BACKCOLOR_DEEPBLUE  = 0x2c,
+  CODE__BACKCOLOR_PURPLE    = 0x2d,
   CODE__BACKCOLOR_LIGHTBLUE = 0x2e,
-  CODE__BACKCOLOR_GRAY = 0x2f,
+  CODE__BACKCOLOR_GRAY      = 0x2f,
 };
 
 #define __ESC_START__ "\x1b["
@@ -83,18 +83,14 @@ static inline void esc_code_clear() {
   return;
 }
 
-static inline void esc_code_add(int code) {
-  printf("%s%d%s", __ESC_START__, code, __ESC_END__);
-}
+static inline void esc_code_add(int code) { printf("%s%d%s", __ESC_START__, code, __ESC_END__); }
 
 static inline void esc_code_clear_f(FILE *f) {
   fprintf(f, "%s%s", __ESC_START__, __ESC_END__);
   return;
 }
 
-static inline void esc_code_add_f(FILE *f, int code) {
-  fprintf(f, "%s%d%s", __ESC_START__, code, __ESC_END__);
-}
+static inline void esc_code_add_f(FILE *f, int code) { fprintf(f, "%s%d%s", __ESC_START__, code, __ESC_END__); }
 
 /** ----------------------
  *  byte operation
@@ -105,22 +101,14 @@ static inline void esc_code_add_f(FILE *f, int code) {
 namespace fnv {
 template <size_t size = SIZEOF_LONG> constexpr unsigned long prime();
 
-template <> constexpr unsigned long prime<4>() {
-  return 16777619UL;
-};
-template <> constexpr unsigned long prime<8>() {
-  return 1099511628211UL;
-};
+template <> constexpr unsigned long prime<4>() { return 16777619UL; };
+template <> constexpr unsigned long prime<8>() { return 1099511628211UL; };
 
 template <size_t size = SIZEOF_LONG> constexpr unsigned long basis();
-template <> constexpr unsigned long basis<4>() {
-  return 2166136261UL;
-}
-template <> constexpr unsigned long basis<8>() {
-  return 14695981039346656037UL;
-}
+template <> constexpr unsigned long                          basis<4>() { return 2166136261UL; }
+template <> constexpr unsigned long                          basis<8>() { return 14695981039346656037UL; }
 
-inline unsigned long hash(const unsigned char *str, long i) {
+inline unsigned long hash(unsigned char const *str, long i) {
   /*
    * FNV-1a hash each octet in the buffer
    */
@@ -136,15 +124,12 @@ inline unsigned long hash(const unsigned char *str, long i) {
 }
 } // namespace fnv
 
-static inline unsigned long lmn_byte_hash(const unsigned char *str, long i) {
-  return fnv::hash(str, i);
-}
+static inline unsigned long lmn_byte_hash(unsigned char const *str, long i) { return fnv::hash(str, i); }
 
 /* 正: a ＞ b
  * ０: a = b
  * 負: a ＜ b */
-static inline int lmn_byte_cmp(const unsigned char *a, long alen,
-                               const unsigned char *b, long blen) {
+static inline int lmn_byte_cmp(unsigned char const *a, long alen, unsigned char const *b, long blen) {
   if (alen != blen) {
     return alen - blen;
   } else {
@@ -160,8 +145,8 @@ static inline int lmn_byte_cmp(const unsigned char *a, long alen,
 #define ARY_SIZEOF(ARRAY) (sizeof(ARRAY) / sizeof(ARRAY[0]))
 
 char *int_to_str(long n);
-int comp_int_f(const void *a, const void *b);
-int comp_int_greater_f(const void *a_, const void *b_);
+int   comp_int_f(void const *a, void const *b);
+int   comp_int_greater_f(void const *a_, void const *b_);
 
 /* n以上で最小の2の倍数を返す */
 static inline unsigned long round2up(unsigned long n) {
@@ -185,20 +170,18 @@ template <class T> class raw_pointer_iterator {
 
 public:
   using iterator_category = std::input_iterator_tag;
-  using value_type = T;
-  using difference_type = std::ptrdiff_t;
-  using pointer = T *;
-  using reference = T &;
+  using value_type        = T;
+  using difference_type   = std::ptrdiff_t;
+  using pointer           = T *;
+  using reference         = T &;
 
   raw_pointer_iterator(T *ptr) : p(ptr) {}
-  raw_pointer_iterator(const raw_pointer_iterator<T> &it) : p(it.p) {}
-  raw_pointer_iterator &operator=(const raw_pointer_iterator<T> &it) {
-    p = it.p;
-  }
+  raw_pointer_iterator(raw_pointer_iterator<T> const &it) : p(it.p) {}
+  raw_pointer_iterator &operator=(raw_pointer_iterator<T> const &it) { p = it.p; }
   ~raw_pointer_iterator() noexcept = default;
 
-  reference operator*() const { return *p; }
-  pointer operator->() const { return p; }
+  reference                operator*() const { return *p; }
+  pointer                  operator->() const { return p; }
   raw_pointer_iterator<T> &operator++() {
     p++;
     return *this;
@@ -209,12 +192,11 @@ public:
     return it;
   }
 
-  bool operator!=(const raw_pointer_iterator<T> &a) { return !(*this == a); }
-  bool operator==(const raw_pointer_iterator<T> &a) { return p == a.p; }
+  bool operator!=(raw_pointer_iterator<T> const &a) { return !(*this == a); }
+  bool operator==(raw_pointer_iterator<T> const &a) { return p == a.p; }
 };
 
-template <class T, class... Args>
-std::unique_ptr<T> make_unique(Args &&... args) {
+template <class T, class... Args> std::unique_ptr<T> make_unique(Args &&...args) {
   return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
 }
 } // namespace element

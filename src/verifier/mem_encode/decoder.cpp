@@ -36,8 +36,7 @@
 
 #include "decoder.hpp"
 
-int binstr_decoder::decode_cell(LmnMembraneRef mem, LmnSymbolAtomRef from_atom,
-                                int from_arg) {
+int binstr_decoder::decode_cell(LmnMembraneRef mem, LmnSymbolAtomRef from_atom, int from_arg) {
   for (int i = 0; scanner.location() < scanner.size; i++) {
     auto tag = scanner.scan_tag();
 
@@ -54,7 +53,7 @@ int binstr_decoder::decode_cell(LmnMembraneRef mem, LmnSymbolAtomRef from_atom,
       for (auto j = 0; j < n; j++)
         lmn_mem_add_ruleset(mem, LmnRuleSetTable::at(scanner.scan_ruleset()));
     } else if (tag == TAG_RULESET_UNIQ) {
-      auto rs_num = scanner.scan_ruleset_num();
+      auto                      rs_num = scanner.scan_ruleset_num();
       std::vector<LmnRuleSet *> rulesets;
       decode_rulesets(rs_num, &rulesets);
       for (auto &v : rulesets)
@@ -82,7 +81,7 @@ void binstr_decoder::decode_rulesets(int rs_num, std::vector<LmnRuleSet *> *rule
        * コピー元となるルールセットオブジェクトに直接履歴を持たせていないため,
        *       上記コメントは考慮しなくてよい. */
 
-      auto r = rs->get_rule(j);
+      auto r       = rs->get_rule(j);
       auto his_num = scanner.scan_history_num();
 
       for (auto k = 0; k < his_num; k++) {
@@ -94,8 +93,7 @@ void binstr_decoder::decode_rulesets(int rs_num, std::vector<LmnRuleSet *> *rule
   }
 }
 
-int binstr_decoder::decode_mol(LmnMembraneRef mem, LmnSymbolAtomRef from_atom,
-                               int from_arg) {
+int binstr_decoder::decode_mol(LmnMembraneRef mem, LmnSymbolAtomRef from_atom, int from_arg) {
   if (scanner.location() >= scanner.size)
     return scanner.location();
 
@@ -115,12 +113,12 @@ int binstr_decoder::decode_mol(LmnMembraneRef mem, LmnSymbolAtomRef from_atom,
     new_mem->set_active(TRUE);
     mem->add_child_mem(new_mem);
 
-    log[(nvisit)].v = (LmnWord)new_mem;
+    log[(nvisit)].v    = (LmnWord)new_mem;
     log[(nvisit)].type = BS_LOG_TYPE_MEM;
     (nvisit)++;
 
     if (from_atom) {
-      auto in = lmn_mem_newatom(new_mem, LMN_IN_PROXY_FUNCTOR);
+      auto in  = lmn_mem_newatom(new_mem, LMN_IN_PROXY_FUNCTOR);
       auto out = lmn_mem_newatom(mem, LMN_OUT_PROXY_FUNCTOR);
       lmn_newlink_in_symbols(in, 0, out, 0);
       lmn_newlink_in_symbols(out, 1, from_atom, from_arg);
@@ -132,26 +130,26 @@ int binstr_decoder::decode_mol(LmnMembraneRef mem, LmnSymbolAtomRef from_atom,
   case TAG_MEM_END:
     break;
   case TAG_ESCAPE_MEM_DATA: {
-    LmnWord n;
+    LmnWord     n;
     LmnLinkAttr n_attr;
 
-    auto in = lmn_mem_newatom(mem, LMN_IN_PROXY_FUNCTOR);
-    auto out = lmn_mem_newatom(mem->mem_parent(), LMN_OUT_PROXY_FUNCTOR);
+    auto in      = lmn_mem_newatom(mem, LMN_IN_PROXY_FUNCTOR);
+    auto out     = lmn_mem_newatom(mem->mem_parent(), LMN_OUT_PROXY_FUNCTOR);
     auto sub_tag = scanner.scan_tag();
 
     if (sub_tag == TAG_INT_DATA) {
-      n = scanner.scan_integer();
+      n      = scanner.scan_integer();
       n_attr = LMN_INT_ATTR;
     } else if (sub_tag == TAG_DBL_DATA) {
-      n = scanner.scan_double();
+      n      = scanner.scan_double();
       n_attr = LMN_DBL_ATTR;
     } else if (sub_tag == TAG_SP_ATOM_DATA) {
-      auto type = scanner.scan_sp_atom_type();
+      auto type  = scanner.scan_sp_atom_type();
       auto bytes = scanner.scan_bytes();
-      n = (LmnWord)sp_atom_decoder(type)(bytes);
-      n_attr = LMN_SP_ATOM_ATTR;
+      n          = (LmnWord)sp_atom_decoder(type)(bytes);
+      n_attr     = LMN_SP_ATOM_ATTR;
     } else {
-      n = 0;
+      n      = 0;
       n_attr = 0; /* false positive対策 */
       lmn_fatal("unexpected");
     }
@@ -169,7 +167,7 @@ int binstr_decoder::decode_mol(LmnMembraneRef mem, LmnSymbolAtomRef from_atom,
   case TAG_ESCAPE_MEM: {
     LmnMembraneRef parent = mem->mem_parent();
     if (from_atom) {
-      auto in = lmn_mem_newatom(mem, LMN_IN_PROXY_FUNCTOR);
+      auto in  = lmn_mem_newatom(mem, LMN_IN_PROXY_FUNCTOR);
       auto out = lmn_mem_newatom(parent, LMN_OUT_PROXY_FUNCTOR);
       lmn_newlink_in_symbols(in, 0, out, 0);
       lmn_newlink_in_symbols(in, 1, from_atom, from_arg);
@@ -181,13 +179,12 @@ int binstr_decoder::decode_mol(LmnMembraneRef mem, LmnSymbolAtomRef from_atom,
   }
   case TAG_HLINK: {
     LmnSymbolAtomRef hl_atom = lmn_hyperlink_new();
-    log[(nvisit)].v = (LmnWord)hl_atom;
-    log[(nvisit)].type = BS_LOG_TYPE_HLINK;
+    log[(nvisit)].v          = (LmnWord)hl_atom;
+    log[(nvisit)].type       = BS_LOG_TYPE_HLINK;
     (nvisit)++;
 
     lmn_mem_push_atom(mem, hl_atom, LMN_HL_ATTR);
-    lmn_mem_newlink(mem, from_atom, LMN_ATTR_GET_VALUE((LmnWord)from_atom),
-                    from_arg, hl_atom, LMN_HL_ATTR, 0);
+    lmn_mem_newlink(mem, from_atom, LMN_ATTR_GET_VALUE((LmnWord)from_atom), from_arg, hl_atom, LMN_HL_ATTR, 0);
     scanner.scan_hlink_num();
 
     tag = scanner.scan_tag();
@@ -209,9 +206,9 @@ int binstr_decoder::decode_mol(LmnMembraneRef mem, LmnSymbolAtomRef from_atom,
       (lmn_hyperlink_at_to_hl(hl_atom))->put_attr(n, LMN_DBL_ATTR);
     } break;
     case TAG_SP_ATOM_DATA: {
-      auto type = scanner.scan_sp_atom_type();
+      auto type  = scanner.scan_sp_atom_type();
       auto bytes = scanner.scan_bytes();
-      auto atom = sp_atom_decoder(type)(bytes);
+      auto atom  = sp_atom_decoder(type)(bytes);
       (lmn_hyperlink_at_to_hl(hl_atom))->put_attr(atom, LMN_SP_ATOM_ATTR);
     } break;
     default:
@@ -227,7 +224,7 @@ int binstr_decoder::decode_mol(LmnMembraneRef mem, LmnSymbolAtomRef from_atom,
 
     switch (log[ref].type) {
     case BS_LOG_TYPE_ATOM: {
-      unsigned int arg = scanner.scan_arg_ref();
+      unsigned int     arg  = scanner.scan_arg_ref();
       LmnSymbolAtomRef atom = (LmnSymbolAtomRef)log[ref].v;
       if (from_atom) {
         lmn_newlink_in_symbols(atom, arg, from_atom, from_arg);
@@ -240,7 +237,7 @@ int binstr_decoder::decode_mol(LmnMembraneRef mem, LmnSymbolAtomRef from_atom,
       } else {
         LmnSymbolAtomRef in, out;
 
-        in = lmn_mem_newatom(ref_mem, LMN_IN_PROXY_FUNCTOR);
+        in  = lmn_mem_newatom(ref_mem, LMN_IN_PROXY_FUNCTOR);
         out = lmn_mem_newatom(mem, LMN_OUT_PROXY_FUNCTOR);
 
         lmn_newlink_in_symbols(in, 0, out, 0);
@@ -250,12 +247,11 @@ int binstr_decoder::decode_mol(LmnMembraneRef mem, LmnSymbolAtomRef from_atom,
     } break;
     case BS_LOG_TYPE_HLINK: {
       auto ref_hl_atom = (LmnAtomRef)log[ref].v;
-      auto hl_atom = (LmnSymbolAtomRef)lmn_copy_atom(ref_hl_atom, LMN_HL_ATTR);
+      auto hl_atom     = (LmnSymbolAtomRef)lmn_copy_atom(ref_hl_atom, LMN_HL_ATTR);
 
       lmn_newlink_in_symbols(hl_atom, 0, from_atom, from_arg);
       lmn_mem_push_atom(mem, hl_atom, LMN_HL_ATTR);
-      lmn_mem_newlink(mem, from_atom, LMN_ATTR_GET_VALUE((LmnWord)from_atom),
-                      from_arg, hl_atom, LMN_HL_ATTR, 0);
+      lmn_mem_newlink(mem, from_atom, LMN_ATTR_GET_VALUE((LmnWord)from_atom), from_arg, hl_atom, LMN_HL_ATTR, 0);
     } break;
     default:
       lmn_fatal("unexpected reference");
@@ -276,9 +272,9 @@ int binstr_decoder::decode_mol(LmnMembraneRef mem, LmnSymbolAtomRef from_atom,
     lmn_mem_push_atom(mem, n, LMN_DBL_ATTR);
   } break;
   case TAG_SP_ATOM_DATA: {
-    auto type = scanner.scan_sp_atom_type();
+    auto type  = scanner.scan_sp_atom_type();
     auto bytes = scanner.scan_bytes();
-    auto atom = sp_atom_decoder(type)(bytes);
+    auto atom  = sp_atom_decoder(type)(bytes);
     from_atom->set_link(from_arg, atom);
     from_atom->set_attr(from_arg, LMN_SP_ATOM_ATTR);
     lmn_mem_push_atom(mem, atom, LMN_SP_ATOM_ATTR);
@@ -295,12 +291,11 @@ int binstr_decoder::decode_mol(LmnMembraneRef mem, LmnSymbolAtomRef from_atom,
 /* bsの位置posから膜memにデコードしたアトムを書き込む
  * *nvisitは出現番号
  * 辿って来た場合, from_atomとそのリンク番号が渡される */
-int binstr_decoder::decode_atom(LmnMembraneRef mem, LmnSymbolAtomRef from_atom,
-                                int from_arg) {
+int binstr_decoder::decode_atom(LmnMembraneRef mem, LmnSymbolAtomRef from_atom, int from_arg) {
   auto f = scanner.scan_functor();
 
-  auto atom = lmn_mem_newatom(mem, f); /* アトムを生成する */
-  log[(nvisit)].v = (LmnWord)atom; /* アドレスを記録(*nvisitは初期値1) */
+  auto atom          = lmn_mem_newatom(mem, f); /* アトムを生成する */
+  log[(nvisit)].v    = (LmnWord)atom;           /* アドレスを記録(*nvisitは初期値1) */
   log[(nvisit)].type = BS_LOG_TYPE_ATOM;
   (nvisit)++;
 

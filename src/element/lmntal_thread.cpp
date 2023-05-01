@@ -60,7 +60,7 @@ void lmn_thread_set_CPU_affinity(unsigned long n) {
   /* TODO: マニュアルによればpthread_npライブラリを使った方がよい  */
 #ifdef ENABLE_CPU_AFFINITY
   if (lmn_env.core_num <= HAVE_PROCESSOR_ELEMENTS) {
-    pid_t my_pid;
+    pid_t     my_pid;
     cpu_set_t my_mask;
     my_pid = syscall(SYS_gettid);
     CPU_ZERO(&my_mask);
@@ -80,12 +80,12 @@ void thread_yield_CPU() { sched_yield(); }
 /* TODO: stripeの粒度を呼出側で指定できた方が汎用的だと思う */
 *EWLock::EWLock(unsigned int e_num, unsigned int w_num) {
   unsigned int i;
-  w_num = round2up(w_num);
+  w_num            = round2up(w_num);
   this->elock_used = NULL;
-  this->elock_num = e_num;
-  this->elock = NULL;
-  this->wlock_num = w_num;
-  this->wlock = NULL;
+  this->elock_num  = e_num;
+  this->elock      = NULL;
+  this->wlock_num  = w_num;
+  this->wlock      = NULL;
 
   this->elock = LMN_NALLOC<lmn_mutex_t>(e_num);
   for (i = 0; i < e_num; i++) {

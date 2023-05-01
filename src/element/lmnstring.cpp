@@ -43,11 +43,10 @@
 #include "vm/vm.h"
 
 #include <algorithm>
-#include <stdio.h>
+#include <cstdio>
 
-#define LINK_STR(MEM, TO_ATOM, TO_ATTR, STR_ATOM)                              \
-  lmn_mem_newlink((MEM), (TO_ATOM), (TO_ATTR), LMN_ATTR_GET_VALUE((TO_ATTR)),  \
-                  (STR_ATOM), LMN_SP_ATOM_ATTR, 0)
+#define LINK_STR(MEM, TO_ATOM, TO_ATTR, STR_ATOM)                                                                      \
+  lmn_mem_newlink((MEM), (TO_ATOM), (TO_ATTR), LMN_ATTR_GET_VALUE((TO_ATTR)), (STR_ATOM), LMN_SP_ATOM_ATTR, 0)
 
 int LmnString::string_atom_type;
 
@@ -59,16 +58,16 @@ BOOL lmn_is_string(LmnAtomRef atom, LmnLinkAttr attr) {
  * Callbacks
  */
 
-void cb_string_make(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
-                    LmnLinkAttr t0, LmnAtomRef a1, LmnLinkAttr t1) {
-  const char *s;
-  char buf[64];
-  BOOL to_be_freed = FALSE;
+void cb_string_make(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0, LmnLinkAttr t0, LmnAtomRef a1,
+                    LmnLinkAttr t1) {
+  char const *s;
+  char        buf[64];
+  BOOL        to_be_freed = FALSE;
 
   if (LMN_ATTR_IS_DATA(t0)) {
     switch (t0) {
     case LMN_INT_ATTR:
-      s = int_to_str((LmnWord)a0);
+      s           = int_to_str((LmnWord)a0);
       to_be_freed = TRUE;
       break;
     case LMN_DBL_ATTR:
@@ -93,45 +92,40 @@ void cb_string_make(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
   lmn_mem_delete_atom(mem, a0, t0);
 }
 
-void cb_string_concat(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
-                      LmnLinkAttr t0, LmnAtomRef a1, LmnLinkAttr t1,
-                      LmnAtomRef a2, LmnLinkAttr t2) {
-  LmnStringRef s = new LmnString(reinterpret_cast<LmnString *>(a0)->str +
-                                 reinterpret_cast<LmnString *>(a1)->str);
+void cb_string_concat(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0, LmnLinkAttr t0, LmnAtomRef a1,
+                      LmnLinkAttr t1, LmnAtomRef a2, LmnLinkAttr t2) {
+  LmnStringRef s = new LmnString(reinterpret_cast<LmnString *>(a0)->str + reinterpret_cast<LmnString *>(a1)->str);
   LINK_STR(mem, a2, t2, s);
 
   lmn_mem_delete_atom(mem, a0, t0);
   lmn_mem_delete_atom(mem, a1, t1);
 }
 
-void cb_string_length(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
-                      LmnLinkAttr t0, LmnAtomRef a1, LmnLinkAttr t1) {
+void cb_string_length(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0, LmnLinkAttr t0, LmnAtomRef a1,
+                      LmnLinkAttr t1) {
   LmnWord len = reinterpret_cast<LmnString *>(a0)->str.size();
 
-  lmn_mem_newlink(mem, a1, t1, LMN_ATTR_GET_VALUE(t1), (LmnAtomRef)len,
-                  LMN_INT_ATTR, 0);
+  lmn_mem_newlink(mem, a1, t1, LMN_ATTR_GET_VALUE(t1), (LmnAtomRef)len, LMN_INT_ATTR, 0);
 
   lmn_mem_delete_atom(mem, a0, t0);
 }
 
-void cb_string_reverse(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
-                       LmnLinkAttr t0, LmnAtomRef a1, LmnLinkAttr t1) {
-  int i, j;
+void cb_string_reverse(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0, LmnLinkAttr t0, LmnAtomRef a1,
+                       LmnLinkAttr t1) {
+  int   i, j;
   auto &s = reinterpret_cast<LmnString *>(a0)->str;
 
   for (i = 0, j = s.size() - 1; i < j; i++, j--) {
     char t = s[i];
-    s[i] = s[j];
-    s[j] = t;
+    s[i]   = s[j];
+    s[j]   = t;
   }
 
   lmn_mem_newlink(mem, a1, t1, LMN_ATTR_GET_VALUE(t1), a0, t0, 0);
 }
 
-void cb_string_replace(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
-                      LmnLinkAttr t0, LmnAtomRef a1, LmnLinkAttr t1,
-                      LmnAtomRef a2, LmnLinkAttr t2,
-                      LmnAtomRef a3, LmnLinkAttr t3) {
+void cb_string_replace(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0, LmnLinkAttr t0, LmnAtomRef a1,
+                       LmnLinkAttr t1, LmnAtomRef a2, LmnLinkAttr t2, LmnAtomRef a3, LmnLinkAttr t3) {
   LmnStringRef ret;
 
   auto ret_str = reinterpret_cast<LmnString *>(a0)->str;
@@ -139,13 +133,13 @@ void cb_string_replace(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
   auto rep_str = reinterpret_cast<LmnString *>(a2)->str;
 
   auto pos = std::string::size_type(0);
-  if(!sub_str.empty()) {
-    while((pos = ret_str.find(sub_str, pos)) != std::string::npos) {
+  if (!sub_str.empty()) {
+    while ((pos = ret_str.find(sub_str, pos)) != std::string::npos) {
       ret_str.replace(pos, sub_str.length(), rep_str);
       pos += rep_str.length();
     }
   } else {
-    while(pos <= ret_str.length()) {
+    while (pos <= ret_str.length()) {
       ret_str.insert(pos, rep_str);
       pos += rep_str.length() + 1;
     }
@@ -164,18 +158,18 @@ void cb_string_replace(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
  *    string型文字列を指定した分割文字をもとに分割し、リストの要素に変換する
  *    lib/string.lmn の string.split から利用出来る
  */
-void cb_string_split(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
-                      LmnLinkAttr t0, LmnAtomRef a1, LmnLinkAttr t1,
-                      LmnAtomRef a2, LmnLinkAttr t2) {
+void cb_string_split(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0, LmnLinkAttr t0, LmnAtomRef a1,
+                     LmnLinkAttr t1, LmnAtomRef a2, LmnLinkAttr t2) {
 
-  auto split_str = reinterpret_cast<LmnString *>(a0)->str;  //入力文字列
-  auto sep_str = reinterpret_cast<LmnString *>(a1)->str;    //分割文字(列)
-  auto sep_len = sep_str.length();
-  auto ls = std::vector<std::string>();
+  auto split_str = reinterpret_cast<LmnString *>(a0)->str; // 入力文字列
+  auto sep_str   = reinterpret_cast<LmnString *>(a1)->str; // 分割文字(列)
+  auto sep_len   = sep_str.length();
+  auto ls        = std::vector<std::string>();
 
-  if(sep_len == 0) {          // 分割文字として空文字が入力された場合は一文字ずつ分割する
-    for (auto i = 0; i < split_str.length(); i++) ls.push_back(split_str.substr(i,1));
-  } else {          // 分割文字が空文字以外に設定されている場合は分割文字の位置で分割する（分割文字は飛ばす）
+  if (sep_len == 0) { // 分割文字として空文字が入力された場合は一文字ずつ分割する
+    for (auto i = 0; i < split_str.length(); i++)
+      ls.push_back(split_str.substr(i, 1));
+  } else { // 分割文字が空文字以外に設定されている場合は分割文字の位置で分割する（分割文字は飛ばす）
     auto offset = std::string::size_type(0);
     while (1) {
       auto pos = split_str.find(sep_str, offset);
@@ -188,10 +182,10 @@ void cb_string_split(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
     }
   }
 
-  LmnStringRef car;
+  LmnStringRef     car;
   LmnSymbolAtomRef cons;
-  LmnSymbolAtomRef cdr = lmn_mem_newatom(mem, LMN_NIL_FUNCTOR);
-  int cdr_pos = 0;
+  LmnSymbolAtomRef cdr     = lmn_mem_newatom(mem, LMN_NIL_FUNCTOR);
+  int              cdr_pos = 0;
 
   for (auto itr = ls.rbegin(), e = ls.rend(); itr != e; itr++) {
     car = new LmnString(itr->c_str());
@@ -200,7 +194,7 @@ void cb_string_split(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
 
     LINK_STR(mem, cons, LMN_ATTR_MAKE_LINK(0), car);
     lmn_newlink_in_symbols(cons, 1, cdr, cdr_pos);
-    cdr = cons;
+    cdr     = cons;
     cdr_pos = 2;
   }
   lmn_mem_newlink(mem, cdr, LMN_ATTR_MAKE_LINK(cdr_pos), cdr_pos, a2, t2, LMN_ATTR_GET_VALUE(t2));
@@ -209,16 +203,13 @@ void cb_string_split(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
   lmn_mem_delete_atom(mem, a1, t1);
 }
 
-void cb_string_substr(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
-                      LmnLinkAttr t0, LmnAtomRef begin_, LmnLinkAttr t1,
-                      LmnAtomRef end_, LmnLinkAttr t2, LmnAtomRef a3,
-                      LmnLinkAttr t3) {
-  const char *src =
-      (const char *)reinterpret_cast<LmnString *>(a0)->str.c_str();
-  char *s;
+void cb_string_substr(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0, LmnLinkAttr t0, LmnAtomRef begin_,
+                      LmnLinkAttr t1, LmnAtomRef end_, LmnLinkAttr t2, LmnAtomRef a3, LmnLinkAttr t3) {
+  char const  *src = (char const *)reinterpret_cast<LmnString *>(a0)->str.c_str();
+  char        *s;
   LmnStringRef ret;
-  LmnWord begin = (LmnWord)begin_;
-  LmnWord end = (LmnWord)end_;
+  LmnWord      begin = (LmnWord)begin_;
+  LmnWord      end   = (LmnWord)end_;
 
   if (begin <= end) {
     int len = strlen(src);
@@ -240,14 +231,13 @@ void cb_string_substr(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
   lmn_mem_delete_atom(mem, end_, t2);
 }
 
-void cb_string_substr_right(LmnReactCxtRef rc, LmnMembraneRef mem,
-                            LmnAtomRef a0, LmnLinkAttr t0, LmnAtomRef begin_,
+void cb_string_substr_right(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0, LmnLinkAttr t0, LmnAtomRef begin_,
                             LmnLinkAttr t1, LmnAtomRef a2, LmnLinkAttr t2) {
-  const char *src = reinterpret_cast<LmnString *>(a0)->str.c_str();
-  char *s;
-  int len = strlen(src);
+  char const  *src = reinterpret_cast<LmnString *>(a0)->str.c_str();
+  char        *s;
+  int          len = strlen(src);
   LmnStringRef ret;
-  LmnWord begin = (LmnWord)begin_;
+  LmnWord      begin = (LmnWord)begin_;
 
   if (begin > len)
     begin = len;
@@ -275,9 +265,7 @@ void sp_cb_string_dump(void *s, LmnPortRef port) {
 
 BOOL sp_cb_string_is_ground(void *data) { return TRUE; }
 
-BOOL sp_cb_string_eq(void *s1, void *s2) {
-  return *(LmnStringRef)s1 == *(LmnStringRef)s2;
-}
+BOOL sp_cb_string_eq(void *s1, void *s2) { return *(LmnStringRef)s1 == *(LmnStringRef)s2; }
 
 std::vector<uint8_t> sp_cb_string_encode(void *data) {
   std::vector<uint8_t> res(sizeof(lmn_interned_str));
@@ -286,16 +274,15 @@ std::vector<uint8_t> sp_cb_string_encode(void *data) {
   return res;
 }
 
-void *sp_cb_string_decode(const std::vector<uint8_t> &bytes) {
+void *sp_cb_string_decode(std::vector<uint8_t> const &bytes) {
   auto n_id = *(lmn_interned_str *)bytes.data();
   return new LmnString(lmn_id_to_name(n_id));
 }
 
 void string_init() {
-  LmnString::string_atom_type = lmn_sp_atom_register(
-      "string", sp_cb_string_copy, sp_cb_string_free, sp_cb_string_eq,
-      sp_cb_string_dump, sp_cb_string_is_ground, sp_cb_string_encode,
-      sp_cb_string_decode);
+  LmnString::string_atom_type =
+      lmn_sp_atom_register("string", sp_cb_string_copy, sp_cb_string_free, sp_cb_string_eq, sp_cb_string_dump,
+                           sp_cb_string_is_ground, sp_cb_string_encode, sp_cb_string_decode);
 
   CCallback::lmn_register_c_fun("string_make", (void *)cb_string_make, 2);
   CCallback::lmn_register_c_fun("string_concat", (void *)cb_string_concat, 3);

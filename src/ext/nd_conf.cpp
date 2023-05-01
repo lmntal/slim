@@ -37,37 +37,26 @@
  * $Id$
  */
 
-#include <stdio.h>
-#include "vm/vm.h"
 #include "verifier/verifier.h"
-void cb_set_functor_priority(LmnReactCxtRef rc,
-                             LmnMembraneRef mem,
-                             LmnAtomRef a0, LmnLinkAttr t0,
-                             LmnAtomRef a1, LmnLinkAttr t1,
-                             LmnAtomRef a2, LmnLinkAttr t2);
+#include "vm/vm.h"
+#include <cstdio>
+void cb_set_functor_priority(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0, LmnLinkAttr t0, LmnAtomRef a1,
+                             LmnLinkAttr t1, LmnAtomRef a2, LmnLinkAttr t2);
 
 /* ポートa0から一行読み込む
  * +a0     : 優先度を表す整数
  * +a1     : アトム名のunaryアトム
  * +a2     : アリティの整数
  */
-void cb_set_functor_priority(LmnReactCxtRef rc,
-                             LmnMembraneRef mem,
-                             LmnAtomRef a0, LmnLinkAttr t0,
-                             LmnAtomRef a1, LmnLinkAttr t1,
-                             LmnAtomRef a2, LmnLinkAttr t2)
-{
-  set_functor_priority(lmn_functor_table->intern(ANONYMOUS,
-                             LMN_FUNCTOR_NAME_ID(lmn_functor_table, ((LmnSymbolAtomRef)a1)->get_functor()),
-                             (LmnWord)a2),
-                       (LmnWord)a0);
+void cb_set_functor_priority(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0, LmnLinkAttr t0, LmnAtomRef a1,
+                             LmnLinkAttr t1, LmnAtomRef a2, LmnLinkAttr t2) {
+  set_functor_priority(
+      lmn_functor_table->intern(
+          ANONYMOUS, LMN_FUNCTOR_NAME_ID(lmn_functor_table, ((LmnSymbolAtomRef)a1)->get_functor()), (LmnWord)a2),
+      (LmnWord)a0);
   lmn_mem_delete_atom(mem, a0, t0);
   lmn_mem_delete_atom(mem, a1, t1);
   lmn_mem_delete_atom(mem, a2, t2);
 }
 
-void init_nd_conf(void)
-{
-  CCallback::lmn_register_c_fun("set_functor_priority", (void *)cb_set_functor_priority, 3);
-}
-
+void init_nd_conf(void) { CCallback::lmn_register_c_fun("set_functor_priority", (void *)cb_set_functor_priority, 3); }

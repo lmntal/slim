@@ -52,31 +52,31 @@ void sp_atom_finalize() {
   delete sp_atom_callback_tbl;
 }
 
-int lmn_sp_atom_register(const char *name, f_copy f_copy, f_free f_free,
-                         f_eq f_eq, f_dump f_dump, f_is_ground f_is_ground) {
+int lmn_sp_atom_register(char const *name, f_copy f_copy, f_free f_free, f_eq f_eq, f_dump f_dump,
+                         f_is_ground f_is_ground) {
   struct SpecialAtomCallback *c = LMN_MALLOC<struct SpecialAtomCallback>();
   c->name = lmn_intern(name), c->copy = f_copy;
-  c->free = f_free;
-  c->eq = f_eq;
-  c->dump = f_dump;
+  c->free      = f_free;
+  c->eq        = f_eq;
+  c->dump      = f_dump;
   c->is_ground = f_is_ground;
-  c->encode = nullptr;
-  c->decode = nullptr;
+  c->encode    = nullptr;
+  c->decode    = nullptr;
 
   sp_atom_callback_tbl->push((LmnWord)c);
   return sp_atom_callback_tbl->get_num() - 1;
 }
 
-int lmn_sp_atom_register(const char *name, f_copy f_copy, f_free f_free,
-                         f_eq f_eq, f_dump f_dump, f_is_ground f_is_ground, f_encode encoder, f_decode decoder) {
+int lmn_sp_atom_register(char const *name, f_copy f_copy, f_free f_free, f_eq f_eq, f_dump f_dump,
+                         f_is_ground f_is_ground, f_encode encoder, f_decode decoder) {
   struct SpecialAtomCallback *c = LMN_MALLOC<struct SpecialAtomCallback>();
   c->name = lmn_intern(name), c->copy = f_copy;
-  c->free = f_free;
-  c->eq = f_eq;
-  c->dump = f_dump;
+  c->free      = f_free;
+  c->eq        = f_eq;
+  c->dump      = f_dump;
   c->is_ground = f_is_ground;
-  c->encode = encoder;
-  c->decode = decoder;
+  c->encode    = encoder;
+  c->decode    = decoder;
 
   sp_atom_callback_tbl->push((LmnWord)c);
   return sp_atom_callback_tbl->get_num() - 1;

@@ -44,20 +44,17 @@
  *  プロセスIDをkeyにしたBYTEサイズテーブル
  */
 
-
 #include "element/element.h"
-#include "vm/vm.h"
 #include "vm/process_table.hpp"
+#include "vm/vm.h"
 
-using SimplyProcessTableRef = struct SimpleProcessTable*;
+using SimplyProcessTableRef = struct SimpleProcessTable *;
 
 struct SimpleProcessTable : ProcessTable<BYTE> {
   SimpleProcessTable() : ProcessTable<BYTE>(){};
   SimpleProcessTable(unsigned long size) : ProcessTable<BYTE>(size){};
 
-  bool get_flag(key_type key, value_type flag) {
-    return this->contains(key) ? ((*this)[key] & flag) : false;
-  }
+  bool get_flag(key_type key, value_type flag) { return this->contains(key) ? ((*this)[key] & flag) : false; }
 
   void unset_flag(key_type key, value_type flag) {
     value_type v = this->contains(key) ? (*this)[key] : 0;
@@ -80,9 +77,9 @@ struct SimpleProcessTable : ProcessTable<BYTE> {
   void tbl_unput(LmnWord key);
   void tbl_unput_atom(LmnSymbolAtomRef atom);
   void tbl_unput_mem(LmnMembraneRef mem);
-  int tbl_get(LmnWord key, BYTE *value);
-  int tbl_get_by_atom(LmnSymbolAtomRef atom, BYTE *value);
-  int tbl_get_by_mem(LmnMembraneRef mem, BYTE *value);
+  int  tbl_get(LmnWord key, BYTE *value);
+  int  tbl_get_by_atom(LmnSymbolAtomRef atom, BYTE *value);
+  int  tbl_get_by_mem(LmnMembraneRef mem, BYTE *value);
   bool tbl_contains(LmnWord key);
   bool tbl_contains_atom(LmnSymbolAtomRef atom);
   bool tbl_contains_mem(LmnMembraneRef mem);

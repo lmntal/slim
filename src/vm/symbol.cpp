@@ -38,25 +38,25 @@
 
 #include "symbol.h"
 #include "element/element.h"
-#include <stdarg.h>
+#include <cstdarg>
 
-static struct st_table *sym_tbl;
-static struct st_table *sym_rev_tbl;
+static struct st_table  *sym_tbl;
+static struct st_table  *sym_rev_tbl;
 static lmn_interned_str *next_sym_id;
-static lmn_mutex_t sym_mtx;
+static lmn_mutex_t       sym_mtx;
 
 /* prototypes */
 
-void sym_tbl_init(void);
-int free_sym_tbl_entry(st_data_t name, st_data_t _v, int _i);
-void sym_tbl_destroy(void);
+void             sym_tbl_init(void);
+int              free_sym_tbl_entry(st_data_t name, st_data_t _v, int _i);
+void             sym_tbl_destroy(void);
 lmn_interned_str create_new_id(void);
 
 void sym_tbl_init() {
   int i, n;
-  sym_tbl = st_init_strtable();
+  sym_tbl     = st_init_strtable();
   sym_rev_tbl = st_init_numtable();
-  n = lmn_env.core_num;
+  n           = lmn_env.core_num;
   next_sym_id = LMN_NALLOC<lmn_interned_str>(n);
   for (i = 0; i < n; i++) {
     next_sym_id[i] = i + 1; /* 0はIDに使わない */
@@ -84,15 +84,15 @@ void sym_tbl_destroy() {
 }
 
 lmn_interned_str create_new_id() {
-  int cid = env_my_thread_id();
+  int              cid    = env_my_thread_id();
   lmn_interned_str new_id = next_sym_id[cid];
-  next_sym_id[cid] += env_threads_num();
+  next_sym_id[cid]        += env_threads_num();
   return new_id;
 }
 
-lmn_interned_str lmn_intern(const char *name) {
+lmn_interned_str lmn_intern(char const *name) {
   st_data_t new_id;
-  char *name2;
+  char     *name2;
 
   /* すでにnameに対応する値があるならそれを返す */
   if (st_lookup(sym_tbl, (st_data_t)name, &new_id))
@@ -100,7 +100,7 @@ lmn_interned_str lmn_intern(const char *name) {
 
   /* 新しいIDを作る */
   new_id = create_new_id();
-  name2 = strdup(name);
+  name2  = strdup(name);
   if (env_threads_num() >= 2)
     lmn_mutex_lock(&(sym_mtx));
   st_add_direct(sym_tbl, (st_data_t)name2, (st_data_t)new_id);
@@ -110,7 +110,7 @@ lmn_interned_str lmn_intern(const char *name) {
   return new_id;
 }
 
-const char *lmn_id_to_name(lmn_interned_str id) {
+char const *lmn_id_to_name(lmn_interned_str id) {
   char *name;
 
   if (id == ANONYMOUS)
@@ -121,6 +121,4 @@ const char *lmn_id_to_name(lmn_interned_str id) {
     return NULL;
 }
 
-int count_symbols() {
-  return st_num(sym_tbl) + 1; /* symbol 0 is out of table */
-}
+int count_symbols() { return st_num(sym_tbl) + 1; /* symbol 0 is out of table */ }

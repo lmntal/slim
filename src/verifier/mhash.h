@@ -48,7 +48,7 @@
 #include "vm/vm.h"
 
 unsigned long mhash(LmnMembraneRef mem);
-void mhash_set_depth(int depth);
+void          mhash_set_depth(int depth);
 
 /* @} */
 

@@ -40,8 +40,8 @@
 #ifndef EXT_STATE_MAP_H
 #define EXT_STATE_MAP_H
 
-#include "lmntal.h"
 #include "element/element.h"
+#include "lmntal.h"
 #include "set.h"
 #include "verifier/verifier.h"
 #include "vm/vm.h"
@@ -49,33 +49,25 @@
 class LmnStateMap {
   LMN_SP_ATOM_HEADER;
   static int state_map_atom_type;
-  using LmnStateMapRef = class LmnStateMap*;
+  using LmnStateMapRef = class LmnStateMap *;
   StateSpaceRef states;
   LmnStateMap(LmnMembraneRef mem);
   ~LmnStateMap();
-  static void cb_state_map_init(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
-                       LmnLinkAttr t0);
-  static void cb_state_map_free(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
-                       LmnLinkAttr t0);
-  static void cb_state_map_id_find(LmnReactCxtRef rc,
-                          LmnMembraneRef mem,
-                          LmnAtomRef a0, LmnLinkAttr t0,
-                          LmnAtomRef a1, LmnLinkAttr t1,
-                          LmnAtomRef a2, LmnLinkAttr t2,
-                          LmnAtomRef a3, LmnLinkAttr t3);
-  static void cb_state_map_state_find(LmnReactCxtRef rc, LmnMembraneRef mem,
-                             LmnAtomRef a0, LmnLinkAttr t0, LmnAtomRef a1,
-                             LmnLinkAttr t1, LmnAtomRef a2, LmnLinkAttr t2,
-                             LmnAtomRef a3, LmnLinkAttr t3);
+  static void  cb_state_map_init(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0, LmnLinkAttr t0);
+  static void  cb_state_map_free(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0, LmnLinkAttr t0);
+  static void  cb_state_map_id_find(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0, LmnLinkAttr t0, LmnAtomRef a1,
+                                    LmnLinkAttr t1, LmnAtomRef a2, LmnLinkAttr t2, LmnAtomRef a3, LmnLinkAttr t3);
+  static void  cb_state_map_state_find(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0, LmnLinkAttr t0,
+                                       LmnAtomRef a1, LmnLinkAttr t1, LmnAtomRef a2, LmnLinkAttr t2, LmnAtomRef a3,
+                                       LmnLinkAttr t3);
   static void *sp_cb_state_map_copy(void *data);
-  static void sp_cb_state_map_free(void *data);
+  static void  sp_cb_state_map_free(void *data);
   static unsigned char sp_cb_state_map_eq(void *_p1, void *_p2);
-  static void sp_cb_state_map_dump(void *state_map, LmnPortRef port);
+  static void          sp_cb_state_map_dump(void *state_map, LmnPortRef port);
   static unsigned char sp_cb_state_map_is_ground(void *data);
-  public:
-  static void init_state_map(void);
+
+public:
+  static void init_state_map();
 };
-
-
 
 #endif /* EXT_STATE_MAP_H */

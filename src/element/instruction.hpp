@@ -38,7 +38,6 @@
 #ifndef LMN_INSTRUCTION_HPP
 #define LMN_INSTRUCTION_HPP
 
-
 #include "lmntal.h"
 
 #include <map>
@@ -276,25 +275,15 @@ enum LmnInstruction {
   NUM_INSTRS // this must be the last
 };
 
-enum ArgType {
-  ARG_END = 0,
-  InstrVar = 1,
-  Label,
-  InstrVarList,
-  String,
-  LineNum,
-  ArgFunctor,
-  ArgRuleset,
-  InstrList
-};
+enum ArgType { ARG_END = 0, InstrVar = 1, Label, InstrVarList, String, LineNum, ArgFunctor, ArgRuleset, InstrList };
 
 struct InstrSpec {
-  const char *op_str;
+  char const          *op_str;
   std::vector<ArgType> args;
 };
 
 extern const std::map<LmnInstruction, InstrSpec> instr_spec;
 
-int get_instr_id(const char *name);
+int get_instr_id(char const *name);
 
 #endif

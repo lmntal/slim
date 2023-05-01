@@ -39,8 +39,8 @@
 #define IL_LEXER_HPP
 
 #include <cstdio>
-#include <string>
 #include <memory>
+#include <string>
 
 namespace il {
 class lexer;
@@ -48,19 +48,20 @@ class lexer;
 
 #include "lmntal.h"
 #include "syntax.hpp"
+
 #include "il_parser.hpp"
 
 namespace il {
 class lexer {
-  static const size_t SIZE = 512;
-  std::map<unsigned long, unsigned long> ruleset_id_tbl;
+  static const size_t                          SIZE = 512;
+  std::map<unsigned long, unsigned long>       ruleset_id_tbl;
   std::unique_ptr<slim::element::re2c::buffer> buffer;
 
   std::string get_token() const;
 
 public:
   lexer(std::unique_ptr<FILE, decltype(&fclose)> in);
-  lexer(const std::string &file_path);
+  lexer(std::string const &file_path);
   ~lexer();
 
   int lineno() const { return 0; }

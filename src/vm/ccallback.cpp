@@ -39,23 +39,14 @@
 
 #include "ccallback.h"
 
-CCallback::CCallback(){
-  f = NULL;
-}
-CCallback::~CCallback(){
-  f = NULL;
-}
-int CCallback::get_arity() const{
-  return arity;
-}
-void *CCallback::get_f() const{
-  return f;
-}
+CCallback::CCallback() { f = NULL; }
+CCallback::~CCallback() { f = NULL; }
+int   CCallback::get_arity() const { return arity; }
+void *CCallback::get_f() const { return f; }
 
 st_table_t CCallback::ccallback_tbl;
 
 void CCallback::ccallback_init() { ccallback_tbl = st_init_numtable(); }
-
 
 void CCallback::ccallback_finalize() {
   st_foreach(ccallback_tbl, (st_iter_func)free_v, 0);
@@ -68,10 +59,10 @@ int CCallback::free_v(st_data_t key, st_data_t v, st_data_t _t) {
 }
 /* コールバックを名前nameで登録する。arityはコールバックに引数として
    渡されるアトムのリンク数 */
-void CCallback::lmn_register_c_fun(const char *name, void *f, int arity) {
+void CCallback::lmn_register_c_fun(char const *name, void *f, int arity) {
   CCallback *c = new CCallback;
-  c->f = f;
-  c->arity = arity;
+  c->f         = f;
+  c->arity     = arity;
   st_insert(ccallback_tbl, (st_data_t)lmn_intern(name), (st_data_t)c);
 }
 

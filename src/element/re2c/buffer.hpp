@@ -39,14 +39,12 @@
 
 #include <cstddef>
 
-namespace slim {
-namespace element {
-namespace re2c {
+namespace slim::element::re2c {
 class buffer {
 protected:
   char *buf;
-  int size;
-  int fill_size;
+  int   size;
+  int   fill_size;
 
 public:
   char *YYLIMIT;
@@ -57,13 +55,11 @@ public:
   // virtual ~buffer() {}
   virtual ~buffer();
   //  ~buffer();
-  virtual bool is_finished() const = 0;
+  virtual bool is_finished() const       = 0;
   virtual void update_limit(size_t free) = 0;
 
   bool fill(size_t need);
 };
-} // namespace re2c
-} // namespace element
-} // namespace slim
+} // namespace slim::element::re2c
 
 #endif /* ELEMENT_RE2C_BUFFER_HPP */

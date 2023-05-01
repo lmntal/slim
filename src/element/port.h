@@ -58,12 +58,12 @@ using LmnPortRef = struct LmnPort *;
 struct LmnPort {
   LMN_SP_ATOM_HEADER;
 
-  BOOL direction;
-  LmnByte type; /* LMN_PORT_{FILE|ISTR|OST|PROC} */
-  BOOL closed;  /* TRUE if this port is closed */
-  BOOL error;   /* error has occurred */
-  BOOL owner;   /* TRUE if this port owns underlying
-                   file pointer */
+  BOOL    direction;
+  LmnByte type;   /* LMN_PORT_{FILE|ISTR|OST|PROC} */
+  BOOL    closed; /* TRUE if this port is closed */
+  BOOL    error;  /* error has occurred */
+  BOOL    owner;  /* TRUE if this port owns underlying
+                     file pointer */
   lmn_interned_str name;
 
   void *data; /* used internally */
@@ -71,7 +71,7 @@ struct LmnPort {
 
 struct IStrPortData {
   LmnStringRef s;
-  int i;
+  int          i;
 };
 
 #define LMN_PORT(obj) ((LmnPortRef)(obj))
@@ -100,12 +100,11 @@ LmnPortRef lmn_make_output_string_port();
 /* 出力文字列ポートに書き込まれた文字列のコピー返す。 */
 LmnStringRef lmn_port_output_string(LmnPortRef ostr_port);
 
-LmnPortRef lmn_make_port(LmnPortDirection dir, LmnPortType type,
-                         const char *name);
-void lmn_port_free(LmnPortRef port);
-void lmn_port_close(LmnPortRef port);
-BOOL lmn_port_closed(LmnPortRef port_atom);
-BOOL lmn_port_error_occurred(LmnPortRef port_atom);
+LmnPortRef       lmn_make_port(LmnPortDirection dir, LmnPortType type, char const *name);
+void             lmn_port_free(LmnPortRef port);
+void             lmn_port_close(LmnPortRef port);
+BOOL             lmn_port_closed(LmnPortRef port_atom);
+BOOL             lmn_port_error_occurred(LmnPortRef port_atom);
 lmn_interned_str lmn_port_name(LmnPortRef port_atom);
 
 int port_get_raw_c(LmnPortRef port_atom);
@@ -113,7 +112,7 @@ int port_unget_raw_c(LmnPortRef port_atom, int c);
 int port_putc(LmnPortRef port_atom, LmnSAtom unary_atom);
 int port_puts(LmnPortRef port_atom, LmnStringRef str);
 int port_put_raw_c(LmnPortRef port_atom, int c);
-int port_put_raw_s(LmnPortRef port_atom, const char *str);
+int port_put_raw_s(LmnPortRef port_atom, char const *str);
 
 /* @} */
 

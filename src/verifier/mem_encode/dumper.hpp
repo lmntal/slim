@@ -58,9 +58,9 @@ struct dumper {
       printf("_DBL%lf_", n);
     } break;
     case TAG_SP_ATOM_DATA: {
-      auto type = scanner.scan_sp_atom_type();
+      auto type  = scanner.scan_sp_atom_type();
       auto bytes = scanner.scan_bytes();
-      auto atom = sp_atom_decoder(type)(bytes);
+      auto atom  = sp_atom_decoder(type)(bytes);
       SP_ATOM_DUMP(atom, lmn_stdout_port());
     } break;
     default:
@@ -71,15 +71,15 @@ struct dumper {
 
   void dump(BYTE *bs, int len) {
     std::vector<BsDecodeLog> log(len * TAG_IN_BYTE);
-    halfbyte_scanner scanner(bs, len);
-    auto v_i = 1;
+    halfbyte_scanner         scanner(bs, len);
+    auto                     v_i = 1;
     while (scanner.location() < len) {
       unsigned int tag = scanner.scan_tag();
 
       switch (tag) {
       case TAG_ATOM_START: {
         LmnFunctor f = scanner.scan_functor();
-        log[v_i] = {(LmnWord)f, BS_LOG_TYPE_ATOM};
+        log[v_i]     = {(LmnWord)f, BS_LOG_TYPE_ATOM};
         printf("%s/%d_%d ", lmn_id_to_name(LMN_FUNCTOR_NAME_ID(lmn_functor_table, f)),
                LMN_FUNCTOR_ARITY(lmn_functor_table, f), v_i++);
       } break;
@@ -177,9 +177,9 @@ struct dumper {
         }
       } break;
       case TAG_RULESET_UNIQ: {
-        LmnRuleSetRef rs;
+        LmnRuleSetRef    rs;
         lmn_interned_str id;
-        unsigned int j, k, l, n, rs_id, rule_num, his_num;
+        unsigned int     j, k, l, n, rs_id, rule_num, his_num;
 
         n = scanner.scan_ruleset_num();
         for (j = 0; j < n; j++) {
@@ -188,7 +188,7 @@ struct dumper {
 
           /* dump applied histories of uniq constraint rules */
 
-          rs = LmnRuleSetTable::at(rs_id);
+          rs       = LmnRuleSetTable::at(rs_id);
           rule_num = rs->size();
 
           for (k = 0; k < rule_num; k++) {

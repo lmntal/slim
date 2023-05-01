@@ -42,41 +42,27 @@
 #include "element/element.h"
 #include "vm/vm.h"
 
-
-
 /*
  * (S, N):
  *
  * N is bound to a floating-point number with the string representation S.
  */
-void float_of_string(LmnReactCxtRef rc,
-                     LmnMembraneRef mem,
-                     LmnAtomRef a0, LmnLinkAttr t0,
-                     LmnAtomRef a1, LmnLinkAttr t1)
-{
-  char *t;
-  LmnAtomRef d;
-  const char *s = reinterpret_cast<LmnString *>(a0)->c_str();
-  t = NULL;
-  d = (LmnAtomRef)lmn_create_double_atom(strtod(s, &t));
+void float_of_string(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0, LmnLinkAttr t0, LmnAtomRef a1,
+                     LmnLinkAttr t1) {
+  char       *t;
+  LmnAtomRef  d;
+  char const *s = reinterpret_cast<LmnString *>(a0)->c_str();
+  t             = NULL;
+  d             = (LmnAtomRef)lmn_create_double_atom(strtod(s, &t));
   if (t == NULL || s == t) {
-    LmnSAtom a = lmn_mem_newatom(mem, lmn_functor_table->intern(ANONYMOUS,
-                                                         lmn_intern("fail"),
-                                                         1));
-    lmn_mem_newlink(mem,
-                    a1, t1, LMN_ATTR_GET_VALUE(t1),
-                    a, LMN_ATTR_MAKE_LINK(0), 0);
+    LmnSAtom a = lmn_mem_newatom(mem, lmn_functor_table->intern(ANONYMOUS, lmn_intern("fail"), 1));
+    lmn_mem_newlink(mem, a1, t1, LMN_ATTR_GET_VALUE(t1), a, LMN_ATTR_MAKE_LINK(0), 0);
   } else { /* 変換できた */
-    lmn_mem_newlink(mem,
-                    a1, t1, LMN_ATTR_GET_VALUE(t1),
-                    d, LMN_DBL_ATTR, 0);
+    lmn_mem_newlink(mem, a1, t1, LMN_ATTR_GET_VALUE(t1), d, LMN_DBL_ATTR, 0);
     lmn_mem_push_atom(mem, d, LMN_DBL_ATTR);
   }
 
   lmn_mem_delete_atom(mem, a0, t0);
 }
 
-void init_float(void)
-{
-  CCallback::lmn_register_c_fun("float_of_string", (void *)float_of_string, 2);
-}
+void init_float(void) { CCallback::lmn_register_c_fun("float_of_string", (void *)float_of_string, 2); }

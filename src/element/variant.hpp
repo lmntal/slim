@@ -47,58 +47,54 @@ namespace element {
 
 template <typename...> struct variant_storage_info;
 
-template <typename T, typename... Types>
-struct variant_storage_info<T, Types...> {
-  using base_type = variant_storage_info<Types...>;
-  static constexpr auto size =
-      (base_type::size > sizeof(T)) ? base_type::size : sizeof(T);
-  static constexpr auto align =
-      (base_type::align > alignof(T)) ? base_type::align : alignof(T);
+template <typename T, typename... Types> struct variant_storage_info<T, Types...> {
+  using base_type             = variant_storage_info<Types...>;
+  static constexpr auto size  = (base_type::size > sizeof(T)) ? base_type::size : sizeof(T);
+  static constexpr auto align = (base_type::align > alignof(T)) ? base_type::align : alignof(T);
 };
 
 template <typename Z> struct variant_storage_info<Z> {
-  static constexpr auto size = sizeof(Z);
+  static constexpr auto size  = sizeof(Z);
   static constexpr auto align = alignof(Z);
 };
 
 template <typename... Types>
 using variant_storage =
-    typename std::aligned_storage<variant_storage_info<Types...>::size,
-                                  variant_storage_info<Types...>::align>::type;
+    typename std::aligned_storage<variant_storage_info<Types...>::size, variant_storage_info<Types...>::align>::type;
 
 template <typename T, typename U, typename... Types>
-static constexpr auto variant_type_index() -> typename std::enable_if<
-    std::is_same<typename std::decay<T>::type, U>::value, size_t>::type {
+static constexpr auto variant_type_index() ->
+    typename std::enable_if<std::is_same<typename std::decay<T>::type, U>::value, size_t>::type {
   return 0;
 }
 
 template <typename T, typename U, typename... Types>
-static constexpr auto variant_type_index() -> typename std::enable_if<
-    !std::is_same<typename std::decay<T>::type, U>::value, size_t>::type {
+static constexpr auto variant_type_index() ->
+    typename std::enable_if<!std::is_same<typename std::decay<T>::type, U>::value, size_t>::type {
   return 1 + variant_type_index<T, Types...>();
 }
 
 template <typename T, typename U, typename... Types>
-static auto variant_store(void *p, T &&t) -> typename std::enable_if<
-    std::is_same<U, typename std::decay<T>::type>::value>::type {
+static auto variant_store(void *p, T &&t) ->
+    typename std::enable_if<std::is_same<U, typename std::decay<T>::type>::value>::type {
   ::new (p) typename std::decay<T>::type(std::forward<U>(t));
 }
 
 template <typename T, typename U, typename... Types>
-static auto variant_store(void *p, T &&t) -> typename std::enable_if<
-    !std::is_same<U, typename std::decay<T>::type>::value>::type {
+static auto variant_store(void *p, T &&t) ->
+    typename std::enable_if<!std::is_same<U, typename std::decay<T>::type>::value>::type {
   variant_store<T, Types...>(p, std::forward<T>(t));
 }
 
 template <typename T, typename U, typename... Types>
-static auto variant_store(void *p, const T &t) -> typename std::enable_if<
-    std::is_same<U, typename std::decay<T>::type>::value>::type {
+static auto variant_store(void *p, T const &t) ->
+    typename std::enable_if<std::is_same<U, typename std::decay<T>::type>::value>::type {
   ::new (p) typename std::decay<T>::type(t);
 }
 
 template <typename T, typename U, typename... Types>
-static auto variant_store(void *p, const T &t) -> typename std::enable_if<
-    !std::is_same<U, typename std::decay<T>::type>::value>::type {
+static auto variant_store(void *p, T const &t) ->
+    typename std::enable_if<!std::is_same<U, typename std::decay<T>::type>::value>::type {
   variant_store<T, Types...>(p, t);
 }
 
@@ -108,45 +104,36 @@ template <typename T, typename... Types> T &get(variant<Types...> &v) {
   return *static_cast<T *>(static_cast<void *>(&v.storage_));
 }
 
-template <typename T, typename... Types>
-const T &get(const variant<Types...> &v) {
-  return *static_cast<const T *>(static_cast<const void *>(&v.storage_));
+template <typename T, typename... Types> T const &get(variant<Types...> const &v) {
+  return *static_cast<T const *>(static_cast<void const *>(&v.storage_));
 }
 
 template <size_t I, typename Variant>
 auto get(Variant &&v)
-    -> decltype(get<typename std::tuple_element<
-                    I, typename std::decay<Variant>::type::type_tuple>::type>(
+    -> decltype(get<typename std::tuple_element<I, typename std::decay<Variant>::type::type_tuple>::type>(
         std::forward<Variant>(v))) {
-  return get<typename std::tuple_element<
-      I, typename std::decay<Variant>::type::type_tuple>::type>(
+  return get<typename std::tuple_element<I, typename std::decay<Variant>::type::type_tuple>::type>(
       std::forward<Variant>(v));
 }
 
 template <size_t I, typename Visitor, typename Variant,
           typename TypeTuple = typename std::decay<Variant>::type::type_tuple,
-          typename std::enable_if<(I == std::tuple_size<TypeTuple>::value - 1),
-                                  std::nullptr_t>::type = nullptr>
-constexpr auto visit_impl(Visitor &&vis, Variant &&var)
-    -> decltype(vis(get<I>(std::forward<Variant>(var)))) {
+          typename std::enable_if<(I == std::tuple_size<TypeTuple>::value - 1), std::nullptr_t>::type = nullptr>
+constexpr auto visit_impl(Visitor &&vis, Variant &&var) -> decltype(vis(get<I>(std::forward<Variant>(var)))) {
   return vis(get<I>(std::forward<Variant>(var)));
 }
 
 template <size_t I, typename Visitor, typename Variant,
           typename TypeTuple = typename std::decay<Variant>::type::type_tuple,
-          typename std::enable_if<(I < std::tuple_size<TypeTuple>::value - 1),
-                                  std::nullptr_t>::type = nullptr>
-constexpr auto visit_impl(Visitor &&vis, Variant &&var)
-    -> decltype(vis(get<I>(std::forward<Variant>(var)))) {
+          typename std::enable_if<(I < std::tuple_size<TypeTuple>::value - 1), std::nullptr_t>::type = nullptr>
+constexpr auto visit_impl(Visitor &&vis, Variant &&var) -> decltype(vis(get<I>(std::forward<Variant>(var)))) {
   return (var.index() == I) ? vis(get<I>(std::forward<Variant>(var)))
-                            : visit_impl<I + 1>(std::forward<Visitor>(vis),
-                                                std::forward<Variant>(var));
+                            : visit_impl<I + 1>(std::forward<Visitor>(vis), std::forward<Variant>(var));
 }
 
 template <typename Visitor, typename Variant>
 auto visit(Visitor &&vis, Variant &&var)
-    -> decltype(visit_impl<0>(std::forward<Visitor>(vis),
-                              std::forward<Variant>(var))) {
+    -> decltype(visit_impl<0>(std::forward<Visitor>(vis), std::forward<Variant>(var))) {
   return visit_impl<0>(std::forward<Visitor>(vis), std::forward<Variant>(var));
 }
 
@@ -159,28 +146,20 @@ template <typename... Types> struct variant {
   struct loader {
     void *p;
     loader(void *storage) : p(storage) {}
-    template <typename T> void operator()(T &&t) {
-      variant_store<T, Types...>(p, std::forward<T>(t));
-    }
-    template <typename T> void operator()(const T &t) {
-      variant_store<T, Types...>(p, t);
-    }
+    template <typename T> void operator()(T &&t) { variant_store<T, Types...>(p, std::forward<T>(t)); }
+    template <typename T> void operator()(T const &t) { variant_store<T, Types...>(p, t); }
   };
 
   struct equalizer {
-    const slim::element::variant<Types...> &v;
-    equalizer(const slim::element::variant<Types...> &v) : v(v) {}
-    template <typename T> bool operator()(const T &w) {
-      return slim::element::get<T>(v) == w;
-    }
+    slim::element::variant<Types...> const &v;
+    equalizer(slim::element::variant<Types...> const &v) : v(v) {}
+    template <typename T> bool operator()(T const &w) { return slim::element::get<T>(v) == w; }
   };
 
   struct comparator {
-    const slim::element::variant<Types...> &v;
-    comparator(const slim::element::variant<Types...> &v) : v(v) {}
-    template <typename T> bool operator()(const T &w) {
-      return slim::element::get<T>(v) < w;
-    }
+    slim::element::variant<Types...> const &v;
+    comparator(slim::element::variant<Types...> const &v) : v(v) {}
+    template <typename T> bool operator()(T const &w) { return slim::element::get<T>(v) < w; }
   };
 
   variant() {
@@ -189,7 +168,7 @@ template <typename... Types> struct variant {
     index_ = variant_type_index<T, Types...>();
   }
 
-  variant(const variant &other) {
+  variant(variant const &other) {
     visit(loader(&storage_), other);
     index_ = other.index();
   }
@@ -198,20 +177,18 @@ template <typename... Types> struct variant {
     visit(loader(&storage_), std::move(other));
     index_ = other.index();
   }
-  template <typename T,
-            typename std::enable_if<
-                !std::is_same<typename std::decay<T>::type, variant>::value,
-                std::nullptr_t>::type = nullptr>
+  template <typename T, typename std::enable_if<!std::is_same<typename std::decay<T>::type, variant>::value,
+                                                std::nullptr_t>::type = nullptr>
   variant(T &&t) {
     variant_store<T, Types...>(&storage_, std::forward<T>(t));
     index_ = variant_type_index<T, Types...>();
   }
-  variant &operator=(const variant &rhs) {
+  variant &operator=(variant const &rhs) {
     visit(loader(&storage_), rhs);
     index_ = rhs.index();
     return *this;
   }
-  template <typename... Ts> variant &operator=(const variant<Ts...> &rhs) {
+  template <typename... Ts> variant &operator=(variant<Ts...> const &rhs) {
     visit(deleter(), *this);
     visit(loader(&storage_), rhs);
     index_ = rhs.index();
@@ -222,12 +199,11 @@ template <typename... Types> struct variant {
 
   size_t index() const { return index_; }
 
-  size_t index_;
+  size_t                    index_;
   variant_storage<Types...> storage_;
 };
 
-template <class T, class... Types>
-constexpr bool holds_alternative(const variant<Types...> &v) noexcept {
+template <class T, class... Types> constexpr bool holds_alternative(variant<Types...> const &v) noexcept {
   return variant_type_index<T, Types...>() == v.index();
 }
 
@@ -244,27 +220,20 @@ constexpr bool operator!=(monostate, monostate) noexcept { return false; }
 } // namespace slim
 
 template <class... Types>
-constexpr bool operator==(const slim::element::variant<Types...> &v,
-                          const slim::element::variant<Types...> &w) {
-  return (v.index() != w.index())
-             ? false
-             : slim::element::visit(
-                   typename slim::element::variant<Types...>::equalizer(v), w);
+constexpr bool operator==(slim::element::variant<Types...> const &v, slim::element::variant<Types...> const &w) {
+  return (v.index() != w.index()) ? false
+                                  : slim::element::visit(typename slim::element::variant<Types...>::equalizer(v), w);
 }
 
 template <class... Types>
-constexpr bool operator!=(const slim::element::variant<Types...> &v,
-                          const slim::element::variant<Types...> &w) {
+constexpr bool operator!=(slim::element::variant<Types...> const &v, slim::element::variant<Types...> const &w) {
   return !(v == w);
 }
 
 template <class... Types>
-constexpr bool operator<(const slim::element::variant<Types...> &v,
-                         const slim::element::variant<Types...> &w) {
+constexpr bool operator<(slim::element::variant<Types...> const &v, slim::element::variant<Types...> const &w) {
   return v.index() < w.index() ||
-         (v.index() == w.index() &&
-          slim::element::visit(
-              typename slim::element::variant<Types...>::comparator(v), w));
+         (v.index() == w.index() && slim::element::visit(typename slim::element::variant<Types...>::comparator(v), w));
 }
 
 #endif /* SLIM_ELEMENT_VARINT_HPP */

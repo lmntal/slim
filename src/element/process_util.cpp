@@ -40,13 +40,13 @@
 /* 外部プログラムの起動など、プロセス関連の便利関数の定義 */
 
 #include "process_util.h"
-#include <stdlib.h>
+#include <cstdlib>
 #include <sys/wait.h>
 
 /* program_pathにあるプログラムを引数argsで起動し、プログラムの出力のストリームを返す。*/
-FILE *run_program(const char *program_path, char **args) {
+FILE *run_program(char const *program_path, char **args) {
   pid_t pid;
-  int pipes[2];
+  int   pipes[2];
 
   if (pipe(pipes)) { /* fail : -1 */
     perror("pipe failed");

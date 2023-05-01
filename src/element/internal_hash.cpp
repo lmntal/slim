@@ -46,10 +46,10 @@
 #include "internal_hash.h"
 #include "../config.h"
 #include "util.h"
-#include <assert.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cassert>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 
 /* Hashtable
  *
@@ -80,7 +80,7 @@
 
 #define INT_HASH(val) ((val)*K)
 
-static void hashtbl_extend(SimpleHashtbl *ht);
+static void              hashtbl_extend(SimpleHashtbl *ht);
 static struct HashEntry *hashtbl_get_p(SimpleHashtbl *ht, HashKeyType key);
 
 /* HashMap <HashKeyType, HashValueType> */
@@ -102,12 +102,9 @@ void hashtbl_free(SimpleHashtbl *ht) {
   LMN_FREE(ht);
 }
 
-HashValueType hashtbl_get(SimpleHashtbl *ht, HashKeyType key) {
-  return hashtbl_get_p(ht, key)->data;
-}
+HashValueType hashtbl_get(SimpleHashtbl *ht, HashKeyType key) { return hashtbl_get_p(ht, key)->data; }
 
-HashValueType hashtbl_get_default(SimpleHashtbl *ht, HashKeyType key,
-                                  HashValueType default_value) {
+HashValueType hashtbl_get_default(SimpleHashtbl *ht, HashKeyType key, HashValueType default_value) {
   HashEntry *e = hashtbl_get_p(ht, key);
   if (e->key == EMPTY_KEY)
     return default_value;
@@ -115,9 +112,7 @@ HashValueType hashtbl_get_default(SimpleHashtbl *ht, HashKeyType key,
     return e->data;
 }
 
-int hashtbl_contains(SimpleHashtbl *ht, HashKeyType key) {
-  return hashtbl_get_p(ht, key)->key != EMPTY_KEY;
-}
+int hashtbl_contains(SimpleHashtbl *ht, HashKeyType key) { return hashtbl_get_p(ht, key)->key != EMPTY_KEY; }
 
 void hashtbl_put(SimpleHashtbl *ht, HashKeyType key, HashValueType data) {
   struct HashEntry *e;
@@ -134,16 +129,13 @@ void hashtbl_put(SimpleHashtbl *ht, HashKeyType key, HashValueType data) {
   }
 }
 
-void hashtbl_clear(SimpleHashtbl *ht) {
-  memset(ht->tbl, 0xffU, sizeof(struct HashEntry) * ht->cap);
-}
+void hashtbl_clear(SimpleHashtbl *ht) { memset(ht->tbl, 0xffU, sizeof(struct HashEntry) * ht->cap); }
 
 static struct HashEntry *hashtbl_get_p(SimpleHashtbl *ht, HashKeyType key) {
   HashKeyType probe;
   HashKeyType increment = (key | 1) & (ht->cap - 1);
 
-  for (probe = INT_HASH(key) & (ht->cap - 1);
-       ht->tbl[probe].key != EMPTY_KEY && ht->tbl[probe].key != key;
+  for (probe = INT_HASH(key) & (ht->cap - 1); ht->tbl[probe].key != EMPTY_KEY && ht->tbl[probe].key != key;
        probe = (probe + increment) & (ht->cap - 1)) {
   }
 
@@ -152,23 +144,23 @@ static struct HashEntry *hashtbl_get_p(SimpleHashtbl *ht, HashKeyType key) {
 
 static void hashtbl_extend(SimpleHashtbl *ht) {
   struct HashEntry *tbl, *e;
-  unsigned int i, cap;
+  unsigned int      i, cap;
 
   if (ht->cap == MAX_CAP) {
     fprintf(stderr, "hashtable capacity overflow\n");
     exit(1);
   }
 
-  cap = ht->cap;
-  tbl = ht->tbl;
+  cap     = ht->cap;
+  tbl     = ht->tbl;
   ht->cap <<= 1;
   ht->tbl = (HashEntry *)malloc(sizeof(struct HashEntry) * ht->cap);
   memset(ht->tbl, 0xffU, sizeof(struct HashEntry) * ht->cap);
 
   for (i = 0; i < cap; i++) {
     if (tbl[i].key != EMPTY_KEY) {
-      e = hashtbl_get_p(ht, tbl[i].key);
-      e->key = tbl[i].key;
+      e       = hashtbl_get_p(ht, tbl[i].key);
+      e->key  = tbl[i].key;
       e->data = tbl[i].data;
     }
   }
@@ -177,7 +169,7 @@ static void hashtbl_extend(SimpleHashtbl *ht) {
 
 HashIterator hashtbl_iterator(SimpleHashtbl *ht) {
   HashIterator iter;
-  iter.i = 0;
+  iter.i  = 0;
   iter.ht = ht;
   if (ht->cap > 0 && ht->tbl[iter.i].key >= DELETED_KEY) {
     hashtbliter_next(&iter);
@@ -198,13 +190,9 @@ HashSet::HashSet(unsigned int init_size) {
   memset(this->tbl, 0xffU, sizeof(HashKeyType) * this->cap);
 }
 
-HashSet::~HashSet() {
-  LMN_FREE(this->tbl);
-}
+HashSet::~HashSet() { LMN_FREE(this->tbl); }
 
-int HashSet::contains(HashKeyType key) {
-  return *this->get_p(key, EMPTY_KEY) != EMPTY_KEY;
-}
+int HashSet::contains(HashKeyType key) { return *this->get_p(key, EMPTY_KEY) != EMPTY_KEY; }
 
 static void hashset_extend(HashSet *set) {
   HashKeyType *tbl, *entry;
@@ -215,15 +203,15 @@ static void hashset_extend(HashSet *set) {
     exit(1);
   }
 
-  cap = set->cap;
-  tbl = set->tbl;
+  cap      = set->cap;
+  tbl      = set->tbl;
   set->cap <<= 1;
   set->tbl = (HashKeyType *)malloc(sizeof(HashKeyType) * set->cap);
   memset(set->tbl, 0xffU, sizeof(HashKeyType) * set->cap);
 
   for (i = 0; i < cap; i++) {
     if (tbl[i] != EMPTY_KEY) {
-      entry = set->get_p(tbl[i], DELETED_KEY); /* 新しいindex */
+      entry  = set->get_p(tbl[i], DELETED_KEY); /* 新しいindex */
       *entry = tbl[i];
     }
   }
@@ -258,7 +246,7 @@ void HashSet::delete_entry(HashKeyType key) {
 
 HashSetIterator hashset_iterator(HashSet *set) {
   HashSetIterator it;
-  it.i = 0;
+  it.i   = 0;
   it.set = set;
   if (set->cap > 0 && set->tbl[it.i] >= DELETED_KEY) {
     hashsetiter_next(&it);
@@ -271,12 +259,11 @@ void hashsetiter_next(HashSetIterator *it) {
     ;
 }
 
-HashKeyType * HashSet::get_p(HashKeyType key, unsigned long dummykey) {
+HashKeyType *HashSet::get_p(HashKeyType key, unsigned long dummykey) {
   HashKeyType probe;
   HashKeyType increment = (key | 1) & (this->cap - 1);
 
-  for (probe = INT_HASH(key) & (this->cap - 1);
-       this->tbl[probe] < dummykey && this->tbl[probe] != key;
+  for (probe = INT_HASH(key) & (this->cap - 1); this->tbl[probe] < dummykey && this->tbl[probe] != key;
        probe = (probe + increment) & (this->cap - 1)) {
   }
   return &(this->tbl[probe]);

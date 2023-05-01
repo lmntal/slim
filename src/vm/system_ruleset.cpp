@@ -47,8 +47,7 @@
 /* prototypes */
 
 /* delete out proxies connected each other */
-static BOOL delete_redundant_outproxies(LmnReactCxtRef rc, LmnMembraneRef mem,
-                                        LmnRuleRef rule) {
+static BOOL delete_redundant_outproxies(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule) {
   AtomListEntryRef ent;
   LmnSymbolAtomRef o0;
 
@@ -68,8 +67,8 @@ static BOOL delete_redundant_outproxies(LmnReactCxtRef rc, LmnMembraneRef mem,
               if (o1->get_functor() == LMN_OUT_PROXY_FUNCTOR) {
                 LmnSymbolAtomRef i0;
                 LmnSymbolAtomRef i1;
-                LmnMembraneRef m0;
-                LmnMembraneRef m1;
+                LmnMembraneRef   m0;
+                LmnMembraneRef   m1;
 
                 i0 = (LmnSymbolAtomRef)o0->get_link(0);
                 i1 = (LmnSymbolAtomRef)o1->get_link(0);
@@ -95,8 +94,7 @@ static BOOL delete_redundant_outproxies(LmnReactCxtRef rc, LmnMembraneRef mem,
 }
 
 /* delete in proxies connected each other */
-static BOOL delete_redundant_inproxies(LmnReactCxtRef rc, LmnMembraneRef mem,
-                                       LmnRuleRef rule) {
+static BOOL delete_redundant_inproxies(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule) {
   AtomListEntryRef ent;
   LmnSymbolAtomRef o0;
 
@@ -116,8 +114,7 @@ static BOOL delete_redundant_inproxies(LmnReactCxtRef rc, LmnMembraneRef mem,
                 return FALSE;
               i1 = (LmnSymbolAtomRef)i0->get_link(1);
               if (i1->get_functor() == LMN_IN_PROXY_FUNCTOR) {
-                LmnSymbolAtomRef o1 =
-                    (LmnSymbolAtomRef)i1->get_link(0);
+                LmnSymbolAtomRef o1 = (LmnSymbolAtomRef)i1->get_link(0);
                 ent->remove(o0);
                 ent->remove(o1);
                 lmn_delete_atom(o0);
@@ -140,10 +137,10 @@ static BOOL mem_eq(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule) {
     return FALSE;
 
   EACH_ATOM(op, ent, ({
-              LmnMembraneRef mem0, mem1;
+              LmnMembraneRef   mem0, mem1;
               LmnSymbolAtomRef out0, in0, out1, in1, ret, result_atom;
               LmnSymbolAtomRef temp0, temp1;
-              LmnLinkAttr out_attr0, out_attr1, ret_attr;
+              LmnLinkAttr      out_attr0, out_attr1, ret_attr;
 
               out_attr0 = op->get_attr(0);
               if (LMN_ATTR_IS_DATA(out_attr0))
@@ -154,7 +151,7 @@ static BOOL mem_eq(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule) {
                 return FALSE;
               }
 
-              in0 = (LmnSymbolAtomRef)out0->get_link(0);
+              in0       = (LmnSymbolAtomRef)out0->get_link(0);
               out_attr1 = op->get_attr(1);
               if (LMN_ATTR_IS_DATA(out_attr1)) {
                 return FALSE;
@@ -172,16 +169,16 @@ static BOOL mem_eq(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule) {
 
               /* roots of mem0 and mem1, connected to their outside proxies,
                  are temporarily set to unary atoms with the same functor */
-              temp0 = lmn_mem_newatom(mem, LMN_TRUE_FUNCTOR);
-              ret = (LmnSymbolAtomRef)op->get_link(0);
+              temp0    = lmn_mem_newatom(mem, LMN_TRUE_FUNCTOR);
+              ret      = (LmnSymbolAtomRef)op->get_link(0);
               ret_attr = op->get_attr(0);
               temp0->set_link(0, ret);
               temp0->set_attr(0, ret_attr);
               ret->set_link(LMN_ATTR_GET_VALUE(ret_attr), temp0);
               ret->set_attr(LMN_ATTR_GET_VALUE(ret_attr), LMN_ATTR_MAKE_LINK(0));
 
-              temp1 = lmn_mem_newatom(mem, LMN_TRUE_FUNCTOR);
-              ret = (LmnSymbolAtomRef)op->get_link(1);
+              temp1    = lmn_mem_newatom(mem, LMN_TRUE_FUNCTOR);
+              ret      = (LmnSymbolAtomRef)op->get_link(1);
               ret_attr = op->get_attr(1);
               temp1->set_link(0, ret);
               temp1->set_attr(0, ret_attr);
@@ -197,7 +194,7 @@ static BOOL mem_eq(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule) {
               lmn_mem_unify_atom_args(mem, temp0, 0, op, 2);
               lmn_mem_unify_atom_args(mem, temp1, 0, op, 3);
 
-              ret = (LmnSymbolAtomRef)op->get_link(4);
+              ret      = (LmnSymbolAtomRef)op->get_link(4);
               ret_attr = op->get_attr(4);
               if (LMN_ATTR_IS_DATA(ret_attr)) {
                 result_atom->set_link(0, ret);

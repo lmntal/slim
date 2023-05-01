@@ -18,7 +18,7 @@
  */
 
 #include <iterator>
-#include <stddef.h>
+#include <cstddef>
 #include <utility>
 
 #ifndef _

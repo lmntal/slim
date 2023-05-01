@@ -47,8 +47,8 @@
  */
 
 #include "../lmntal.h"
-#include "element/element.h"
 #include "automata.h"
+#include "element/element.h"
 
 struct StateSpace;
 
@@ -60,7 +60,6 @@ struct StateSpace;
 
 struct LmnWorker;
 
-
 /**
  *  Worker Group
  */
@@ -70,70 +69,69 @@ class LmnWorkerGroup {
   /* 4bytes alignment (64-bit processor) */
   LmnWorker **workers; /* 参加Worker */
 
-  BOOL terminated;    /* 終了した場合に真 */
-  volatile BOOL stop; /* 待ち合わせ中に真 */
-  BOOL do_search;     /* 反例の探索を行う場合に真 */
-  BOOL
-      do_exhaustive; /* 反例を1つ見つけた場合に探索を!!打ち切らない場合!!に真 */
-  BOOL do_para_algo; /* 並列アルゴリズムを使用する場合に真 */
-  volatile BOOL mc_exit; /* 反例の発見により探索を打ち切る場合に真 */
-  BOOL error_exist; /* 反例が存在する場合に真 */
+  BOOL          terminated;    /* 終了した場合に真 */
+  volatile BOOL stop;          /* 待ち合わせ中に真 */
+  BOOL          do_search;     /* 反例の探索を行う場合に真 */
+  BOOL          do_exhaustive; /* 反例を1つ見つけた場合に探索を!!打ち切らない場合!!に真 */
+  BOOL          do_para_algo;  /* 並列アルゴリズムを使用する場合に真 */
+  volatile BOOL mc_exit;       /* 反例の発見により探索を打ち切る場合に真 */
+  BOOL          error_exist;   /* 反例が存在する場合に真 */
 
-  State *opt_end_state; /* the state has optimized cost */
-  EWLock *ewlock;       /* elock: 最適状態用ロック
-                         * wlock: 各状態のコストアップデート用 */
+  State  *opt_end_state; /* the state has optimized cost */
+  EWLock *ewlock;        /* elock: 最適状態用ロック
+                          * wlock: 各状態のコストアップデート用 */
 
   FILE *out; /* 出力先 */
- 
-  LmnWorkerGroup(const LmnWorkerGroup &lwg);
+
+  LmnWorkerGroup(LmnWorkerGroup const &lwg);
   LmnWorker *workers_get_entry(unsigned int i);
-  void workers_set_entry(unsigned int i, LmnWorker *w);
-  void workers_free(unsigned int w_num);
-  void workers_gen(unsigned int w_num, AutomataRef a, Vector *psyms, BOOL flags);//private?
-  BOOL flags_init(AutomataRef property_a);
-  void ring_alignment();
+  void       workers_set_entry(unsigned int i, LmnWorker *w);
+  void       workers_free(unsigned int w_num);
+  void       workers_gen(unsigned int w_num, AutomataRef a, Vector *psyms, BOOL flags); // private?
+  BOOL       flags_init(AutomataRef property_a);
+  void       ring_alignment();
 
 public:
 #ifdef OPT_WORKERS_SYNC
-  volatile unsigned int synchronizer;
-  volatile unsigned int workers_synchronizer();
+  unsigned int volatile synchronizer;
+  unsigned int volatile workers_synchronizer();
   void workers_set_synchronizer(unsigned int i);
 #else
-  lmn_barrier_t synchronizer; /* 待ち合わせ用オブジェクト */
-  lmn_barrier_t *workers_synchronizer(); //koredato private ni dekinai by sumiya
-  void workers_set_synchronizer(lmn_barrier_t);
+  lmn_barrier_t  synchronizer;           /* 待ち合わせ用オブジェクト */
+  lmn_barrier_t *workers_synchronizer(); // koredato private ni dekinai by sumiya
+  void           workers_set_synchronizer(lmn_barrier_t);
 #endif
 
   LmnWorkerGroup();
   LmnWorkerGroup(AutomataRef a, Vector *psyms, int thread_num);
   ~LmnWorkerGroup();
   volatile BOOL workers_are_exit();
-  void workers_set_exit();
-  void workers_unset_exit();
-  BOOL workers_have_error();
-  void workers_found_error();
-  void workers_unfound_error();
-  BOOL workers_get_do_palgorithm();
-  void workers_set_do_palgorithm();
-  void workers_unset_do_palgorithm();
-  FILE workers_out();
+  void          workers_set_exit();
+  void          workers_unset_exit();
+  BOOL          workers_have_error();
+  void          workers_found_error();
+  void          workers_unfound_error();
+  BOOL          workers_get_do_palgorithm();
+  void          workers_set_do_palgorithm();
+  void          workers_unset_do_palgorithm();
+  FILE          workers_out();
 
-  State *workers_get_opt_end_state();
-  void workers_set_opt_end_state(State *s);
+  State  *workers_get_opt_end_state();
+  void    workers_set_opt_end_state(State *s);
   EWLock *workers_get_ewlock();
-  void workers_set_ewlock(EWLock *e);
-  void workers_opt_end_lock();
-  void workers_opt_end_unlock();
-  void workers_state_lock(mtx_data_t id);
-  void workers_state_unlock(mtx_data_t id);
+  void    workers_set_ewlock(EWLock *e);
+  void    workers_opt_end_lock();
+  void    workers_opt_end_unlock();
+  void    workers_state_lock(mtx_data_t id);
+  void    workers_state_unlock(mtx_data_t id);
 
   BOOL workers_are_terminated();
   void workers_set_terminated();
   void workers_unset_terminated();
 
   volatile BOOL workers_are_stop();
-  void workers_set_stop();
-  void workers_unset_stop();
+  void          workers_set_stop();
+  void          workers_unset_stop();
 
   BOOL workers_are_do_search();
   void workers_set_do_search();
@@ -144,16 +142,15 @@ public:
   void workers_unset_do_exhaustive();
 
   unsigned int workers_get_entried_num();
-  void workers_set_entried_num(unsigned int i);
+  void         workers_set_entried_num(unsigned int i);
 
   LmnWorker *get_worker(unsigned long id);
-  LmnWorker *workers_get_my_worker(); 
-  void launch_lmn_workers();
-  LmnCost opt_cost();
-  void update_opt_cost(State *new_s, BOOL f);
-  BOOL termination_detection(int id);
-  void lmn_workers_synchronization(unsigned long id, void (*func)(LmnWorker *w));
-
+  LmnWorker *workers_get_my_worker();
+  void       launch_lmn_workers();
+  LmnCost    opt_cost();
+  void       update_opt_cost(State *new_s, BOOL f);
+  BOOL       termination_detection(int id);
+  void       lmn_workers_synchronization(unsigned long id, void (*func)(LmnWorker *w));
 };
 /**
  *  Objects for Model Checking
@@ -161,8 +158,8 @@ public:
 
 struct LmnMCObj {
   LmnWorker *owner;
-  BYTE type;
-  void *obj;                     /* 任意のデータ */
+  BYTE       type;
+  void      *obj;                /* 任意のデータ */
   void (*init)(LmnWorker *);     /* objの初期化関数 */
   void (*finalize)(LmnWorker *); /* objの後始末関数 */
 };
@@ -171,15 +168,15 @@ struct LmnMCObj {
 #define mc_obj_set(MC, O) ((MC)->obj = (O))
 #define mc_type(MC) ((MC)->type)
 #define mc_type_set(MC, T) ((MC)->type = (T))
-#define mc_init_f(MC)                                                          \
-  if ((MC)->init) {                                                            \
-    (*(MC)->init)((MC)->owner);                                                \
+#define mc_init_f(MC)                                                                                                  \
+  if ((MC)->init) {                                                                                                    \
+    (*(MC)->init)((MC)->owner);                                                                                        \
   }
 #define mc_init_f_set(MC, FP) ((MC)->init = (FP))
 #define mc_finalize_f_set(MC, FP) ((MC)->finalize = (FP))
-#define mc_finalize_f(MC)                                                      \
-  if ((MC)->finalize) {                                                        \
-    (*(MC)->finalize)((MC)->owner);                                            \
+#define mc_finalize_f(MC)                                                                                              \
+  if ((MC)->finalize) {                                                                                                \
+    (*(MC)->finalize)((MC)->owner);                                                                                    \
   }
 
 /**
@@ -188,9 +185,9 @@ struct LmnMCObj {
 
 struct LmnWorker {
   lmn_thread_t pth;         /* スレッド識別子(pthread_t) */
-  volatile unsigned int id; /* Natural integer id (lmn_thread_id) */
+  unsigned int volatile id; /* Natural integer id (lmn_thread_id) */
 
-  BOOL f_end; /* Workerの終了検知判定用フラグ. 任意のWorkerが操作可能 */
+  BOOL f_end;  /* Workerの終了検知判定用フラグ. 任意のWorkerが操作可能 */
   BOOL f_end2; /* Workerの終了検知判定用フラグ. 任意のWorkerが操作可能 */
   BYTE f_safe; /* Workerに割り当てられたスレッドのみWritableなフラグ */
   BYTE f_exec; /* 実行時オプションをローカルに記録 */
@@ -200,15 +197,15 @@ struct LmnWorker {
 
   LmnMCObj generator;
   LmnMCObj explorer;
-  BOOL is_explorer;
+  BOOL     is_explorer;
 
   void (*start)(struct LmnWorker *); /* 実行関数 */
   BOOL (*check)(struct LmnWorker *); /* 終了検知関数 */
 
-  StateSpaceRef states; /* Pointer to StateSpace */
-  std::unique_ptr<MCReactContext> cxt;   /* ReactContext Object */
-  LmnWorker *next;      /* Pointer to Neighbor Worker */
-  LmnWorkerGroup *group;
+  StateSpaceRef                   states; /* Pointer to StateSpace */
+  std::unique_ptr<MCReactContext> cxt;    /* ReactContext Object */
+  LmnWorker                      *next;   /* Pointer to Neighbor Worker */
+  LmnWorkerGroup                 *group;
 
   Vector *invalid_seeds;
   Vector *cycles;
@@ -248,21 +245,21 @@ struct LmnWorker {
 #define worker_is_generator(W) (!worker_is_explorer(W))
 #define worker_generator_set(W) ((W)->is_explorer = FALSE)
 
-#define worker_init(W)                                                         \
-  do {                                                                         \
-    mc_init_f(&worker_generator(W));                                           \
-    mc_init_f(&worker_explorer(W));                                            \
+#define worker_init(W)                                                                                                 \
+  do {                                                                                                                 \
+    mc_init_f(&worker_generator(W));                                                                                   \
+    mc_init_f(&worker_explorer(W));                                                                                    \
   } while (0)
 
-#define worker_finalize(W)                                                     \
-  do {                                                                         \
-    mc_finalize_f(&worker_generator(W));                                       \
-    mc_finalize_f(&worker_explorer(W));                                        \
+#define worker_finalize(W)                                                                                             \
+  do {                                                                                                                 \
+    mc_finalize_f(&worker_generator(W));                                                                               \
+    mc_finalize_f(&worker_explorer(W));                                                                                \
   } while (0)
 
-#define worker_start(W)                                                        \
-  if ((W)->start) {                                                            \
-    (*(W)->start)(W);                                                          \
+#define worker_start(W)                                                                                                \
+  if ((W)->start) {                                                                                                    \
+    (*(W)->start)(W);                                                                                                  \
   }
 
 static inline BOOL worker_check(LmnWorker *w) {
@@ -274,11 +271,9 @@ static inline BOOL worker_check(LmnWorker *w) {
 }
 
 #define worker_generator_init_f_set(W, F) mc_init_f_set(&worker_generator(W), F)
-#define worker_generator_finalize_f_set(W, F)                                  \
-  mc_finalize_f_set(&worker_generator(W), F)
+#define worker_generator_finalize_f_set(W, F) mc_finalize_f_set(&worker_generator(W), F)
 #define worker_explorer_init_f_set(W, F) mc_init_f_set(&worker_explorer(W), F)
-#define worker_explorer_finalize_f_set(W, F)                                   \
-  mc_finalize_f_set(&worker_explorer(W), F)
+#define worker_explorer_finalize_f_set(W, F) mc_finalize_f_set(&worker_explorer(W), F)
 
 /** Macros for f_safe
  */
@@ -419,10 +414,8 @@ static inline BOOL worker_check(LmnWorker *w) {
 #define worker_set_ble(W) (mc_set_ble(worker_explorer_type(W)))
 #define worker_use_mapndfs(W) (mc_use_mapndfs(worker_explorer_type(W)))
 #define worker_set_mapndfs(W) (mc_set_mapndfs(worker_explorer_type(W)))
-#define worker_use_mapndfs_weak(W)                                             \
-  (mc_use_mapndfs_weak(worker_explorer_type(W)))
-#define worker_set_mapndfs_weak(W)                                             \
-  (mc_set_mapndfs_weak(worker_explorer_type(W)))
+#define worker_use_mapndfs_weak(W) (mc_use_mapndfs_weak(worker_explorer_type(W)))
+#define worker_set_mapndfs_weak(W) (mc_set_mapndfs_weak(worker_explorer_type(W)))
 #define worker_use_mcndfs(W) (mc_use_mcndfs(worker_explorer_type(W)))
 #define worker_set_mcndfs(W) (mc_set_mcndfs(worker_explorer_type(W)))
 
@@ -433,11 +426,11 @@ static inline BOOL worker_check(LmnWorker *w) {
 
 /** ProtoTypes
  */
-BOOL lmn_workers_termination_detection_for_rings(LmnWorker *root);
-void lmn_workers_synchronization(LmnWorker *root, void (*func)(LmnWorker *w));
+BOOL       lmn_workers_termination_detection_for_rings(LmnWorker *root);
+void       lmn_workers_synchronization(LmnWorker *root, void (*func)(LmnWorker *w));
 LmnWorker *lmn_worker_make_minimal(void);
 LmnWorker *lmn_worker_make(StateSpaceRef ss, unsigned long id, BOOL flags);
-void lmn_worker_free(LmnWorker *w);
+void       lmn_worker_free(LmnWorker *w);
 
 LmnWorker *worker_next_generator(LmnWorker *w);
 

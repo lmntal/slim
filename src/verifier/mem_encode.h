@@ -48,7 +48,6 @@
 #include "delta_membrane.h"
 #include "mem_encode/lmn_binstr.hpp"
 
-
 #define BS_COMP_Z (0x01U)
 #define BS_COMP_D (0x01U << 1)
 
@@ -69,22 +68,22 @@ void mem_isom_init(void);
 void mem_isom_finalize(void);
 void set_functor_priority(LmnFunctor f, int priority);
 
-LmnBinStrRef lmn_mem_encode(LmnMembraneRef mem);
-LmnBinStrRef lmn_mem_encode_delta(struct MemDeltaRoot *d);
-int binstr_compare(const LmnBinStrRef a, const LmnBinStrRef b);
-unsigned long binstr_hash(const LmnBinStrRef a);
-int binstr_byte_size(LmnBinStrRef p);
-LmnBinStrRef lmn_binstr_make(unsigned int size);
-LmnBinStrRef lmn_binstr_copy(LmnBinStrRef src_bs);
+LmnBinStrRef   lmn_mem_encode(LmnMembraneRef mem);
+LmnBinStrRef   lmn_mem_encode_delta(struct MemDeltaRoot *d);
+int            binstr_compare(const LmnBinStrRef a, const LmnBinStrRef b);
+unsigned long  binstr_hash(const LmnBinStrRef a);
+int            binstr_byte_size(LmnBinStrRef p);
+LmnBinStrRef   lmn_binstr_make(unsigned int size);
+LmnBinStrRef   lmn_binstr_copy(LmnBinStrRef src_bs);
 LmnMembraneRef lmn_binstr_decode(const LmnBinStrRef bs);
 
 BOOL lmn_mem_equals_enc(LmnBinStrRef bs, LmnMembraneRef mem);
 
 void lmn_binstr_free(LmnBinStrRef p);
-//void lmn_binstr_dump(const LmnBinStrRef bs);
+// void lmn_binstr_dump(const LmnBinStrRef bs);
 unsigned long lmn_binstr_space(struct LmnBinStr *bs);
-LmnBinStrRef lmn_mem_to_binstr(LmnMembraneRef mem);
-LmnBinStrRef lmn_mem_to_binstr_delta(struct MemDeltaRoot *d);
+LmnBinStrRef  lmn_mem_to_binstr(LmnMembraneRef mem);
+LmnBinStrRef  lmn_mem_to_binstr_delta(struct MemDeltaRoot *d);
 
 /* @} */
 

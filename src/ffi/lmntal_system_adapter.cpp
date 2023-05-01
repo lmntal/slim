@@ -37,40 +37,36 @@
  * $Id$
  */
 
-#include <stdio.h>
-#include <stdarg.h>
-#include <string.h>
-#include <stdlib.h>
 #include "lmntal_system_adapter.h"
-#include "lmntal.h"
 #include "arch.h"
 #include "element/element.h"
+#include "lmntal.h"
+#include <cstdarg>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 
 using file_ptr = std::unique_ptr<FILE, decltype(&fclose)>;
 
 /* Java処理系によるコンパイル時に用いる最適化オプション */
-const char* OPTIMIZE_FLAGS[] = {"-O0",
-                                "-O1",
-                                "-O2",
-                                "-O3"};
+char const *OPTIMIZE_FLAGS[] = {"-O0", "-O1", "-O2", "-O3"};
 
 #define LMNTAL_BIN_REL_PATH "/bin/lmntal"
 #define OPT_SLIM_CODE "--slimcode"
 #define OPT_COMPILE_RULE "--compile-rule"
 #define OPT_EVAL "-e"
-const char* HYPERLINK_FLAG = "--hl-opt";
+char const *HYPERLINK_FLAG = "--hl-opt";
 
 /* コンパイラフラグの最大長。バッファあふれの対策 */
 #define CFLAGS_MAX_SIZE 1024
 
-static void lmntal_build_cmd(char **program, char **ret_args[],  va_list opt_args);
-static void add_arg(Vector *args, const char *arg);
-static FILE *run_lmntal_system(int dummy, ... );
+static void  lmntal_build_cmd(char **program, char **ret_args[], va_list opt_args);
+static void  add_arg(Vector *args, char const *arg);
+static FILE *run_lmntal_system(int dummy, ...);
 
-void add_arg(Vector *args, const char *arg)
-{
+void add_arg(Vector *args, char const *arg) {
   args->push((vec_data_t)LMN_CALLOC<char>(strlen(arg) + 1));
-  sprintf((char *)args->get(args->get_num()-1), "%s", arg);
+  sprintf((char *)args->get(args->get_num() - 1), "%s", arg);
 }
 
 /* LMNtal systemを呼ぶためのコマンドと引数を構築する。
@@ -78,13 +74,11 @@ void add_arg(Vector *args, const char *arg)
    programにはコマンドのパス文字列を返す
    ret_argsにはコマンドの引数を返す。ret_argsの最後の要素は0である。
 */
-void lmntal_build_cmd(char **program, char **ret_args[], va_list opt_args) 
-{
-  const char *lmntal_home = getenv(ENV_LMNTAL_HOME);
-  Vector *args = new Vector(16);
+void lmntal_build_cmd(char **program, char **ret_args[], va_list opt_args) {
+  char const *lmntal_home = getenv(ENV_LMNTAL_HOME);
+  Vector     *args        = new Vector(16);
 
-  *program = LMN_CALLOC<char>(
-                        strlen(lmntal_home) + strlen(LMNTAL_BIN_REL_PATH) + 1);
+  *program                = LMN_CALLOC<char>(strlen(lmntal_home) + strlen(LMNTAL_BIN_REL_PATH) + 1);
   sprintf(*program, "%s%s", lmntal_home, LMNTAL_BIN_REL_PATH);
 
   add_arg(args, ""); /* 第0引数には何か適当に入れておく */
@@ -102,7 +96,7 @@ void lmntal_build_cmd(char **program, char **ret_args[], va_list opt_args)
 
   /* opt_argsにある引数を追加 */
   while (TRUE) {
-    char *p = va_arg(opt_args, char*);
+    char *p = va_arg(opt_args, char *);
     if (!p)
       break;
     add_arg(args, p);
@@ -112,7 +106,7 @@ void lmntal_build_cmd(char **program, char **ret_args[], va_list opt_args)
   args->push(0);
   { /* vectorの要素をコピー */
     unsigned int i;
-    *ret_args = LMN_CALLOC<char*>(args->get_num());
+    *ret_args = LMN_CALLOC<char *>(args->get_num());
     for (i = 0; i < args->get_num(); i++) {
       (*ret_args)[i] = (char *)args->get(i);
     }
@@ -122,20 +116,15 @@ void lmntal_build_cmd(char **program, char **ret_args[], va_list opt_args)
 }
 
 /* LMNtalソースコードのファイルを中間言語にコンパイルし結果のストリームを返す*/
-file_ptr lmntal_compile_file(const char *filename) {
-  return file_ptr(run_lmntal_system(0 /*dummy*/, OPT_SLIM_CODE, filename, 0),
-                  fclose);
+file_ptr lmntal_compile_file(char const *filename) {
+  return file_ptr(run_lmntal_system(0 /*dummy*/, OPT_SLIM_CODE, filename, 0), fclose);
 }
 
 /* LMNtalのルールを中間言語にコンパイルし結果のストリームを返す*/
-file_ptr lmntal_compile_rule_str(const char *rule_str)
-{
+file_ptr lmntal_compile_rule_str(char const *rule_str) {
   return file_ptr(run_lmntal_system(0, /*dummy*/
-                           OPT_SLIM_CODE,
-                           OPT_COMPILE_RULE,
-                           OPT_EVAL,
-                           rule_str,
-                           0), fclose);
+                                    OPT_SLIM_CODE, OPT_COMPILE_RULE, OPT_EVAL, rule_str, 0),
+                  fclose);
 }
 
 /* LMNtal systemを呼び出す。プログラムを呼び出し時に渡す引数を
@@ -143,20 +132,20 @@ file_ptr lmntal_compile_rule_str(const char *rule_str)
    e.g.
      run_lmntal_system(0, "-O3", "--compileonly", 0);
 */
-FILE *run_lmntal_system(int dummy, ... )
-{
-  va_list argp;
-  char *program_name;
-  char **args;
-  FILE *ret;
+FILE *run_lmntal_system(int dummy, ...) {
+  va_list      argp;
+  char        *program_name;
+  char       **args;
+  FILE        *ret;
   unsigned int i;
-  
+
   va_start(argp, dummy);
   lmntal_build_cmd(&program_name, &args, argp);
   ret = run_program(program_name, args);
 
   /* 解放処理 */
-  for (i = 0; args[i]; i++) LMN_FREE(args[i]);
+  for (i = 0; args[i]; i++)
+    LMN_FREE(args[i]);
   LMN_FREE(args);
   LMN_FREE(program_name);
 

@@ -46,21 +46,22 @@
  * @{
  */
 
-#include "lmntal.h"
 #include "element/element.h"
+#include "lmntal.h"
 #include "symbol.h"
 
 /* LMNtalから呼ばれるCのコールバック */
 class CCallback {
-  void *f;
-  int arity;
+  void             *f;
+  int               arity;
   static st_table_t ccallback_tbl;
-  static int free_v(st_data_t key, st_data_t v, st_data_t _t);
+  static int        free_v(st_data_t key, st_data_t v, st_data_t _t);
   CCallback(CCallback *);
+
 public:
   CCallback();
   ~CCallback();
-  int get_arity() const;
+  int   get_arity() const;
   void *get_f() const;
 
   static void ccallback_init();
@@ -75,7 +76,7 @@ public:
    * @param f a function that has a spacific signature (see \ref callback ).
    * @param arity the number of arguments of the callback.
    */
-  static void lmn_register_c_fun(const char *name, void *f, int arity);
+  static void lmn_register_c_fun(char const *name, void *f, int arity);
   /**
    * @brief get a function with its name.
    */
@@ -84,6 +85,5 @@ public:
    */
   static void ccallback_finalize(void);
 };
-
 
 #endif

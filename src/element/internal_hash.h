@@ -46,38 +46,37 @@
  */
 
 /* HashMap */
-using HashKeyType = unsigned long;
+using HashKeyType   = unsigned long;
 using HashValueType = unsigned long;
 
 struct HashEntry {
-  HashKeyType key;
+  HashKeyType   key;
   HashValueType data;
 };
 
 struct SimpleHashtbl {
   struct HashEntry *tbl;
-  unsigned int cap, num;
+  unsigned int      cap, num;
 };
 
 struct HashIterator {
   SimpleHashtbl *ht;
-  unsigned int i;
+  unsigned int   i;
 };
 
-void hashtbl_init(SimpleHashtbl *ht, unsigned int init_size);
+void           hashtbl_init(SimpleHashtbl *ht, unsigned int init_size);
 SimpleHashtbl *hashtbl_make(unsigned int init_size);
-HashValueType hashtbl_get(SimpleHashtbl *ht, HashKeyType key);
-HashValueType hashtbl_get_default(SimpleHashtbl *ht, HashKeyType key,
-                                  HashValueType default_value);
-int hashtbl_contains(SimpleHashtbl *ht, HashKeyType key);
-void hashtbl_put(SimpleHashtbl *ht, HashKeyType key, HashValueType val);
-void hashtbl_clear(SimpleHashtbl *ht);
-void hashtbl_destroy(SimpleHashtbl *ht);
-void hashtbl_free(SimpleHashtbl *ht);
+HashValueType  hashtbl_get(SimpleHashtbl *ht, HashKeyType key);
+HashValueType  hashtbl_get_default(SimpleHashtbl *ht, HashKeyType key, HashValueType default_value);
+int            hashtbl_contains(SimpleHashtbl *ht, HashKeyType key);
+void           hashtbl_put(SimpleHashtbl *ht, HashKeyType key, HashValueType val);
+void           hashtbl_clear(SimpleHashtbl *ht);
+void           hashtbl_destroy(SimpleHashtbl *ht);
+void           hashtbl_free(SimpleHashtbl *ht);
 #define hashtbl_num(HT) (HT)->num
 
 HashIterator hashtbl_iterator(SimpleHashtbl *ht);
-void hashtbliter_next(HashIterator *iter);
+void         hashtbliter_next(HashIterator *iter);
 #define hashtbliter_entry(I) (&((I)->ht->tbl[(I)->i]))
 #define hashtbliter_isend(I) ((I)->i >= (I)->ht->cap)
 
@@ -88,19 +87,19 @@ struct HashSet {
 
   HashSet(unsigned int init_size);
   ~HashSet();
-  int contains(HashKeyType key);
-  void add(HashKeyType key);
-  void delete_entry(HashKeyType key);
+  int          contains(HashKeyType key);
+  void         add(HashKeyType key);
+  void         delete_entry(HashKeyType key);
   HashKeyType *get_p(HashKeyType key, unsigned long dummykey);
 };
 
 struct HashSetIterator {
-  HashSet *set;
+  HashSet     *set;
   unsigned int i;
 };
 
 HashSetIterator hashset_iterator(HashSet *set);
-void hashsetiter_next(HashSetIterator *it);
+void            hashsetiter_next(HashSetIterator *it);
 #define hashsetiter_entry(I) ((I)->set->tbl[(I)->i])
 #define hashsetiter_isend(I) ((I)->i >= (I)->set->cap)
 

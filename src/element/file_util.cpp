@@ -39,31 +39,30 @@
 
 #include "file_util.h"
 #include "../arch.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 
-char *build_path(const char *dir, const char *component) {
-  const int dir_len = strlen(dir);
-  const int comp_len = strlen(component);
-  char *buf;
+char *build_path(char const *dir, char const *component) {
+  int const dir_len  = strlen(dir);
+  int const comp_len = strlen(component);
+  char     *buf;
 
   if (dir_len > 0 && dir[dir_len - 1] == DIR_SEPARATOR_CHAR) {
     buf = (char *)malloc(sizeof(char) * dir_len + comp_len + 1);
     sprintf(buf, "%s%s", dir, component);
   } else {
-    buf = (char *)malloc(sizeof(char) * dir_len + comp_len +
-                         strlen(DIR_SEPARATOR_STR) + comp_len + 1);
+    buf = (char *)malloc(sizeof(char) * dir_len + comp_len + strlen(DIR_SEPARATOR_STR) + comp_len + 1);
     sprintf(buf, "%s%s%s", dir, DIR_SEPARATOR_STR, component);
   }
 
   return buf;
 }
 
-char *basename_ext(const char *path) {
+char *basename_ext(char const *path) {
   char *buf = strdup(path);
-  int len = strlen(buf);
-  int i;
+  int   len = strlen(buf);
+  int   i;
 
   for (i = len - 1; i >= 0; i--) {
     if (buf[i] == '.') {
@@ -75,9 +74,9 @@ char *basename_ext(const char *path) {
   return buf;
 }
 
-char *extension(const char *path) {
-  int len = strlen(path);
-  int i;
+char *extension(char const *path) {
+  int   len = strlen(path);
+  int   i;
   char *ext;
 
   for (i = len - 1; i >= 0; i--) {

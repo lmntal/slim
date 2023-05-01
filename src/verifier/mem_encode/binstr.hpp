@@ -51,51 +51,51 @@
 
 /* Tags */
 enum {
-  TAG_ATOM_START = 0x0,
-  TAG_MEM_START = 0x1,
-  TAG_MEM_END = 0x2,
-  TAG_NAMED_MEM_START = 0x3,
+  TAG_ATOM_START        = 0x0,
+  TAG_MEM_START         = 0x1,
+  TAG_MEM_END           = 0x2,
+  TAG_NAMED_MEM_START   = 0x3,
   TAG_VISITED_ATOMHLINK = 0x4,
-  TAG_VISITED_MEM = 0x5,
-  TAG_ESCAPE_MEM = 0x6,
-  TAG_ESCAPE_MEM_DATA = 0x7,
-  TAG_FROM = 0x8,
-  TAG_RULESET1 = 0x9,
-  TAG_RULESET = 0xa,
-  TAG_RULESET_UNIQ = 0xb,
-  TAG_INT_DATA = 0xc,
-  TAG_DBL_DATA = 0xd,
-  TAG_SP_ATOM_DATA = 0xe,
-  TAG_HLINK = 0xf,
+  TAG_VISITED_MEM       = 0x5,
+  TAG_ESCAPE_MEM        = 0x6,
+  TAG_ESCAPE_MEM_DATA   = 0x7,
+  TAG_FROM              = 0x8,
+  TAG_RULESET1          = 0x9,
+  TAG_RULESET           = 0xa,
+  TAG_RULESET_UNIQ      = 0xb,
+  TAG_INT_DATA          = 0xc,
+  TAG_DBL_DATA          = 0xd,
+  TAG_SP_ATOM_DATA      = 0xe,
+  TAG_HLINK             = 0xf,
 };
 
 /* Binary Stringのpositionを進めるためのカウンタ群. */
 namespace {
 /* 訪問番号(4byteへ拡張したが, sizeof(ProcessID)とするのが好ましいはず) */
-const int BS_PROC_REF_SIZE = (TAG_IN_BYTE * sizeof(uint32_t));
+int const BS_PROC_REF_SIZE = (TAG_IN_BYTE * sizeof(uint32_t));
 /* アトムあたりのリンク本数は127本までなので1Byteで良い */
-const int BS_ATOM_REF_ARG_SIZE = (TAG_IN_BYTE * sizeof(LmnArity));
+int const BS_ATOM_REF_ARG_SIZE = (TAG_IN_BYTE * sizeof(LmnArity));
 /* Functor ID */
-const int BS_FUNCTOR_SIZE = (TAG_IN_BYTE * sizeof(LmnFunctor));
+int const BS_FUNCTOR_SIZE = (TAG_IN_BYTE * sizeof(LmnFunctor));
 /* lmntalにおける整数データは1wordであるためlongで良い */
-const int BS_INT_SIZE = (TAG_IN_BYTE * SIZEOF_LONG);
+int const BS_INT_SIZE = (TAG_IN_BYTE * SIZEOF_LONG);
 /* 膜名 */
-const int BS_MEM_NAME_SIZE = (TAG_IN_BYTE * sizeof(lmn_interned_str));
+int const BS_MEM_NAME_SIZE = (TAG_IN_BYTE * sizeof(lmn_interned_str));
 /* ルールセットID */
-const int BS_RULESET_SIZE = (TAG_IN_BYTE * sizeof(LmnRulesetId));
+int const BS_RULESET_SIZE = (TAG_IN_BYTE * sizeof(LmnRulesetId));
 /* ルールセット数 */
-const int BS_RULESET_NUM_SIZE = (TAG_IN_BYTE * sizeof(uint32_t));
+int const BS_RULESET_NUM_SIZE = (TAG_IN_BYTE * sizeof(uint32_t));
 /* ルール数 */
-const int BS_RULE_NUM_SIZE = (TAG_IN_BYTE * sizeof(uint32_t));
+int const BS_RULE_NUM_SIZE = (TAG_IN_BYTE * sizeof(uint32_t));
 /* 浮動小数点数 */
-const int BS_DBL_SIZE = (TAG_IN_BYTE * sizeof(double));
+int const BS_DBL_SIZE = (TAG_IN_BYTE * sizeof(double));
 /* 文字列に対応させたID */
-const int BS_STR_ID_SIZE = (TAG_IN_BYTE * sizeof(lmn_interned_str));
-const int BS_HISTORY_NUM_SIZE = (BS_RULE_NUM_SIZE);
+int const BS_STR_ID_SIZE      = (TAG_IN_BYTE * sizeof(lmn_interned_str));
+int const BS_HISTORY_NUM_SIZE = (BS_RULE_NUM_SIZE);
 /* UNIQ制約が管理する履歴型のサイズ. lmn_histroy_tみたいな型にしたい */
-const int BS_HISTORY_SIZE = (BS_STR_ID_SIZE);
+int const BS_HISTORY_SIZE = (BS_STR_ID_SIZE);
 /* ハイパーリンクの接続個数. 同型性判定で使う */
-const int BS_HLINK_NUM_SIZE = (TAG_IN_BYTE * sizeof(LmnHlinkRank));
+int const BS_HLINK_NUM_SIZE = (TAG_IN_BYTE * sizeof(LmnHlinkRank));
 } // namespace
 
 /*----------------------------------------------------------------------
@@ -108,20 +108,19 @@ const int BS_HLINK_NUM_SIZE = (TAG_IN_BYTE * sizeof(LmnHlinkRank));
 
 class BinStrCursor {
   struct BinStr *binstr; /* 所属するBinStrを指す */
-  int pos_;              /* bit (0で初期化) */
-  bool valid;            /* TRUEで初期化 */
-  bool direct; /* FALSEで初期化, directメソッドを用いた場合はTRUEで初期化 */
+  int            pos_;   /* bit (0で初期化) */
+  bool           valid;  /* TRUEで初期化 */
+  bool           direct; /* FALSEで初期化, directメソッドを用いた場合はTRUEで初期化 */
 
 public:
   BinStrCursor() : binstr(nullptr), pos_(0), valid(false), direct(false) {}
 
-  BinStrCursor(BinStr *bs, bool direct = false)
-      : binstr(bs), pos_(0), valid(true), direct(direct) {}
+  BinStrCursor(BinStr *bs, bool direct = false) : binstr(bs), pos_(0), valid(true), direct(direct) {}
 
-  const BinStrCursor &operator=(const BinStrCursor &p) {
+  BinStrCursor const &operator=(BinStrCursor const &p) {
     binstr = p.binstr;
-    pos_ = p.pos_;
-    valid = p.valid;
+    pos_   = p.pos_;
+    valid  = p.valid;
     direct = p.direct;
     return p;
   }
@@ -130,7 +129,7 @@ public:
 
 private:
   void invalidate() { valid = false; }
-  
+
 public:
   bool is_valid() const { return valid; }
 
@@ -149,8 +148,7 @@ public:
     if (name == ANONYMOUS) {
       return push(TAG_MEM_START);
     } else {
-      return push(TAG_NAMED_MEM_START) &&
-             push((BYTE *)&name, sizeof(lmn_interned_str) * TAG_IN_BYTE);
+      return push(TAG_NAMED_MEM_START) && push((BYTE *)&name, sizeof(lmn_interned_str) * TAG_IN_BYTE);
     }
   }
   bool push_end_mem() { return push(TAG_MEM_END); }
@@ -166,12 +164,10 @@ public:
     LmnWord ref;
 
     /* hyperlink構造を圧縮する際は, rootオブジェクトをバイト列に記録する. */
-    auto hl_root =
-      (lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)atom))->get_root();
+    auto hl_root = (lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)atom))->get_root();
 
     if (log->get_hlink(hl_root, &ref)) {
-      return push(TAG_VISITED_ATOMHLINK) &&
-             push((BYTE *)&ref, BS_PROC_REF_SIZE);
+      return push(TAG_VISITED_ATOMHLINK) && push((BYTE *)&ref, BS_PROC_REF_SIZE);
     }
 
     auto hl_num = hl_root->element_num();
@@ -181,8 +177,8 @@ public:
     push((const BYTE *)&hl_num, BS_HLINK_NUM_SIZE);
 
     if (LMN_HL_HAS_ATTR(hl_root)) {
-      LmnLinkAttr attr = LMN_HL_ATTRATOM_ATTR(hl_root);
-      LmnAtomRef attrAtom = LMN_HL_ATTRATOM(hl_root);
+      LmnLinkAttr attr     = LMN_HL_ATTRATOM_ATTR(hl_root);
+      LmnAtomRef  attrAtom = LMN_HL_ATTRATOM(hl_root);
 
       /* データアトムの場合 */
       if (LMN_ATTR_IS_DATA(attr)) {
@@ -197,7 +193,7 @@ public:
     return is_valid();
   }
 
-  int push(const std::vector<uint8_t> &bytes) {
+  int push(std::vector<uint8_t> const &bytes) {
     uint64_t size = bytes.size();
     return push((uint8_t *)&size, sizeof(size) * TAG_IN_BYTE) && push(bytes.data(), size * TAG_IN_BYTE);
   }
@@ -210,14 +206,13 @@ public:
     case LMN_INT_ATTR:
       return push(TAG_INT_DATA) && push((const BYTE *)&atom, BS_INT_SIZE);
     case LMN_DBL_ATTR:
-      return push(TAG_DBL_DATA) &&
-             push((const BYTE *)LMN_GETREF_DOUBLE(atom), BS_DBL_SIZE);
+      return push(TAG_DBL_DATA) && push((const BYTE *)LMN_GETREF_DOUBLE(atom), BS_DBL_SIZE);
     case LMN_HL_ATTR:
       return push_hlink(atom, log);
     case LMN_SP_ATOM_ATTR:
       if (sp_atom_encoder(atom)) {
         auto bytes = sp_atom_encoder(atom)(atom);
-        auto type = LMN_SP_ATOM_TYPE(atom);
+        auto type  = LMN_SP_ATOM_TYPE(atom);
         return push(TAG_SP_ATOM_DATA) && push(&type, sizeof(type) * TAG_IN_BYTE) && push(bytes);
       }
     default:
@@ -233,9 +228,7 @@ public:
            push((BYTE *)&arg, BS_ATOM_REF_ARG_SIZE);
   }
 
-  int push_visited_mem(int n) {
-    return push(TAG_VISITED_MEM) && push((BYTE *)&n, BS_PROC_REF_SIZE);
-  }
+  int push_visited_mem(int n) { return push(TAG_VISITED_MEM) && push((BYTE *)&n, BS_PROC_REF_SIZE); }
 
   int push_escape_mem() { return push(TAG_ESCAPE_MEM); }
 
@@ -252,13 +245,11 @@ public:
     return push(TAG_RULESET) && push((BYTE *)&n, BS_RULESET_NUM_SIZE);
   }
 
-  int push_ruleset(LmnRuleSetRef rs) {
-    return push((BYTE *)&rs->id, BS_RULESET_SIZE);
-  }
+  int push_ruleset(LmnRuleSetRef rs) { return push((BYTE *)&rs->id, BS_RULESET_SIZE); }
 
   void push_rule_histories(LmnRuleRef r) {
     auto &his_tbl = r->history();
-    auto his_num = his_tbl.size();
+    auto  his_num = his_tbl.size();
 
     push((BYTE *)&his_num, BS_HISTORY_NUM_SIZE); /* write history num */
 
@@ -294,38 +285,31 @@ using slim::element::make_unique;
 
 #define BS_TBL_SIZE (128)
 
-#define BS_SET(a, pos, v)                                                      \
-  (((pos)&1)                                                                   \
-       ? ((a)[(pos) >> 1] = ((a)[(pos) >> 1] & 0x0f) | ((v) << TAG_BIT_SIZE))  \
-       : ((a)[(pos) >> 1] = (v & 0x0f) | ((a)[(pos) >> 1] & 0xf0)))
-#define BS_GET(a, pos)                                                         \
-  (((pos)&1) ? ((a)[(pos) >> 1] & 0xf0) >> TAG_BIT_SIZE                        \
-             : (a)[(pos) >> 1] & 0x0f)
+#define BS_SET(a, pos, v)                                                                                              \
+  (((pos)&1) ? ((a)[(pos) >> 1] = ((a)[(pos) >> 1] & 0x0f) | ((v) << TAG_BIT_SIZE))                                    \
+             : ((a)[(pos) >> 1] = (v & 0x0f) | ((a)[(pos) >> 1] & 0xf0)))
+#define BS_GET(a, pos) (((pos)&1) ? ((a)[(pos) >> 1] & 0xf0) >> TAG_BIT_SIZE : (a)[(pos) >> 1] & 0x0f)
 
 /* エンコード処理(計算中)に用いるバイナリストリング(作業領域) */
 class BinStr {
-  BYTE *v;  /* バイト列(128個で初期化) */
-  int size; /* バッファのサイズ（4ビット単位）: 現在のバイト列の大きさ(128 *
-               TAG_IN_BYTEで初期化) */
-  int cur; /* 書き込み位置（4ビット単位）    : 次に書き込む位置(0で初期化) */
+  BYTE *v;    /* バイト列(128個で初期化) */
+  int   size; /* バッファのサイズ（4ビット単位）: 現在のバイト列の大きさ(128 *
+                 TAG_IN_BYTEで初期化) */
+  int cur;    /* 書き込み位置（4ビット単位）    : 次に書き込む位置(0で初期化) */
 
 public:
   BinStr() {
     size = BS_TBL_SIZE * TAG_IN_BYTE;
-    v = LMN_NALLOC<BYTE>(size / TAG_IN_BYTE);
+    v    = LMN_NALLOC<BYTE>(size / TAG_IN_BYTE);
     memset(v, 0x0U, sizeof(BYTE) * BS_TBL_SIZE);
     cur = 0;
   }
 
   ~BinStr() { LMN_FREE(v); }
 
-  std::unique_ptr<BinStrCursor> head() {
-    return make_unique<BinStrCursor>(this);
-  }
+  std::unique_ptr<BinStrCursor> head() { return make_unique<BinStrCursor>(this); }
 
-  std::unique_ptr<BinStrCursor> head_direct() {
-    return make_unique<BinStrCursor>(this, true);
-  }
+  std::unique_ptr<BinStrCursor> head_direct() { return make_unique<BinStrCursor>(this, true); }
 
 public:
   /* bsの位置posにbの下位4ビットを書き込む。書き込みに成功した場合は真を
@@ -365,10 +349,10 @@ public:
 
   LmnBinStr *to_lmn_binstr() const {
     struct LmnBinStr *ret_bs;
-    int size = (this->cur + 1) / 2;
-    ret_bs = LMN_MALLOC<struct LmnBinStr>();
-    ret_bs->v = LMN_NALLOC<BYTE>(size);
-    ret_bs->type = 0x00U;
+    int               size = (this->cur + 1) / 2;
+    ret_bs                 = LMN_MALLOC<struct LmnBinStr>();
+    ret_bs->v              = LMN_NALLOC<BYTE>(size);
+    ret_bs->type           = 0x00U;
     memcpy(ret_bs->v, this->v, size);
     ret_bs->len = this->cur;
     if (ret_bs->len & 1) {
@@ -384,10 +368,10 @@ private:
     while (size <= pos) {
       size *= 2;
     }
-    
+
     if (org_size >= size)
       return;
-    
+
     v = LMN_REALLOC<BYTE>(v, size / TAG_IN_BYTE);
   }
 };

@@ -45,40 +45,31 @@
 
 #include <string>
 
-using LmnStringRef = struct LmnString*;
+using LmnStringRef = struct LmnString *;
 struct LmnString : LmnSPAtomHeader {
-  static int string_atom_type;
+  static int  string_atom_type;
   std::string str;
 
   LmnString() : LmnSPAtomHeader(string_atom_type) {}
-  LmnString(const char *s) : str(s), LmnSPAtomHeader(string_atom_type) {}
+  LmnString(char const *s) : str(s), LmnSPAtomHeader(string_atom_type) {}
   LmnString(const std::string s) : str(s), LmnSPAtomHeader(string_atom_type) {}
 
-  const char *c_str() const { return str.c_str(); }
-  unsigned long hash() const {
-    return lmn_byte_hash((const unsigned char *)str.c_str(), str.size() + 1);
-  }
-  template <typename T> void push_back(T &&s) {
-    str.push_back(std::forward<T>(s));
-  }
+  char const                *c_str() const { return str.c_str(); }
+  unsigned long              hash() const { return lmn_byte_hash((unsigned char const *)str.c_str(), str.size() + 1); }
+  template <typename T> void push_back(T &&s) { str.push_back(std::forward<T>(s)); }
   template <typename T> void append(T &&s) { str.append(std::forward<T>(s)); }
 
-  template <typename T>
-  auto operator[](T &&idx) const -> decltype(str[std::forward<T>(idx)]) {
+  template <typename T> auto operator[](T &&idx) const -> decltype(str[std::forward<T>(idx)]) {
     return str[std::forward<T>(idx)];
   }
 
   size_t size() const { return str.size(); }
 
-  friend bool operator==(const LmnString &s1, const LmnString &s2);
+  friend bool operator==(LmnString const &s1, LmnString const &s2);
 };
 
-inline bool operator==(const LmnString &s1, const LmnString &s2) {
-  return s1.str == s2.str;
-}
-inline bool operator!=(const LmnString &s1, const LmnString &s2) {
-  return !(s1 == s2);
-}
+inline bool operator==(LmnString const &s1, LmnString const &s2) { return s1.str == s2.str; }
+inline bool operator!=(LmnString const &s1, LmnString const &s2) { return !(s1 == s2); }
 
 void string_init(void);
 void string_finalize(void);

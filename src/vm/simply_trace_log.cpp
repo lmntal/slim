@@ -41,9 +41,8 @@
 #include "trace_log.h"
 
 class SimpleTraceLog {
-  SimpleProcessTable
-      tbl; /* Process IDをkey, 訪問済みか否かの真偽値をvalueとしたテーブル */
-  LogTracker tracker;
+  SimpleProcessTable tbl; /* Process IDをkey, 訪問済みか否かの真偽値をvalueとしたテーブル */
+  LogTracker         tracker;
 
 public:
   SimpleTraceLog() {}
@@ -71,29 +70,19 @@ public:
 
 SimplyLog simplylog_make() { return new SimpleTraceLog; }
 
-SimplyLog simplylog_make_with_size(unsigned long size) {
-  return new SimpleTraceLog(size);
-}
+SimplyLog simplylog_make_with_size(unsigned long size) { return new SimpleTraceLog(size); }
 
 void simplylog_free(SimplyLog s) { delete s; }
 
 void simplylog_put(SimplyLog l, LmnWord key) { l->visit(key); }
 
-void simplylog_put_atom(SimplyLog l, LmnSymbolAtomRef atom) {
-  simplylog_put(l, atom->get_id());
-}
+void simplylog_put_atom(SimplyLog l, LmnSymbolAtomRef atom) { simplylog_put(l, atom->get_id()); }
 
-void simplylog_put_mem(SimplyLog l, LmnMembraneRef mem) {
-  simplylog_put(l, mem->mem_id());
-}
+void simplylog_put_mem(SimplyLog l, LmnMembraneRef mem) { simplylog_put(l, mem->mem_id()); }
 
-BOOL simplylog_contains_atom(SimplyLog l, LmnSymbolAtomRef atom) {
-  return l->is_visited(atom);
-}
+BOOL simplylog_contains_atom(SimplyLog l, LmnSymbolAtomRef atom) { return l->is_visited(atom); }
 
-BOOL simplylog_contains_mem(SimplyLog l, LmnMembraneRef mem) {
-  return l->is_visited(mem);
-}
+BOOL simplylog_contains_mem(SimplyLog l, LmnMembraneRef mem) { return l->is_visited(mem); }
 
 void simplylog_backtrack(SimplyLog l) { l->backtrack(); }
 

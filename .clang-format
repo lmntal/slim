@@ -6,7 +6,7 @@ ColumnLimit: 120
 AlignConsecutiveDeclarations: Consecutive
 AlignConsecutiveAssignments:
   Enabled: true
-  AcrossEmptyLines: true
+  AcrossEmptyLines: false
   AcrossComments: false
   AlignCompound: true
   PadOperators: true

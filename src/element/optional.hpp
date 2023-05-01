@@ -45,13 +45,13 @@ namespace element {
 
 template <typename T> class optional {
   bool empty;
-  T value_;
+  T    value_;
 
 public:
   optional() : empty(true) {}
-  optional(const T &value_) : empty(false), value_(value_) {}
+  optional(T const &value_) : empty(false), value_(value_) {}
   optional(T &&value_) : empty(false), value_(std::move(value_)) {}
-  optional(const optional &other) : empty(false), value_(*other) {}
+  optional(optional const &other) : empty(false), value_(*other) {}
   optional(optional &&other) : empty(false), value_(*std::move(other)) {}
 
   ~optional() {
@@ -60,7 +60,7 @@ public:
     }
   }
 
-  optional &operator=(const optional &rhs) {
+  optional &operator=(optional const &rhs) {
     reset();
     empty = rhs.empty;
     if (empty)
@@ -78,11 +78,11 @@ public:
   template <class U = T> optional &operator=(U &&rhs) {
     reset();
     value_ = std::move(rhs);
-    empty = false;
+    empty  = false;
     return *this;
   }
 
-  template <class U> optional &operator=(const optional<U> &rhs) {
+  template <class U> optional &operator=(optional<U> const &rhs) {
     reset();
     empty = rhs.empty;
     if (empty)
@@ -107,34 +107,31 @@ public:
 
   bool has_value() const noexcept { return !empty; }
 
-  const T &value() const & { return value_; }
-  T &value() & { return value_; }
-  T &&value() && { return std::move(value_); }
-  const T &&value() const && { return std::move(value_); }
+  T const  &value() const  &{ return value_; }
+  T        &value()        &{ return value_; }
+  T       &&value()       &&{ return std::move(value_); }
+  T const &&value() const && { return std::move(value_); }
 
   template <class U> constexpr T value_or(U &&default_value) const & {
-    return bool(*this) ? **this
-                       : static_cast<T>(std::forward<U>(default_value));
+    return bool(*this) ? **this : static_cast<T>(std::forward<U>(default_value));
   }
   template <class U> constexpr T value_or(U &&default_value) const && {
-    return bool(*this) ? std::move(**this)
-                       : static_cast<T>(std::forward<U>(default_value));
+    return bool(*this) ? std::move(**this) : static_cast<T>(std::forward<U>(default_value));
   }
 
-  const T &operator*() const & { return value_; }
-  T &operator*() & { return value_; }
-  T &&operator*() && { return std::move(value_); }
-  const T &&operator*() const && { return std::move(value_); }
+  T const  &operator*() const  &{ return value_; }
+  T        &operator*()        &{ return value_; }
+  T       &&operator*()       &&{ return std::move(value_); }
+  T const &&operator*() const && { return std::move(value_); }
 
-  const T *operator->() const { return &value_; }
-  T *operator->() { return &value_; }
+  T const *operator->() const { return &value_; }
+  T       *operator->() { return &value_; }
 };
 
 } // namespace element
 } // namespace slim
 
-template <typename T, typename U>
-bool operator<(const slim::element::optional<T> opt, const U &value) {
+template <typename T, typename U> bool operator<(const slim::element::optional<T> opt, U const &value) {
   return (opt) ? (*opt < value) : true;
 }
 

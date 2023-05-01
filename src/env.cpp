@@ -42,12 +42,12 @@
 
 #include <climits>
 
-struct Vector *lmn_id_pool;
-struct LmnEnv lmn_env;
+struct Vector     *lmn_id_pool;
+struct LmnEnv      lmn_env;
 struct LmnProfiler lmn_prof;
 LMN_TLS_TYPE(LmnTLS) lmn_tls;
 
-//static void env_init(void);
+// static void env_init(void);
 
 /* TODO: slim自体をスレッドセーフ化してライブラリ化したい。
  * そうすると, 共有ライブラリとしてslimをビルドし, Java Native
@@ -60,13 +60,14 @@ LMN_TLS_TYPE(LmnTLS) lmn_tls;
  */
 
 static inline void lmn_TLS_init(LmnTLS *p, unsigned int thread_id) {
-  p->thread_num = lmn_env.core_num;
-  p->thread_id = thread_id;
-  p->state_id = 0UL;
+  p->thread_num   = lmn_env.core_num;
+  p->thread_id    = thread_id;
+  p->state_id     = 0UL;
   p->proc_next_id = 1UL;
 }
 
-static inline void lmn_TLS_destroy(LmnTLS *p) { /* nothing now */ }
+static inline void lmn_TLS_destroy(LmnTLS *p) { /* nothing now */
+}
 
 static inline LmnTLS *lmn_TLS_make(unsigned int thread_id) LMN_UNUSED;
 static inline LmnTLS *lmn_TLS_make(unsigned int thread_id) {
@@ -107,9 +108,9 @@ void env_my_TLS_finalize() {
 }
 
 void lmn_stream_init() {
-//  lmn_env.init();
+  //  lmn_env.init();
 
-  lmn_id_pool = NULL;
+  lmn_id_pool = nullptr;
 #if !defined(ENABLE_PARALLEL) || defined(USE_TLS_KEYWORD)
   /* 並列処理無効の場合か, 並列処理有効かつthread local
    * storageキーワードが利用可能な場合 */
@@ -135,94 +136,94 @@ void lmn_stream_destroy() {
 
 /* lmn_env構造体の初期化 */
 LmnEnv::LmnEnv() {
-  trace = FALSE;
-  this->show_proxy = FALSE;
-  this->show_chr = FALSE;
-  this->show_ruleset = TRUE;
-  this->output_format = DEFAULT;
-  this->mc_dump_format = CUI;
-  this->sp_dump_format = SP_NONE;
-  this->show_laststep_only = FALSE;
-  this->nd = FALSE;
-  this->ltl = FALSE;
-  this->ltl_all = FALSE;
-  this->enable_por_old = FALSE;
-  this->enable_por = FALSE;
-  this->show_transition = FALSE;
-  this->translate = FALSE;
-  this->optimization_level = 3;
-  this->profile_level = 0;
-  this->load_path_num = 0;
-  this->automata_file = NULL;
-  this->propositional_symbol = NULL;
-  this->ltl_exp = NULL;
-  this->bfs = FALSE;
-  this->prop_scc_driven = FALSE;
-  this->depth_limits = UINT_MAX;
-  this->nd_search_end = FALSE;
-  this->mem_enc = FALSE;
-  this->delta_mem = FALSE;
-  this->dump = TRUE;
-  this->end_dump = FALSE;
-  this->benchmark = FALSE;
-  this->property_dump = FALSE;
-  this->enable_compress_mem = TRUE;
-  this->z_compress = FALSE;
-  this->d_compress = FALSE;
-  this->r_compress = FALSE;
-  this->enable_parallel = FALSE;
-  this->core_num = 1;
-  this->cutoff_depth = 7;
-  this->optimize_lock = FALSE;
-  this->optimize_hash = TRUE;
+  trace                        = FALSE;
+  this->show_proxy             = FALSE;
+  this->show_chr               = FALSE;
+  this->show_ruleset           = TRUE;
+  this->output_format          = DEFAULT;
+  this->mc_dump_format         = CUI;
+  this->sp_dump_format         = SP_NONE;
+  this->show_laststep_only     = FALSE;
+  this->nd                     = FALSE;
+  this->ltl                    = FALSE;
+  this->ltl_all                = FALSE;
+  this->enable_por_old         = FALSE;
+  this->enable_por             = FALSE;
+  this->show_transition        = FALSE;
+  this->translate              = FALSE;
+  this->optimization_level     = 3;
+  this->profile_level          = 0;
+  this->load_path_num          = 0;
+  this->automata_file          = nullptr;
+  this->propositional_symbol   = nullptr;
+  this->ltl_exp                = nullptr;
+  this->bfs                    = FALSE;
+  this->prop_scc_driven        = FALSE;
+  this->depth_limits           = UINT_MAX;
+  this->nd_search_end          = FALSE;
+  this->mem_enc                = FALSE;
+  this->delta_mem              = FALSE;
+  this->dump                   = TRUE;
+  this->end_dump               = FALSE;
+  this->benchmark              = FALSE;
+  this->property_dump          = FALSE;
+  this->enable_compress_mem    = TRUE;
+  this->z_compress             = FALSE;
+  this->d_compress             = FALSE;
+  this->r_compress             = FALSE;
+  this->enable_parallel        = FALSE;
+  this->core_num               = 1;
+  this->cutoff_depth           = 7;
+  this->optimize_lock          = FALSE;
+  this->optimize_hash          = TRUE;
   this->optimize_loadbalancing = TRUE;
 
-  this->opt_mode = OPT_NONE;
-  
+  this->opt_mode               = OPT_NONE;
+
   /* only jni-interactive mode */
-  this->interactive = FALSE;
-  this->normal_remain = FALSE;
-  this->normal_remaining = FALSE;
-  this->normal_cleaning = FALSE;
-  this->nd_remain = FALSE;
-  this->nd_remaining = FALSE;
-  this->nd_cleaning = FALSE;
+  this->interactive              = FALSE;
+  this->normal_remain            = FALSE;
+  this->normal_remaining         = FALSE;
+  this->normal_cleaning          = FALSE;
+  this->nd_remain                = FALSE;
+  this->nd_remaining             = FALSE;
+  this->nd_cleaning              = FALSE;
 
-  this->enable_owcty = FALSE;
-  this->enable_map = FALSE;
-  this->enable_bledge = FALSE;
-  this->bfs_layer_sync = FALSE;
+  this->enable_owcty             = FALSE;
+  this->enable_map               = FALSE;
+  this->enable_bledge            = FALSE;
+  this->bfs_layer_sync           = FALSE;
 
-  this->enable_map_heuristic = TRUE;
+  this->enable_map_heuristic     = TRUE;
 
-  this->show_reduced_graph = FALSE;
+  this->show_reduced_graph       = FALSE;
 
-  this->hash_compaction = FALSE;
-  this->tree_compress = FALSE;
-  this->hash_depth = 2;
+  this->hash_compaction          = FALSE;
+  this->tree_compress            = FALSE;
+  this->hash_depth               = 2;
   this->tree_compress_table_size = 20;
 #ifdef PROFILE
   this->optimize_hash_old = FALSE;
-  this->prof_no_memeq = FALSE;
+  this->prof_no_memeq     = FALSE;
 #endif
 
   // 履歴管理用アトム(nakata)
   this->history_management = FALSE;
-  
+
 #ifdef DEBUG
   this->debug_por_dep = FALSE;
-  this->debug_id = FALSE;
-  this->debug_delta = FALSE;
-  this->debug_hash = FALSE;
-  this->debug_isomor = FALSE;
-  this->debug_mc = FALSE;
-  this->debug_por = FALSE;
+  this->debug_id      = FALSE;
+  this->debug_delta   = FALSE;
+  this->debug_hash    = FALSE;
+  this->debug_isomor  = FALSE;
+  this->debug_mc      = FALSE;
+  this->debug_por     = FALSE;
 #endif
 
-  this->shuffle_rule = FALSE;
-  this->shuffle_atom = FALSE;
-  
+  this->shuffle_rule           = FALSE;
+  this->shuffle_atom           = FALSE;
+
   this->findatom_parallel_mode = FALSE;
-  this->find_atom_parallel = FALSE;
+  this->find_atom_parallel     = FALSE;
   this->findatom_parallel_inde = FALSE;
 }

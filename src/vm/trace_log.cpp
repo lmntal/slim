@@ -37,9 +37,7 @@
 
 #include "trace_log.h"
 
-
-template <typename T>
-const T ProcessTable<T>::unused = std::numeric_limits<T>::max();
+template <typename T> const T ProcessTable<T>::unused = std::numeric_limits<T>::max();
 
 template class ProcessTable<unsigned char>;
 template class ProcessTable<unsigned long>;
@@ -50,17 +48,11 @@ template class ProcessTable<unsigned long>;
 
 BOOL tracelog_contains(TraceLogRef l, LmnWord key) { return l->contains(key); }
 
-BOOL tracelog_contains_atom(TraceLogRef l, LmnSymbolAtomRef atom) {
-  return l->contains(atom->get_id());
-}
+BOOL tracelog_contains_atom(TraceLogRef l, LmnSymbolAtomRef atom) { return l->contains(atom->get_id()); }
 
-BOOL tracelog_contains_mem(TraceLogRef l, LmnMembraneRef mem) {
-  return l->contains(mem->mem_id());
-}
+BOOL tracelog_contains_mem(TraceLogRef l, LmnMembraneRef mem) { return l->contains(mem->mem_id()); }
 
-BOOL tracelog_contains_hlink(TraceLogRef l, HyperLink *hl) {
-  return l->contains(LMN_HL_ID(hl));
-}
+BOOL tracelog_contains_hlink(TraceLogRef l, HyperLink *hl) { return l->contains(LMN_HL_ID(hl)); }
 
 LmnWord tracelog_get_matched(TraceLogRef l, LmnWord key) {
   return l->table.find(key) != l->table.end() ? l->table[key].matched : 0;
@@ -70,10 +62,6 @@ LmnWord tracelog_get_atomMatched(TraceLogRef l, LmnSymbolAtomRef atom) {
   return tracelog_get_matched(l, atom->get_id());
 }
 
-LmnWord tracelog_get_memMatched(TraceLogRef l, LmnMembraneRef mem) {
-  return tracelog_get_matched(l, mem->mem_id());
-}
+LmnWord tracelog_get_memMatched(TraceLogRef l, LmnMembraneRef mem) { return tracelog_get_matched(l, mem->mem_id()); }
 
-LmnWord tracelog_get_hlinkMatched(TraceLogRef l, HyperLink *hl) {
-  return tracelog_get_matched(l, LMN_HL_ID(hl));
-}
+LmnWord tracelog_get_hlinkMatched(TraceLogRef l, HyperLink *hl) { return tracelog_get_matched(l, LMN_HL_ID(hl)); }

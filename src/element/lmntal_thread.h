@@ -53,7 +53,7 @@
 /* check for atomic operation */
 #ifdef ENABLE_PARALLEL
 #
-#ifdef HAVE_ATOMIC_CAS /* AとBが等しければAの実態をCに置き換え, \
+#ifdef HAVE_ATOMIC_CAS /* AとBが等しければAの実態をCに置き換え,                                        \
                           成功したら真を返す */
 #define CAS(A, B, C) __sync_bool_compare_and_swap(&(A), B, C)
 #else
@@ -120,12 +120,12 @@ using mtx_data_t = unsigned long;
 #include "../lmntal.h"
 
 struct EWLock {
-  BOOL *elock_used;
-  unsigned int elock_num;
-  lmn_mutex_t *elock;
+  BOOL         *elock_used;
+  unsigned int  elock_num;
+  lmn_mutex_t  *elock;
   unsigned long wlock_num;
-  lmn_mutex_t *wlock;
-  *EWLock(unsigned int e_num,unsigned int w_num);
+  lmn_mutex_t  *wlock;
+  *EWLock(unsigned int e_num, unsigned int w_num);
   ~EWLock();
   void acquire_write(mtx_data_t id);
   void release_write(mtx_data_t id);
@@ -135,10 +135,8 @@ struct EWLock {
   void permit_enter(mtx_data_t my_id);
 };
 
-#define lmn_ewlock_space(L)                                                    \
-  (!(L) ? 0                                                                    \
-        : ((sizeof(L) + ((L)->elock_num * sizeof(lmn_mutex_t)) +               \
-            ((L)->wlock_num * sizeof(lmn_mutex_t)))))
+#define lmn_ewlock_space(L)                                                                                            \
+  (!(L) ? 0 : ((sizeof(L) + ((L)->elock_num * sizeof(lmn_mutex_t)) + ((L)->wlock_num * sizeof(lmn_mutex_t)))))
 
 #define DEFAULT_LOCK_ID 0
 
@@ -155,7 +153,7 @@ namespace element {
 /** std::lock_guard/std::unique_lockのためのEWLockのラッパー */
 struct ewmutex {
 private:
-  EWLock *lck;
+  EWLock       *lck;
   unsigned long id;
 
   struct ewmutex_tag {
@@ -165,10 +163,9 @@ private:
   const ewmutex_tag tag;
 
 public:
-  static constexpr ewmutex_tag write{ewlock_acquire_write,
-                                     ewlock_release_write};
-  static constexpr ewmutex_tag enter {ewlock_acquire_enter, ewlock_release_enter};
-  static constexpr ewmutex_tag exclusive_enter {ewlock_reject_enter, ewlock_permit_enter};
+  static constexpr ewmutex_tag write{ewlock_acquire_write, ewlock_release_write};
+  static constexpr ewmutex_tag enter{ewlock_acquire_enter, ewlock_release_enter};
+  static constexpr ewmutex_tag exclusive_enter{ewlock_reject_enter, ewlock_permit_enter};
 
   ewmutex(ewmutex_tag tag, EWLock *lck, unsigned long id) : tag(tag), lck(lck), id(id) {}
 
@@ -182,8 +179,8 @@ public:
       tag.unlock(lck, id);
   }
 };
-}
-}
+} // namespace element
+} // namespace slim
 
 /* @} */
 

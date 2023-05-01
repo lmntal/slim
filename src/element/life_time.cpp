@@ -41,5 +41,5 @@ namespace slim {
 namespace element {
 LifetimeProfiler *LifetimeProfiler::instance_ = nullptr;
 }
-}
+} // namespace slim
 #endif

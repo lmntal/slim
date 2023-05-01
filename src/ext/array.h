@@ -50,40 +50,33 @@
  */
 class LmnArray {
   LMN_SP_ATOM_HEADER;
-  using LmnArrayRef = class LmnArray*;
+  using LmnArrayRef = class LmnArray *;
   /**
-  * @memberof LmnArray
-  * @private
-  */
-  static int array_atom_type; /* special atom type */
+   * @memberof LmnArray
+   * @private
+   */
+  static int  array_atom_type; /* special atom type */
   LmnArrayRef lmn_array_copy();
-  LmnArray(LmnMembraneRef mem, LmnWord size, LmnAtomRef init_value,
-           LmnLinkAttr init_type);
-  LmnArray(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0, LmnLinkAttr t0,
-           LmnAtomRef a1, LmnLinkAttr t1, LmnAtomRef a2, LmnLinkAttr t2);
+  LmnArray(LmnMembraneRef mem, LmnWord size, LmnAtomRef init_value, LmnLinkAttr init_type);
+  LmnArray(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0, LmnLinkAttr t0, LmnAtomRef a1, LmnLinkAttr t1,
+           LmnAtomRef a2, LmnLinkAttr t2);
   ~LmnArray();
-  static void cb_array_new(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
-                           LmnLinkAttr t0, LmnAtomRef a1, LmnLinkAttr t1,
-                           LmnAtomRef a2, LmnLinkAttr t2);
-  static void cb_array_free(LmnReactCxtRef rc, LmnMembraneRef mem,
-                            LmnAtomRef a0, LmnLinkAttr t0);
-  static void cb_array_size(LmnReactCxtRef rc, LmnMembraneRef mem,
-                            LmnAtomRef a0, LmnLinkAttr t0, LmnAtomRef a1,
-                            LmnLinkAttr t1, LmnAtomRef a2, LmnLinkAttr t2);
-  static void cb_array_get(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
-                           LmnLinkAttr t0, LmnAtomRef a1, LmnLinkAttr t1,
-                           LmnAtomRef a2, LmnLinkAttr t2, LmnAtomRef a3,
-                           LmnLinkAttr t3);
-  static void cb_array_put(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
-                           LmnLinkAttr t0, LmnAtomRef a1_, LmnLinkAttr t1,
-                           LmnAtomRef a2, LmnLinkAttr t2, LmnAtomRef a3,
-                           LmnLinkAttr t3);
+  static void         cb_array_new(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0, LmnLinkAttr t0, LmnAtomRef a1,
+                                   LmnLinkAttr t1, LmnAtomRef a2, LmnLinkAttr t2);
+  static void         cb_array_free(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0, LmnLinkAttr t0);
+  static void         cb_array_size(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0, LmnLinkAttr t0, LmnAtomRef a1,
+                                    LmnLinkAttr t1, LmnAtomRef a2, LmnLinkAttr t2);
+  static void         cb_array_get(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0, LmnLinkAttr t0, LmnAtomRef a1,
+                                   LmnLinkAttr t1, LmnAtomRef a2, LmnLinkAttr t2, LmnAtomRef a3, LmnLinkAttr t3);
+  static void         cb_array_put(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0, LmnLinkAttr t0, LmnAtomRef a1_,
+                                   LmnLinkAttr t1, LmnAtomRef a2, LmnLinkAttr t2, LmnAtomRef a3, LmnLinkAttr t3);
   static LmnArrayRef *sp_cb_array_new();
-  static void *sp_cb_array_copy(void *data);
-  static BOOL sp_cb_array_is_ground(void *data);
-  static void sp_cb_array_dump(void *array, LmnPortRef port);
-  static BOOL sp_cb_array_eq(void *_p1, void *_p2);
-  static void sp_cb_array_free(void *data);
+  static void        *sp_cb_array_copy(void *data);
+  static BOOL         sp_cb_array_is_ground(void *data);
+  static void         sp_cb_array_dump(void *array, LmnPortRef port);
+  static BOOL         sp_cb_array_eq(void *_p1, void *_p2);
+  static void         sp_cb_array_free(void *data);
+
 public:
   // callbacks cannot be methods
   static void init_array();

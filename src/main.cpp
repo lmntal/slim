@@ -44,7 +44,7 @@
 #include "loader/loader.h"
 #include "verifier/verifier.h"
 #include "vm/vm.h"
-#include <ctype.h>
+#include <cctype>
 #include <getopt.h>
 #include <unistd.h>
 /* #include "ext.h" */
@@ -56,8 +56,8 @@
 
 #include <vector>
 
-void install_builtin_extensions(void);
-void init_builtin_extensions(void); /* ext/init_exts.c */
+void install_builtin_extensions();
+void init_builtin_extensions(); /* ext/init_exts.c */
 
 void init_default_system_ruleset();
 void init_rules();
@@ -66,81 +66,80 @@ void sym_tbl_destroy();
 void sym_tbl_init();
 
 static void usage(void) {
-  fprintf(
-      stderr,
-      "Usage: slim [OPTION]... FILE\n"
-      "     When FILE is  -, read standard input.\n"
-      "options:\n"
-      "  -I<path>             Adds <path> to the head of the load path list.\n"
-      "  -O[<0-9>] (-O=-O3)   Optimization level. [DEFAULT:-O3]\n"
-      "                       Intermediate instruction sequences are "
-      "optimized.\n"
-      "  -p[<0-3>] (-p=-p1)   Profiler level.\n"
-      "  --use-builtin-rule   Load the rules builtin this application for "
-      "arithmetic, nlmem, etc\n"
-      "  --history-management Optimize backtracking of findatom function by using atoms for history management \n"
-      "  --nd                 Change the execution mode from RunTime(RT) to "
-      "ModelChecker(MC)\n"
-      "  --translate          Change the execution mode to Output translated C "
-      "from LMNtal\n"
-      "  -t                   (RT) Show execution path\n"
-      "                       (MC) Show state space\n"
-      "  --hide-ruleset       Hide ruleset from result\n"
-      "  --shuffle-rule       (RT) Apply rules randomly\n"
-      "  --shuffle-atom       (RT) Choose atoms to be applied randomly\n"
-      "  --shuffle            (RT) Apply both shuffle-rule option and shuffle-atom options\n"
-      "  --hl                 (RT) Allow using hyperlink system\n"
-      "  --show-proxy         Show proxy atoms\n"
-      "  --show-chr           Show applied history in uniq rulesets "
-      "(constraint handling rules)\n"
-      "  --show-transition    (MC) Show transition information in state "
-      "transition graph\n"
-      "  --show-ends          (MC) Show all of terminated states\n"
-      "  --show-hl            (RT) Show all hyperlinks details\n"
-      "  --dump-dot           (RT) Print format: DOT language (LMNtal "
-      "hierarchical graph)\n"
-      "                       (MC) Print format: DOT language (State "
-      "Transition graph) \n"
-      "  --dump-lavit         (MC) Print format: LaViT - LMNtal IDE (State "
-      "Transition Graph)\n"
-      "  --dump-inc           (MC) State Generation and Output of states at "
-      "the same time\n"
-      "  --dump-json          Print format: JSON\n"
-      "  --nc <file>          (MC) Input <file> as a property automata (LTL2BA "
-      "format)\n"
-      "  --psym <file>        (MC) Input <file> as propositional symbol "
-      "definitions\n"
-      "  --ltl                (MC) Do LTL model checking (need --psym, --nc)\n"
-      "  --ltl-all            (MC) Generate full state space and exhaustive "
-      "search\n"
-      "  --bfs                (MC) Use BFS strategy\n"
-      "  --bfs-lsync          (MC) Use Layer Synchronized BFS strategy\n"
-      "  --limited-step=<N>   (MC) Run only first <N> steps (BFS)\n"
-      "  --use-owcty          (MC) Use OWCTY algorithm  (LTL model checking)\n"
-      "  --use-map            (MC) Use MAP algorithm    (LTL model checking)\n"
-      "  --use-mapndfs        (MC) Use Map+NDFS algorithm (LTL model "
-      "checking)\n"
+  fprintf(stderr,
+          "Usage: slim [OPTION]... FILE\n"
+          "     When FILE is  -, read standard input.\n"
+          "options:\n"
+          "  -I<path>             Adds <path> to the head of the load path list.\n"
+          "  -O[<0-9>] (-O=-O3)   Optimization level. [DEFAULT:-O3]\n"
+          "                       Intermediate instruction sequences are "
+          "optimized.\n"
+          "  -p[<0-3>] (-p=-p1)   Profiler level.\n"
+          "  --use-builtin-rule   Load the rules builtin this application for "
+          "arithmetic, nlmem, etc\n"
+          "  --history-management Optimize backtracking of findatom function by using atoms for history management \n"
+          "  --nd                 Change the execution mode from RunTime(RT) to "
+          "ModelChecker(MC)\n"
+          "  --translate          Change the execution mode to Output translated C "
+          "from LMNtal\n"
+          "  -t                   (RT) Show execution path\n"
+          "                       (MC) Show state space\n"
+          "  --hide-ruleset       Hide ruleset from result\n"
+          "  --shuffle-rule       (RT) Apply rules randomly\n"
+          "  --shuffle-atom       (RT) Choose atoms to be applied randomly\n"
+          "  --shuffle            (RT) Apply both shuffle-rule option and shuffle-atom options\n"
+          "  --hl                 (RT) Allow using hyperlink system\n"
+          "  --show-proxy         Show proxy atoms\n"
+          "  --show-chr           Show applied history in uniq rulesets "
+          "(constraint handling rules)\n"
+          "  --show-transition    (MC) Show transition information in state "
+          "transition graph\n"
+          "  --show-ends          (MC) Show all of terminated states\n"
+          "  --show-hl            (RT) Show all hyperlinks details\n"
+          "  --dump-dot           (RT) Print format: DOT language (LMNtal "
+          "hierarchical graph)\n"
+          "                       (MC) Print format: DOT language (State "
+          "Transition graph) \n"
+          "  --dump-lavit         (MC) Print format: LaViT - LMNtal IDE (State "
+          "Transition Graph)\n"
+          "  --dump-inc           (MC) State Generation and Output of states at "
+          "the same time\n"
+          "  --dump-json          Print format: JSON\n"
+          "  --nc <file>          (MC) Input <file> as a property automata (LTL2BA "
+          "format)\n"
+          "  --psym <file>        (MC) Input <file> as propositional symbol "
+          "definitions\n"
+          "  --ltl                (MC) Do LTL model checking (need --psym, --nc)\n"
+          "  --ltl-all            (MC) Generate full state space and exhaustive "
+          "search\n"
+          "  --bfs                (MC) Use BFS strategy\n"
+          "  --bfs-lsync          (MC) Use Layer Synchronized BFS strategy\n"
+          "  --limited-step=<N>   (MC) Run only first <N> steps (BFS)\n"
+          "  --use-owcty          (MC) Use OWCTY algorithm  (LTL model checking)\n"
+          "  --use-map            (MC) Use MAP algorithm    (LTL model checking)\n"
+          "  --use-mapndfs        (MC) Use Map+NDFS algorithm (LTL model "
+          "checking)\n"
 #ifndef MINIMAL_STATE
-      "  --use-mcndfs         (MC) Use Multicore NDFS algorithm (LTL model "
-      "checking)\n"
+          "  --use-mcndfs         (MC) Use Multicore NDFS algorithm (LTL model "
+          "checking)\n"
 #endif
-      "  --use-bledge         (MC) Use BLEDGE algorithm (LTL model checking)\n"
-      "  --disable-map-h      (MC) No use MAP heuristics(LTL model checking)\n"
-      "  --pscc-driven        (MC) Use SCC analysis of property automata (LTL "
-      "model checking)\n"
-      "  --use-Ncore=<N>      (MC) Use <N>threads\n"
-      "  --delta-mem          (MC) Use delta membrane generator\n"
-      "  --tree-compress=<N>  (MC) Use Tree Compression with 2^N table size "
-      "default(N=20)\n"
-      "  --hash-compaction    (MC) Use Hash Compaction\n"
-      "  --hash-depth=<N>     (MC) Set <N> Depth of Hash Function\n"
-      "  --mem-enc            (MC) Use canonical membrane representation\n"
-      "  --ltl-f <ltl>        (MC) Input <ltl> formula directly. (need LTL2BA "
-      "env)\n"
-      "  --visualize          (MC) Output information for visualize\n"
-      "  --run-test           Run CUnit\n"
-      "  --version            Prints version and exits.\n"
-      "  --help               This Help.\n");
+          "  --use-bledge         (MC) Use BLEDGE algorithm (LTL model checking)\n"
+          "  --disable-map-h      (MC) No use MAP heuristics(LTL model checking)\n"
+          "  --pscc-driven        (MC) Use SCC analysis of property automata (LTL "
+          "model checking)\n"
+          "  --use-Ncore=<N>      (MC) Use <N>threads\n"
+          "  --delta-mem          (MC) Use delta membrane generator\n"
+          "  --tree-compress=<N>  (MC) Use Tree Compression with 2^N table size "
+          "default(N=20)\n"
+          "  --hash-compaction    (MC) Use Hash Compaction\n"
+          "  --hash-depth=<N>     (MC) Set <N> Depth of Hash Function\n"
+          "  --mem-enc            (MC) Use canonical membrane representation\n"
+          "  --ltl-f <ltl>        (MC) Input <ltl> formula directly. (need LTL2BA "
+          "env)\n"
+          "  --visualize          (MC) Output information for visualize\n"
+          "  --run-test           Run CUnit\n"
+          "  --version            Prints version and exits.\n"
+          "  --help               This Help.\n");
   exit(1);
 }
 
@@ -239,14 +238,13 @@ static void parse_options(int *optid, int argc, char *argv[]) {
                                   {"tree-compress", 1, 0, 6062},
                                   {"run-test", 0, 0, 6070},
                                   {"history-management", 0, 0, 6071},
-                                  {"shuffle-rule",0,0,6080},
-                                  {"shuffle-atom",0,0,6081},
-                                  {"shuffle",0,0,6082},
+                                  {"shuffle-rule", 0, 0, 6080},
+                                  {"shuffle-atom", 0, 0, 6081},
+                                  {"shuffle", 0, 0, 6082},
                                   {"interactive-debug", 0, 0, 6090},
                                   {0, 0, 0, 0}};
 
-  while ((c = getopt_long(argc, argv, "+dvhtI:O::p::", long_options,
-                          &option_index)) != -1) {
+  while ((c = getopt_long(argc, argv, "+dvhtI:O::p::", long_options, &option_index)) != -1) {
     switch (c) {
     case 0:
       printf("log_options entries must have positive 4th member.\n");
@@ -261,7 +259,7 @@ static void parse_options(int *optid, int argc, char *argv[]) {
     case 'p':
       if (optarg) {
         if (isdigit((unsigned char)optarg[0])) {
-          int l = optarg[0] - '0';
+          int l                 = optarg[0] - '0';
           lmn_env.profile_level = l <= 3 ? l : 3;
         } else {
           fprintf(stderr, "invalid argument: -p %s\n", optarg);
@@ -310,7 +308,7 @@ static void parse_options(int *optid, int argc, char *argv[]) {
       lmn_env.load_path[lmn_env.load_path_num++] = SLIM_LIB_DIR;
       break;
     case 1100:
-      lmn_env.output_format = DOT;
+      lmn_env.output_format  = DOT;
       lmn_env.mc_dump_format = Dir_DOT;
       break;
     case 1101:
@@ -335,7 +333,7 @@ static void parse_options(int *optid, int argc, char *argv[]) {
       lmn_env.mc_dump_format = LMN_FSM_GRAPH_HL_NODE;
       break;
     case 1108:
-      lmn_env.trace = TRUE;
+      lmn_env.trace              = TRUE;
       lmn_env.show_laststep_only = TRUE;
       break;
     case 1200: /* jni interactive mode */
@@ -361,13 +359,13 @@ static void parse_options(int *optid, int argc, char *argv[]) {
       lmn_env.nd = TRUE;
       break;
     case 1403:
-      lmn_env.nd = TRUE;
-      lmn_env.opt_mode = OPT_MINIMIZE;
+      lmn_env.nd              = TRUE;
+      lmn_env.opt_mode        = OPT_MINIMIZE;
       lmn_env.show_transition = TRUE;
       break;
     case 1404:
-      lmn_env.nd = TRUE;
-      lmn_env.opt_mode = OPT_MAXIMIZE;
+      lmn_env.nd              = TRUE;
+      lmn_env.opt_mode        = OPT_MAXIMIZE;
       lmn_env.show_transition = TRUE;
       break;
     case 1410:
@@ -384,10 +382,10 @@ static void parse_options(int *optid, int argc, char *argv[]) {
       break;
     case 1419:
       lmn_env.enable_por_old = TRUE;
-      lmn_env.enable_por = TRUE;
+      lmn_env.enable_por     = TRUE;
       break;
     case 1420:
-      lmn_env.delta_mem = TRUE; /* 新PORはdelta-mem方式に依存 */
+      lmn_env.delta_mem  = TRUE; /* 新PORはdelta-mem方式に依存 */
       lmn_env.enable_por = TRUE;
       break;
     case 1421:
@@ -395,7 +393,7 @@ static void parse_options(int *optid, int argc, char *argv[]) {
       break;
     case 1422:
       lmn_env.bfs_layer_sync = TRUE;
-      lmn_env.depth_limits = atoi(optarg);
+      lmn_env.depth_limits   = atoi(optarg);
       break;
     case 1423:
       lmn_env.nd_search_end = TRUE;
@@ -414,8 +412,7 @@ static void parse_options(int *optid, int argc, char *argv[]) {
       lmn_env.z_compress = TRUE;
 #else
       fprintf(stderr, "Sorry, z library cannot be found on your environment\n");
-      fprintf(stderr,
-              "if you installed z library, please re-configure & make slim\n");
+      fprintf(stderr, "if you installed z library, please re-configure & make slim\n");
       exit(EXIT_FAILURE);
 #endif
       break;
@@ -427,29 +424,29 @@ static void parse_options(int *optid, int argc, char *argv[]) {
       break;
     case 3000:
       lmn_env.enable_parallel = TRUE;
-      lmn_env.enable_owcty = TRUE;
+      lmn_env.enable_owcty    = TRUE;
       break;
     case 3001:
-      lmn_env.enable_parallel = TRUE;
-      lmn_env.enable_map = TRUE;
+      lmn_env.enable_parallel      = TRUE;
+      lmn_env.enable_map           = TRUE;
       lmn_env.enable_map_heuristic = FALSE;
       break;
     case 3002:
       lmn_env.enable_parallel = TRUE;
-      lmn_env.enable_bledge = TRUE; /* FALLTROUGH */
+      lmn_env.enable_bledge   = TRUE; /* FALLTROUGH */
     case 3003:
-      lmn_env.bfs = TRUE;
+      lmn_env.bfs            = TRUE;
       lmn_env.bfs_layer_sync = TRUE;
       break;
     case 3004:
       lmn_env.enable_parallel = TRUE;
-      lmn_env.enable_mapndfs = TRUE;
+      lmn_env.enable_mapndfs  = TRUE;
       // lmn_env.enable_map_heuristic = FALSE;
       break;
 #ifndef MINIMAL_STATE
     case 3005:
       lmn_env.enable_parallel = TRUE;
-      lmn_env.enable_mcndfs = TRUE;
+      lmn_env.enable_mcndfs   = TRUE;
       // lmn_env.enable_map_heuristic = FALSE;
       break;
 #endif
@@ -489,9 +486,7 @@ static void parse_options(int *optid, int argc, char *argv[]) {
     case 5001:
     case 5015:
     case 5025:
-      fprintf(
-          stderr,
-          "Sorry, parallel execution is not supported on your environment.\n");
+      fprintf(stderr, "Sorry, parallel execution is not supported on your environment.\n");
       fprintf(stderr, "Requirement: GCC keyword __thread, pthread library \n");
       exit(EXIT_FAILURE);
       break;
@@ -501,7 +496,7 @@ static void parse_options(int *optid, int argc, char *argv[]) {
       break;
     case 5027:
 #ifdef PROFILE
-      lmn_env.optimize_hash = FALSE;
+      lmn_env.optimize_hash     = FALSE;
       lmn_env.optimize_hash_old = TRUE;
 #else
       usage();
@@ -512,8 +507,8 @@ static void parse_options(int *optid, int argc, char *argv[]) {
       break;
     case 6001: /* 性能測定時のデータ収集用に仮設. 無視してください(gocho) */
       lmn_env.benchmark = TRUE;
-      lmn_env.dump = FALSE;
-      lmn_env.end_dump = FALSE;
+      lmn_env.dump      = FALSE;
+      lmn_env.end_dump  = FALSE;
       break;
     case 6002:
       lmn_env.property_dump = TRUE;
@@ -539,11 +534,11 @@ static void parse_options(int *optid, int argc, char *argv[]) {
       break;
     case 6013:
       lmn_env.show_reduced_graph = TRUE;
-      lmn_env.show_transition = TRUE;
+      lmn_env.show_transition    = TRUE;
       break;
     case 6014:
       lmn_env.debug_por_dep = TRUE;
-      lmn_env.enable_por = TRUE;
+      lmn_env.enable_por    = TRUE;
       break;
 #else
     case 6007:
@@ -582,8 +577,8 @@ static void parse_options(int *optid, int argc, char *argv[]) {
     }
     case 6062: {
       lmn_env.hash_compaction = FALSE;
-      lmn_env.tree_compress = TRUE;
-      int size = atoi(optarg);
+      lmn_env.tree_compress   = TRUE;
+      int size                = atoi(optarg);
       if (size >= 15) {
         lmn_env.tree_compress_table_size = size;
       } else {
@@ -617,9 +612,8 @@ static void parse_options(int *optid, int argc, char *argv[]) {
       /* -Oに引数が付かない場合 optargは 0 に設定される */
       if (optarg) {
         if (isdigit((unsigned char)optarg[0])) {
-          int l = optarg[0] - '0';
-          lmn_env.optimization_level =
-              l <= OPTIMIZE_LEVEL_MAX ? l : OPTIMIZE_LEVEL_MAX;
+          int l                      = optarg[0] - '0';
+          lmn_env.optimization_level = l <= OPTIMIZE_LEVEL_MAX ? l : OPTIMIZE_LEVEL_MAX;
         } else {
           fprintf(stderr, "invalid argument: -O %s\n", optarg);
           exit(EXIT_FAILURE);
@@ -701,14 +695,13 @@ static inline void slim_finalize(void) {
   slim::element::LifetimeProfiler::check_memory_leak();
 }
 
-static inline int load_input_files(std::vector<LmnRuleSetRef> &start_rulesets, int optid, int argc,
-                                   char **argv) {
+static inline int load_input_files(std::vector<LmnRuleSetRef> &start_rulesets, int optid, int argc, char **argv) {
   int i;
 
   /** load input files */
   for (i = optid; i < argc; i++) {
     LmnRuleSetRef t;
-    char *f = argv[i];
+    char         *f = argv[i];
 
     try {
       if (!strcmp("-", f)) { /* 標準入力からの読込み */
@@ -719,8 +712,7 @@ static inline int load_input_files(std::vector<LmnRuleSetRef> &start_rulesets, i
         if (t)
           start_rulesets.push_back(t);
       }
-    }
-    catch (const slim::loader::exception &e) {
+    } catch (slim::loader::exception const &e) {
       fprintf(stderr, "loader error: %s\n", e.what());
       return 0;
     }
@@ -735,22 +727,21 @@ static inline int load_input_files(std::vector<LmnRuleSetRef> &start_rulesets, i
   }
 }
 
-static inline void slim_exec(const std::vector<LmnRuleSetRef> &start_rulesets) {
+static inline void slim_exec(std::vector<LmnRuleSetRef> const &start_rulesets) {
   if (!lmn_env.nd) {
     /* プログラム実行 */
     Task::lmn_run(new Vector(start_rulesets));
   } else {
     /* プログラム検証 */
     AutomataRef automata;
-    PVector prop_defs;
-    int ret;
+    PVector     prop_defs;
+    int         ret;
 
-    automata = NULL;
+    automata  = NULL;
     prop_defs = NULL;
-    ret = 1;
+    ret       = 1;
 
-    if ((lmn_env.automata_file || lmn_env.ltl_exp) &&
-        lmn_env.propositional_symbol) {
+    if ((lmn_env.automata_file || lmn_env.ltl_exp) && lmn_env.propositional_symbol) {
       /* load property automata, definition of atomic propositional symbol */
       ret = mc_load_property(&automata, &prop_defs);
       if (ret) {
@@ -783,9 +774,7 @@ int main(int argc, char *argv[]) {
 #ifdef USE_CUNIT
     test_main();
 #else
-    fprintf(
-        stderr,
-        "CUnit is disabled. Please configure with --enable-cunit option.\n");
+    fprintf(stderr, "CUnit is disabled. Please configure with --enable-cunit option.\n");
 #endif
     return 0;
   }

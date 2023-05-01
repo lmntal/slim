@@ -51,16 +51,16 @@
 #include "statespace.h"
 #ifdef DEBUG
 #include "vm/dumper.h"
-#define POR_DEBUG(V)                                                           \
-  if (lmn_env.debug_por) {                                                     \
-    (V);                                                                       \
+#define POR_DEBUG(V)                                                                                                   \
+  if (lmn_env.debug_por) {                                                                                             \
+    (V);                                                                                                               \
   }
 #else
 #define POR_DEBUG(V)
 #endif
 
-using ContextC2Ref = struct ContextC2*;
-using ContextC1Ref = struct ContextC1*;
+using ContextC2Ref = struct ContextC2 *;
+using ContextC1Ref = struct ContextC1 *;
 
 struct McDporData {
   unsigned int cur_depth;
@@ -68,15 +68,13 @@ struct McDporData {
   ContextC1Ref tmp; /* ちょっと退避する場所 */
   ContextC2Ref c2;
 
-  Vector
-      *wt_gatoms; /* マッチング中, ground命令によるProcessTblを集める作業場 */
-  ProcessTableRef
-      wt_flags; /* マッチング中, プロセスIDに対するフラグを設定していく作業場 */
+  Vector         *wt_gatoms; /* マッチング中, ground命令によるProcessTblを集める作業場 */
+  ProcessTableRef wt_flags;  /* マッチング中, プロセスIDに対するフラグを設定していく作業場 */
 
-  Vector *ample_cand; /* ample setに含める予定のContextC1へのポインタを積む */
-  st_table_t delta_tbl;   /* MemDeltaRootをkey, ContextC1をvalue */
-  Vector *free_deltas;    /* ゴミ置き場 */
-  unsigned int nxt_tr_id; /* 遷移に割り当てる遷移番号 */
+  Vector      *ample_cand;  /* ample setに含める予定のContextC1へのポインタを積む */
+  st_table_t   delta_tbl;   /* MemDeltaRootをkey, ContextC1をvalue */
+  Vector      *free_deltas; /* ゴミ置き場 */
+  unsigned int nxt_tr_id;   /* 遷移に割り当てる遷移番号 */
 };
 
 extern McDporData **dpor_data;
@@ -110,16 +108,13 @@ extern McDporData **dpor_data;
 
 void dpor_explore_redundunt_graph(StateSpaceRef ss);
 
-void dpor_start(StateSpaceRef ss, State *s, MCReactContext *rc, Vector *new_s,
-                BOOL flag);
+void dpor_start(StateSpaceRef ss, State *s, MCReactContext *rc, Vector *new_s, BOOL flag);
 
 void dpor_env_init(void);
 void dpor_env_destroy(void);
 
-void dpor_transition_gen_LHS(McDporData *mc, MemDeltaRoot *d,
-                             LmnReactCxtRef rc);
-BOOL dpor_transition_gen_RHS(McDporData *mc, MemDeltaRoot *d,
-                             MCReactContext *rc);
+void dpor_transition_gen_LHS(McDporData *mc, MemDeltaRoot *d, LmnReactCxtRef rc);
+BOOL dpor_transition_gen_RHS(McDporData *mc, MemDeltaRoot *d, MCReactContext *rc);
 
 void dpor_LHS_flag_add(McDporData *d, LmnWord proc_id, BYTE set_f);
 
@@ -133,7 +128,7 @@ void dpor_LHS_remove_ground_atoms(McDporData *d, ProcessTableRef atoms);
 void dpor_contextC1_dump_eachL(ContextC1Ref c);
 void dpor_contextC1_dump_eachR(ContextC1Ref c);
 void dpor_contextC1_dump(McDporData *d);
-int dpor_dependency_tbl_dump(McDporData *d);
+int  dpor_dependency_tbl_dump(McDporData *d);
 
 /* @} */
 

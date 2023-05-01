@@ -50,97 +50,92 @@
 #include "element/element.h"
 #include "vm/vm.h"
 
-using AutomataRef = struct Automata*;
-using AutomataStateRef = struct AutomataState*;
-using AutomataTransitionRef = struct AutomataTransition*;
-using AutomataSCC = struct AutomataSCC;
+using AutomataRef           = struct Automata *;
+using AutomataStateRef      = struct AutomataState *;
+using AutomataTransitionRef = struct AutomataTransition *;
+using AutomataSCC           = struct AutomataSCC;
 
 using atmstate_id_t = BYTE; /* 性質ラベル(状態)数は256個まで */
 
 struct Automata {
   atmstate_id_t init_state;
-  unsigned int prop_num;
-  Vector states; /* Vector of AutomataState */
-  st_table_t state_name_to_id;
-  st_table_t id_to_state_name;
-  st_table_t prop_to_id;
-  Vector sccs;
+  unsigned int  prop_num;
+  Vector        states; /* Vector of AutomataState */
+  st_table_t    state_name_to_id;
+  st_table_t    id_to_state_name;
+  st_table_t    prop_to_id;
+  Vector        sccs;
 
-  Automata(void);
-  ~Automata(void);
-  atmstate_id_t state_id(const char *);
-  const char *state_name(atmstate_id_t);
-  void add_state(AutomataStateRef);
+  Automata();
+  ~Automata();
+  atmstate_id_t    state_id(char const *);
+  char const      *state_name(atmstate_id_t);
+  void             add_state(AutomataStateRef);
   AutomataStateRef get_state(atmstate_id_t);
-  atmstate_id_t get_init_state();
-  void set_init_state(atmstate_id_t);
-  unsigned int propsym_to_id(char *prop_name);
-  void analysis();
-  void print_property();
+  atmstate_id_t    get_init_state();
+  void             set_init_state(atmstate_id_t);
+  unsigned int     propsym_to_id(char *prop_name);
+  void             analysis();
+  void             print_property();
 };
 
 struct AutomataState {
   atmstate_id_t id;
-  BOOL is_accept;
-  BOOL is_end;
-  Vector transitions; /* Vector of Successors (AutomataTransition) */
-  AutomataSCC *scc;
+  BOOL          is_accept;
+  BOOL          is_end;
+  Vector        transitions; /* Vector of Successors (AutomataTransition) */
+  AutomataSCC  *scc;
 
   AutomataState(unsigned int, BOOL, BOOL);
   ~AutomataState();
-  void add_transition(AutomataTransitionRef t);
-  atmstate_id_t get_id();
-  unsigned int get_transition_num();
+  void                  add_transition(AutomataTransitionRef t);
+  atmstate_id_t         get_id();
+  unsigned int          get_transition_num();
   AutomataTransitionRef get_transition(unsigned int index);
-  BOOL get_is_accept();
-  BOOL get_is_end();
-  void set_scc(AutomataSCC *scc);
-  BYTE scc_type();
-  AutomataSCC *get_scc();
+  BOOL                  get_is_accept();
+  BOOL                  get_is_end();
+  void                  set_scc(AutomataSCC *scc);
+  BYTE                  scc_type();
+  AutomataSCC          *get_scc();
 };
 
 /* Propositional Logic Formula */
-using PLFormulaRef = struct PLFormula*;
+using PLFormulaRef = struct PLFormula *;
 
 struct AutomataTransition {
   atmstate_id_t next;
-  PLFormulaRef f; /* 実際は命題論理式 */
+  PLFormulaRef  f; /* 実際は命題論理式 */
 
   AutomataTransition(atmstate_id_t next, PLFormulaRef f);
   ~AutomataTransition();
   atmstate_id_t get_next();
-  PLFormulaRef get_formula();
+  PLFormulaRef  get_formula();
 };
 
 struct AutomataSCC {
 private:
-  unsigned int id;
-  BYTE type;
+  unsigned int        id;
+  BYTE                type;
   static unsigned int unsafe_id_counter;
+
 public:
   AutomataSCC();
   ~AutomataSCC();
-  const char *get_name();
-/** CAUTION: MT-Unsafe */
-  void issue_id(){
-  	id = unsafe_id_counter++;
-	//Is it checked by test cases? by sumiya
+  char const *get_name();
+  /** CAUTION: MT-Unsafe */
+  void issue_id() {
+    id = unsafe_id_counter++;
+    // Is it checked by test cases? by sumiya
   }
-  unsigned int get_id(){
-  	return id;
-  }
-  BYTE get_type(){
-  	return type;
-  }
-  void set_type(BYTE t){
-  	type = t;
-  }
+  unsigned int get_id() { return id; }
+  BYTE         get_type() { return type; }
+  void         set_type(BYTE t) { type = t; }
 };
 
 enum SCC_ACCEPTING_TYPE {
-  SCC_TYPE_UNKNOWN = 0U,
-  SCC_TYPE_FULLY = 1U, /* 構成するサイクルが全て受理サイクル */
-  SCC_TYPE_PARTIALLY = 2U, /* 構成するサイクルが非受理サイクルも含む */
+  SCC_TYPE_UNKNOWN    = 0U,
+  SCC_TYPE_FULLY      = 1U, /* 構成するサイクルが全て受理サイクル */
+  SCC_TYPE_PARTIALLY  = 2U, /* 構成するサイクルが非受理サイクルも含む */
   SCC_TYPE_NON_ACCEPT = 3U, /* 受理サイクルを含まない */
 };
 
@@ -151,8 +146,8 @@ PLFormulaRef sym_node_make(int sym_id);
 PLFormulaRef negation_node_make(PLFormulaRef f0);
 PLFormulaRef and_node_make(PLFormulaRef f0, PLFormulaRef f1);
 PLFormulaRef or_node_make(PLFormulaRef f0, PLFormulaRef f1);
-void free_formula(PLFormulaRef f);
-BOOL eval_formula(LmnMembraneRef mem, Vector *prop_defs, PLFormulaRef f);
+void         free_formula(PLFormulaRef f);
+BOOL         eval_formula(LmnMembraneRef mem, Vector *prop_defs, PLFormulaRef f);
 
 /* never claim */
 int never_claim_load(FILE *f, AutomataRef *a);

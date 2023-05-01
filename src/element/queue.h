@@ -55,7 +55,7 @@
 
 struct Node {
   LmnWord v;
-  Node *next;
+  Node   *next;
   Node(LmnWord v);
   ~Node();
 };
@@ -64,23 +64,20 @@ struct Queue {
   Queue();
   Queue(BOOL lock_type);
   ~Queue();
-  Node *head;
-  Node *tail;
-  BOOL qlock;
-  unsigned long enq_num, deq_num;
+  Node           *head;
+  Node           *tail;
+  BOOL            qlock;
+  unsigned long   enq_num, deq_num;
   pthread_mutex_t enq_mtx, deq_mtx;
-  void enqueue(LmnWord v);
-  void enqueue_push_head(LmnWord v);
-  LmnWord dequeue();
-  BOOL is_empty();
-  void lock(BOOL is_enq);
-  void unlock(BOOL is_enq);
-  void clear();
-  unsigned long entry_num();
-
+  void            enqueue(LmnWord v);
+  void            enqueue_push_head(LmnWord v);
+  LmnWord         dequeue();
+  BOOL            is_empty();
+  void            lock(BOOL is_enq);
+  void            unlock(BOOL is_enq);
+  void            clear();
+  unsigned long   entry_num();
 };
-
-
 
 /* single dequeue(reader), single enqueue(writer) */
 #define LMN_Q_SRSW 0
@@ -101,28 +98,28 @@ using deq_data_t = LmnWord;
 #define DEQ_INC(X, C) (X = X != C - 1 ? X + 1 : 0)
 
 struct Deque {
-  LmnWord *tbl;
+  LmnWord     *tbl;
   unsigned int head, tail, cap;
   Deque(unsigned int init_size);
   ~Deque();
-  void init(unsigned int init_size);
-  int num();
-  BOOL is_empty();
-  void extend();
-  void push_head(LmnWord keyp);
-  void push_tail(LmnWord keyp);
-  LmnWord pop_head();
-  LmnWord pop_tail();
-  LmnWord peek_head()const;
-  LmnWord peek_tail()const;
-  LmnWord get(unsigned int i)const;
-  void clear();
-  void destroy();
+  void          init(unsigned int init_size);
+  int           num();
+  BOOL          is_empty();
+  void          extend();
+  void          push_head(LmnWord keyp);
+  void          push_tail(LmnWord keyp);
+  LmnWord       pop_head();
+  LmnWord       pop_tail();
+  LmnWord       peek_head() const;
+  LmnWord       peek_tail() const;
+  LmnWord       get(unsigned int i) const;
+  void          clear();
+  void          destroy();
   unsigned long space();
   unsigned long space_inner();
-  void print();
-  BOOL contains(LmnWord keyp)const;
-  Deque *copy();
+  void          print();
+  BOOL          contains(LmnWord keyp) const;
+  Deque        *copy();
 };
 /* @} */
 

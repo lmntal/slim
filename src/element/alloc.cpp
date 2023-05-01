@@ -53,19 +53,18 @@ static memory_pool **atom_memory_pools[128];
 void mpool_init() {
   int i, core_num, arity_num;
   arity_num = ARY_SIZEOF(atom_memory_pools);
-  core_num = lmn_env.core_num;
+  core_num  = lmn_env.core_num;
   for (i = 0; i < arity_num; i++) {
-    atom_memory_pools[i] =
-        (memory_pool **)malloc(sizeof(memory_pool *) * core_num);
+    atom_memory_pools[i] = (memory_pool **)malloc(sizeof(memory_pool *) * core_num);
     memset(atom_memory_pools[i], 0, sizeof(memory_pool *) * core_num);
   }
 }
 
 LmnSymbolAtomRef lmn_new_atom(LmnFunctor f) {
   LmnSymbolAtomRef ap;
-  int arity, cid;
+  int              arity, cid;
   arity = LMN_FUNCTOR_ARITY(lmn_functor_table, f);
-  cid = env_my_thread_id();
+  cid   = env_my_thread_id();
 
   if (atom_memory_pools[arity][cid] == 0) {
     atom_memory_pools[arity][cid] = memory_pool_new(LMN_SATOM_SIZE(arity));
@@ -84,7 +83,7 @@ void lmn_delete_atom(LmnSymbolAtomRef ap) {
   env_return_id(ap->get_id());
 
   arity = LMN_FUNCTOR_ARITY(lmn_functor_table, ap->get_functor());
-  cid = env_my_thread_id();
+  cid   = env_my_thread_id();
   memory_pool_free(atom_memory_pools[arity][cid], ap);
 }
 
@@ -92,7 +91,7 @@ void free_atom_memory_pools(void) {
   unsigned int i, j, arity_num, core_num;
 
   arity_num = ARY_SIZEOF(atom_memory_pools);
-  core_num = lmn_env.core_num;
+  core_num  = lmn_env.core_num;
   for (i = 0; i < arity_num; i++) {
     for (j = 0; j < core_num; j++) {
       if (atom_memory_pools[i][j]) {
@@ -157,27 +156,14 @@ void *lmn_realloc(void *p, size_t num) {
 
 void lmn_free(void *p) { free(p); }
 
-void* operator new(std::size_t num) {
-  return lmn_malloc(num);
-}
+void *operator new(std::size_t num) { return lmn_malloc(num); }
 
-void* operator new[](std::size_t num) {
-  return lmn_malloc(num);
-}
+void *operator new[](std::size_t num) { return lmn_malloc(num); }
 
-void operator delete(void* p) noexcept {
-  lmn_free(p);
-}
+void operator delete(void *p) noexcept { lmn_free(p); }
 
-void operator delete[](void* p) noexcept {
-  lmn_free(p);
-}
+void operator delete[](void *p) noexcept { lmn_free(p); }
 
-void operator delete(void* p, std::size_t num) noexcept {
-  lmn_free(p);
-}
+void operator delete(void *p, std::size_t num) noexcept { lmn_free(p); }
 
-void operator delete[](void* p, std::size_t num) noexcept {
-  lmn_free(p);
-}
-
+void operator delete[](void *p, std::size_t num) noexcept { lmn_free(p); }

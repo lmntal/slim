@@ -46,7 +46,7 @@
  */
 
 struct memory_pool {
-  int sizeof_element;
+  int   sizeof_element;
   void *block_head;
   void *free_head;
 };
