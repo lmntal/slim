@@ -106,7 +106,7 @@ using LmnLinkAttr = uint8_t;
 // using ProcessID = uint16_t;
 using ProcessID = LmnWord;
 
-using LmnCost   = LmnWord;
+using LmnCost = LmnWord;
 
 /* uint16_t is not defined if there is no 2Byte data type */
 using LmnFunctor                                       = uint16_t;
@@ -115,17 +115,17 @@ constexpr auto                       LMN_FUNCTOR_BITS  = LMN_FUNCTOR_BYTES * 8;
 template <typename T> constexpr auto LMN_FUNCTOR(T X) { return (LmnFunctor)((X)); }
 
 /* this type must be enough to represent arity */
-using LmnArity         = uint8_t;
+using LmnArity = uint8_t;
 
 using lmn_interned_str = unsigned int;
 
-using LmnRuleInstr     = BYTE *;
-using LmnInstrOp       = uint16_t;
-using LmnInstrVar      = uint16_t;
-using LmnJumpOffset    = uint16_t;
-using LmnLineNum       = uint32_t;
-using LmnRulesetId     = int16_t;
-using LmnSubInstrSize  = uint32_t;
+using LmnRuleInstr    = BYTE *;
+using LmnInstrOp      = uint16_t;
+using LmnInstrVar     = uint16_t;
+using LmnJumpOffset   = uint16_t;
+using LmnLineNum      = uint32_t;
+using LmnRulesetId    = int16_t;
+using LmnSubInstrSize = uint32_t;
 
 // using LmnMembrane = struct LmnMembrane;
 // using DeltaMembrane = struct DeltaMembrane;

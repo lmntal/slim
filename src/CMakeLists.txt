@@ -13,6 +13,7 @@ add_executable(slim)
 target_sources(slim PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/env.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/options.cpp
 )
 
 target_sources(slim PRIVATE
@@ -33,6 +34,7 @@ target_sources(slim PRIVATE
 )
 
 target_include_directories(slim PRIVATE ${CMAKE_SOURCE_DIR}/src)
+target_include_directories(slim PRIVATE ${CMAKE_SOURCE_DIR}/third_party)
 
 target_link_libraries(slim PRIVATE Threads::Threads)
 target_link_libraries(slim PRIVATE OpenMP::OpenMP_CXX)
@@ -83,7 +85,7 @@ add_subdirectory(verifier)
 add_subdirectory(vm)
 
 set_property(
-  TARGET lmn_verifier
-  APPEND
-  PROPERTY ADDITIONAL_CLEAN_FILES ${CMAKE_CURRENT_SOURCE_DIR}/arch.h ${CMAKE_CURRENT_SOURCE_DIR}/config.h
+    TARGET lmn_verifier
+    APPEND
+    PROPERTY ADDITIONAL_CLEAN_FILES ${CMAKE_CURRENT_SOURCE_DIR}/arch.h ${CMAKE_CURRENT_SOURCE_DIR}/config.h
 )

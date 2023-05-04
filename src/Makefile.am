@@ -65,6 +65,7 @@ CLEANFILES = arch.h $(PARSER_SOURCE) $(PARSER_HEADER)
 slim_SOURCES =                                                     \
 	main.cpp                          lmntal.h                         \
 	env.cpp                           arch.h                           \
+	options.cpp                       options.h                    \
 	\
 	lmntal_ext.h                                                     \
 	ext/init_exts.cpp                                                  \
