@@ -45,6 +45,7 @@
 #include "so.h"
 #include "syntax.hpp"
 #include "verifier/verifier.h"
+#include <optional>
 
 #ifdef PROFILE
 #include "verifier/runtime_status.h"
@@ -614,7 +615,9 @@ static int print_trans_module_f(st_data_t key, st_data_t value, st_data_t counte
 
 static void print_trans_modules(char const *filename) {
   extern st_table_t module_table;
-  int               count, counter;
+
+  int count;
+  int counter;
 
   count   = count_modules();
   counter = 0;
@@ -632,7 +635,7 @@ static void print_trans_initfunction(char const *filename) {
   fprintf(OUT, "}\n\n");
 }
 
-void translate(char *filepath) {
+void translate(std::string_view filepath) {
   std::string filename;
 
   /* just for debug ! */
@@ -640,8 +643,8 @@ void translate(char *filepath) {
   OUT = stdout;
   /* OUT = fopen("/dev/null", "w"); */
 
-  if (filepath) {
-    filename = create_formatted_basename(filepath);
+  if (!filepath.empty()) {
+    filename = create_formatted_basename(filepath.data());
   } else {
     filename = "anonymous";
   }
@@ -654,6 +657,7 @@ void translate(char *filepath) {
   print_trans_maindata(filename.c_str());
   print_trans_initfunction(filename.c_str());
 
-  if (OUT != stdout)
+  if (OUT != stdout) {
     fprintf(stderr, "--translate is under construction\n");
+  }
 }

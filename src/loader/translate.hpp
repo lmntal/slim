@@ -49,6 +49,8 @@
 #include "lmntal.h"
 #include "vm/vm.h"
 #include <cstdarg>
+#include <optional>
+#include <string_view>
 
 /* この辺の読み込みマクロはインタプリタ出力時も使えるはず */
 /* translate.c内でも使えるはず */
@@ -168,7 +170,7 @@ union LmnFunctorLiteral {
 };
 
 /* 現在ロードしている情報をfilepath.so の名前で使えるように出力する */
-void translate(char *filepath);
+void translate(std::string_view filepath);
 
 /* @} */
 
