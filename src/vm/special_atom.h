@@ -64,13 +64,13 @@
 #define LMN_SP_ATOM_TYPE(X) (LMN_SP_ATOM(X)->type)
 #define LMN_SP_ATOM_SET_TYPE(obj, t) (LMN_SP_ATOM((obj))->type = (t))
 
-using f_copy      = std::function<void *(void *)>;
-using f_eq        = std::function<BOOL(void *, void *)>;
-using f_free      = std::function<void(void *)>;
-using f_dump      = std::function<void(void *, LmnPortRef)>;
-using f_is_ground = std::function<BOOL(void *)>;
-using f_encode    = std::function<std::vector<uint8_t>(void *)>;
-using f_decode    = std::function<void *(std::vector<uint8_t> const &)>;
+using f_copy      = void *(*)(void *);
+using f_eq        = BOOL (*)(void *, void *);
+using f_free      = void (*)(void *);
+using f_dump      = void (*)(void *, LmnPortRef);
+using f_is_ground = BOOL (*)(void *);
+using f_encode    = std::vector<uint8_t> (*)(void *);
+using f_decode    = void *(*)(std::vector<uint8_t> const &);
 
 struct SpecialAtomCallback {
   lmn_interned_str name;
@@ -83,8 +83,8 @@ struct SpecialAtomCallback {
   f_decode         decode;
 };
 
-void sp_atom_init(void);
-void sp_atom_finalize(void);
+void sp_atom_init();
+void sp_atom_finalize();
 
 /* 新しいスペシャルアトムのタイプを登録する。登録されたタイプのIDを返す */
 int lmn_sp_atom_register(char const *name, /* move owner */
