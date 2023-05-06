@@ -1,15 +1,14 @@
 #include "options.h"
-#include "arch.h"
-#include "config.h"
-#include "lmntal.h"
-
-#include "cxxopts/cxxopts.hpp"
 
 #include <iostream>
 #include <string>
 #include <string_view>
 
-cxxopts::Options slim_options{"slim", "An implementation of the SLIM language"};
+#include "cxxopts/cxxopts.hpp"
+
+#include "arch.h"
+#include "config.h"
+#include "lmntal.h"
 
 void init_options() {
   // The trailing comment is for formatting purpose.
@@ -166,6 +165,7 @@ auto check_parallel_options(cxxopts::ParseResult const &result) {
 }
 
 auto check_debug_options(cxxopts::ParseResult const &result) {
+#ifdef DEBUG
   auto check_have      = [&](std::string_view name) { return result.count(name.data()) > 0 ? TRUE : FALSE; };
   lmn_env.debug_id     = check_have("debug-id");
   lmn_env.debug_delta  = check_have("debug-delta");
@@ -179,6 +179,7 @@ auto check_debug_options(cxxopts::ParseResult const &result) {
 
   lmn_env.debug_por_dep = check_have("debug-tr-dep");
   lmn_env.enable_por    = check_have("enable-por");
+#endif
 }
 
 // NOLINTNEXTLINE

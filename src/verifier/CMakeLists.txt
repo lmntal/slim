@@ -64,6 +64,8 @@ target_sources(lmn_verifier PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/tree_compress.cpp
 )
 
+target_compile_definitions(lmn_verifier PUBLIC FMT_HEADER_ONLY)
+
 target_link_libraries(lmn_verifier PRIVATE zd_in_slim)
 target_link_libraries(lmn_verifier PRIVATE ZLIB::ZLIB)
 

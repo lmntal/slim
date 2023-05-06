@@ -47,6 +47,8 @@
 #include "symbol.h"
 #include "verifier/runtime_status.h"
 #include "verifier/verifier.h"
+#include <fmt/color.h>
+#include <fmt/core.h>
 
 #ifdef USE_FIRSTCLASS_RULE
 #include "firstclass_rule.h"
@@ -54,16 +56,16 @@
 
 #include <algorithm>
 #include <iostream>
-typedef void (*callback_0)(LmnReactCxtRef, LmnMembraneRef);
-typedef void (*callback_1)(LmnReactCxtRef, LmnMembraneRef, LmnAtomRef, LmnLinkAttr);
-typedef void (*callback_2)(LmnReactCxtRef, LmnMembraneRef, LmnAtomRef, LmnLinkAttr, LmnAtomRef, LmnLinkAttr);
-typedef void (*callback_3)(LmnReactCxtRef, LmnMembraneRef, LmnAtomRef, LmnLinkAttr, LmnAtomRef, LmnLinkAttr, LmnAtomRef,
-                           LmnLinkAttr);
-typedef void (*callback_4)(LmnReactCxtRef, LmnMembraneRef, LmnAtomRef, LmnLinkAttr, LmnAtomRef, LmnLinkAttr, LmnAtomRef,
-                           LmnLinkAttr, LmnAtomRef, LmnLinkAttr);
 
-typedef void (*callback_5)(LmnReactCxtRef, LmnMembraneRef, LmnAtomRef, LmnLinkAttr, LmnAtomRef, LmnLinkAttr, LmnAtomRef,
-                           LmnLinkAttr, LmnAtomRef, LmnLinkAttr, LmnAtomRef, LmnLinkAttr);
+using callback_0 = void (*)(LmnReactCxtRef, LmnMembraneRef);
+using callback_1 = void (*)(LmnReactCxtRef, LmnMembraneRef, LmnAtomRef, LmnLinkAttr);
+using callback_2 = void (*)(LmnReactCxtRef, LmnMembraneRef, LmnAtomRef, LmnLinkAttr, LmnAtomRef, LmnLinkAttr);
+using callback_3 = void (*)(LmnReactCxtRef, LmnMembraneRef, LmnAtomRef, LmnLinkAttr, LmnAtomRef, LmnLinkAttr,
+                            LmnAtomRef, LmnLinkAttr);
+using callback_4 = void (*)(LmnReactCxtRef, LmnMembraneRef, LmnAtomRef, LmnLinkAttr, LmnAtomRef, LmnLinkAttr,
+                            LmnAtomRef, LmnLinkAttr, LmnAtomRef, LmnLinkAttr);
+using callback_5 = void (*)(LmnReactCxtRef, LmnMembraneRef, LmnAtomRef, LmnLinkAttr, LmnAtomRef, LmnLinkAttr,
+                            LmnAtomRef, LmnLinkAttr, LmnAtomRef, LmnLinkAttr, LmnAtomRef, LmnLinkAttr);
 
 // Left here waiting for hash table's refactoring
 // using callback_0 = std::function<void(LmnReactCxtRef, LmnMembraneRef)>;
@@ -199,9 +201,7 @@ void Task::lmn_run(Vector *start_rulesets) {
   mrc->memstack_reconstruct(mem);
 
   if (lmn_env.interactive_debug) {
-    esc_code_add(CODE__FORECOLOR_GREEN);
-    std::cout << "Launched interactive debug shell on normal execution start.\n";
-    esc_code_clear();
+    fmt::print(fmt::fg(fmt::color::green), "Launched interactive debug shell on normal execution start.\n");
     InteractiveDebugger::get_instance().start_session_on_entry();
   }
 

@@ -1,8 +1,13 @@
 #include "debug_printer.hpp"
 #include "atomlist.hpp"
+#include "lmntal.h"
 #include "task.h"
 
+#include <fmt/color.h>
+#include <fmt/core.h>
+#include <fmt/format.h>
 #include <iostream>
+#include <iterator>
 
 namespace slim {
 namespace debug_printer {
@@ -14,7 +19,7 @@ struct PrintRecord {
   link_name_table table;
 };
 
-using dump_history_table        = std::map<LmnSymbolAtomRef, PrintRecord>;
+using dump_history_table = std::map<LmnSymbolAtomRef, PrintRecord>;
 
 constexpr size_t MAX_CALL_DEPTH = 1000;
 constexpr char   LINK_PREFIX[]  = "L";
@@ -175,7 +180,7 @@ std::string to_string_atom_short(const LmnAtomRef atom, LmnLinkAttr attr) {
 static std::string __to_string_link(const LmnSymbolAtomRef atom, int link_position, dump_history_table &ht) {
   PrintRecord &record = get_history_entry(ht, atom);
 
-  auto res            = record.table.find(link_position);
+  auto res = record.table.find(link_position);
 
   if (res == record.table.end()) { // not found
     LmnLinkAttr dst_attr = atom->get_attr(link_position);
@@ -281,8 +286,8 @@ static std::string __to_string_list(const LmnSymbolAtomRef atom, dump_history_ta
 
 static std::string __to_string_satom(const LmnSymbolAtomRef atom, int link_position, dump_history_table &ht,
                                      size_t call_depth) {
-  LmnFunctor functor  = atom->get_functor();
-  LmnArity   arity    = atom->get_arity();
+  LmnFunctor functor = atom->get_functor();
+  LmnArity   arity   = atom->get_arity();
 
   PrintRecord &record = get_history_entry(ht, atom);
 
@@ -661,22 +666,32 @@ std::string to_string_mem(const LmnMembraneRef mem) {
 }
 
 std::string __to_string_dev_atom(const LmnAtomRef atom, LmnLinkAttr attr) {
-  std::string retVal = "";
-  retVal             += __ESC_START__ + std::to_string(CODE__FORECOLOR_LIGHTBLUE) + __ESC_END__;
-  if (LMN_ATTR_IS_DATA(attr)) {
-    retVal += "Data[" + to_hex_string(atom) + "], ";
-    retVal += "Attr[" + to_hex_string(attr) + "]";
+  fmt::memory_buffer buf;
+
+  auto       out   = std::back_inserter(buf);
+  auto const style = fmt::fg(fmt::color::light_blue);
+
+  if (LMN_ATTR_IS_DATA(attr) == TRUE) {
+    fmt::format_to(out, style, "Data[{}], ", to_hex_string(atom));
+    fmt::format_to(out, style, "Attr[{}]", to_hex_string(attr));
+    // retVal += "Data[" + to_hex_string(atom) + "], ";
+    // retVal += "Attr[" + to_hex_string(attr) + "]";
   } else {
-    LmnSymbolAtomRef satom = (LmnSymbolAtomRef)atom;
-    retVal                 += "Addr[" + to_hex_string(satom) + "], ";
-    retVal                 += "ID[" + std::to_string(satom->get_id()) + "], ";
-    retVal += "Func[" + std::to_string(satom->get_functor()) + "(" + to_string_functor(satom->get_functor()) + ")], ";
-    retVal += "Arity[" + std::to_string(satom->get_arity()) + "], ";
-    retVal += "Link[" + std::to_string(LMN_ATTR_GET_VALUE(attr)) + "]";
+    auto *satom = (LmnSymbolAtomRef)atom;
+    fmt::format_to(out, style, "Addr[{}], ", to_hex_string(satom));
+    fmt::format_to(out, style, "ID[{}], ", satom->get_id());
+    fmt::format_to(out, style, "Func[{}({})], ", satom->get_functor(), to_string_functor(satom->get_functor()));
+    fmt::format_to(out, style, "Arity[{}], ", satom->get_arity());
+    fmt::format_to(out, style, "Link[{}]", LMN_ATTR_GET_VALUE(attr));
+    // retVal                 += "Addr[" + to_hex_string(satom) + "], ";
+    // retVal                 += "ID[" + std::to_string(satom->get_id()) + "], ";
+    // retVal += "Func[" + std::to_string(satom->get_functor()) + "(" + to_string_functor(satom->get_functor()) + ")],
+    // "; retVal += "Arity[" + std::to_string(satom->get_arity()) + "], "; retVal += "Link[" +
+    // std::to_string(LMN_ATTR_GET_VALUE(attr)) + "]";
   }
-  retVal += __ESC_START__;
-  retVal += __ESC_END__;
-  return retVal;
+  // retVal += __ESC_START__;
+  // retVal += __ESC_END__;
+  return fmt::to_string(buf);
 }
 
 std::string to_string_dev_atom(const LmnAtomRef atom, LmnLinkAttr attr) {

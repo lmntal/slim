@@ -10,6 +10,8 @@ configure_file(
 
 add_executable(slim)
 
+target_compile_definitions(slim PRIVATE FMT_HEADER_ONLY)
+
 target_sources(slim PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/env.cpp

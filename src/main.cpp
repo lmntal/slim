@@ -36,29 +36,29 @@
  * $Id: main.c,v 1.17 2008/10/16 18:14:00 sasaki Exp $
  */
 
-#include "arch.h"
+#include <cctype>
+#include <cstdio>
+#include <iostream>
+#include <unistd.h>
+#include <vector>
+
 #include "cxxopts/cxxopts.hpp"
+#include "fmt/color.h"
+
+#include "arch.h"
 #include "element/element.h"
 #include "ffi/jni_lmntal.h"
 #include "ffi/lmntal_system_adapter.h"
 #include "lmntal.h"
 #include "loader/loader.h"
+#include "options.h"
+#include "verifier/runtime_status.h"
 #include "verifier/verifier.h"
 #include "vm/vm.h"
-#include <cctype>
-#include <getopt.h>
-#include <optional>
-#include <unistd.h>
-/* #include "ext.h" */
-#include "verifier/runtime_status.h"
 
 #ifdef USE_CUNIT
 #include "test/unit_test.h"
 #endif
-
-#include <vector>
-
-#include "options.h"
 
 void install_builtin_extensions();
 void init_builtin_extensions(); /* ext/init_exts.c */
@@ -69,21 +69,14 @@ void destroy_rules();
 void sym_tbl_destroy();
 void sym_tbl_init();
 
-void ver_print_with_esc_code(FILE *f, char *str, int color) {
-  esc_code_add_f(f, CODE__UNDER_LINE);
-  esc_code_add_f(f, color);
-  fprintf(f, "%s", str);
-  esc_code_clear_f(f);
-}
-
-void slim_version(FILE *f) {
-  // ver_print_with_esc_code(f, "S", CODE__FORECOLOR_LIGHTBLUE);
-  // fprintf(f, "lim ");
-  // ver_print_with_esc_code(f, "L", CODE__FORECOLOR_LIGHTBLUE);
-  // fprintf(f, "mntal ");
-  // ver_print_with_esc_code(f, "IM", CODE__FORECOLOR_LIGHTBLUE);
-  fprintf(f, "Slim Lmntal IMplementation ");
-  fprintf(f, "- version %s (%s)\n", SLIM_VERSION, COMMIT_ID);
+void slim_version(FILE *f = stdout) {
+  fmt::print(f, fmt::fg(fmt::color::light_blue) | fmt::emphasis::underline, "S");
+  fmt::print(f, "lim ");
+  fmt::print(f, fmt::fg(fmt::color::light_blue) | fmt::emphasis::underline, "L");
+  fmt::print(f, "mntal ");
+  fmt::print(f, fmt::fg(fmt::color::light_blue) | fmt::emphasis::underline, "IM");
+  fmt::print(f, "plementation ");
+  fmt::print(f, "- version {} ({})\n", SLIM_VERSION, COMMIT_ID);
 }
 
 static auto parse_options(int argc, char *argv[], cxxopts::ParseResult &result) {

@@ -27,3 +27,5 @@ target_sources(lmn_vm PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/trace_log.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/vm.cpp
 )
+
+target_compile_definitions(lmn_vm PUBLIC FMT_HEADER_ONLY)

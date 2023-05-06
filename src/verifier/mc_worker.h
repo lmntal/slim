@@ -105,7 +105,7 @@ public:
   LmnWorkerGroup();
   LmnWorkerGroup(AutomataRef a, Vector *psyms, int thread_num);
   ~LmnWorkerGroup();
-  volatile BOOL workers_are_exit();
+  BOOL workers_are_exit();
   void          workers_set_exit();
   void          workers_unset_exit();
   BOOL          workers_have_error();
@@ -129,7 +129,7 @@ public:
   void workers_set_terminated();
   void workers_unset_terminated();
 
-  volatile BOOL workers_are_stop();
+  BOOL workers_are_stop();
   void          workers_set_stop();
   void          workers_unset_stop();
 

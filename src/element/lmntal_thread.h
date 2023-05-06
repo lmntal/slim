@@ -125,7 +125,7 @@ struct EWLock {
   lmn_mutex_t  *elock;
   unsigned long wlock_num;
   lmn_mutex_t  *wlock;
-  *EWLock(unsigned int e_num, unsigned int w_num);
+  EWLock(unsigned int e_num, unsigned int w_num);
   ~EWLock();
   void acquire_write(mtx_data_t id);
   void release_write(mtx_data_t id);

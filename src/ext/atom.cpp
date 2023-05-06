@@ -48,8 +48,8 @@ static LmnSymbolAtomRef lmn_make_atom(LmnMembraneRef mem, LmnAtomRef s, LmnWord 
   LmnSymbolAtomRef a = lmn_mem_newatom(
       mem, lmn_functor_table->intern(ANONYMOUS, lmn_intern(reinterpret_cast<LmnString *>(s)->c_str()), size));
   for (int k = 0; k < (int)size - 1; k++) {
-    lmn_mem_newlink(mem, a, LMN_ATTR_MAKE_LINK(0), k, 0, LMN_INT_ATTR, 0);
-    lmn_mem_push_atom(mem, (LmnAtomRef)k, LMN_INT_ATTR);
+    lmn_mem_newlink(mem, a, LMN_ATTR_MAKE_LINK(0), k, nullptr, LMN_INT_ATTR, 0);
+    lmn_mem_push_atom(mem, reinterpret_cast<LmnAtomRef>(k), LMN_INT_ATTR);
   }
   return a;
 }

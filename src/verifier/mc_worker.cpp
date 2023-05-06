@@ -75,7 +75,7 @@ static void worker_set_env(LmnWorker *w);
 
 /* まっさらなLmnWorkerオブジェクトをmallocして返す */
 inline LmnWorker *lmn_worker_make_minimal() {
-  LmnWorker *w     = new (LmnWorker);
+  LmnWorker *w = new (LmnWorker);
 
   w->id            = 0;
   w->f_safe        = 0x00U;
@@ -219,7 +219,7 @@ LmnWorkerGroup::LmnWorkerGroup(LmnWorkerGroup const &lwg) {
   // copy soshi
 }
 
-volatile BOOL LmnWorkerGroup::workers_are_exit() { return mc_exit; }
+BOOL LmnWorkerGroup::workers_are_exit() { return mc_exit; }
 
 void LmnWorkerGroup::workers_set_exit() { mc_exit = TRUE; }
 
@@ -259,7 +259,7 @@ void LmnWorkerGroup::workers_set_terminated() { terminated = TRUE; }
 
 void LmnWorkerGroup::workers_unset_terminated() { terminated = FALSE; }
 
-volatile BOOL LmnWorkerGroup::workers_are_stop() { return stop; }
+BOOL LmnWorkerGroup::workers_are_stop() { return stop; }
 
 void LmnWorkerGroup::workers_set_stop() { stop = TRUE; }
 

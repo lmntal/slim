@@ -37,21 +37,25 @@
  * $Id$
  */
 #include "mc.h"
-#include "binstr_compress.h"
-#include "delta_membrane.h"
-#include "dpor.h"
-#include "ltl2ba_adapter.h"
-#include "mc_worker.h"
-#include "mhash.h"
-#include "propositional_symbol.h"
-#include "runtime_status.h"
+
+#include "fmt/color.h"
+
+#include "verifier/binstr_compress.h"
+#include "verifier/delta_membrane.h"
+#include "verifier/dpor.h"
+#include "verifier/ltl2ba_adapter.h"
+#include "verifier/mc_worker.h"
+#include "verifier/mhash.h"
+#include "verifier/propositional_symbol.h"
+#include "verifier/runtime_status.h"
+#include "verifier/state.h"
+#include "verifier/state.hpp"
+#include "verifier/state_dumper.h"
+#include "vm/interactive_debug.hpp"
+
 #ifdef DEBUG
 #include "vm/dumper.h"
 #endif
-#include "../vm/interactive_debug.hpp"
-#include "state.h"
-#include "state.hpp"
-#include "state_dumper.h"
 
 /** =======================================
  *  ==== Entrance for model checking ======
@@ -124,9 +128,7 @@ static inline void do_mc(LmnMembraneRef world_mem_org, AutomataRef a, Vector *ps
 
   if (lmn_env.interactive_debug) {
     InteractiveDebugger::get_instance().register_statespace(states);
-    esc_code_add(CODE__FORECOLOR_GREEN);
-    printf("Launched interactive debug shell on non-deterministic execution start.\n");
-    esc_code_clear();
+    fmt::print(fmt::fg(fmt::color::green), "Launched interactive debug shell on non-deterministic execution start.\n");
     InteractiveDebugger::get_instance().start_session_on_entry();
   }
 

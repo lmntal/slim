@@ -1,14 +1,15 @@
-#include "interactive_debug.hpp"
-#include "debug_printer.hpp"
-
-#include "../verifier/statespace.h"
-#include "task.h"
+#include "vm/interactive_debug.hpp"
 
 #include <iostream>
-
 #include <sys/ioctl.h>
 #include <termios.h>
 #include <unistd.h>
+
+#include <fmt/color.h>
+
+#include "verifier/statespace.h"
+#include "vm/debug_printer.hpp"
+#include "vm/task.h"
 
 // constants
 enum class DebugCommand {
@@ -640,7 +641,7 @@ void InteractiveDebugger::start_session_with_interpreter(slim::vm::interpreter c
               s += ",";
             }
           }
-          s                  += "\n";
+          s += "\n";
 
           LmnMembraneRef mem = state->restore_membrane_inner(FALSE);
           s += ("  Membrane (" + slim::debug_printer::print_object_ids(mem->NAME_ID(), mem->mem_id()) + ")\n   " +
@@ -806,26 +807,21 @@ void InteractiveDebugger::break_on_instruction(slim::vm::interpreter const *inte
   LmnInstrOp instr_op = *(LmnInstrOp *)interpreter->instr;
   // step execution
   if (instr_execution_stop_at != 0 && instr_execution_count == instr_execution_stop_at) {
-    esc_code_add(CODE__FORECOLOR_YELLOW);
-    printf("\nSteped %ld instructions.\n", instr_execution_stop_at);
-    esc_code_clear();
+    fmt::print(fmt::fg(fmt::color::yellow), "\nSteped {} instructions.\n", instr_execution_stop_at);
     reset_step_execution();
     start_session_with_interpreter(interpreter);
   }
   // finishing rule
   else if (finish_current_rule && instr_op == INSTR_PROCEED) {
-    esc_code_add(CODE__FORECOLOR_YELLOW);
-    printf("\nFinishing current rule.\n");
-    esc_code_clear();
+    fmt::print(fmt::fg(fmt::color::yellow), "\nFinishing current rule.\n");
     finish_current_rule = false;
     start_session_with_interpreter(interpreter);
   }
   // hit breakpoint
   else {
     if (vector_contains(breakpoints_on_instr, (LmnInstruction)instr_op)) {
-      esc_code_add(CODE__FORECOLOR_YELLOW);
-      printf("\nBreakpoint on instruction \"%s\" hit.\n", slim::debug_printer::to_string_instrop(instr_op).c_str());
-      esc_code_clear();
+      fmt::print(fmt::fg(fmt::color::yellow), "\nBreakpoint on instruction \"{}\" hit.\n",
+                 slim::debug_printer::to_string_instrop(instr_op));
       reset_step_execution();
       start_session_with_interpreter(interpreter);
     }
@@ -851,18 +847,15 @@ void InteractiveDebugger::break_on_rule(slim::vm::interpreter const *interpreter
   rule_reaction_count++;
   // step execution
   if (rule_reaction_stop_at != 0 && rule_reaction_count == rule_reaction_stop_at) {
-    esc_code_add(CODE__FORECOLOR_YELLOW);
-    printf("\nSteped %ld rules.\n", rule_reaction_stop_at);
-    esc_code_clear();
+    fmt::print(fmt::fg(fmt::color::yellow), "\nSteped {} rules.\n", rule_reaction_stop_at);
     reset_step_execution();
     start_session_with_interpreter(interpreter);
   }
   // hit breakpoint
   else {
     if (vector_contains(breakpoints_on_rule, std::string(lmn_id_to_name(interpreter->rule->name)))) {
-      esc_code_add(CODE__FORECOLOR_YELLOW);
-      printf("\nBreakpoint on rule \"%s\" hit.\n", lmn_id_to_name(interpreter->rule->name));
-      esc_code_clear();
+      fmt::print(fmt::fg(fmt::color::yellow), "\nBreakpoint on rule \"{}\" hit.\n",
+                 lmn_id_to_name(interpreter->rule->name));
       reset_step_execution();
       start_session_with_interpreter(interpreter);
     }

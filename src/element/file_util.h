@@ -51,24 +51,26 @@ char *build_path(char const *dir, char const *component);
 char *basename_ext(char const *path);
 char *extension(char const *path);
 
-#include "arch.h"
-#include <cstring>
 #include <dirent.h>
+#include <sys/stat.h>
+
+#include <cstring>
 #include <iterator>
 #include <memory>
 #include <string>
-#include <sys/stat.h>
+#include <string_view>
 #include <system_error>
+#include <utility>
 
-namespace slim {
-namespace element {
-namespace filesystem {
+#include "arch.h"
+
+namespace slim::element::filesystem {
 class path {
   std::string str_;
 
 public:
-  path() : str_("") {}
-  path(std::string const &src) : str_(src) {}
+  path() = default;
+  path(std::string src) : str_(std::move(src)) {}
 
   path filename() const {
     auto pos = str_.find_last_of(DIR_SEPARATOR_CHAR);
@@ -86,10 +88,10 @@ public:
   std::string string() const { return str_; }
 };
 inline path operator/(path const &lhs, path const &rhs) {
-  if (lhs.string().back() == DIR_SEPARATOR_CHAR)
+  if (lhs.string().back() == DIR_SEPARATOR_CHAR) {
     return lhs.string() + rhs.string();
-  else
-    return lhs.string() + DIR_SEPARATOR_CHAR + rhs.string();
+  }
+  return lhs.string() + DIR_SEPARATOR_CHAR + rhs.string();
 }
 
 class filesystem_error : public std::system_error {
@@ -114,8 +116,9 @@ public:
 
   file_status status() const {
     struct stat st;
-    if (stat(path_.string().c_str(), &st) == -1)
+    if (stat(path_.string().c_str(), &st) == -1) {
       throw filesystem_error(std::error_code(errno, std::system_category()), "");
+    }
     return st;
   }
 
@@ -129,20 +132,25 @@ class directory_stream {
 public:
   directory_stream(std::string const &name) : dirpath(name) {
     dir = opendir(name.c_str());
-    if (!dir)
+    if (dir == nullptr) {
       throw filesystem_error(std::error_code(errno, std::system_category()), name);
-  }
-  ~directory_stream() throw() {
-    if (closedir(dir))
-      throw filesystem_error(std::error_code(errno, std::system_category()), dirpath.string());
+    }
   }
 
-  long            loc() const { return telldir(dir); }
+  ~directory_stream() noexcept {
+    if (closedir(dir) != 0) {
+      // throw filesystem_error(std::error_code(errno, std::system_category()), dirpath.string());
+    }
+  }
+
+  [[nodiscard]] long loc() const { return telldir(dir); }
+
   directory_entry read() {
-    auto err = errno;
-    auto e   = readdir(dir);
-    if (e == nullptr && err != errno)
+    auto  err = errno;
+    auto *e   = readdir(dir);
+    if (e == nullptr && err != errno) {
       throw filesystem_error(std::error_code(errno, std::system_category()), dirpath.string());
+    }
     return (e == nullptr) ? directory_entry() : directory_entry(*e, dirpath);
   }
   void seek(long loc) { seekdir(dir, loc); }
@@ -203,8 +211,6 @@ inline bool exists(filesystem::path const &p) {
   return stat(p.string().c_str(), &st) != 0;
 }
 
-} // namespace filesystem
-} // namespace element
-} // namespace slim
+} // namespace slim::element::filesystem
 
 #endif /* !LMN_UTIL_H */

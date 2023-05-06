@@ -11,6 +11,7 @@ Checks: "
   misc-*,
   -readability-magic-numbers,
   -readability-identifier-length,
+  -readability-braces-around-statements,
   -misc-no-recursion,
   -misc-unused-parameters,
   -misc-non-private-member-variables-in-classes,
@@ -19,6 +20,7 @@ Checks: "
   -google-readability-braces-around-statements,
   -modernize-use-trailing-return-type,
   -modernize-use-equals-delete,
+  -modernize-use-nodiscard,
   "
 
 # 一応、全てどのケースでもいいように設定しておく

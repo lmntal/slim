@@ -2,7 +2,7 @@
 
 #include <cxxopts/cxxopts.hpp>
 
-extern cxxopts::Options slim_options;
+inline cxxopts::Options slim_options{"slim", "An implementation of the SLIM language"};
 
 enum class CommandLineParseResult {
   OK,   // used when parsing is successful

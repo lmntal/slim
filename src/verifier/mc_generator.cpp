@@ -36,20 +36,25 @@
  *
  * $Id$
  */
+
 #include "mc_generator.h"
-#include "element/element.h"
-#include "lmntal.h"
-#include "mc.h"
-#include "mc_explorer.h"
-#include "mc_worker.h"
-#include "runtime_status.h"
+
 #include <unistd.h>
 
+#include <fmt/core.h>
+
+#include "element/element.h"
+#include "lmntal.h"
+#include "verifier/mc.h"
+#include "verifier/mc_explorer.h"
+#include "verifier/mc_worker.h"
+#include "verifier/runtime_status.h"
+#include "verifier/state.h"
+#include "verifier/state.hpp"
 #ifndef MINIMAL_STATE
-#include "mc_visualizer.h"
+#include "verifier/mc_visualizer.h"
 #endif
-#include "state.h"
-#include "state.hpp"
+
 /* TODO: C++ template関数で書き直した方がよい */
 
 /* 邪魔なので上に持ってきた */
@@ -413,7 +418,7 @@ void dfs_start(LmnWorker *w) {
         worker_set_active(w);
 #ifdef DEBUG
         if (!DFS_WORKER_QUEUE(w)->is_empty() && !((Queue *)DFS_WORKER_QUEUE(w))->head->next) {
-          printf("%d : queue is not empty? %d\n", worker_id(w), DFS_WORKER_QUEUE(w)->entry_num());
+          fmt::print("{}: queue is not empty? {}\n", worker_id(w), DFS_WORKER_QUEUE(w)->entry_num());
         }
 #endif
         if (s || (s = (State *)DFS_WORKER_QUEUE(w)->dequeue())) {

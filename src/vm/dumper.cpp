@@ -37,14 +37,19 @@
  */
 
 #include "dumper.h"
-#include "atomlist.hpp"
-#include "ccallback.h"
-#include "rule.hpp"
-#include "symbol.h"
-#include <cctype>
 
+#include <cctype>
 #include <ios>
 #include <ostream>
+
+#include <fmt/color.h>
+#include <fmt/core.h>
+
+#include "lmntal.h"
+#include "vm/atomlist.hpp"
+#include "vm/ccallback.h"
+#include "vm/rule.hpp"
+#include "vm/symbol.h"
 
 #define MAX_DEPTH 1000
 #define LINK_PREFIX "L"
@@ -88,8 +93,8 @@ static void lmn_dump_link_json(LmnSymbolAtomRef atom, int index);
 static void lmn_dump_mem_json(LmnMembraneRef mem);
 
 static struct AtomRec *atomrec_make() {
-  struct AtomRec *a = LMN_MALLOC<struct AtomRec>();
-  a->done           = FALSE;
+  auto *a = LMN_MALLOC<struct AtomRec>();
+  a->done = FALSE;
   hashtbl_init(&a->args, 16);
   a->link_num = -1;
   return a;
@@ -120,15 +125,18 @@ DumpState::DumpState() { link_num = 0; }
 static BOOL is_direct_printable(LmnFunctor f) {
   char const *s;
 
-  if (LMN_IS_PROXY_FUNCTOR(f) || f == LMN_NIL_FUNCTOR)
+  if (LMN_IS_PROXY_FUNCTOR(f) == TRUE || f == LMN_NIL_FUNCTOR) {
     return TRUE;
+  }
 
   s = LMN_FUNCTOR_STR(f);
-  if (!(isalpha((unsigned char)*s) && islower((unsigned char)*s)))
+  if (isalpha((unsigned char)*s) == 0 || islower((unsigned char)*s) == 0) {
     return FALSE;
-  while (*(++s)) {
-    if (!(isalpha((unsigned char)*s) || isdigit((unsigned char)*s) || *s == '_'))
+  }
+  while (*(++s) != 0) {
+    if ((isalpha((unsigned char)*s) == 0) && (isdigit((unsigned char)*s) == 0) && *s != '_') {
       return FALSE;
+    }
   }
   return TRUE;
 }
@@ -137,12 +145,12 @@ static BOOL is_direct_printable(LmnFunctor f) {
 static struct AtomRec *get_atomrec(SimpleHashtbl *ht, LmnSymbolAtomRef atom) {
   if (hashtbl_contains(ht, (HashKeyType)atom)) {
     return (struct AtomRec *)hashtbl_get(ht, (HashKeyType)atom);
-  } else {
-    struct AtomRec *t;
-    t = atomrec_make();
-    hashtbl_put(ht, (HashKeyType)atom, (HashValueType)t);
-    return t;
   }
+
+  struct AtomRec *t;
+  t = atomrec_make();
+  hashtbl_put(ht, (HashKeyType)atom, (HashValueType)t);
+  return t;
 }
 
 static void dump_atomname(LmnPortRef port, LmnFunctor f) {
@@ -259,10 +267,10 @@ static BOOL dump_hl_attratom(LmnPortRef port, LmnAtomRef atom, LmnLinkAttr attr)
 }
 
 static BOOL dump_list(LmnPortRef port, LmnSymbolAtomRef atom, SimpleHashtbl *ht, struct DumpState *s, int call_depth) {
-  BOOL        first = TRUE;
   LmnLinkAttr attr;
-  LmnAtomRef  a = (LmnAtomRef)atom;
   LmnAtomRef  prev_a;
+  BOOL        first = TRUE;
+  auto       *a     = (LmnAtomRef)atom;
 
   if (get_atomrec(ht, atom)->done) {
     dump_link(port, atom, 2, ht, s);
@@ -274,7 +282,7 @@ static BOOL dump_list(LmnPortRef port, LmnSymbolAtomRef atom, SimpleHashtbl *ht,
   port_put_raw_s(port, "[");
 
   /* リストの要素を出力していく*/
-  while (TRUE) {
+  while (true) {
     if (LMN_HAS_FUNCTOR((LmnSymbolAtomRef)a, attr, LMN_LIST_FUNCTOR) && LMN_ATTR_GET_VALUE(attr) == 2) {
       struct AtomRec *rec;
 
@@ -289,13 +297,14 @@ static BOOL dump_list(LmnPortRef port, LmnSymbolAtomRef atom, SimpleHashtbl *ht,
       }
       rec->done = TRUE;
 
-      if (!first)
+      if (!first) {
         port_put_raw_s(port, ",");
+      }
       first = FALSE;
 
       dump_arg(port, (LmnSymbolAtomRef)a, 0, ht, s, call_depth + 1);
 
-      attr   = ((LmnSymbolAtomRef)a)->get_attr(1);
+      attr = ((LmnSymbolAtomRef)a)->get_attr(1);
 
       prev_a = a;
       a      = ((LmnSymbolAtomRef)a)->get_link(1);
@@ -370,7 +379,7 @@ static BOOL dump_proxy(LmnPortRef port, LmnSymbolAtomRef atom, SimpleHashtbl *ht
     /* outプロキシの接続先である膜の自由リンクが一つで、一引数の'+'アトムに
        接続している場合、膜をその場に出力する */
     if (atom->get_functor() == LMN_OUT_PROXY_FUNCTOR) {
-      const LmnSymbolAtomRef in = (LmnSymbolAtomRef)atom->get_link(0);
+      auto *const in = (LmnSymbolAtomRef)atom->get_link(0);
       if (!LMN_ATTR_IS_DATA(in->get_attr(1)) &&
           ((LmnSymbolAtomRef)in->get_link(1))->get_functor() == LMN_UNARY_PLUS_FUNCTOR) {
         LmnMembraneRef mem = LMN_PROXY_GET_MEM(in);
@@ -457,18 +466,17 @@ static BOOL dump_atom(LmnPortRef port, LmnAtomRef atom, SimpleHashtbl *ht, LmnLi
                       int call_depth) {
   if (LMN_ATTR_IS_DATA(attr)) {
     return dump_data_atom(port, atom, attr);
-  } else {
-    LmnSymbolAtomRef a        = (LmnSymbolAtomRef)atom;
-    LmnFunctor       f        = a->get_functor();
-    int              link_pos = LMN_ATTR_GET_VALUE(attr);
-    if (!lmn_env.show_proxy && (f == LMN_IN_PROXY_FUNCTOR || f == LMN_OUT_PROXY_FUNCTOR)) {
-      return dump_proxy(port, a, ht, link_pos, s, call_depth);
-    } else if (f == LMN_LIST_FUNCTOR && link_pos == 2) {
-      return dump_list(port, a, ht, s, call_depth);
-    } else {
-      return dump_symbol_atom(port, a, ht, link_pos, s, call_depth);
-    }
   }
+  auto *a        = (LmnSymbolAtomRef)atom;
+  auto  f        = a->get_functor();
+  int   link_pos = LMN_ATTR_GET_VALUE(attr);
+  if (!lmn_env.show_proxy && (f == LMN_IN_PROXY_FUNCTOR || f == LMN_OUT_PROXY_FUNCTOR)) {
+    return dump_proxy(port, a, ht, link_pos, s, call_depth);
+  }
+  if (f == LMN_LIST_FUNCTOR && link_pos == 2) {
+    return dump_list(port, a, ht, s, call_depth);
+  }
+  return dump_symbol_atom(port, a, ht, link_pos, s, call_depth);
 }
 
 /* atom must be a symbol atom */
@@ -476,9 +484,8 @@ static BOOL dump_toplevel_atom(LmnPortRef port, LmnSymbolAtomRef atom, SimpleHas
   const LmnFunctor f = atom->get_functor();
   if (!lmn_env.show_proxy && (f == LMN_IN_PROXY_FUNCTOR || f == LMN_OUT_PROXY_FUNCTOR)) {
     return dump_proxy(port, atom, ht, 0, s, 0);
-  } else {
-    return dump_symbol_atom(port, atom, ht, 0, s, 0);
   }
+  return dump_symbol_atom(port, atom, ht, 0, s, 0);
 }
 
 static void dump_rule(LmnPortRef port, LmnRuleSetRef rs) {
@@ -489,14 +496,14 @@ static void dump_rule(LmnPortRef port, LmnRuleSetRef rs) {
 
   port_put_raw_s(port, "_CHR");
 
-  for (auto r : *rs) {
+  for (auto *r : *rs) {
     /* TODO: uniqはコピー先のルールオブジェクトに名前を設定するため,
      *        コピー元のルールオブジェクトの名前が空になってしまう */
     // if (r->name == ANONYMOUS) continue;
 
     /* 少なくともCOMMIT命令を1度以上処理したuniqルールを対象に,
      * ルール名と履歴を出力する */
-    if (r->history().size() > 0) {
+    if (!r->history().empty()) {
       port_put_raw_s(port, "[id:");
       port_put_raw_s(port, lmn_id_to_name(r->name)); /* ルール名 */
       port_put_raw_s(port, "\"");
@@ -568,7 +575,7 @@ static void lmn_dump_cell_internal(LmnPortRef port, LmnMembraneRef mem, SimpleHa
   unsigned int     i, j;
   LmnFunctor       f;
 
-  if (!mem)
+  if (mem == nullptr)
     return;
 
   /*   if (hashtbl_contains(ht, (HashKeyType)mem)) return; */
@@ -649,7 +656,7 @@ static void lmn_dump_cell_internal(LmnPortRef port, LmnMembraneRef mem, SimpleHa
   { /* dump atoms */
     for (i = 0; i < PRI_NUM; i++) {
       for (j = 0; j < pred_atoms[i].get_num(); j++) {
-        LmnSymbolAtomRef atom = (LmnSymbolAtomRef)pred_atoms[i].get(j);
+        auto *atom = (LmnSymbolAtomRef)pred_atoms[i].get(j);
         if (dump_toplevel_atom(port, atom, ht, s)) {
           /* TODO アトムの出力の後には常に ". "が入ってしまう.
              アトムの間に ", "を挟んだ方が見栄えが良い */
@@ -664,10 +671,10 @@ static void lmn_dump_cell_internal(LmnPortRef port, LmnMembraneRef mem, SimpleHa
 
   { /* dump chidren */
     LmnMembraneRef m;
-    BOOL           dumped = FALSE;
+    bool           dumped{false};
     for (m = mem->mem_child_head(); m; m = m->mem_next()) {
       if (lmn_dump_mem_internal(port, m, ht, s)) {
-        dumped = TRUE;
+        dumped = true;
       }
       /* 一回でも出力したことがあって、かつ次回が出力可能ならカンマを打つ */
       if (dumped && m->mem_next() && !hashtbl_contains(ht, (HashKeyType)(m->mem_next()))) {
@@ -764,14 +771,12 @@ void dump_atom_dev(LmnSymbolAtomRef atom) {
   f     = atom->get_functor();
   arity = LMN_FUNCTOR_ARITY(lmn_functor_table, f);
 
-  esc_code_add(CODE__FORECOLOR_LIGHTBLUE);
-  fprintf(stdout, "Func[%3u], Name[%5s], A[%2u], Addr[%p], ID[%2lu], ", f,
-          lmn_id_to_name(LMN_FUNCTOR_NAME_ID(lmn_functor_table, f)), arity, atom, atom->get_id());
+  fmt::print(fmt::fg(fmt::color::light_blue), "Func[{:3}], Name[{:>6}], A[{:2}], Addr[{}], ID[{:2}], ", f,
+             lmn_id_to_name(LMN_FUNCTOR_NAME_ID(lmn_functor_table, f)), arity, fmt::ptr(atom), atom->get_id());
 
   if (LMN_FUNC_IS_HL(f)) {
-    fprintf(stdout, "HL_OBJ_ID[%2lu], ", LMN_HL_ID(LMN_HL_ATOM_ROOT_HL(atom)));
+    fmt::print(fmt::fg(fmt::color::light_blue), "HL_ROOT_ID[{:2}], ", LMN_HL_ID(LMN_HL_ATOM_ROOT_HL(atom)));
   }
-  esc_code_clear();
 
   fprintf(stdout, "\n");
   fflush(stdout);
@@ -785,7 +790,7 @@ void dump_atom_dev(LmnSymbolAtomRef atom) {
     if (i == 2 && LMN_IS_PROXY_FUNCTOR(f)) { /* membrane */
       fprintf(stdout, "mem[%p], ", (void *)LMN_PROXY_GET_MEM(atom));
     } else if (i == 1 && LMN_FUNC_IS_HL(f)) {
-      HyperLink *h = (HyperLink *)atom->get_link(i);
+      auto *h = (HyperLink *)atom->get_link(i);
       fprintf(stdout,
               " link[HLobj, Addr:%p, HL_ID:%2lu, ROOT_HL_ID:%2lu, "
               "Owner!Addr:%p, Owner'!'ID:%2lu], ",
@@ -833,28 +838,27 @@ void dump_atom_dev(LmnSymbolAtomRef atom) {
 
 static void dump_ruleset_dev(std::vector<LmnRuleSet *> const &v) {
   unsigned int i;
-  fprintf(stdout, "ruleset[");
+  fmt::print("ruleset[");
   for (i = 0; i < v.size(); i++) {
-    fprintf(stdout, "%d ", (v[i])->id);
+    fmt::print("{} ", (v[i])->id);
   }
-  fprintf(stdout, "]\n");
+  fmt::print("]\n");
 }
 
 void lmn_dump_mem_dev(LmnMembraneRef mem) {
-  AtomListEntryRef ent;
-  if (!mem)
+  if (mem == nullptr) {
     return;
+  }
 
-  fprintf(stdout, "{\n");
-  fprintf(stdout, "Mem[%u], Addr[%p], ID[%lu]\n", mem->NAME_ID(), mem, mem->mem_id());
-  EACH_ATOMLIST(mem, ent, ({
-                  LmnSymbolAtomRef atom;
-                  EACH_ATOM(atom, ent, ({ dump_atom_dev(atom); }));
-                }));
+  fmt::print("{{\n");
+  fmt::print("Mem[{}], Addr[{:p}], ID[{}]\n", mem->NAME_ID(), fmt::ptr(mem), mem->mem_id());
+
+  for_each_atom_list(
+      mem, [](AtomListEntryRef ent) { for_each_atom(ent, [](LmnSymbolAtomRef atom) { dump_atom_dev(atom); }); });
 
   dump_ruleset_dev(mem->get_rulesets());
   lmn_dump_mem_dev(mem->mem_child_head());
-  fprintf(stdout, "}\n");
+  fmt::print("}}\n");
   lmn_dump_mem_dev(mem->mem_next());
 }
 
@@ -868,8 +872,9 @@ static void dump_dot_cell(LmnMembraneRef mem, SimpleHashtbl *ht, int *data_id, i
   LmnPortRef       out;
   unsigned int     i;
 
-  if (!mem)
+  if (mem == nullptr) {
     return;
+  }
 
   out = lmn_stdout_port();
 

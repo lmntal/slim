@@ -39,6 +39,9 @@
 #define LMN_ATOMLIST_HPP
 
 #include "atom.h"
+#include "vm/membrane.h"
+#include "vm/membrane.hpp"
+#include <functional>
 #include <iterator>
 #include <random>
 #include <vector>
@@ -78,7 +81,8 @@ struct AtomListEntry {
   // ランダムに位置につなげる->楽？
   /*
     先頭と最後尾を保持しておいて
-    リング状にする. ランダムな位置をheadにして, shuffle-tailやshuffle-head変数を追加する.
+    リング状にする. ランダムな位置をheadにして,
+    shuffle-tailやshuffle-head変数を追加する.
     -> 非決定実行いけるかな？
    */
   void push(LmnSymbolAtomRef a) {
@@ -161,7 +165,7 @@ struct AtomListEntry {
     head_atom->set_next(this->head);
     this->head->set_prev(head_atom);
     head_atom->set_prev(this->head->prev);
-    this->head     = head_atom;
+    this->head = head_atom;
 
     this->n        += 1;
     this->n_record += 1;
@@ -177,7 +181,7 @@ struct AtomListEntry {
     // make new record atom
     LmnSymbolAtomRef newatom = new LmnSymbolAtom;
 
-    newatom->procId          = -1;
+    newatom->procId = -1;
     newatom->set_functor(f);
     newatom->record_flag = true;
 
@@ -286,7 +290,8 @@ void move_atom_to_atom_tail(LmnSymbolAtomRef a, LmnSymbolAtomRef a1, LmnMembrane
 /* RecordAtom, RecordList クラスは履歴管理用アトムのためのクラス */
 class RecordAtom {
   LmnSymbolAtomRef atom_record;
-  LmnSymbolAtomRef head_record; // necessary to move atom_record to the beginning(head) after backtracking
+  LmnSymbolAtomRef head_record; // necessary to move atom_record to the
+                                // beginning(head) after backtracking
 public:
   bool first_time;
   RecordAtom(LmnSymbolAtomRef atom_record, LmnSymbolAtomRef head_record, int rule_number) {
@@ -414,6 +419,12 @@ extern RecordList record_list;
     }                                                                                                                  \
   } while (0)
 
+inline void for_each_atom_list(LmnMembraneRef mem, std::function<void(AtomListEntryRef)> const &code) {
+  for (auto it : mem->atom_lists()) {
+    code(it.second);
+  }
+}
+
 /* アトムリストENTのアトムに対してCODEを実行する。
    それぞれのループでCODEを実行する前に、Vにアトムが割り当てられる。
    履歴アトムがアトムリストにある場合は、読み飛ばす */
@@ -426,6 +437,16 @@ extern RecordList record_list;
       }                                                                                                                \
     }                                                                                                                  \
   }
+
+inline void for_each_atom(AtomListEntryRef ent, std::function<void(LmnSymbolAtomRef)> const &code) {
+  if (ent != nullptr) {
+    for (auto *iter : *ent) {
+      if (iter->get_functor() != LMN_RESUME_FUNCTOR) {
+        code(iter);
+      }
+    }
+  }
+}
 
 #define EACH_ATOM_THREAD(V, ENT, ID, NUM, CODE)                                                                        \
   int id = (ID);                                                                                                       \
