@@ -19,7 +19,7 @@ void init_options() {
       ("t,trace", "(RT) Show execution path\n"
                   "(MC) Show state space") //
       ("p,profiler-level", "Profiler level.",
-       cxxopts::value<int>()->implicit_value("1")) //
+       cxxopts::value<int>()->default_value("1")) //
       ("I,include", "Adds <path> to the head of the load path list.",
        cxxopts::value<std::string>()) //
       ("O,optimize-level", "Optimization level of the intermediate instruction.",
@@ -126,7 +126,7 @@ void init_options() {
       ("visualize", "(MC) Output information for visualize.") //
       ("hash-compaction", "(MC) Use Hash Compaction.")        //
       ("hash-depth", "(MC) Set <N> Depth of Hash Function.",
-       cxxopts::value<int>()->implicit_value("1")) //
+       cxxopts::value<int>()->default_value("1")) //
       ("tree-compress", "(MC) Use Tree Compression with 2^N table size default(N=20).",
        cxxopts::value<int>()->default_value("20")) //
       ("run-test", "Run CUnit.")                   //

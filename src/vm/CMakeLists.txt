@@ -1,7 +1,8 @@
 add_library(lmn_vm STATIC)
 
-target_include_directories(lmn_vm PRIVATE
+target_include_directories(lmn_vm PUBLIC
     ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}/third_party
 )
 
 target_sources(lmn_vm PRIVATE
