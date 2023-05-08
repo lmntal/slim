@@ -271,7 +271,7 @@ auto parse_command_line(cxxopts::ParseResult const &result) -> CommandLineParseR
     lmn_env.mc_dump_format = LMN_FSM_GRAPH_HL_NODE;
   }
 
-  lmn_env.trace              = check_have("show-laststep-only");
+  lmn_env.trace              |= check_have("show-laststep-only");
   lmn_env.show_laststep_only = check_have("show-laststep-only");
 
   lmn_env.interactive = check_have("interactive");
@@ -283,8 +283,8 @@ auto parse_command_line(cxxopts::ParseResult const &result) -> CommandLineParseR
   lmn_env.ltl     = check_have("ltl-all") | check_have("ltl");
   lmn_env.nd      = check_have("ltl-all") | check_have("ltl") | check_have("nd");
 
-  lmn_env.nd              = check_have("opt-min") | check_have("opt-max");
-  lmn_env.show_transition = check_have("opt-min") | check_have("opt-max");
+  lmn_env.nd              |= check_have("opt-min") | check_have("opt-max");
+  lmn_env.show_transition |= check_have("opt-min") | check_have("opt-max");
   if (result.count("opt-min") > 0) {
     lmn_env.opt_mode = OPT_MINIMIZE;
   } else if (result.count("opt-max") > 0) {
@@ -325,13 +325,13 @@ auto parse_command_line(cxxopts::ParseResult const &result) -> CommandLineParseR
   lmn_env.mem_enc             = check_have("mem-enc");
   lmn_env.enable_compress_mem = check_have("disable-compress") == TRUE ? FALSE : TRUE;
 
-  lmn_env.delta_mem = check_have("delta-mem");
+  lmn_env.delta_mem |= check_have("delta-mem");
 
   lmn_env.z_compress = check_have("z-compress");
   lmn_env.d_compress = check_have("d-compress");
   lmn_env.r_compress = check_have("r-compress");
 
-  lmn_env.enable_parallel =
+  lmn_env.enable_parallel |=
       check_have("use-owcty") | check_have("use-map") | check_have("use-bledge") | check_have("use-mapndfs");
   lmn_env.enable_owcty = check_have("use-owcty");
 
@@ -339,17 +339,17 @@ auto parse_command_line(cxxopts::ParseResult const &result) -> CommandLineParseR
   lmn_env.enable_map_heuristic = check_have("use-map") == TRUE ? FALSE : TRUE;
 
   lmn_env.enable_bledge  = check_have("use-bledge");
-  lmn_env.bfs            = check_have("use-bledge") | check_have("bfs-lsync");
-  lmn_env.bfs_layer_sync = check_have("use-bledge") | check_have("bfs-lsync");
+  lmn_env.bfs            |= check_have("use-bledge") | check_have("bfs-lsync");
+  lmn_env.bfs_layer_sync |= check_have("use-bledge") | check_have("bfs-lsync");
 
   lmn_env.enable_mapndfs = check_have("use-mapndfs");
 
 #ifndef MINIMAL_STATE
-  lmn_env.enable_parallel = check_have("use-mcndfs");
+  lmn_env.enable_parallel |= check_have("use-mcndfs");
   lmn_env.enable_mcndfs   = check_have("use-mcndfs");
 #endif
 
-  lmn_env.enable_map_heuristic = check_have("disable-map-h") == TRUE ? FALSE : TRUE;
+  lmn_env.enable_map_heuristic |= check_have("disable-map-h") == TRUE ? FALSE : TRUE;
 
   check_parallel_options(result);
 
@@ -363,7 +363,7 @@ auto parse_command_line(cxxopts::ParseResult const &result) -> CommandLineParseR
   lmn_env.dump = (check_have("no-dump") | check_have("benchmark-dump")) == TRUE ? FALSE : TRUE;
 
   lmn_env.benchmark = check_have("benchmark-dump");
-  lmn_env.end_dump  = check_have("benchmark-dump") == TRUE ? FALSE : TRUE;
+  lmn_env.end_dump  |= check_have("benchmark-dump") == TRUE ? FALSE : TRUE;
 
   lmn_env.property_dump = check_have("property-dump");
 
