@@ -410,7 +410,7 @@ static void translate_ruleset(LmnRuleSetRef ruleset, char const *header) {
   if (ruleset->size() > 0) {
     rule_names = LMN_CALLOC<lmn_interned_str>(ruleset->size());
   } else {
-    rule_names = NULL;
+    rule_names = nullptr;
   }
 
   for (int i = 0; i < ruleset->size(); i++) {
@@ -627,7 +627,7 @@ static void print_trans_modules(char const *filename) {
 }
 
 static void print_trans_initfunction(char const *filename) {
-  fprintf(OUT, "void init_%s(void){\n", filename);
+  fprintf(OUT, "void init_%s(){\n", filename);
 
   /* fprintf(OUT, "  extern void helloworld(const char*);\n"); */
   /* fprintf(OUT, "  helloworld(\"%s\");\n", filename); */

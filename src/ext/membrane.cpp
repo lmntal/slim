@@ -77,7 +77,7 @@ void Membrane::cb_mem_equals(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef m
                   LMN_ATTR_MAKE_LINK(0), LMN_ATTR_GET_VALUE(ret_mem1_link_attr));
 }
 
-void Membrane::init_membrane(void) {
+void Membrane::init_membrane() {
   CCallback::lmn_register_c_fun("cb_mhash", (void *)cb_mhash, 3);
   CCallback::lmn_register_c_fun("cb_mem_equals", (void *)cb_mem_equals, 5);
 }

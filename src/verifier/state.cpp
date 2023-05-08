@@ -295,7 +295,7 @@ LmnBinStrRef state_calc_mem_dump_with_tree(State *s) { return s->mem_dump_with_t
 
 LmnBinStrRef state_calc_mem_dummy(State *s) {
   /* DUMMY: nothing to do */
-  return NULL;
+  return nullptr;
 }
 
 unsigned long transition_space(TransitionRef t) {
@@ -308,8 +308,8 @@ unsigned long transition_space(TransitionRef t) {
 TransitionRef transition_make(State *s, lmn_interned_str rule_name) {
   struct Transition *t = LMN_MALLOC<struct Transition>();
 
-  t->s                 = s;
-  t->id                = 0;
+  t->s  = s;
+  t->id = 0;
   transition_set_cost(t, 0);
   t->rule_names.init(4);
   t->rule_names.push(rule_name);
@@ -415,7 +415,7 @@ unsigned long state_hash(State *s) {
  * 階層グラフ構造の参照を持たない場合は, なにもしない. */
 void state_unset_mem(State *s) {
   if (!s->is_binstr_user()) {
-    s->state_set_mem(NULL);
+    s->state_set_mem(nullptr);
   }
 }
 
@@ -426,7 +426,7 @@ void state_unset_mem(State *s) {
  * バイナリストリングに対する参照を持たない場合は, なにもしない. */
 void state_unset_binstr(State *s) {
   if (s->is_binstr_user()) {
-    s->data = (state_data_t)NULL;
+    s->data = nullptr;
     s->unset_binstr_user();
   }
 }
@@ -514,9 +514,8 @@ void state_D_cache(State *s, LmnBinStrRef d) {
 LmnBinStrRef state_D_fetch(State *s) {
   if (s->s_is_d()) {
     return (LmnBinStrRef)s->successors;
-  } else {
-    return NULL;
   }
+  return nullptr;
 }
 
 /* 状態sに対応する非圧縮バイナリストリングのキャッシュをクリアする. */
@@ -525,7 +524,7 @@ void state_D_flush(State *s) {
   if (cached) {
     lmn_binstr_free(cached);
   }
-  s->successors = NULL;
+  s->successors = nullptr;
 }
 
 /* 差分圧縮バイト列に基づく状態生成処理のfinalizeを行う. */

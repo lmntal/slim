@@ -87,7 +87,7 @@ void lmn_delete_atom(LmnSymbolAtomRef ap) {
   memory_pool_free(atom_memory_pools[arity][cid], ap);
 }
 
-void free_atom_memory_pools(void) {
+void free_atom_memory_pools() {
   unsigned int i, j, arity_num, core_num;
 
   arity_num = ARY_SIZEOF(atom_memory_pools);

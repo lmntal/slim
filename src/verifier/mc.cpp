@@ -120,7 +120,7 @@ static inline void do_mc(LmnMembraneRef world_mem_org, AutomataRef a, Vector *ps
   state_id_issue(init_s); /* 状態に整数IDを発行 */
 #ifdef KWBT_OPT
   if (lmn_env.opt_mode != OPT_NONE)
-    state_set_cost(init_s, 0U, NULL); /* 初期状態のコストは0 */
+    state_set_cost(init_s, 0U, nullptr); /* 初期状態のコストは0 */
 #endif
   states->set_init_state(init_s);
   if (lmn_env.enable_compress_mem)
@@ -316,7 +316,7 @@ void mc_store_successors(const StateSpaceRef ss, State *s, MCReactContext *rc, V
     /* 状態sのi番目の遷移src_tと遷移先状態src_succを取得 */
     if (!s->has_trans_obj()) {
       /* Transitionオブジェクトを利用しない場合 */
-      src_t    = NULL;
+      src_t    = nullptr;
       src_succ = (State *)rc->expanded_states(i);
     } else {
       src_t    = (TransitionRef)rc->expanded_states(i);
@@ -332,12 +332,12 @@ void mc_store_successors(const StateSpaceRef ss, State *s, MCReactContext *rc, V
     if (rc->has_optmode(DeltaMembrane)) { /* --delta-mem */
       MemDeltaRoot *d = rc->get_mem_delta_roots().at(i);
       succ            = ss->insert_delta(src_succ, d);
-      src_succ_m      = NULL;
+      src_succ_m      = nullptr;
     } else if (src_succ->is_encoded()) { /* !--delta-mem && --mem-enc */
       if (src_succ->s_is_d())
         src_succ->calc_binstr_delta();
       succ       = ss->insert(src_succ);
-      src_succ_m = NULL;
+      src_succ_m = nullptr;
     } else {                              /* default */
       src_succ_m = src_succ->state_mem(); /* for free mem pointed by src_succ */
       succ       = ss->insert(src_succ);
@@ -540,11 +540,11 @@ void mc_gen_successors_with_property(State *s, LmnMembraneRef mem, AutomataState
         src_succ_t = (TransitionRef)rc->expanded_states(j);
         src_succ_s = transition_next_state(src_succ_t);
       } else {
-        src_succ_t = NULL;
+        src_succ_t = nullptr;
         src_succ_s = (State *)rc->expanded_states(j);
       }
 
-      new_s = src_succ_s->duplicate(NULL);
+      new_s = src_succ_s->duplicate(nullptr);
       state_set_parent(new_s, s);
       state_set_property_state(new_s, p_nxt_l);
 
@@ -594,7 +594,7 @@ static inline void stutter_extension(State *s, LmnMembraneRef mem, BYTE next_lab
 
   if (mc_use_delta(f)) {
     /* 差分構造が存在しないstruct MemDeltaRootを登録する. */
-    mc_react_cxt_add_mem_delta(rc, new MemDeltaRoot(mem, NULL, 0), NULL);
+    mc_react_cxt_add_mem_delta(rc, new MemDeltaRoot(mem, nullptr, 0), nullptr);
     new_s = new State();
   } else {
     /* 遷移元状態sをdeep copyする.
@@ -684,7 +684,7 @@ static Vector *mc_gen_invalids_path(State *seed) {
   path = new Vector(32);
   pred = seed;
 
-  while (pred) { /* 初期頂点のparentはNULL */
+  while (pred) { /* 初期頂点のparentはnullptr */
     path->push((vec_data_t)pred);
     pred = state_get_parent(pred);
   }
@@ -729,7 +729,7 @@ static void mc_store_invalids_graph(AutomataRef a, st_table_t g, Vector *v) {
 
   if (state_is_end(a, (State *)v->peek())) {
     State *s = (State *)v->peek();
-    MC_INSERT_INVALIDS(g, s, NULL);
+    MC_INSERT_INVALIDS(g, s, nullptr);
   }
 }
 
@@ -827,7 +827,7 @@ void mc_dump_all_errors(LmnWorkerGroup *wp, FILE *f) {
       fprintf(f, "%s\n", lmn_env.sp_dump_format == LMN_SYNTAX ? "counter_exapmle." : "CounterExamplePaths");
 
       cui_dump       = (lmn_env.mc_dump_format == CUI);
-      invalids_graph = cui_dump ? NULL : st_init_ptrtable();
+      invalids_graph = cui_dump ? nullptr : st_init_ptrtable();
 
       /* state property */
       for (i = 0; i < wp->workers_get_entried_num(); i++) {
@@ -843,7 +843,7 @@ void mc_dump_all_errors(LmnWorkerGroup *wp, FILE *f) {
           Vector *path = mc_gen_invalids_path((State *)v->get(j));
 
           if (cui_dump) { /* 出力 */
-            mc_print_vec_states(ss, path, NULL);
+            mc_print_vec_states(ss, path, nullptr);
             fprintf(f, "\n");
           } else { /* ハッシュ表に追加 */
             mc_store_invalids_graph(ss->automata(), invalids_graph, path);
@@ -875,7 +875,7 @@ void mc_dump_all_errors(LmnWorkerGroup *wp, FILE *f) {
           if (cui_dump) {
             path->pop(); /* cycle Vectorとpath
                               Vectorでseedが重複して積まれているため */
-            mc_print_vec_states(ss, path, NULL);
+            mc_print_vec_states(ss, path, nullptr);
             mc_print_vec_states(ss, cycle, seed);
             fprintf(f, "\n");
           } else {
@@ -930,9 +930,9 @@ int mc_load_property(AutomataRef *a, PVector *prop_defs) {
   FILE *nc_fp, *prop_fp;
   int   r;
 
-  *a         = NULL;
-  *prop_defs = NULL;
-  nc_fp = prop_fp = NULL;
+  *a         = nullptr;
+  *prop_defs = nullptr;
+  nc_fp = prop_fp = nullptr;
 
   if (lmn_env.ltl_exp) {
     nc_fp = ltl2ba_str(lmn_env.ltl_exp);
@@ -1010,6 +1010,6 @@ char const *mc_error_msg(int error_id) {
     return "error while parsing propositional symbol definition file";
   default:
     lmn_fatal("implementation error\n");
-    return NULL;
+    return nullptr;
   }
 }

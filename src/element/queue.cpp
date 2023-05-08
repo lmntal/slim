@@ -83,7 +83,7 @@ Queue::Queue(BOOL lock_type) {
  *    sentinel
  */
 
-Queue::Queue(void) {
+Queue::Queue() {
   Node *sentinel = new Node(0);
   this->head     = sentinel;
   this->tail     = sentinel;
@@ -192,7 +192,7 @@ BOOL Queue::is_empty() { return (this->head == this->tail) && (this->enq_num == 
 
 Node::Node(LmnWord v) {
   this->v    = v;
-  this->next = NULL;
+  this->next = nullptr;
 }
 
 Node::~Node(){};

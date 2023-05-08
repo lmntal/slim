@@ -77,15 +77,15 @@ mhash_t mhash(LmnMembraneRef mem) {
 }
 
 static mhash_t mhash_sub(LmnMembraneRef mem, unsigned long tbl_size) {
-  ProcessTableRef c = new ProcessTbl(tbl_size);
-  mhash_t         t;
+  auto   *c = new ProcessTbl(tbl_size);
+  mhash_t t;
 
 #ifdef PROFILE
   if (lmn_env.profile_level >= 3)
     profile_start_timer(PROFILE_TIME__STATE_HASH_MEM);
 #endif
 
-  t = mhash_membrane(mem, NULL, c);
+  t = mhash_membrane(mem, nullptr, c);
   delete c;
 
 #ifdef PROFILE
@@ -130,7 +130,7 @@ static inline mhash_t mhash_membrane(LmnMembraneRef mem, LmnMembraneRef calc_mem
                                   continue;
                                 EACH_ATOM(atom, ent, ({
                                             /* 各連結分子のハッシュ値の値を求める. */
-                                            if (!proc_tbl_get_by_atom(ctx, atom, NULL)) {
+                                            if (!proc_tbl_get_by_atom(ctx, atom, nullptr)) {
                                               mhash_t tmp = molecule(atom, mem, ctx);
                                               hash_sum    += tmp;
                                               hash_mul    *= tmp;
@@ -142,7 +142,7 @@ static inline mhash_t mhash_membrane(LmnMembraneRef mem, LmnMembraneRef calc_mem
     { /** 2. membranes */
       LmnMembraneRef child_mem;
       for (child_mem = mem->mem_child_head(); child_mem; child_mem = child_mem->mem_next()) {
-        mhash_t tmp = mhash_membrane(child_mem, NULL, ctx);
+        mhash_t tmp = mhash_membrane(child_mem, nullptr, ctx);
         hash_sum    += tmp;
         hash_mul    *= tmp;
       }

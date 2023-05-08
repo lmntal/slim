@@ -109,9 +109,9 @@ struct LmnMembrane {
   void           data_atom_sub(int n) { this->atom_data_num -= n; }
   void           data_atom_inc() { this->atom_data_num++; }
   void           data_atom_dec() { this->atom_data_num--; }
-  LmnMembraneRef mem_child_head() { return this->child_head; }
-  LmnMembraneRef mem_next() { return this->next; }
-  LmnMembraneRef mem_prev() { return this->prev; }
+  LmnMembraneRef mem_child_head() const { return this->child_head; }
+  LmnMembraneRef mem_next() const { return this->next; }
+  LmnMembraneRef mem_prev() const { return this->prev; }
   ProcessID      mem_id() const { return this->id; }
   void           set_id(ProcessID n) { this->id = n; }
   void           natoms_copy(LmnMembraneRef n) {
@@ -119,7 +119,7 @@ struct LmnMembrane {
     this->data_atom_set(n->data_atom_num());
   }
   void add_child_mem(LmnMembraneRef newmem) {
-    newmem->prev   = NULL;
+    newmem->prev   = nullptr;
     newmem->next   = this->mem_child_head();
     newmem->parent = this;
     LMN_ASSERT(this);
@@ -131,16 +131,14 @@ struct LmnMembrane {
   AtomListEntry *get_atomlist(LmnFunctor f) {
     if ((f < this->atomset_size) && this->atomset[f]) {
       return this->atomset[f];
-    } else {
-      return NULL;
     }
+    return nullptr;
   }
   AtomListEntry const *get_atomlist(LmnFunctor f) const {
     if ((f < this->atomset_size) && this->atomset[f]) {
       return this->atomset[f];
-    } else {
-      return NULL;
     }
+    return nullptr;
   }
   char const   *MEM_NAME();
   void          drop();

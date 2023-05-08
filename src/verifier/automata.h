@@ -108,8 +108,8 @@ struct AutomataTransition {
 
   AutomataTransition(atmstate_id_t next, PLFormulaRef f);
   ~AutomataTransition();
-  atmstate_id_t get_next();
-  PLFormulaRef  get_formula();
+  atmstate_id_t get_next()const;
+  PLFormulaRef  get_formula()const;
 };
 
 struct AutomataSCC {
@@ -120,15 +120,15 @@ private:
 
 public:
   AutomataSCC();
-  ~AutomataSCC();
+  ~AutomataSCC() = default;
   char const *get_name();
   /** CAUTION: MT-Unsafe */
   void issue_id() {
     id = unsafe_id_counter++;
     // Is it checked by test cases? by sumiya
   }
-  unsigned int get_id() { return id; }
-  BYTE         get_type() { return type; }
+  unsigned int get_id() const { return id; }
+  BYTE         get_type() const { return type; }
   void         set_type(BYTE t) { type = t; }
 };
 
@@ -140,8 +140,8 @@ enum SCC_ACCEPTING_TYPE {
 };
 
 /* propositional Logic Formula */
-PLFormulaRef true_node_make(void);
-PLFormulaRef false_node_make(void);
+PLFormulaRef true_node_make();
+PLFormulaRef false_node_make();
 PLFormulaRef sym_node_make(int sym_id);
 PLFormulaRef negation_node_make(PLFormulaRef f0);
 PLFormulaRef and_node_make(PLFormulaRef f0, PLFormulaRef f1);

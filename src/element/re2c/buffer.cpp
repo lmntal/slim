@@ -44,9 +44,7 @@ buffer::buffer(int fill_size, int size)
       parsed_pos(YYLIMIT) {}
 
 buffer::~buffer() {
-  if (this->buf != NULL) {
     delete[] buf;
-  }
 }
 
 bool buffer::fill(size_t need) {

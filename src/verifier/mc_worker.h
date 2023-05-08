@@ -428,7 +428,7 @@ static inline BOOL worker_check(LmnWorker *w) {
  */
 BOOL       lmn_workers_termination_detection_for_rings(LmnWorker *root);
 void       lmn_workers_synchronization(LmnWorker *root, void (*func)(LmnWorker *w));
-LmnWorker *lmn_worker_make_minimal(void);
+LmnWorker *lmn_worker_make_minimal();
 LmnWorker *lmn_worker_make(StateSpaceRef ss, unsigned long id, BOOL flags);
 void       lmn_worker_free(LmnWorker *w);
 

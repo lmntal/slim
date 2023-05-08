@@ -52,9 +52,9 @@ void float_of_string(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0, LmnLi
   char       *t;
   LmnAtomRef  d;
   char const *s = reinterpret_cast<LmnString *>(a0)->c_str();
-  t             = NULL;
+  t             = nullptr;
   d             = (LmnAtomRef)lmn_create_double_atom(strtod(s, &t));
-  if (t == NULL || s == t) {
+  if (t == nullptr || s == t) {
     LmnSAtom a = lmn_mem_newatom(mem, lmn_functor_table->intern(ANONYMOUS, lmn_intern("fail"), 1));
     lmn_mem_newlink(mem, a1, t1, LMN_ATTR_GET_VALUE(t1), a, LMN_ATTR_MAKE_LINK(0), 0);
   } else { /* 変換できた */
@@ -65,4 +65,4 @@ void float_of_string(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0, LmnLi
   lmn_mem_delete_atom(mem, a0, t0);
 }
 
-void init_float(void) { CCallback::lmn_register_c_fun("float_of_string", (void *)float_of_string, 2); }
+void init_float() { CCallback::lmn_register_c_fun("float_of_string", (void *)float_of_string, 2); }

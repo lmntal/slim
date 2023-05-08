@@ -71,7 +71,7 @@ struct LmnString : LmnSPAtomHeader {
 inline bool operator==(LmnString const &s1, LmnString const &s2) { return s1.str == s2.str; }
 inline bool operator!=(LmnString const &s1, LmnString const &s2) { return !(s1 == s2); }
 
-void string_init(void);
-void string_finalize(void);
+void string_init();
+void string_finalize();
 
 #endif

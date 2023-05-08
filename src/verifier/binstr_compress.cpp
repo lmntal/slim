@@ -37,11 +37,14 @@
  * $Id$
  */
 #include "binstr_compress.h"
-#include "../third_party/zdelta-2.1/zdlib.h"
-#include "element/element.h"
+
+#include "fmt/color.h"
+#include "zdelta-2.1/zdlib.h"
 #ifdef HAVE_LIBZ
 #include <zlib.h>
 #endif
+
+#include "element/element.h"
 #ifdef PROFILE
 #include "runtime_status.h"
 #endif
@@ -94,7 +97,7 @@
  *    "A Massively Spiffy Yet Delicately Unobtrusive Compression Library"
  *    @see http://www.zlib.net/
  */
-LmnBinStrRef lmn_bscomp_z_encode(const LmnBinStrRef org) {
+LmnBinStrRef lmn_bscomp_z_encode(LmnBinStr const *org) {
 #ifndef HAVE_LIBZ
   return org;
 #else
@@ -137,7 +140,7 @@ LmnBinStrRef lmn_bscomp_z_encode(const LmnBinStrRef org) {
 #endif
 }
 
-LmnBinStrRef lmn_bscomp_z_decode(const LmnBinStrRef cmp) {
+LmnBinStrRef lmn_bscomp_z_decode(LmnBinStr const *cmp) {
 #ifndef HAVE_LIBZ
   return cmp;
 #else
@@ -223,7 +226,7 @@ LmnBinStrRef lmn_bscomp_d_encode(const LmnBinStrRef org, const LmnBinStrRef ref)
   ref_8len = (ref->len + 1) / TAG_IN_BYTE;
 
   mul      = zd_buf_n;
-  dif      = NULL;
+  dif      = nullptr;
   dif_8len = org_8len;
 
   while (1) {
@@ -280,10 +283,10 @@ LmnBinStrRef lmn_bscomp_d_decode(const LmnBinStrRef ref, const LmnBinStrRef dif)
   dif_8len = dif->len / TAG_IN_BYTE;
 
   mul      = zd_buf_n;
-  org      = NULL;
+  org      = nullptr;
   org_8len = ref_8len + dif_8len;
 
-  while (1) {
+  while (true) {
     if (org)
       lmn_binstr_free(org);
     org_8len *= mul;
@@ -328,17 +331,17 @@ uint64_t memory;
 
 void lmn_bscomp_tree_profile(FILE *f) {
 #ifdef PROFILE
-  fprintf(f, "node count              : %10llu\n", node_count);
-  fprintf(f, "table size              : %10llu\n", table_size);
-  fprintf(f, "load factor             : %10.3lf\n", load_factor);
-  fprintf(f, "memory                  : %7llu MB\n", memory);
+  fmt::print(f, "{:24}: {:10}\n", "node count", node_count);
+  fmt::print(f, "{:24}: {:10}\n", "table size", table_size);
+  fmt::print(f, "{:24}: {:10.3}\n", "load factor", load_factor);
+  fmt::print(f, "{:24}: {:10} MB\n", "memory", memory);
 #else
   fprintf(f, "have to enable profile option\n");
 #endif
 }
 
 BOOL lmn_bscomp_tree_init() {
-  if (treedb == NULL) {
+  if (treedb == nullptr) {
     treedb = new TreeDatabase(2ULL << lmn_env.tree_compress_table_size);
     return TRUE;
   }
@@ -346,7 +349,7 @@ BOOL lmn_bscomp_tree_init() {
 }
 
 BOOL lmn_bscomp_tree_clean() {
-  if (treedb != NULL) {
+  if (treedb != nullptr) {
 #ifdef PROFILE
     node_count  = tree_db_node_count(treedb);
     table_size  = treedb->mask + 1;
@@ -354,7 +357,7 @@ BOOL lmn_bscomp_tree_clean() {
     memory      = (uint64_t)treedb->space() / 1024 / 1024;
 #endif
     delete treedb;
-    treedb = NULL;
+    treedb = nullptr;
     return TRUE;
   }
   return FALSE;

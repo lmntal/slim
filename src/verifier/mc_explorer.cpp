@@ -173,7 +173,7 @@ void ndfs_found_accepting_cycle(LmnWorker *w, State *seed, Vector *cycle_path) {
   gen_counter_example = lmn_env.dump;
   seed->set_on_cycle(); /* 受理サイクルに含まれるフラグを立てる */
 
-  v = gen_counter_example ? new Vector(cycle_path->get_num()) : NULL;
+  v = gen_counter_example ? new Vector(cycle_path->get_num()) : nullptr;
 
   /* 受理サイクル上の状態にフラグを立てていく */
   for (i = 0; i < cycle_path->get_num(); i++) {
@@ -382,7 +382,7 @@ static inline void owcty_termination_detection(LmnWorker *w) {
 }
 
 /* primary Queueに積まれた頂点を起点に到達可能な受理頂点の集合を
- * secondary QueueがNULLでなければsecondary Queueに積む.
+ * secondary Queueがnullptrでなければsecondary Queueに積む.
  * 訪問した頂点は,
  *   is_upが真ならset_flagを真に
  *   is_upが偽ならset_flagを偽に
@@ -589,7 +589,7 @@ void map_start(LmnWorker *w, State *u) {
     }
 
     if (worker_use_weak_map(w)) {
-      u = NULL;
+      u = nullptr;
     } else {
       u = (State *)MAP_WORKER_PROPAG_G(w)->dequeue();
     }
@@ -602,7 +602,7 @@ void map_start(LmnWorker *w, State *u) {
  * on-the-flyなMAPの伝搬でDELと判定した頂点を起点に
  * MAP値の再伝搬を行う */
 void map_iteration_start(LmnWorker *w) {
-  lmn_workers_synchronization(w, NULL);
+  lmn_workers_synchronization(w, nullptr);
 
   while (!MAP_WORKER_DEL_G(w)->is_empty()) {
     State *seed = (State *)MAP_WORKER_DEL_G(w)->dequeue();
@@ -683,9 +683,9 @@ static inline State *map_ordering(State *s1, State *s2, AutomataRef a) {
   if (s1_valid && s2_valid) {
     return state_id(s1) < state_id(s2) ? s1 : s2;
   } else if (!s1_valid) {
-    return s2_valid ? s2 : NULL;
+    return s2_valid ? s2 : nullptr;
   } else {
-    return s1_valid ? s1 : NULL;
+    return s1_valid ? s1 : nullptr;
   }
 }
 
@@ -698,7 +698,7 @@ State *map_ordering_states(AutomataRef a, unsigned int num, ...) {
 
   va_start(states, num);
 
-  ret = NULL;
+  ret = nullptr;
   for (i = 0; i < num; i++) {
     ptr = va_arg(states, State *);
     ret = map_ordering(ptr, ret, a);
@@ -861,7 +861,7 @@ static BOOL bledge_explorer_accepting_cycle(LmnWorker *w, State *u, State *v) {
 }
 
 void bledge_start(LmnWorker *w) {
-  lmn_workers_synchronization(w, NULL);
+  lmn_workers_synchronization(w, nullptr);
 
   START_CYCLE_SEARCH();
 
@@ -906,7 +906,7 @@ static void bledge_found_accepting_cycle(LmnWorker *w, Vector *cycle_path) {
   wp->workers_found_error();
 
   gen_counter_example = lmn_env.dump;
-  v                   = gen_counter_example ? new Vector(cycle_path->get_num()) : NULL;
+  v                   = gen_counter_example ? new Vector(cycle_path->get_num()) : nullptr;
 
   /* 受理サイクル上の状態にフラグを立てていく */
   for (i = 0; i < cycle_path->get_num(); i++) {
@@ -978,7 +978,7 @@ void mapndfs_worker_init(LmnWorker *w) {
     mc->propagate   = MAP_WORKER_PROPAG_G(prim);
     mc->waitingSeed = MAP_WORKER_DEL_G(prim);
   }
-  mc->traversed = NULL;
+  mc->traversed = nullptr;
 #endif
 
   MAPNDFS_WORKER_OBJ_SET(w, mc);
@@ -1056,7 +1056,7 @@ void mapndfs_found_accepting_cycle(LmnWorker *w, State *seed, Vector *cycle_path
   gen_counter_example = lmn_env.dump;
   seed->set_on_cycle(); /* 受理サイクルに含まれるフラグを立てる */
 
-  v = gen_counter_example ? new Vector(cycle_path->get_num()) : NULL;
+  v = gen_counter_example ? new Vector(cycle_path->get_num()) : nullptr;
 
   /* 受理サイクル上の状態にフラグを立てていく */
   for (i = 0; i < cycle_path->get_num(); i++) {
@@ -1136,7 +1136,7 @@ void mcndfs_worker_init(LmnWorker *w) {
     mc->propagate   = MAP_WORKER_PROPAG_G(prim);
     mc->waitingSeed = MAP_WORKER_DEL_G(prim);
   }
-  mc->traversed = NULL;
+  mc->traversed = nullptr;
 #endif
 
   MAPNDFS_WORKER_OBJ_SET(w, mc);
@@ -1209,7 +1209,7 @@ void mcndfs_found_accepting_cycle(LmnWorker *w, State *seed, Vector *cycle_path)
   gen_counter_example = lmn_env.dump;
   seed->set_on_cycle(); /* 受理サイクルに含まれるフラグを立てる */
 
-  v = gen_counter_example ? new Vector(cycle_path->get_num()) : NULL;
+  v = gen_counter_example ? new Vector(cycle_path->get_num()) : nullptr;
 
   /* 受理サイクル上の状態にフラグを立てていく */
   for (i = 0; i < cycle_path->get_num(); i++) {

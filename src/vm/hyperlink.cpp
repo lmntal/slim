@@ -72,12 +72,12 @@ static inline unsigned long hyperlink_new_id() { return env_gen_next_id(); /* nd
 HyperLink::HyperLink(LmnSymbolAtomRef at) {
   this->atom = at;
   this->rank = 0;
-  this->mem  = NULL;
+  this->mem  = nullptr;
   this->id   = hyperlink_new_id();
   //  hl->usrid = 0;
   this->parent   = this;
-  this->children = NULL;
-  this->attrAtom = 0;
+  this->children = nullptr;
+  this->attrAtom = nullptr;
   this->attr     = 0;
 
   at->set_link(1, this);
@@ -152,14 +152,14 @@ HyperLink *HyperLink::head_child() {
     HashSetIterator it;
 
     for (it = hashset_iterator(children); !hashsetiter_isend(&it); hashsetiter_next(&it)) {
-      HyperLink *child = (HyperLink *)hashsetiter_entry(&it);
+      auto *child = (HyperLink *)hashsetiter_entry(&it);
       if ((HashKeyType)child < DELETED_KEY) {
         return child;
       }
     }
   }
 
-  return NULL;
+  return nullptr;
 }
 
 /*
@@ -191,7 +191,7 @@ void lmn_hyperlink_delete(LmnSymbolAtomRef at) {
       parent->rank_calc(-1);
       if (parent->rank == 0) {
         delete parent->children;
-        parent->children = NULL;
+        parent->children = nullptr;
       }
     }
 
@@ -228,13 +228,13 @@ void lmn_hyperlink_delete_old(LmnSymbolAtomRef at) {
     parent->rank_calc(-1);
     if (parent->rank == 0) {
       delete parent->children;
-      parent->children = NULL;
+      parent->children = nullptr;
     }
 
     if (children) { // 子表があるとき
       HashSetIterator it;
       for (it = hashset_iterator(children); !hashsetiter_isend(&it); hashsetiter_next(&it)) {
-        HyperLink *tmp = (HyperLink *)hashsetiter_entry(&it);
+        auto *tmp = (HyperLink *)hashsetiter_entry(&it);
         if ((HashKeyType)tmp < DELETED_KEY) {
           parent->children->add((HashKeyType)tmp);
           children->delete_entry((HashKeyType)tmp);
@@ -251,7 +251,7 @@ void lmn_hyperlink_delete_old(LmnSymbolAtomRef at) {
       HyperLink      *newroot;
       HashSetIterator it;
 
-      newroot = NULL;
+      newroot = nullptr;
       for (it = hashset_iterator(children); !hashsetiter_isend(&it); hashsetiter_next(&it)) {
         newroot = (HyperLink *)hashsetiter_entry(&it);
         if ((HashKeyType)newroot < DELETED_KEY) {
@@ -268,7 +268,7 @@ void lmn_hyperlink_delete_old(LmnSymbolAtomRef at) {
       }
 
       for (it = hashset_iterator(children); !hashsetiter_isend(&it); hashsetiter_next(&it)) {
-        HyperLink *tmp = (HyperLink *)hashsetiter_entry(&it);
+        auto *tmp = (HyperLink *)hashsetiter_entry(&it);
         if ((HashKeyType)tmp < DELETED_KEY) {
           newroot->children->add((HashKeyType)tmp);
           children->delete_entry((HashKeyType)tmp);
@@ -279,14 +279,13 @@ void lmn_hyperlink_delete_old(LmnSymbolAtomRef at) {
       newroot->rank = parent->rank - 1;
       if (newroot->rank == 0) {
         delete newroot->children;
-        newroot->children = NULL;
+        newroot->children = nullptr;
       }
     }
   }
 
-  if (children) {
-    delete children;
-  }
+  delete children;
+
   LMN_FREE(hl);
 }
 
@@ -331,7 +330,7 @@ void HyperLink::path_compression(Vector *children) {
 
       if (old_parent_children->num == 0) {
         delete old_parent_children;
-        old_parent->children = NULL;
+        old_parent->children = nullptr;
       }
 
       /* 新親(root)に対する処理 */
@@ -364,7 +363,7 @@ void hyperlink_path_compression(HyperLink *root, Vector *children) {
 
       if (old_parent_children->num == 0) {
         delete old_parent_children;
-        old_parent->children = NULL;
+        old_parent->children = nullptr;
       }
 
       /* 新親(root)に対する処理 */
@@ -820,7 +819,7 @@ static inline void sameproccxt_destroy(SimpleHashtbl *hl_sameproccxt) {
     return;
 
   for (it = hashtbl_iterator(hl_sameproccxt); !hashtbliter_isend(&it); hashtbliter_next(&it)) {
-    SameProcCxt *spc = (SameProcCxt *)(hashtbliter_entry(&it)->data);
+    auto *spc = (SameProcCxt *)(hashtbliter_entry(&it)->data);
     delete spc;
   }
 

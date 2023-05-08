@@ -81,7 +81,7 @@ McDporData **dpor_data;
 
 /* for DEBUG (MT-Unsafe):
  * 削減したグラフを表示するために最後に状態展開を行うためのStack */
-Vector *reduced_stack = NULL;
+Vector *reduced_stack = nullptr;
 
 struct ContextC1 {
   BOOL          is_ample_cand;
@@ -165,7 +165,7 @@ static int contextC1_expand_gatoms_LHS_f(LmnWord _k, LmnWord _v, LmnWord _arg) {
   c = (ContextC1Ref)_arg;
   //  key = ((LmnSAtom)_v)->get_id();
 
-  if (!proc_tbl_get(c->LHS_procs, _k, NULL)) {
+  if (!proc_tbl_get(c->LHS_procs, _k, nullptr)) {
     (c->LHS_procs)->proc_tbl_put(_k, LHS_DEFAULT);
   }
 
@@ -385,7 +385,7 @@ static void dpor_data_clear(McDporData *d, MCReactContext *rc) {
   d->nxt_tr_id = 0;
 }
 
-void dpor_env_init(void) {
+void dpor_env_init() {
   if (lmn_env.enable_por_old) {
     McPorData::mc_por.init_por_vars(); // called only once  --by sumiya 2019/03/29
   } else {
@@ -398,7 +398,7 @@ void dpor_env_init(void) {
   }
 }
 
-void dpor_env_destroy(void) {
+void dpor_env_destroy() {
   if (lmn_env.enable_por_old) {
     McPorData::mc_por.free_por_vars(); // called only once  --by sumiya 2019/03/29
   } else {
@@ -567,7 +567,7 @@ static BOOL dpor_explore_subgraph(McDporData *mc, ContextC1Ref c, Vector *cur_ch
     return ret;
   }
 
-  if (dpor_dependency_check(mc, rc.get_mem_delta_roots(), NULL) && mc->cur_depth < 200) {
+  if (dpor_dependency_check(mc, rc.get_mem_delta_roots(), nullptr) && mc->cur_depth < 200) {
 
     for (auto &succ_d : rc.get_mem_delta_roots()) {
       st_data_t t;
@@ -658,7 +658,7 @@ BOOL dpor_transition_gen_RHS(McDporData *mc, MemDeltaRoot *d, MCReactContext *rc
   ContextC1Ref c, ret;
 
   c       = mc->tmp;
-  mc->tmp = NULL;
+  mc->tmp = nullptr;
 
   contextC1_expand_RHS(mc, c, d);
 
@@ -681,7 +681,7 @@ BOOL dpor_transition_gen_RHS(McDporData *mc, MemDeltaRoot *d, MCReactContext *rc
     if (!ret->is_ample_cand) {
       if (std::find(roots.begin(), roots.end(), ret->d) == roots.end()) {
         POR_DEBUG(printf("push succ\n\n"));
-        mc_react_cxt_add_mem_delta(rc, ret->d, NULL);
+        mc_react_cxt_add_mem_delta(rc, ret->d, nullptr);
       }
     }
 
@@ -759,7 +759,7 @@ static void dpor_ample_set_to_succ_tbl(StateSpaceRef ss, Vector *ample_set, Vect
     if (s->has_trans_obj()) {
       src_t = transition_make(src_succ, lmn_intern("ample set"));
     } else {
-      src_t = NULL;
+      src_t = nullptr;
     }
 
     succ = ss->insert_delta(src_succ, succ_d);
@@ -816,7 +816,7 @@ static void dpor_ample_set_to_succ_tbl(StateSpaceRef ss, Vector *ample_set, Vect
       if (s->has_trans_obj()) {
         src_t = transition_make(src_succ, ANONYMOUS);
       } else {
-        src_t = NULL;
+        src_t = nullptr;
       }
 
       succ = ss->insert_delta(src_succ, succ_d);

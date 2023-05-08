@@ -81,8 +81,8 @@ static LmnRuleInstr instr_parallel;
 
 void *normal_thread(void *arg);
 
-void normal_parallel_init(void);
-void normal_parallel_free(void);
+void normal_parallel_init();
+void normal_parallel_free();
 void threadinfo_init(int id, LmnInstrVar atomi, LmnRuleRef rule, LmnReactCxtRef rc, LmnRuleInstr instr,
                      AtomListEntryRef atomlist_ent, int atom_arity);
 
@@ -92,7 +92,7 @@ void normal_parallel_prof_dump(FILE *f);
 
 BOOL check_exist(LmnSymbolAtomRef atom, LmnFunctor f);
 
-void rule_wall_time_start(void);
-void rule_wall_time_finish(void);
+void rule_wall_time_start();
+void rule_wall_time_finish();
 
 #endif

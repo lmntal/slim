@@ -81,11 +81,11 @@ void thread_yield_CPU() { sched_yield(); }
 EWLock::EWLock(unsigned int e_num, unsigned int w_num) {
   unsigned int i;
   w_num            = round2up(w_num);
-  this->elock_used = NULL;
+  this->elock_used = nullptr;
   this->elock_num  = e_num;
-  this->elock      = NULL;
+  this->elock      = nullptr;
   this->wlock_num  = w_num;
-  this->wlock      = NULL;
+  this->wlock      = nullptr;
 
   this->elock = LMN_NALLOC<lmn_mutex_t>(e_num);
   for (i = 0; i < e_num; i++) {

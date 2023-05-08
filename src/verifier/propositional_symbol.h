@@ -73,7 +73,7 @@ BOOL           proposition_eval(PropositionRef prop, LmnMembraneRef mem);
 
 /* propositional symbol definitions */
 
-PropSyms            propsyms_make(void);
+PropSyms            propsyms_make();
 void                propsyms_set(PropSyms props, unsigned int id, SymbolDefinitionRef symdef);
 unsigned int        propsyms_num(PropSyms props);
 SymbolDefinitionRef propsyms_get(PropSyms props, unsigned int i);

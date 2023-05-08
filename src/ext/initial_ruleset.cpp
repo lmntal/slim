@@ -92,7 +92,7 @@ BOOL register_initial_module(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef r
   for (i = 0; i < ARY_SIZEOF(initial_modules); i++) {
     LmnRuleSetRef rs = lmn_get_module_ruleset(lmn_intern(initial_modules[i]));
     if (rs) {
-      for (auto r : *rs) {
+      for (auto *r : *rs) {
         lmn_add_initial_system_rule(new LmnRule(*r));
       }
     }
@@ -100,7 +100,7 @@ BOOL register_initial_module(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef r
   return TRUE;
 }
 
-void init_initial_ruleset(void) {
+void init_initial_ruleset() {
   lmn_add_initial_rule(new LmnRule(register_initial_rulesets, lmn_intern("register_initial_ruleset")));
   lmn_add_initial_rule(new LmnRule(register_initial_module, lmn_intern("register_initial_module")));
 }

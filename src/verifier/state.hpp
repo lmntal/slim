@@ -184,9 +184,8 @@ struct State {                 /* Total:72(36)byte */
   LmnBinStrRef state_binstr() {
     if (is_binstr_user()) {
       return (LmnBinStrRef)data;
-    } else {
-      return NULL;
     }
+    return nullptr;
   }
 
   void state_set_binstr(LmnBinStrRef bs) {
@@ -213,10 +212,9 @@ struct State {                 /* Total:72(36)byte */
    * 既にバイナリストリングへエンコードしている場合の呼び出しは想定外. */
   LmnMembraneRef state_mem() {
     if (is_binstr_user()) {
-      return NULL;
-    } else {
-      return (LmnMembraneRef)data;
+      return nullptr;
     }
+    return (LmnMembraneRef)data;
   }
 
   /* 状態srcと等価な状態を新たに構築して返す.
@@ -308,7 +306,7 @@ struct State {                 /* Total:72(36)byte */
 #endif
 
     LMN_FREE(this->successors);
-    this->successors    = NULL;
+    this->successors    = nullptr;
     this->successor_num = 0;
     this->unset_trans_obj();
   }
@@ -321,14 +319,14 @@ struct State {                 /* Total:72(36)byte */
       }
 #endif
       (this->state_mem())->free_rec();
-      this->state_set_mem(NULL);
+      this->state_set_mem(nullptr);
     }
   }
 
   void free_binstr() {
     if (this->state_binstr()) {
       lmn_binstr_free(this->state_binstr());
-      this->data = NULL;
+      this->data = nullptr;
     }
     this->unset_binstr_user();
   }
@@ -354,7 +352,7 @@ struct State {                 /* Total:72(36)byte */
       }
     } else {
       lmn_fatal("unexpected.");
-      ret = NULL;
+      ret = nullptr;
     }
 
     return ret;
@@ -370,7 +368,7 @@ struct State {                 /* Total:72(36)byte */
       return lmn_mem_to_binstr(this->state_mem());
 
     lmn_fatal("unexpected.");
-    return NULL;
+    return nullptr;
   }
 
   /* 状態sに対応した階層グラフ構造のバイナリストリングをzlibで圧縮して返す.
@@ -397,7 +395,7 @@ struct State {                 /* Total:72(36)byte */
   /* 状態sに対応する階層グラフ構造と等価な階層グラフ構造を新たに構築して返す.
    * 構築できなかった場合はNULLを返す. */
   LmnMembraneRef duplicate_membrane() {
-    LmnMembraneRef ret = NULL;
+    LmnMembraneRef ret = nullptr;
     if (!this->is_binstr_user() && this->state_mem()) {
       ret = (this->state_mem())->copy();
     } else if (this->is_binstr_user() && this->state_binstr()) {
@@ -531,12 +529,12 @@ struct State {                 /* Total:72(36)byte */
 
 public:
   State()
-      : data(NULL), state_name(0x00U), flags(0x00U), flags2(0x00U), flags3(0x00U), hash(0), next(NULL),
-        successors(NULL), successor_num(0), parent(NULL), state_id(0), map(NULL) {
+      : data(nullptr), state_name(0x00U), flags(0x00U), flags2(0x00U), flags3(0x00U), hash(0), next(nullptr),
+        successors(nullptr), successor_num(0), parent(nullptr), state_id(0), map(nullptr) {
     memset(&tcd, 0x00, sizeof(TreeCompressData));
 #ifndef MINIMAL_STATE
     state_set_expander_id(LONG_MAX);
-    local_flags = 0x00U;
+    local_flags = nullptr;
     state_expand_lock_init();
 #endif
     s_set_fresh();

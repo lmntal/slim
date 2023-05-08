@@ -59,14 +59,14 @@
  * \e dumper_init must be called just once before use.
  * This function just register callback so far.
  */
-LMN_EXTERN void dumper_init(void);
+LMN_EXTERN void dumper_init();
 /**
  * @brief finalize dumper module.
  *
  * \e dumper_finalize muste be called just once after use.
  * This function does nothing.
  */
-LMN_EXTERN void dumper_finalize(void);
+LMN_EXTERN void dumper_finalize();
 /**
  * @brief print a membrane to stdout.
  */

@@ -191,7 +191,7 @@ public:
    * hl1にマッチしたハイパリンクオブジェクトIDもしくは訪問番号hl2_idを併せて記録する
    */
   bool visit_hlink(HyperLink *hl1, LmnWord hl2_id) {
-    return this->visit(LMN_HL_ID(hl1), TraceData::options::TRAVERSED_HLINK, hl2_id, NULL);
+    return this->visit(LMN_HL_ID(hl1), TraceData::options::TRAVERSED_HLINK, hl2_id, nullptr);
   }
 
   void leave(key_type key) {

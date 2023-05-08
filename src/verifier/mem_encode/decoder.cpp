@@ -133,9 +133,9 @@ int binstr_decoder::decode_mol(LmnMembraneRef mem, LmnSymbolAtomRef from_atom, i
     LmnWord     n;
     LmnLinkAttr n_attr;
 
-    auto in      = lmn_mem_newatom(mem, LMN_IN_PROXY_FUNCTOR);
-    auto out     = lmn_mem_newatom(mem->mem_parent(), LMN_OUT_PROXY_FUNCTOR);
-    auto sub_tag = scanner.scan_tag();
+    auto *in      = lmn_mem_newatom(mem, LMN_IN_PROXY_FUNCTOR);
+    auto *out     = lmn_mem_newatom(mem->mem_parent(), LMN_OUT_PROXY_FUNCTOR);
+    auto  sub_tag = scanner.scan_tag();
 
     if (sub_tag == TAG_INT_DATA) {
       n      = scanner.scan_integer();
@@ -167,15 +167,14 @@ int binstr_decoder::decode_mol(LmnMembraneRef mem, LmnSymbolAtomRef from_atom, i
   case TAG_ESCAPE_MEM: {
     LmnMembraneRef parent = mem->mem_parent();
     if (from_atom) {
-      auto in  = lmn_mem_newatom(mem, LMN_IN_PROXY_FUNCTOR);
-      auto out = lmn_mem_newatom(parent, LMN_OUT_PROXY_FUNCTOR);
+      auto *in  = lmn_mem_newatom(mem, LMN_IN_PROXY_FUNCTOR);
+      auto *out = lmn_mem_newatom(parent, LMN_OUT_PROXY_FUNCTOR);
       lmn_newlink_in_symbols(in, 0, out, 0);
       lmn_newlink_in_symbols(in, 1, from_atom, from_arg);
 
       return decode_mol(parent, out, 1);
-    } else {
-      return decode_mol(parent, NULL, 1);
     }
+    return decode_mol(parent, nullptr, 1);
   }
   case TAG_HLINK: {
     LmnSymbolAtomRef hl_atom = lmn_hyperlink_new();
@@ -224,26 +223,27 @@ int binstr_decoder::decode_mol(LmnMembraneRef mem, LmnSymbolAtomRef from_atom, i
 
     switch (log[ref].type) {
     case BS_LOG_TYPE_ATOM: {
-      unsigned int     arg  = scanner.scan_arg_ref();
-      LmnSymbolAtomRef atom = (LmnSymbolAtomRef)log[ref].v;
+      unsigned int arg  = scanner.scan_arg_ref();
+      auto        *atom = (LmnSymbolAtomRef)log[ref].v;
       if (from_atom) {
         lmn_newlink_in_symbols(atom, arg, from_atom, from_arg);
       }
     } break;
     case BS_LOG_TYPE_MEM: {
-      LmnMembraneRef ref_mem = (LmnMembraneRef)log[ref].v;
+      auto *ref_mem = (LmnMembraneRef)log[ref].v;
       if (!from_atom) {
-        return decode_mol(ref_mem, NULL, from_arg);
-      } else {
-        LmnSymbolAtomRef in, out;
-
-        in  = lmn_mem_newatom(ref_mem, LMN_IN_PROXY_FUNCTOR);
-        out = lmn_mem_newatom(mem, LMN_OUT_PROXY_FUNCTOR);
-
-        lmn_newlink_in_symbols(in, 0, out, 0);
-        lmn_newlink_in_symbols(out, 1, from_atom, from_arg);
-        return decode_mol(ref_mem, in, 1);
+        return decode_mol(ref_mem, nullptr, from_arg);
       }
+
+      LmnSymbolAtomRef in, out;
+
+      in  = lmn_mem_newatom(ref_mem, LMN_IN_PROXY_FUNCTOR);
+      out = lmn_mem_newatom(mem, LMN_OUT_PROXY_FUNCTOR);
+
+      lmn_newlink_in_symbols(in, 0, out, 0);
+      lmn_newlink_in_symbols(out, 1, from_atom, from_arg);
+      return decode_mol(ref_mem, in, 1);
+
     } break;
     case BS_LOG_TYPE_HLINK: {
       auto ref_hl_atom = (LmnAtomRef)log[ref].v;

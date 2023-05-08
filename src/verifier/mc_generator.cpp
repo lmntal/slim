@@ -257,9 +257,8 @@ static inline LmnWord mapdfs_work_stealing(LmnWorker *w) {
       worker_set_active(w);
       worker_set_stealer(w);
       return DFS_WORKER_QUEUE(dst)->dequeue();
-    } else {
-      dst = worker_next_generator(dst);
     }
+    dst = worker_next_generator(dst);
   }
   return (LmnWord)NULL;
 }
@@ -311,7 +310,7 @@ void mcdfs_start(LmnWorker *w) {
   if(WORKER_FOR_INIT_STATE(w, s)) {
     s = ss->initial_state();
   } else {
-    s = NULL;
+    s = nullptr;
   }
   */
   s = ss->initial_state();
@@ -337,7 +336,7 @@ void mcdfs_start(LmnWorker *w) {
           {
             put_stack(&DFS_WORKER_STACK(w), s);
             mcdfs_loop(w, &DFS_WORKER_STACK(w), &new_ss, ss->automata(), ss->prop_symbols());
-            s = NULL;
+            s = nullptr;
             DFS_WORKER_STACK(w).clear();
           }
           new_ss.clear();
@@ -379,7 +378,7 @@ void dfs_start(LmnWorker *w) {
   if (WORKER_FOR_INIT_STATE(w, s)) {
     s = ss->initial_state();
   } else {
-    s = NULL;
+    s = nullptr;
   }
 
   if (!worker_on_parallel(w)) { /* DFS */
@@ -427,7 +426,7 @@ void dfs_start(LmnWorker *w) {
           if (lmn_env.opt_mode != OPT_NONE) {
             push_deq(&DFS_WORKER_DEQUE(w), s, TRUE);
             costed_dfs_loop(w, &DFS_WORKER_DEQUE(w), &new_ss, ss->automata(), ss->prop_symbols());
-            s = NULL;
+            s = nullptr;
             &DFS_WORKER_DEQUE(w)->clear();
           } else
 #endif
@@ -437,7 +436,7 @@ void dfs_start(LmnWorker *w) {
               mapdfs_loop(w, &DFS_WORKER_STACK(w), &new_ss, ss->automata(), ss->prop_symbols());
             else
               dfs_loop(w, &DFS_WORKER_STACK(w), &new_ss, ss->automata(), ss->prop_symbols());
-            s = NULL;
+            s = nullptr;
             DFS_WORKER_STACK(w).clear();
           }
           new_ss.clear();
@@ -712,7 +711,7 @@ static inline void mcdfs_loop(LmnWorker *w, Vector *stack, Vector *new_ss, Autom
 #else
     // fresh successor heuristics
     n             = s->successor_num;
-    Vector *fresh = NULL;
+    Vector *fresh = nullptr;
 
     if (n > 0) {
       fresh = new Vector(n);
@@ -860,7 +859,7 @@ void bfs_worker_init(LmnWorker *w) {
 
 /* LmnWorkerのBFS固有データを破棄する */
 void bfs_worker_finalize(LmnWorker *w) {
-  McExpandBFS *mc = (McExpandBFS *)BFS_WORKER_OBJ(w);
+  auto *mc = (McExpandBFS *)BFS_WORKER_OBJ(w);
   if (!worker_on_parallel(w)) {
     delete mc->cur;
     delete mc->nxt;
@@ -988,7 +987,9 @@ static inline void bfs_loop(LmnWorker *w, Vector *new_ss, AutomataRef a, Vector 
     p_s = MC_GET_PROPERTY(s, a);
     if (s->is_expanded()) {
       continue;
-    } else if (!worker_ltl_none(w) && p_s->get_is_end()) { /* safety property analysis */
+    }
+
+    if (!worker_ltl_none(w) && p_s->get_is_end()) { /* safety property analysis */
       mc_found_invalid_state(wp, s);
       continue;
     }

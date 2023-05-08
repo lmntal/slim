@@ -123,16 +123,16 @@ struct load_rule_func {
 std::unique_ptr<LmnRule> load_rule(Rule const &rule) { return ByteEncoder::encode_rule_ast(rule); }
 
 static LmnRuleSetRef load_ruleset(RuleSet const &rs) {
-  auto runtime_ruleset = new LmnRuleSet(rs.id, 10);
+  auto *runtime_ruleset = new LmnRuleSet(rs.id, 10);
 
-  for (auto &r : rs.rules) {
+  for (auto const &r : rs.rules) {
     runtime_ruleset->put(c17::visit(load_rule_func(), r));
   }
 
   LmnRuleSetTable::add(runtime_ruleset, rs.id);
 
   if (rs.is_system_ruleset)
-    for (auto r : *runtime_ruleset)
+    for (auto *r : *runtime_ruleset)
       lmn_add_system_rule(new LmnRule(*r));
 
   return runtime_ruleset;
@@ -143,9 +143,9 @@ static LmnRuleSetRef load_il(const IL &il) {
   LmnRuleSetRef first_ruleset;
 
   /* load rules */
-  auto &rulesets = il.rulesets;
-  first_ruleset  = NULL;
-  for (int i = rulesets.size() - 1; i >= 0; i--) {
+  auto const &rulesets = il.rulesets;
+  first_ruleset        = nullptr;
+  for (int i = static_cast<int>(rulesets.size() - 1); i >= 0; i--) {
     first_ruleset = load_ruleset(rulesets.at(i));
   }
 
@@ -153,7 +153,7 @@ static LmnRuleSetRef load_il(const IL &il) {
     throw loader_error("no ruleset in il");
 
   /* load module list */
-  for (auto &m : il.modules)
+  for (auto const &m : il.modules)
     lmn_set_module(m.name_id, LmnRuleSetTable::at(m.ruleset_id));
 
   return first_ruleset;
@@ -374,7 +374,7 @@ void load_il_files(char const *path_string) {
       auto     filetype  = p.second;
       auto     extension = extension_table[filetype];
 
-      auto file          = path / basename.replace_extension(extension);
+      auto file = path / basename.replace_extension(extension);
       load_file(file.string());
     }
   } catch (fs::filesystem_error const &e) {

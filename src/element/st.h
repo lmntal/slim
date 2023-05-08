@@ -83,13 +83,13 @@ static inline unsigned long st_cap(st_table_t table) { return table->num_bins; }
 
 st_table_t st_init_table(struct st_hash_type *t);
 st_table_t st_init_table_with_size(struct st_hash_type *t, int size);
-st_table_t st_init_statetable(void);
+st_table_t st_init_statetable();
 st_table_t st_init_statetable_with_size(int size);
-st_table_t st_init_numtable(void);
+st_table_t st_init_numtable();
 st_table_t st_init_numtable_with_size(int size);
-st_table_t st_init_strtable(void);
+st_table_t st_init_strtable();
 st_table_t st_init_strtable_with_size(int size);
-st_table_t st_init_ptrtable(void);
+st_table_t st_init_ptrtable();
 st_table_t st_init_ptrtable_with_size(int size);
 int st_delete(st_table_t tbl, st_data_t key, st_data_t *value);
 int st_delete_safe(st_table_t tbl, st_data_t *key, st_data_t *value,

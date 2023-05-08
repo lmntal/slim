@@ -39,6 +39,7 @@
 #include "element/st.h"
 #include "ffi/lmntal_system_adapter.h"
 #include "loader/loader.h"
+#include "vm/atom.h"
 
 #include <cstdio>
 
@@ -47,12 +48,12 @@
 #define MAX_RULE_STR 10000
 
 struct LinkConnection {
-  LmnSymbolAtomRef atom;
-  HyperLink       *hl;
-  int              link_pos, link_name;
+  LmnAtomRef atom;
+  HyperLink *hl;
+  int        link_pos, link_name;
 };
 
-int linkconnection_push(Vector *link_connections, LmnSymbolAtomRef satom, int link_p, HyperLink *hl) {
+int linkconnection_push(Vector *link_connections, LmnAtomRef satom, int link_p, HyperLink *hl) {
   int   link_name = link_connections->get_num();
   auto *c         = LMN_MALLOC<struct LinkConnection>();
   c->atom         = satom;
@@ -63,18 +64,18 @@ int linkconnection_push(Vector *link_connections, LmnSymbolAtomRef satom, int li
   return link_name;
 }
 
-int linkconnection_make_linkno(Vector *link_connections, LmnSymbolAtomRef satom, int link_p) {
+int linkconnection_make_linkno(Vector *link_connections, auto *satom, int link_p) {
   if (LMN_IS_HL((LmnSymbolAtomRef)satom->get_link(link_p))) {
     HyperLink *hll  = lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)satom->get_link(link_p));
     HyperLink *p_hl = hll->parent;
 
     for (int i = 0; i < link_connections->get_num(); i++) {
-      struct LinkConnection *c = (struct LinkConnection *)link_connections->get(i);
+      auto *c = (LinkConnection *)link_connections->get(i);
       if (c->hl && p_hl->eq_hl(c->hl)) {
         return c->link_name;
       }
     }
-    return linkconnection_push(link_connections, NULL, -1, p_hl);
+    return linkconnection_push(link_connections, nullptr, -1, p_hl);
   }
 
   for (int i = 0; i < link_connections->get_num(); i++) {
@@ -84,31 +85,31 @@ int linkconnection_make_linkno(Vector *link_connections, LmnSymbolAtomRef satom,
     }
   }
 
-  LmnSymbolAtomRef dst_atom = (LmnSymbolAtomRef)satom->get_link(link_p);
+  auto *dst_atom = (LmnSymbolAtomRef)satom->get_link(link_p);
 
   if (dst_atom->get_functor() == LMN_IN_PROXY_FUNCTOR) {
-    LmnSymbolAtomRef out_proxy = (LmnSymbolAtomRef)dst_atom->get_link(0);
-    LmnSymbolAtomRef atom      = (LmnSymbolAtomRef)out_proxy->get_link(1);
-    int              arity     = LMN_FUNCTOR_GET_LINK_NUM(atom->get_functor());
+    auto *out_proxy = (LmnSymbolAtomRef)dst_atom->get_link(0);
+    auto *atom      = (LmnSymbolAtomRef)out_proxy->get_link(1);
+    int   arity     = LMN_FUNCTOR_GET_LINK_NUM(atom->get_functor());
     for (int i = 0; i < arity; i++) {
-      LmnSymbolAtomRef linked_atom = (LmnSymbolAtomRef)atom->get_link(i);
+      auto *linked_atom = (LmnSymbolAtomRef)atom->get_link(i);
       if (linked_atom->get_functor() == LMN_OUT_PROXY_FUNCTOR) {
-        LmnSymbolAtomRef in_proxy = (LmnSymbolAtomRef)linked_atom->get_link(0);
+        auto *in_proxy = (LmnSymbolAtomRef)linked_atom->get_link(0);
         if (satom == in_proxy->get_link(1)) {
-          return linkconnection_push(link_connections, atom, i, NULL);
+          return linkconnection_push(link_connections, atom, i, nullptr);
         }
       }
     }
   } else if (dst_atom->get_functor() == LMN_OUT_PROXY_FUNCTOR) {
-    LmnSymbolAtomRef in_proxy = (LmnSymbolAtomRef)dst_atom->get_link(0);
-    LmnSymbolAtomRef atom     = (LmnSymbolAtomRef)in_proxy->get_link(1);
-    return linkconnection_push(link_connections, atom, 0, NULL);
+    auto *in_proxy = (LmnSymbolAtomRef)dst_atom->get_link(0);
+    auto *atom     = (LmnSymbolAtomRef)in_proxy->get_link(1);
+    return linkconnection_push(link_connections, atom, 0, nullptr);
   }
 
   int arity = LMN_FUNCTOR_GET_LINK_NUM(dst_atom->get_functor());
   for (int i = 0; i < arity; i++) {
     if (satom == dst_atom->get_link(i)) {
-      return linkconnection_push(link_connections, dst_atom, i, NULL);
+      return linkconnection_push(link_connections, dst_atom, i, nullptr);
     }
   }
 
@@ -126,7 +127,7 @@ std::string string_of_data_atom(LmnDataAtomRef data, LmnLinkAttr attr) {
   return "";
 }
 
-std::string string_of_template_membrane(Vector *link_connections, LmnMembraneRef mem, LmnSymbolAtomRef cm_atom) {
+std::string string_of_template_membrane(Vector *link_connections, LmnMembraneRef mem, auto *cm_atom) {
   std::string      result;
   AtomListEntryRef ent;
   LmnFunctor       f;
@@ -134,7 +135,7 @@ std::string string_of_template_membrane(Vector *link_connections, LmnMembraneRef
 
   for (auto it : mem->atom_lists()) {
     auto            &ent = it.second;
-    auto            &f   = it.first;
+    auto const      &f   = it.first;
     LmnSymbolAtomRef satom;
     if (LMN_IS_EX_FUNCTOR(f))
       continue;
@@ -146,8 +147,8 @@ std::string string_of_template_membrane(Vector *link_connections, LmnMembraneRef
                 const char *atom_name = lmn_id_to_name(LMN_FUNCTOR_NAME_ID(lmn_functor_table, satom->get_functor()));
 
                 if (f == LMN_UNARY_PLUS_FUNCTOR) {
-                  LmnSymbolAtomRef in_proxy  = (LmnSymbolAtomRef)satom->get_link(0);
-                  LmnSymbolAtomRef out_proxy = (LmnSymbolAtomRef)in_proxy->get_link(0);
+                  auto *in_proxy  = (LmnSymbolAtomRef)satom->get_link(0);
+                  auto *out_proxy = (LmnSymbolAtomRef)in_proxy->get_link(0);
                   if (cm_atom == out_proxy->get_link(1))
                     continue;
 
@@ -235,7 +236,7 @@ std::string string_of_template_membrane(Vector *link_connections, LmnMembraneRef
   return result;
 }
 
-std::string string_of_guard_op(LmnSymbolAtomRef satom) {
+std::string string_of_guard_op(auto *satom) {
   std::string result;
   char const *atom_name = lmn_id_to_name(LMN_FUNCTOR_NAME_ID(lmn_functor_table, satom->get_functor()));
   int         arity     = LMN_FUNCTOR_GET_LINK_NUM(satom->get_functor());
@@ -264,15 +265,18 @@ std::string string_of_guard_op(LmnSymbolAtomRef satom) {
   return result;
 }
 
-std::string string_of_guard_mem(LmnMembraneRef mem, LmnSymbolAtomRef cm_atom) {
+std::string string_of_guard_mem(LmnMembraneRef mem, auto *cm_atom) {
   AtomListEntryRef ent;
   LmnFunctor       f;
-  char const      *constraint_name[] = {"int", "float", "ground", "unary", "hlink", "new"};
-  char const      *op_name[]         = {"=:=", "=\\=", ">", "<", "=<", ">=", ":=", "==", "\\=", "><"};
-  std::string      result;
+
+  static char const *constraint_name[] = {"int", "float", "ground", "unary", "hlink", "new"};
+  static char const *op_name[]         = {"=:=", "=\\=", ">", "<", "=<", ">=", ":=", "==", "\\=", "><"};
+
+  std::string result;
+
   for (auto it : mem->atom_lists()) {
-    auto &ent = it.second;
-    auto &f   = it.first;
+    auto       &ent = it.second;
+    auto const &f   = it.first;
     if (LMN_IS_EX_FUNCTOR(f) || LMN_IS_PROXY_FUNCTOR(f))
       continue;
     LmnSymbolAtomRef satom;
@@ -280,16 +284,16 @@ std::string string_of_guard_mem(LmnMembraneRef mem, LmnSymbolAtomRef cm_atom) {
                 const char *atom_name = lmn_id_to_name(LMN_FUNCTOR_NAME_ID(lmn_functor_table, satom->get_functor()));
 
                 if (f == LMN_UNARY_PLUS_FUNCTOR) {
-                  LmnSymbolAtomRef in_proxy  = (LmnSymbolAtomRef)satom->get_link(0);
-                  LmnSymbolAtomRef out_proxy = (LmnSymbolAtomRef)in_proxy->get_link(0);
+                  auto *in_proxy  = (LmnSymbolAtomRef)satom->get_link(0);
+                  auto *out_proxy = (LmnSymbolAtomRef)in_proxy->get_link(0);
                   if (cm_atom == out_proxy->get_link(1))
                     continue;
                 } else {
                   for (int i = 0; i < ARY_SIZEOF(constraint_name); i++) {
                     if (strcmp(constraint_name[i], atom_name) != 0)
                       continue;
-                    LmnSymbolAtomRef typed_pc_atom = (LmnSymbolAtomRef)satom->get_link(0);
-                    const char      *typed_pc_atom_name =
+                    auto       *typed_pc_atom = (LmnSymbolAtomRef)satom->get_link(0);
+                    const char *typed_pc_atom_name =
                         lmn_id_to_name(LMN_FUNCTOR_NAME_ID(lmn_functor_table, typed_pc_atom->get_functor()));
                     result += constraint_name[i];
                     result += "(";
@@ -309,8 +313,7 @@ std::string string_of_guard_mem(LmnMembraneRef mem, LmnSymbolAtomRef cm_atom) {
   return result;
 }
 
-std::string string_of_firstclass_rule(LmnMembraneRef h_mem, LmnMembraneRef g_mem, LmnMembraneRef b_mem,
-                                      LmnSymbolAtomRef imply)
+std::string string_of_firstclass_rule(LmnMembraneRef h_mem, LmnMembraneRef g_mem, LmnMembraneRef b_mem, auto *imply)
 /* 3引数の':-' のアトムで接続先が全て膜．
    引数は第一引数から順につながってる膜 */
 {
@@ -335,8 +338,8 @@ std::string string_of_firstclass_rule(LmnMembraneRef h_mem, LmnMembraneRef g_mem
   return result;
 }
 
-LmnMembraneRef get_mem_linked_atom(LmnSymbolAtomRef target_atom, int link_n) {
-  LmnSymbolAtomRef atom = (LmnSymbolAtomRef)target_atom->get_link(link_n);
+LmnMembraneRef get_mem_linked_atom(auto *target_atom, int link_n) {
+  auto *atom = (LmnSymbolAtomRef)target_atom->get_link(link_n);
   return LMN_PROXY_GET_MEM((LmnSymbolAtomRef)atom->get_link(0));
 }
 
@@ -344,15 +347,15 @@ void delete_ruleset(LmnMembraneRef mem, LmnRulesetId del_id) { mem->delete_rules
 
 st_table_t first_class_rule_tbl;
 
-static int colon_minus_cmp(LmnSymbolAtomRef x, LmnSymbolAtomRef y) { return x != y; }
+static int colon_minus_cmp(auto *x, auto *y) { return x != y; }
 
-static long colon_minus_hash(LmnSymbolAtomRef x) { return (long)x; }
+static long colon_minus_hash(auto *x) { return (long)x; }
 
 static struct st_hash_type type_colon_minushash = {(st_cmp_func)colon_minus_cmp, (st_hash_func)colon_minus_hash};
 
 void first_class_rule_tbl_init() { first_class_rule_tbl = st_init_table(&type_colon_minushash); }
 
-LmnRulesetId imply_to_rulesetid(LmnSymbolAtomRef imply) {
+LmnRulesetId imply_to_rulesetid(auto *imply) {
   st_data_t entry;
   if (st_lookup(first_class_rule_tbl, (st_data_t)imply, &entry)) {
     return (LmnRulesetId)entry;
@@ -360,12 +363,12 @@ LmnRulesetId imply_to_rulesetid(LmnSymbolAtomRef imply) {
   return -1;
 }
 
-LmnRuleSetRef firstclass_ruleset_create(LmnSymbolAtomRef imply) {
+LmnRuleSetRef firstclass_ruleset_create(auto *imply) {
   /* ':-'_3アトムがプロキシにつながっていなければ中止 */
   for (int j = 0; j < 3; j++) {
-    LmnSymbolAtomRef pa = (LmnSymbolAtomRef)imply->get_link(j);
+    auto *pa = (LmnSymbolAtomRef)imply->get_link(j);
     if (!pa->is_proxy())
-      return NULL;
+      return nullptr;
   }
 
   /* ':-'_3(head, guard, body)からルール文字列を生成してコンパイル */
@@ -391,12 +394,12 @@ LmnRuleSetRef firstclass_ruleset_create(LmnSymbolAtomRef imply) {
   return ruleset;
 }
 
-void firstclass_ruleset_release(LmnSymbolAtomRef imply) {
+void firstclass_ruleset_release(auto *imply) {
   LMN_ASSERT(st_contains(first_class_rule_tbl, (st_data_t)imply));
-  st_delete(first_class_rule_tbl, (st_data_t)imply, NULL);
+  st_delete(first_class_rule_tbl, (st_data_t)imply, nullptr);
 }
 
-LmnRuleSetRef firstclass_ruleset_lookup(LmnSymbolAtomRef imply) {
+LmnRuleSetRef firstclass_ruleset_lookup(auto *imply) {
   LmnRulesetId id = imply_to_rulesetid(imply);
-  return (id > 0) ? LmnRuleSetTable::at(id) : NULL;
+  return (id > 0) ? LmnRuleSetTable::at(id) : nullptr;
 }

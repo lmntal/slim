@@ -455,11 +455,11 @@ BOOL lmn_is_string(LmnAtomRef atom, LmnLinkAttr attr);
 /**
  * @brief free memory pools for atoms.
  */
-void free_atom_memory_pools(void);
+void free_atom_memory_pools();
 
 /**
  * @brief initialize memory pools for atoms.
  */
-void mpool_init(void);
+void mpool_init();
 
 #endif /* LMN_ATOM_H */

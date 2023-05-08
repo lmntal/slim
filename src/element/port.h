@@ -88,12 +88,12 @@ enum LmnPortType {
   /*   LMN_PORT_PROC /\* virtual port *\/ */
 };
 
-void port_init(void);
-void port_finalize(void);
+void port_init();
+void port_finalize();
 
-LmnPortRef lmn_stdin_port(void);
-LmnPortRef lmn_stdout_port(void);
-LmnPortRef lmn_stderr_port(void);
+LmnPortRef lmn_stdin_port();
+LmnPortRef lmn_stdout_port();
+LmnPortRef lmn_stderr_port();
 
 LmnPortRef lmn_make_input_string_port(LmnStringRef s);
 LmnPortRef lmn_make_output_string_port();

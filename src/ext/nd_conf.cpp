@@ -59,4 +59,4 @@ void cb_set_functor_priority(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a
   lmn_mem_delete_atom(mem, a2, t2);
 }
 
-void init_nd_conf(void) { CCallback::lmn_register_c_fun("set_functor_priority", (void *)cb_set_functor_priority, 3); }
+void init_nd_conf() { CCallback::lmn_register_c_fun("set_functor_priority", (void *)cb_set_functor_priority, 3); }

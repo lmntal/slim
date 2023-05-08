@@ -101,7 +101,7 @@
 void lmn_thread_set_CPU_affinity(unsigned long id);
 #ifdef HAVE_SCHED_H
 #
-void thread_yield_CPU(void);
+void thread_yield_CPU();
 #
 #define lmn_thread_yield_CPU() thread_yield_CPU()
 #

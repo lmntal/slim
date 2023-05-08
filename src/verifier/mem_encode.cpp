@@ -159,10 +159,10 @@ void set_functor_priority(LmnFunctor f, int priority) {
  * Binary String
  */
 LmnBinStrRef lmn_binstr_make(unsigned int real_len) {
-  LmnBinStrRef bs = LMN_MALLOC<struct LmnBinStr>();
-  bs->len         = real_len * TAG_IN_BYTE;
-  bs->type        = 0x00U;
-  bs->v           = LMN_NALLOC<BYTE>(real_len);
+  auto *bs = LMN_MALLOC<struct LmnBinStr>();
+  bs->len  = real_len * TAG_IN_BYTE;
+  bs->type = false;
+  bs->v    = LMN_NALLOC<BYTE>(real_len);
   memset(bs->v, 0x0U, sizeof(BYTE) * real_len);
   return bs;
 }
@@ -180,7 +180,7 @@ LmnBinStrRef lmn_binstr_copy(struct LmnBinStr *src_bs) {
   return dst_bs;
 }
 
-void lmn_binstr_free(struct LmnBinStr *bs) {
+void lmn_binstr_free(LmnBinStr const *bs) {
 #ifdef PROFILE
   if (lmn_env.profile_level >= 3) {
     profile_remove_space(PROFILE_SPACE__STATE_BINSTR, lmn_binstr_space(bs));
@@ -190,7 +190,7 @@ void lmn_binstr_free(struct LmnBinStr *bs) {
   LMN_FREE(bs);
 }
 
-unsigned long lmn_binstr_space(struct LmnBinStr *bs) {
+unsigned long lmn_binstr_space(LmnBinStr const *bs) {
   /* TODO: アラインメントで切り上げる必要があるはず */
   return sizeof(struct LmnBinStr) + sizeof(BYTE) * ((bs->len + 1) / TAG_IN_BYTE);
 }
@@ -204,7 +204,7 @@ template <> struct default_delete<LmnBinStr> {
 int binstr_byte_size(LmnBinStrRef p) { return (p->len / TAG_IN_BYTE) + sizeof(struct LmnBinStr); }
 
 /* バイナリストリングのハッシュ値を返す */
-unsigned long binstr_hash(const LmnBinStrRef a) {
+unsigned long binstr_hash(LmnBinStr const *a) {
   unsigned long hval;
 #ifdef PROFILE
   if (lmn_env.profile_level >= 3)
@@ -223,7 +223,7 @@ unsigned long binstr_hash(const LmnBinStrRef a) {
 
 /* バイナリストリングaとbの比較を行いaがbより、小さい、同じ、大きい場合に、
  * それぞれ負の値、0、正の値を返す。*/
-int binstr_compare(const LmnBinStrRef a, const LmnBinStrRef b) {
+int binstr_compare(LmnBinStr const *a, LmnBinStr const *b) {
 #ifdef PROFILE
   if (lmn_env.profile_level >= 3) {
     profile_start_timer(PROFILE_TIME__STATE_COMPARE_MID);
@@ -258,7 +258,7 @@ LmnBinStrRef lmn_mem_encode(LmnMembraneRef mem) {
 #endif
 
   // ret = lmn_mem_encode_sub(mem, 1024);
-  auto ret = lmn_mem_encode_sub(mem, round2up(env_next_id() + 1));
+  auto *ret = lmn_mem_encode_sub(mem, round2up(env_next_id() + 1));
 
 #ifdef PROFILE
   if (lmn_env.profile_level >= 3) {
@@ -272,7 +272,7 @@ LmnBinStrRef lmn_mem_encode(LmnMembraneRef mem) {
 
 LmnBinStrRef lmn_mem_encode_delta(struct MemDeltaRoot *d) {
   dmem_root_commit(d);
-  auto ret_bs = lmn_mem_encode_sub(d->get_root_mem(), d->get_next_id());
+  auto *ret_bs = lmn_mem_encode_sub(d->get_root_mem(), d->get_next_id());
   dmem_root_revert(d);
 
   return ret_bs;
@@ -292,22 +292,22 @@ static LmnBinStrRef lmn_mem_encode_sub(LmnMembraneRef mem, unsigned long tbl_siz
 static LmnBinStrRef lmn_mem_to_binstr_sub(LmnMembraneRef mem, unsigned long tbl_size);
 
 /* エンコードされた膜をデコードし、構造を再構築する */
-static LmnMembraneRef lmn_binstr_decode_sub(const LmnBinStrRef bs) {
+static LmnMembraneRef lmn_binstr_decode_sub(LmnBinStr const *bs) {
   /* MEMO:
    *   8bit列を, binary stringの長さ * TAG_IN_BYTE(== 2)だけ確保(少し多めになる)
    *   logは, 復元したプロセスへのポインタを持ち,
    * 出現(nvisited)順に先頭から積んでいく */
-  auto groot = new LmnMembrane();
+  auto *groot = new LmnMembrane();
 
   groot->set_active(TRUE); /* globalだから恒真 */
   binstr_decoder dec(bs->v, bs->len);
-  dec.decode_cell(groot, NULL, 0);
+  dec.decode_cell(groot, nullptr, 0);
 
   return groot;
 }
 
-LmnMembraneRef lmn_binstr_decode(const LmnBinStrRef bs) {
-  auto target = is_comp_z(bs) ? lmn_bscomp_z_decode(bs) : bs;
+LmnMembraneRef lmn_binstr_decode(LmnBinStr const *bs) {
+  auto *target = is_comp_z(bs) ? lmn_bscomp_z_decode(bs) : bs;
 
 #ifdef PROFILE
   if (lmn_env.profile_level >= 3) {
@@ -340,7 +340,7 @@ LmnBinStrRef lmn_mem_to_binstr(LmnMembraneRef mem) {
   }
 #endif
   // ret = lmn_mem_to_binstr_sub(mem, 128);
-  auto ret = lmn_mem_to_binstr_sub(mem, round2up(env_next_id() + 1));
+  auto *ret = lmn_mem_to_binstr_sub(mem, round2up(env_next_id() + 1));
 
 #ifdef PROFILE
   if (lmn_env.profile_level >= 3) {

@@ -39,8 +39,8 @@
 
 #include "ccallback.h"
 
-CCallback::CCallback() { f = NULL; }
-CCallback::~CCallback() { f = NULL; }
+CCallback::CCallback() { f = nullptr; }
+CCallback::~CCallback() { f = nullptr; }
 int   CCallback::get_arity() const { return arity; }
 void *CCallback::get_f() const { return f; }
 
@@ -72,7 +72,6 @@ const struct CCallback *CCallback::get_ccallback(lmn_interned_str name) {
 
   if (st_lookup(ccallback_tbl, name, &t)) {
     return (struct CCallback *)t;
-  } else {
-    return NULL;
   }
+  return nullptr;
 }

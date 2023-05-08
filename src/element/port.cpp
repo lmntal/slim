@@ -59,14 +59,14 @@ static LmnPortRef port_copy_sub(LmnPortRef port);
  * Internal Constructor.
  */
 static LmnPortRef make_port(LmnPortDirection dir, LmnPortType type, char const *name) {
-  struct LmnPort *port = LMN_MALLOC<struct LmnPort>();
+  auto *port = LMN_MALLOC<struct LmnPort>();
   LMN_SP_ATOM_SET_TYPE(port, port_atom_type);
   port->direction = dir;
   port->type      = type;
   port->closed    = FALSE;
   port->error     = FALSE;
   port->name      = lmn_intern(name);
-  port->data      = NULL;
+  port->data      = nullptr;
   port->owner     = TRUE;
   return port;
 }
@@ -174,9 +174,9 @@ void lmn_port_close(LmnPortRef port) {
     break;
   case LMN_PORT_ISTR:
     delete (((struct IStrPortData *)LMN_PORT_DATA(port))->s);
-    ((struct IStrPortData *)LMN_PORT_DATA(port))->s = NULL;
+    ((struct IStrPortData *)LMN_PORT_DATA(port))->s = nullptr;
     LMN_FREE(LMN_PORT_DATA(port));
-    LMN_PORT_DATA(port) = NULL;
+    LMN_PORT_DATA(port) = nullptr;
     break;
   default:
     lmn_fatal("not implemented");
@@ -265,13 +265,13 @@ LmnStringRef port_read_line(LmnPortRef port) {
   LmnStringRef s;
 
   if (lmn_port_closed(port))
-    return NULL;
+    return nullptr;
   if (LMN_PORT_DIR(port) != LMN_PORT_INPUT)
-    return NULL;
+    return nullptr;
 
   c0 = port_get_raw_c(port);
   if (c0 == EOF)
-    return NULL;
+    return nullptr;
   s = new LmnString();
   for (;;) {
     if (c0 == EOF)
@@ -299,9 +299,9 @@ LmnStringRef port_read_token(LmnPortRef port) {
   LmnStringRef s;
 
   if (lmn_port_closed(port))
-    return NULL;
+    return nullptr;
   if (LMN_PORT_DIR(port) != LMN_PORT_INPUT)
-    return NULL;
+    return nullptr;
 
   c0 = port_get_raw_c(port);
   for (;;) {
@@ -322,7 +322,7 @@ LmnStringRef port_read_token(LmnPortRef port) {
       break;
   }
   if (c0 == EOF)
-    return NULL;
+    return nullptr;
   s = new LmnString();
   for (;;) {
     if (c0 == EOF)
@@ -580,7 +580,7 @@ void cb_port_read_line(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0, Lmn
                        LmnLinkAttr t1, LmnAtomRef a2, LmnLinkAttr t2) {
   LmnStringRef s = port_read_line(LMN_PORT(a0));
 
-  if (s != NULL) {
+  if (s != nullptr) {
     lmn_mem_push_atom(mem, s, LMN_SP_ATOM_ATTR);
     lmn_mem_newlink(mem, a2, t2, LMN_ATTR_GET_VALUE(t2), s, LMN_SP_ATOM_ATTR, 0);
   } else {
@@ -601,7 +601,7 @@ void cb_port_read_token(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0, Lm
                         LmnLinkAttr t1, LmnAtomRef a2, LmnLinkAttr t2) {
   LmnStringRef s = port_read_token(LMN_PORT(a0));
 
-  if (s != NULL) {
+  if (s != nullptr) {
     lmn_mem_push_atom(mem, s, LMN_SP_ATOM_ATTR);
     lmn_mem_newlink(mem, a2, t2, LMN_ATTR_GET_VALUE(t2), s, LMN_SP_ATOM_ATTR, 0);
   } else {

@@ -51,7 +51,7 @@ template <typename InputIterator> struct false_driven_enumerator_get_candidate<I
 };
 
 template <typename InputIterator>
-struct false_driven_enumerator_get_candidate<InputIterator, std::function<LmnRegister(void)>> {
+struct false_driven_enumerator_get_candidate<InputIterator, std::function<LmnRegister()>> {
   LmnRegister operator()(InputIterator &iter) { return (*iter)(); }
 };
 

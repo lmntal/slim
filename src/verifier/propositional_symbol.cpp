@@ -63,16 +63,16 @@ static char *rule_str_for_compile(char const *head, char const *guard, char cons
 static int   propsym_parse(FILE *in, AutomataRef a, PVector *definitions);
 
 PropositionRef proposition_make(char const *head, char const *guard, char const *body) {
-  PropositionRef p = LMN_MALLOC<struct Proposition>();
-  char          *rule_str;
-  BYTE           optimization_level_org;
+  auto *p = LMN_MALLOC<struct Proposition>();
+  char *rule_str;
+  BYTE  optimization_level_org;
 
   optimization_level_org     = lmn_env.optimization_level;
   lmn_env.optimization_level = OPTIMIZE_LEVEL_MAX;
 
   p->head  = strdup(head);
-  p->guard = (guard == NULL ? strdup("") : strdup(guard));
-  p->body  = (body == NULL ? strdup("") : strdup(body));
+  p->guard = (guard == nullptr ? strdup("") : strdup(guard));
+  p->body  = (body == nullptr ? strdup("") : strdup(body));
 
   rule_str = rule_str_for_compile(head, guard, body);
 
@@ -100,8 +100,8 @@ LmnRuleRef proposition_get_rule(PropositionRef p) { return p->rule; }
 static char *rule_str_for_compile(char const *head, char const *guard, char const *body) {
   char       *buf;
   char const *head_s  = head;
-  char const *guard_s = (guard == NULL ? "" : guard);
-  char const *body_s  = (body == NULL ? head : body);
+  char const *guard_s = (guard == nullptr ? "" : guard);
+  char const *body_s  = (body == nullptr ? head : body);
 
   buf    = LMN_NALLOC<char>(strlen(head_s) + strlen(guard_s) + strlen(body_s) + 32);
   buf[0] = '\0';
@@ -120,7 +120,7 @@ static char *rule_str_for_compile(char const *head, char const *guard, char cons
  */
 
 SymbolDefinitionRef propsym_make(unsigned int sym_id, PropositionRef p) {
-  SymbolDefinitionRef s = LMN_MALLOC<struct SymbolDefinition>();
+  auto *s = LMN_MALLOC<struct SymbolDefinition>();
 
   s->sym_id = sym_id;
   s->prop   = p;
@@ -160,7 +160,7 @@ void propsym_dump(SymbolDefinitionRef s) {
   fprintf(stdout, "%d := %s | %s. \n", s->sym_id, s->prop->head, s->prop->guard);
 }
 
-PropositionRef propsym_get_proposition(SymbolDefinitionRef s) { return s ? s->prop : NULL; }
+PropositionRef propsym_get_proposition(SymbolDefinitionRef s) { return s ? s->prop : nullptr; }
 
 BOOL proposition_eval(PropositionRef prop, LmnMembraneRef mem) {
   LmnReactCxt rc(mem, REACT_PROPERTY);

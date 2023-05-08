@@ -96,7 +96,7 @@ int LmnSet::tuple_cmp(LmnSymbolAtomRef cons0, LmnSymbolAtomRef cons1) {
 LmnBinStrRef LmnSet::lmn_inner_mem_encode(LmnMembraneRef m) {
   AtomListEntryRef plus_atom_list = m->get_atomlist(LMN_UNARY_PLUS_FUNCTOR);
   LMN_ASSERT(plus_atom_list != NULL);
-  LmnAtomRef plus = (LmnAtomRef)atomlist_head(plus_atom_list);
+  auto *plus = (LmnAtomRef)atomlist_head(plus_atom_list);
   LmnAtomRef in   = ((LmnSymbolAtomRef)plus)->get_link(0);
   LmnAtomRef out  = ((LmnSymbolAtomRef)in)->get_link(0);
 
@@ -587,7 +587,7 @@ unsigned char LmnSet::sp_cb_set_is_ground(void *data) { return 1; }
  * @memberof LmnSet
  * @private
  */
-void LmnSet::init_set(void) {
+void LmnSet::init_set() {
   LmnSet::set_atom_type =
       lmn_sp_atom_register("set", LmnSet::sp_cb_set_copy, LmnSet::sp_cb_set_free, LmnSet::sp_cb_set_eq,
                            LmnSet::sp_cb_set_dump, LmnSet::sp_cb_set_is_ground);

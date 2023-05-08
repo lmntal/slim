@@ -72,7 +72,7 @@ public:
   ~LmnFunctorTable();
   static int  functor_cmp(LmnFunctorEntry *x, LmnFunctorEntry *y);
   static long functor_hash(LmnFunctorEntry *x);
-  void        lmn_register_predefined_functor(void); // not found
+  void        lmn_register_predefined_functor(); // not found
   LmnFunctor  intern(lmn_interned_str module, lmn_interned_str name, int arity);
   void        register_functor(int id, BOOL special, lmn_interned_str module, lmn_interned_str name, int arity);
   static int  functor_entry_free(LmnFunctorEntry *e);
@@ -82,7 +82,7 @@ public:
   unsigned int     get_next_id();
 
 #ifdef DEBUG
-  void print(void);
+  void print();
   void functor_printer(LmnFunctor f);
 #endif
 };

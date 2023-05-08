@@ -536,9 +536,9 @@ private:
 };
 
 template <> struct equalizer<VisitLog> : public equalizer_base {
-  bool log_contains(VisitLog *log, LmnSymbolAtomRef atom) { return log->get_atom(atom, NULL); }
+  bool log_contains(VisitLog *log, LmnSymbolAtomRef atom) { return log->get_atom(atom, nullptr); }
 
-  bool log_contains(VisitLog *log, LmnMembraneRef atom) { return log->get_mem(atom, NULL); }
+  bool log_contains(VisitLog *log, LmnMembraneRef atom) { return log->get_mem(atom, nullptr); }
 
   void log_set_backtrack_point(VisitLog *log) { log->set_checkpoint(); }
 
@@ -976,12 +976,12 @@ template <> struct equalizer<VisitLog> : public equalizer_base {
 
   /* mem以下にあるアトムと膜の数を返す */
   long process_num(LmnMembrane *mem) {
-    if (mem == NULL)
+    if (mem == nullptr)
       return 0;
 
     auto n = mem->atom_num() + mem->child_mem_num();
 
-    for (auto m = mem->child_head; m; m = m->next) {
+    for (auto *m = mem->child_head; m; m = m->next) {
       n += process_num(m);
     }
     return n;

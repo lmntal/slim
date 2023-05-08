@@ -189,7 +189,7 @@ State *StateSpace::insert_delta(State *s, struct MemDeltaRoot *d) {
   /* LmnMembraneとLmnBinStrのデータ領域を統合(@rev.458)したため, NULL設定に注意
    */
   if (!s->state_binstr()) {
-    s->state_set_mem(NULL);
+    s->state_set_mem(nullptr);
   }
 
   return ret;

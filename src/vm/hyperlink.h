@@ -210,7 +210,7 @@ struct SameProcCxt {
    * 候補が複数ある場合は、もっとも選択肢の少ない(element_numが小さい)hyperlinkがマッチする引数を探索の始点とする
    */
   HyperLink *start() {
-    HyperLink *start_hl    = NULL;
+    HyperLink *start_hl    = nullptr;
     int        element_num = std::numeric_limits<int>::max();
     int        start_arity = 0;
 

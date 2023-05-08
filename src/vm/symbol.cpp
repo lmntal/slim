@@ -47,10 +47,10 @@ static lmn_mutex_t       sym_mtx;
 
 /* prototypes */
 
-void             sym_tbl_init(void);
+void             sym_tbl_init();
 int              free_sym_tbl_entry(st_data_t name, st_data_t _v, int _i);
-void             sym_tbl_destroy(void);
-lmn_interned_str create_new_id(void);
+void             sym_tbl_destroy();
+lmn_interned_str create_new_id();
 
 void sym_tbl_init() {
   int i, n;
@@ -115,10 +115,9 @@ char const *lmn_id_to_name(lmn_interned_str id) {
 
   if (id == ANONYMOUS)
     return "";
-  else if (st_lookup(sym_rev_tbl, (st_data_t)id, (st_data_t *)&name))
+  if (st_lookup(sym_rev_tbl, (st_data_t)id, (st_data_t *)&name))
     return name;
-  else
-    return NULL;
+  return nullptr;
 }
 
 int count_symbols() { return st_num(sym_tbl) + 1; /* symbol 0 is out of table */ }

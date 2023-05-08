@@ -46,8 +46,8 @@
  */
 
 /* prototypes */
-void init_rules(void);
-void destroy_rules(void);
+void init_rules();
+void destroy_rules();
 
 /*----------------------------------------------------------------------
  * Rule Set
@@ -93,10 +93,10 @@ bool lmn_rulesets_equals(std::vector<LmnRuleSetRef> const &rs_v1, std::vector<Lm
   memset(rs2v_matched, 0U, sizeof(BOOL) * rs_v1.size());
 
   for (unsigned int i = 0; i < rs_v1.size(); i++) {
-    is_ok             = false;
-    LmnRuleSetRef rs1 = (LmnRuleSetRef)rs_v1[i];
+    is_ok     = false;
+    auto *rs1 = (LmnRuleSetRef)rs_v1[i];
     for (unsigned int j = 0; j < rs_v1.size(); j++) {
-      LmnRuleSetRef rs2 = (LmnRuleSetRef)rs_v2[i];
+      auto *rs2 = (LmnRuleSetRef)rs_v2[i];
       if (rs1->id < rs2->id) /* 比較打ち切り */
         break;               /* INNER LOOP */
 
@@ -173,7 +173,7 @@ LmnRuleSetRef lmn_get_module_ruleset(lmn_interned_str module_name) {
 
   if (st_lookup(module_table, (st_data_t)module_name, (st_data_t *)&ruleset))
     return ruleset;
-  return NULL;
+  return nullptr;
 }
 
 /*----------------------------------------------------------------------*/

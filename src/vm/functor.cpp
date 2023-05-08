@@ -149,8 +149,7 @@ LmnFunctorEntry *LmnFunctorTable::lmn_id_to_functor(int functor_id) const {
 
   if (st_lookup(this->functor_id_tbl, (st_data_t)functor_id, (st_data_t *)&entry))
     return entry;
-  else
-    return NULL;
+  return nullptr;
 }
 
 void LmnFunctorTable::register_functor(int id, BOOL special, lmn_interned_str module, lmn_interned_str name,

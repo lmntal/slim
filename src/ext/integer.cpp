@@ -44,14 +44,13 @@
 #include "verifier/verifier.h"
 #include "vm/vm.h"
 
-void init_integer(void);
+void init_integer();
 void integer_set(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0, LmnLinkAttr t0, LmnAtomRef a1, LmnLinkAttr t1,
                  LmnAtomRef a2, LmnLinkAttr t2);
 void integer_srand(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0, LmnLinkAttr t0);
 void integer_rand(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0, LmnLinkAttr t0, LmnAtomRef a1, LmnLinkAttr t1);
 void integer_of_string(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0, LmnLinkAttr t0, LmnAtomRef a1,
                        LmnLinkAttr t1);
-void init_integer(void);
 
 /**
  * ($start, $end, $g)
@@ -75,10 +74,10 @@ void integer_set(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0, LmnLinkAt
   for (i = 0, n = start; n <= end; i++, n++) {
     Vector         *dstlovec;
     ProcessTableRef atommap;
-    ProcessTableRef hlinkmap = NULL;
+    ProcessTableRef hlinkmap = nullptr;
     LinkObjRef      l;
 
-    lmn_mem_copy_ground(mem, srcvec, &dstlovec, &atommap, &hlinkmap, NULL, NULL, NULL); // extended
+    lmn_mem_copy_ground(mem, srcvec, &dstlovec, &atommap, &hlinkmap, nullptr, nullptr, nullptr); // extended
 
     l = (LinkObjRef)dstlovec->get(0);
     lmn_mem_newlink(mem, (LmnAtomRef)n, LMN_INT_ATTR, 0, LinkObjGetAtom(l), t2, LMN_ATTR_GET_VALUE(LinkObjGetPos(l)));
@@ -136,9 +135,9 @@ void integer_of_string(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0, Lmn
   long        n;
   char       *t;
   char const *s = reinterpret_cast<LmnString *>(a0)->c_str();
-  t             = NULL;
+  t             = nullptr;
   n             = strtol(s, &t, 10);
-  if (t == NULL || s == t) {
+  if (t == nullptr || s == t) {
     LmnSymbolAtomRef a = lmn_mem_newatom(mem, lmn_functor_table->intern(ANONYMOUS, lmn_intern("fail"), 1));
     lmn_mem_newlink(mem, (LmnSymbolAtomRef)a1, t1, LMN_ATTR_GET_VALUE(t1), a, LMN_ATTR_MAKE_LINK(0), 0);
   } else { /* 変換できた */
@@ -149,11 +148,11 @@ void integer_of_string(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0, Lmn
   lmn_mem_delete_atom(mem, (LmnSymbolAtomRef)a0, t0);
 }
 
-void init_integer(void) {
+void init_integer() {
   CCallback::lmn_register_c_fun("integer_set", (void *)integer_set, 3);
   CCallback::lmn_register_c_fun("integer_srand", (void *)integer_srand, 1);
   CCallback::lmn_register_c_fun("integer_rand", (void *)integer_rand, 2);
   CCallback::lmn_register_c_fun("integer_of_string", (void *)integer_of_string, 2);
 
-  srand((unsigned)time(NULL));
+  srand((unsigned)time(nullptr));
 }

@@ -116,7 +116,7 @@ MCReactContext::MCReactContext(LmnMembrane *mem) : LmnReactCxt(mem, REACT_ND) {
     this->turnon_optmode(BinaryStringDeltaCompress);
   }
 
-  mem_delta_tmp = NULL;
+  mem_delta_tmp = nullptr;
   opt_mode      = 0x00U;
   org_succ_num  = 0;
   d_cur         = 0;

@@ -139,10 +139,9 @@ struct AtomListEntry {
   LmnSymbolAtomRef get_record(int findatomid) {
     if (this->record) {
       return (LmnSymbolAtomRef)hashtbl_get_default(this->record, findatomid, 0);
-    } else {
-      this->record = hashtbl_make(4);
-      return NULL;
     }
+    this->record = hashtbl_make(4);
+    return nullptr;
   }
 
   void put_record(int id, LmnAtomRef record) { hashtbl_put(this->record, id, (HashKeyType)record); }

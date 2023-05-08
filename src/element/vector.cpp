@@ -39,7 +39,7 @@
 #include "vector.h"
 #include "lmntal.h"
 
-Vector::Vector() { this->tbl = (LmnWord *)NULL; }
+Vector::Vector() { this->tbl = nullptr; }
 Vector::Vector(unsigned int init_size) {
   LMN_ASSERT(init_size > 0);
   this->init(init_size);
@@ -54,7 +54,7 @@ Vector::Vector(Vector const &vec) {
   this->num = vec.get_num();
 }
 Vector::~Vector() {
-  if (this->tbl != NULL) {
+  if (this->tbl != nullptr) {
     LMN_FREE(this->tbl);
   }
 }
@@ -125,7 +125,7 @@ LmnWord Vector::last() const { return this->tbl[this->num - 1]; }
 void Vector::clear() { this->num = 0; }
 void Vector::destroy() {
   LMN_FREE(this->tbl);
-  this->tbl = (LmnWord *)NULL;
+  this->tbl = nullptr;
 }
 unsigned long Vector::space_inner() const { return this->cap * sizeof(vec_data_t); }
 BOOL          Vector::contains(LmnWord keyp) const {

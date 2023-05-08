@@ -105,7 +105,7 @@ McPorData::McPorData() { // don't make 2 instance
  * PORの変数やデータ構造の初期化を行う
  */
 void McPorData::init_por_vars() { // instance tsukurareta toki shokika niha joken aru rashi --sumiya
-  root                = NULL;
+  root                = nullptr;
   strans_independency = st_init_numtable();
   states              = st_init_statetable();
   queue               = new Queue();
@@ -194,7 +194,7 @@ void McPorData::finalize_ample(BOOL org_f) {
   queue->clear();
   ample_candidate->clear();
   RC_CLEAR_DATA(rc.get());
-  root = NULL;
+  root = nullptr;
 }
 
 /* 状態sとsから遷移可能な状態集合をrcとして入力し,
@@ -313,7 +313,7 @@ inline State *McPorData::por_state_insert(State *succ, struct MemDeltaRoot *d) {
     dmem_root_commit(d);
     succ->state_set_mem(DMEM_ROOT_MEM(d));
     succ->state_calc_hash(succ->state_mem(), lmn_env.mem_enc);
-    tmp_m = NULL;
+    tmp_m = nullptr;
   } else {
     tmp_m = succ->state_mem();
   }
@@ -385,7 +385,7 @@ inline void McPorData::por_store_successors_inner(State *s, MCReactContext *rc) 
       src_t    = transition_make(src_succ, rc->get_expanded_rule(i)->name);
     }
 
-    d    = rc->has_optmode(DeltaMembrane) ? rc->get_mem_delta_roots().at(i) : NULL;
+    d    = rc->has_optmode(DeltaMembrane) ? rc->get_mem_delta_roots().at(i) : nullptr;
     succ = this->por_state_insert(src_succ, d);
     if (succ != src_succ) {
       delete (src_succ);
@@ -983,7 +983,7 @@ void McPorData::push_ample_to_expanded(StateSpaceRef ss, State *s, LmnReactCxtRe
     }
 
     LMN_FREE(s->successors);
-    s->successors    = NULL;
+    s->successors    = nullptr;
     s->successor_num = 0;
     s->succ_set(tmp);
   }

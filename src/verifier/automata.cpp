@@ -106,20 +106,19 @@ atmstate_id_t Automata::state_id(char const *state_name) {
 
   if (st_lookup(this->state_name_to_id, (st_data_t)state_name, &id)) {
     return id;
-  } else {
-    /* 0から順にIDを付ける */
-    char *str0;
-    char *str1;
-    int   new_id;
-
-    new_id = st_num(this->state_name_to_id);
-    str0   = strdup(state_name);
-    str1   = strdup(state_name);
-
-    st_add_direct(this->state_name_to_id, (st_data_t)str0, (st_data_t)new_id);
-    st_add_direct(this->id_to_state_name, (st_data_t)new_id, (st_data_t)str1);
-    return new_id;
   }
+  /* 0から順にIDを付ける */
+  char *str0;
+  char *str1;
+  int   new_id;
+
+  new_id = st_num(this->state_name_to_id);
+  str0   = strdup(state_name);
+  str1   = strdup(state_name);
+
+  st_add_direct(this->state_name_to_id, (st_data_t)str0, (st_data_t)new_id);
+  st_add_direct(this->id_to_state_name, (st_data_t)new_id, (st_data_t)str1);
+  return new_id;
 }
 
 char const *Automata::state_name(atmstate_id_t id) {
@@ -127,10 +126,9 @@ char const *Automata::state_name(atmstate_id_t id) {
 
   if (st_lookup(this->id_to_state_name, (st_data_t)(int)id, (st_data_t *)&name)) {
     return name;
-  } else {
-    lmn_fatal("implementation error\n");
-    return NULL;
   }
+  lmn_fatal("implementation error\n");
+  return nullptr;
 }
 
 void Automata::add_state(AutomataStateRef s) {
@@ -154,16 +152,16 @@ unsigned int Automata::propsym_to_id(char *prop_name) {
 
   if (st_lookup(this->prop_to_id, (st_data_t)prop_name, &id)) {
     return id;
-  } else {
-    unsigned int new_id;
-    char        *str;
-
-    /* 0から順にIDを付ける */
-    new_id = st_num(this->prop_to_id);
-    str    = strdup(prop_name);
-    st_add_direct(this->prop_to_id, (st_data_t)str, (st_data_t)new_id);
-    return new_id;
   }
+
+  unsigned int new_id;
+  char        *str;
+
+  /* 0から順にIDを付ける */
+  new_id = st_num(this->prop_to_id);
+  str    = strdup(prop_name);
+  st_add_direct(this->prop_to_id, (st_data_t)str, (st_data_t)new_id);
+  return new_id;
 }
 
 /* for debug only
@@ -210,7 +208,7 @@ AutomataState::AutomataState(unsigned int id, BOOL is_accept_state, BOOL is_end_
   this->id        = id;
   this->is_accept = is_accept_state;
   this->is_end    = is_end_state;
-  this->scc       = NULL;
+  this->scc       = nullptr;
 }
 
 AutomataState::~AutomataState() {
@@ -262,7 +260,7 @@ void Automata::analysis() {
 
 /* for debug */
 char const *AutomataSCC::get_name() {
-  char const *ret = NULL;
+  char const *ret = nullptr;
   switch (this->get_type()) {
   case SCC_TYPE_UNKNOWN:
     ret = "Still_UnKnown.";
@@ -285,8 +283,6 @@ char const *AutomataSCC::get_name() {
 
 AutomataSCC::AutomataSCC() : id(0), type(SCC_TYPE_UNKNOWN) {}
 
-AutomataSCC::~AutomataSCC() {}
-
 /* dfs postorder順を求め, postorder順に2nd DFSを行う.
  * 性質頂点に, SCC-TYPEを割り当てる.
  * 真面目に書いてないのでFullyとPartiallyの判定が間違っている気がする. */
@@ -303,7 +299,7 @@ static void automata_analysis_dfs1(AutomataRef a, BYTE *on_stack_list, AutomataS
   }
 
   if (!s->get_scc()) { /* entering 2nd dfs */
-    AutomataSCC *scc = new AutomataSCC();
+    auto *scc = new AutomataSCC();
     scc->issue_id();
     s->set_scc(scc);
     a->sccs.push((vec_data_t)scc);
@@ -345,9 +341,9 @@ AutomataTransition::AutomataTransition(atmstate_id_t next, PLFormulaRef f) : nex
 
 AutomataTransition::~AutomataTransition() { free_formula(this->f); }
 
-atmstate_id_t AutomataTransition::get_next() { return this->next; }
+atmstate_id_t AutomataTransition::get_next() const { return this->next; }
 
-PLFormulaRef AutomataTransition::get_formula() { return this->f; }
+PLFormulaRef AutomataTransition::get_formula() const { return this->f; }
 
 /*----------------------------------------------------------------------
  * never claim
@@ -382,7 +378,7 @@ struct PLFormula {
 };
 
 static PLFormulaRef make_unary_op(PLNode node_type, PLFormulaRef f0) {
-  PLFormulaRef f = LMN_MALLOC<struct PLFormula>();
+  auto *f = LMN_MALLOC<struct PLFormula>();
 
   f->node_type = node_type;
   f->arg0      = f0;
@@ -390,7 +386,7 @@ static PLFormulaRef make_unary_op(PLNode node_type, PLFormulaRef f0) {
 }
 
 static PLFormulaRef make_binary_op(PLNode node_type, PLFormulaRef f0, PLFormulaRef f1) {
-  PLFormulaRef f = LMN_MALLOC<struct PLFormula>();
+  auto *f = LMN_MALLOC<struct PLFormula>();
 
   f->node_type = node_type;
   f->arg0      = f0;
@@ -417,7 +413,7 @@ void free_formula(PLFormulaRef f) {
 }
 
 static PLFormulaRef ltl_formula_make(PLNode node_type) {
-  PLFormulaRef f = LMN_MALLOC<struct PLFormula>();
+  auto *f = LMN_MALLOC<struct PLFormula>();
 
   f->node_type = node_type;
   return f;

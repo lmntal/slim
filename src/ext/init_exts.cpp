@@ -42,18 +42,18 @@
 #include "membrane.h"
 #include "set.h"
 #include "state_map.h"
-void init_integer(void);
-void init_float(void);
-void init_nlmem(void);
-void init_initial_ruleset(void);
-void init_nd_conf(void);
-void init_time(void);
-void init_atom(void);
-void init_react_rule(void);
-void init_zerostep(void);
-void init_builtin_extensions(void);
+void init_integer();
+void init_float();
+void init_nlmem();
+void init_initial_ruleset();
+void init_nd_conf();
+void init_time();
+void init_atom();
+void init_react_rule();
+void init_zerostep();
+void init_builtin_extensions();
 
-void init_builtin_extensions(void) {
+void init_builtin_extensions() {
   init_integer();
   init_float();
   init_nlmem();

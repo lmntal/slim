@@ -83,7 +83,7 @@ public:
   /**
    * @brief finalize ccallback module.
    */
-  static void ccallback_finalize(void);
+  static void ccallback_finalize();
 };
 
 #endif

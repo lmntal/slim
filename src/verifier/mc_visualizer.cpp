@@ -1,16 +1,19 @@
 #include "mc_visualizer.h"
-#include "state.h"
-#include "state.hpp"
-#include "statespace.h"
+
 #include <cmath>
 #include <cstdlib>
 #include <ctime>
 
-#define R(c) ((c >> 16) & 0xff)
-#define G(c) ((c >> 8) & 0xff)
-#define B(c) ((c)&0xff)
+#include "state.h"
+#include "state.hpp"
+#include "statespace.h"
 
-#define make_rgb(r, g, b) ((r << 16) | (g << 8) | (b))
+constexpr int R(int c) { return (c >> 16) & 0xff; }
+constexpr int G(int c) { return (c >> 8) & 0xff; }
+constexpr int B(int c) { return (c)&0xff; }
+
+constexpr int make_rgb(int r, int g, int b) { return (r << 16) | (g << 8) | (b); }
+
 #define for_each_successors(s, f)                                                                                      \
   do {                                                                                                                 \
     int i, n = s->successor_num;                                                                                       \
@@ -20,7 +23,7 @@
     }                                                                                                                  \
   } while (0)
 
-int hsv2rgb(int h, int s, int v) {
+constexpr int hsv2rgb(int h, int s, int v) {
   double ht = (double)h / 60;
   int    hi = floor(ht);
   double f  = ht - hi;
@@ -47,7 +50,7 @@ int hsv2rgb(int h, int s, int v) {
   return 0;
 }
 
-void calc_colors(int worker_num, int **colors) {
+constexpr void calc_colors(int worker_num, int **colors) {
   int i;
   int step = 360 / worker_num;
 
@@ -105,7 +108,7 @@ void dump_dot(StateSpaceRef ss, int worker_num) {
   State      *root = ss->initial_state();
   AutomataRef a    = ss->automata();
 
-  colors           = (int *)malloc(sizeof(int) * worker_num);
+  colors = (int *)malloc(sizeof(int) * worker_num);
   calc_colors(worker_num, &colors);
 
   printf("digraph statespace {\n");

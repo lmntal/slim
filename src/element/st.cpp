@@ -133,19 +133,19 @@ st_table_t st_init_table_with_size(struct st_hash_type *type, int size) {
 
 st_table_t st_init_table(struct st_hash_type *type) { return st_init_table_with_size(type, 0); }
 
-st_table_t st_init_numtable(void) { return st_init_table(&type_numhash); }
+st_table_t st_init_numtable() { return st_init_table(&type_numhash); }
 
 st_table_t st_init_numtable_with_size(int size) { return st_init_table_with_size(&type_numhash, size); }
 
-st_table_t st_init_strtable(void) { return st_init_table(&type_strhash); }
+st_table_t st_init_strtable() { return st_init_table(&type_strhash); }
 
 st_table_t st_init_strtable_with_size(int size) { return st_init_table_with_size(&type_strhash, size); }
 
-st_table_t st_init_statetable(void) { return st_init_table(&type_statehash); }
+st_table_t st_init_statetable() { return st_init_table(&type_statehash); }
 
 st_table_t st_init_statetable_with_size(int size) { return st_init_table_with_size(&type_statehash, size); }
 
-st_table_t st_init_ptrtable(void) { return st_init_table(&type_ptrhash); }
+st_table_t st_init_ptrtable() { return st_init_table(&type_ptrhash); }
 
 st_table_t st_init_ptrtable_with_size(int size) { return st_init_table_with_size(&type_ptrhash, size); }
 

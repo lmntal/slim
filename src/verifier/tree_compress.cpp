@@ -52,22 +52,23 @@
 #define TREE_THRESHOLD 10
 #define TREE_CACHE_LINE 8
 
-using TreeNodeStrRef = struct TreeNodeStr *;
+using TreeNodeStrRef = TreeNodeStr *;
 
 struct TreeNodeStr {
   TreeNodeElement *nodes;
-  int              len;
-  int              extra;
+
+  int len;
+  int extra;
 };
 
-uint64_t murmurhash64(void const *key, int len, unsigned int seed) {
-  const uint64_t m = 0xc6a4a7935bd1e995;
+constexpr uint64_t murmurhash64(void const *key, int len, unsigned int seed) {
+  uint64_t const m = 0xc6a4a7935bd1e995;
   int const      r = 47;
 
   uint64_t h = seed ^ (len * m);
 
-  uint64_t const *data = (uint64_t const *)key;
-  uint64_t const *end  = data + (len / 8);
+  auto const *data = (uint64_t const *)key;
+  auto const *end  = data + (len / 8);
 
   while (data != end) {
     uint64_t k = *data++;
@@ -80,7 +81,7 @@ uint64_t murmurhash64(void const *key, int len, unsigned int seed) {
     h *= m;
   }
 
-  unsigned char const *data2 = (unsigned char const *)data;
+  auto const *data2 = (unsigned char const *)data;
 
   switch (len & 7) {
   case 7:
@@ -107,7 +108,7 @@ uint64_t murmurhash64(void const *key, int len, unsigned int seed) {
   return h;
 }
 
-uint64_t mix64(uint64_t key) {
+constexpr uint64_t mix64(uint64_t key) {
   key = (~key) + (key << 21); // key = (key << 21) - key - 1;
   key = key ^ (((int64_t)key) >> 24);
   key = (key + (key << 3)) + (key << 8); // key * 265
@@ -118,7 +119,7 @@ uint64_t mix64(uint64_t key) {
   return key;
 }
 
-int tree_get_split_position(int start, int end) {
+constexpr int tree_get_split_position(int start, int end) {
   int size = end - start;
   return (int)(size / 2.0);
 }
@@ -135,32 +136,34 @@ TreeNodeUnit vector_unit(TreeNodeStrRef str, int start, int end) {
   // printf("start :0x%14llx\n", ret);
   return ret;
 }
-uint64_t hash_node(TreeNodeElement left, TreeNodeElement right) {
+constexpr uint64_t hash_node(TreeNodeElement left, TreeNodeElement right) {
   struct TreeNode node = {.left = left, .right = right};
   return murmurhash64(&node, 16, 0x5bd1e995);
 }
 
-BOOL is_compress_node(TreeNodeElement left, TreeNodeElement right) {
+constexpr BOOL is_compress_node(TreeNodeElement left, TreeNodeElement right) {
   return ((left & 0x00000000FFFFFFFF) == left && (right & 0x00000000FFFFFFFF) == right);
 }
 
-BOOL tree_node_equal(TreeNodeRef node1, TreeNodeElement left, TreeNodeElement right) {
+constexpr BOOL tree_node_equal(TreeNodeRef node1, TreeNodeElement left, TreeNodeElement right) {
   return node1->left == left && node1->right == right;
 }
 
 LmnBinStrRef binstr_make(unsigned int len) {
-  int          real_len = ((len + 1) / TAG_IN_BYTE);
-  LmnBinStrRef bs       = LMN_MALLOC<struct LmnBinStr>();
-  bs->len               = len;
-  bs->type              = 0x00U;
-  bs->v                 = LMN_NALLOC<BYTE>(real_len);
+  int   real_len = ((len + 1) / TAG_IN_BYTE);
+  auto *bs       = LMN_MALLOC<struct LmnBinStr>();
+
+  bs->len  = len;
+  bs->type = false;
+  bs->v    = LMN_NALLOC<BYTE>(real_len);
+
   memset(bs->v, 0x0U, sizeof(BYTE) * real_len);
   return bs;
 }
 TreeNodeRef tree_node_make(TreeNodeElement left, TreeNodeElement right) {
-  TreeNodeRef node = LMN_MALLOC<struct TreeNode>();
-  node->left       = left;
-  node->right      = right;
+  auto *node  = LMN_MALLOC<struct TreeNode>();
+  node->left  = left;
+  node->right = right;
   return node;
 }
 
@@ -182,10 +185,9 @@ redo:
           atomic_fetch_and_inc(&this->node_count);
           *ref = (offset + i) & mask;
           return FALSE;
-        } else {
-          std::free(node);
-          goto redo;
         }
+        std::free(node);
+        goto redo;
       } else if (tree_node_equal(table[(offset + i) & mask], left, right)) {
         *ref = (offset + i) & mask;
         return TRUE;
@@ -214,7 +216,7 @@ void TreeDatabase::clear() {
   for (i = 0; i < this->mask + 1; i++) {
     if (this->nodes[i]) {
       LMN_FREE(this->nodes[i]);
-      this->nodes[i] = NULL;
+      this->nodes[i] = nullptr;
     }
   }
 }
@@ -222,7 +224,6 @@ void TreeDatabase::clear() {
 TreeDatabase::~TreeDatabase() {
   this->clear();
   LMN_FREE(this->nodes);
-  return;
 }
 
 TreeNodeElement TreeDatabase::tree_find_or_put_rec(TreeNodeStrRef str, int start, int end, BOOL *found) {
@@ -270,7 +271,7 @@ void TreeDatabase::get_rec(TreeNodeElement elem, int start, int end, TreeNodeStr
     // printf("%d-%d len:%d\n", start, end, dst->len * TREE_UNIT_SIZE);
     // printf("elem:%llu, copy_len: %d\n", elem, copy_len);
     memcpy((BYTE *)dst->nodes + start, &elem, sizeof(BYTE) * copy_len);
-  } else if (this->nodes[elem & this->mask] != NULL) {
+  } else if (this->nodes[elem & this->mask] != nullptr) {
     TreeNodeRef node  = this->nodes[elem & this->mask];
     int         split = ((end - start) / TREE_UNIT_SIZE) / 2;
     // printf("Split: %d\n", split);
@@ -294,7 +295,7 @@ LmnBinStrRef TreeDatabase::get(TreeNodeID ref, int len) {
   return bs;
 }
 
-uint64_t TreeDatabase::space(void) {
+uint64_t TreeDatabase::space() {
   uint64_t memory = 0;
   memory          += sizeof(struct TreeDatabase);
   memory          += this->node_count * sizeof(struct TreeNode);

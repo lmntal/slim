@@ -50,8 +50,8 @@
 #include "mem_encode.h"
 #include "tree_compress.h"
 
-LmnBinStrRef lmn_bscomp_z_encode(LmnBinStrRef org);
-LmnBinStrRef lmn_bscomp_z_decode(LmnBinStrRef org);
+LmnBinStrRef lmn_bscomp_z_encode(LmnBinStr const *org);
+LmnBinStrRef lmn_bscomp_z_decode(LmnBinStr const *org);
 
 LmnBinStrRef lmn_bscomp_d_encode(LmnBinStrRef org, LmnBinStrRef ref);
 LmnBinStrRef lmn_bscomp_d_decode(LmnBinStrRef ref, LmnBinStrRef dif);

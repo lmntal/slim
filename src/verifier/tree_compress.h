@@ -52,7 +52,7 @@
 
 #include "mem_encode.h"
 
-#define TREE_DB_DEFAULT_SIZE (1024 * 1024 * 128)
+constexpr auto TREE_DB_DEFAULT_SIZE = 1024 * 1024 * 128;
 
 using TreeNodeElement = uint64_t;
 using TreeNodeID      = TreeNodeElement;
@@ -74,7 +74,7 @@ struct TreeDatabase {
   BOOL            table_find_or_put(TreeNodeElement left, TreeNodeElement right, TreeNodeID *ref);
   LmnBinStrRef    get(TreeNodeID ref, int len);
   void            get_rec(TreeNodeElement elem, int start, int end, TreeNodeStr *dst);
-  uint64_t        space(void);
+  uint64_t        space();
 };
 
 struct TreeNode {
@@ -82,8 +82,7 @@ struct TreeNode {
   TreeNodeElement right;
 };
 
-#define tree_db_node_count(db) (db->node_count)
-#define tree_db_string_count(db) (db->string_count)
+constexpr auto tree_db_node_count(TreeDatabase *db) { return db->node_count; }
 
 /* @} */
 

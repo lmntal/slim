@@ -67,15 +67,15 @@ class encoder {
       return;
 
     bool last_valid = false;
-    for (auto m = mem->mem_child_head(); m; m = m->mem_next()) {
-      if (visited->get_mem(m, NULL))
+    for (auto *m = mem->mem_child_head(); m; m = m->mem_next()) {
+      if (visited->get_mem(m, nullptr))
         continue;
 
       BinStrCursor new_bsptr = bsp;
 
       visited->set_checkpoint();
 
-      write_mem(m, 0, -1, -1, new_bsptr, visited, TRUE);
+      write_mem(m, nullptr, -1, -1, new_bsptr, visited, TRUE);
 
       if (new_bsptr.is_valid()) {
         /* mからたどった分子が書き込みに成功したので、last_validに記憶する */
@@ -146,10 +146,10 @@ class encoder {
       /* 膜memに存在するデータアトムを起点にしたinside
        * proxyアトムをちゃんと書き込んでおく */
 
-      auto ent = mem->get_atomlist(LMN_IN_PROXY_FUNCTOR);
+      auto *ent = mem->get_atomlist(LMN_IN_PROXY_FUNCTOR);
       if (ent) {
-        for (auto in : *ent) {
-          if (!LMN_ATTR_IS_DATA(in->get_attr(1)) || visited->get_atom(in, NULL)) {
+        for (auto *in : *ent) {
+          if (!LMN_ATTR_IS_DATA(in->get_attr(1)) || visited->get_atom(in, nullptr)) {
             continue;
           }
           /* -------------------------+
@@ -157,7 +157,7 @@ class encoder {
            * -------------------------+
            */
           bsp.push_escape_mem_data(in->get_link(1), in->get_attr(1), visited);
-          auto out = (LmnSymbolAtomRef)in->get_link(0);
+          auto *out = (LmnSymbolAtomRef)in->get_link(0);
           write_mol(out->get_link(1), out->get_attr(1), LMN_ATTR_GET_VALUE(out->get_attr(1)), bsp, visited, is_id);
         };
       }
@@ -185,23 +185,23 @@ class encoder {
       return;
     }
 
-    auto satom = reinterpret_cast<LmnSymbolAtomRef>(atom);
+    auto *satom = reinterpret_cast<LmnSymbolAtomRef>(atom);
     auto f     = satom->get_functor();
     if (f == LMN_OUT_PROXY_FUNCTOR) {
       /* outside proxyの場合, inside proxy側の膜をwrite_memで書き込む */
-      auto in     = (LmnSymbolAtomRef)satom->get_link(0);
-      auto in_mem = LMN_PROXY_GET_MEM(in);
-      if (visited->get_atom(in, NULL)) {
+      auto *in     = (LmnSymbolAtomRef)satom->get_link(0);
+      auto *in_mem = LMN_PROXY_GET_MEM(in);
+      if (visited->get_atom(in, nullptr)) {
         visited->put_atom(in);
       }
       write_mem(in_mem, in->get_link(1), in->get_attr(1), LMN_ATTR_GET_VALUE(in->get_attr(1)), bsp, visited, is_id);
     } else if (f == LMN_IN_PROXY_FUNCTOR) {
       /* inside proxyの場合, 親膜へ抜ける旨を示すタグTAG_ESCAPE_MEMを書き込む.
        * その後, outside proxyから分子のトレース(write_mol)を引き続き実行する */
-      auto out = (LmnSymbolAtomRef)satom->get_link(0);
+      auto *out = (LmnSymbolAtomRef)satom->get_link(0);
       bsp.push_escape_mem();
 
-      if (visited->get_atom(satom, NULL)) {
+      if (visited->get_atom(satom, nullptr)) {
         visited->put_atom(satom);
       }
 
@@ -250,7 +250,7 @@ class encoder {
       if (last_valid_it != end && atom->get_functor() != first_func)
         break;
 
-      if (visited->get_atom(atom, NULL))
+      if (visited->get_atom(atom, nullptr))
         continue;
 
       BinStrCursor new_bsptr = bsp;
@@ -331,7 +331,7 @@ class encoder {
   template <typename Container> void dump_mols(Container const &atoms, BinStrCursor &bsp, VisitLogRef visited) {
     /* atoms中の未訪問のアトムを起点とする分子を、それぞれ試みる */
     for (auto atom : atoms) {
-      if (visited->get_atom(atom, NULL) || LMN_IS_HL(atom))
+      if (visited->get_atom(atom, nullptr) || LMN_IS_HL(atom))
         continue;
 
       write_mol((LmnAtomRef)atom, LMN_ATTR_MAKE_LINK(0), -1, bsp, visited, FALSE);
@@ -342,9 +342,9 @@ class encoder {
    * dump_memsへ再起する 兄弟膜は子膜内のプロセスを全て書き込んでから訪問される
    */
   void dump_mems(LmnMembraneRef mem, BinStrCursor &bsp, VisitLogRef visited) {
-    for (auto m = mem->mem_child_head(); m; m = m->mem_next()) {
-      if (!visited->get_mem(m, NULL)) {
-        write_mem(m, 0, -1, -1, bsp, visited, FALSE);
+    for (auto *m = mem->mem_child_head(); m; m = m->mem_next()) {
+      if (!visited->get_mem(m, nullptr)) {
+        write_mem(m, nullptr, -1, -1, bsp, visited, FALSE);
       }
     }
   }

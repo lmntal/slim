@@ -105,17 +105,16 @@ void *normal_thread(void *arg) {
     }
     pthread_mutex_unlock(thread_data->exec);
   }
-  return NULL;
+  return nullptr;
 }
 
 void normal_profile_init(normal_prof *profile) {
   profile->wakeup        = 0;
   profile->backtrack_num = 0;
   profile->findatom_num  = 0;
-  return;
 }
 
-void normal_parallel_init(void) {
+void normal_parallel_init() {
   int i;
   findthread  = LMN_NALLOC<pthread_t>(lmn_env.core_num);
   thread_info = LMN_NALLOC<arginfo *>(lmn_env.core_num);
@@ -125,10 +124,10 @@ void normal_parallel_init(void) {
     thread_info[i]->rc->warray_set(LmnRegisterArray(thread_info[i]->rc->capacity()));
     thread_info[i]->register_size = LmnReactCxt::warray_DEF_SIZE;
     thread_info[i]->id            = i;
-    thread_info[i]->next_atom     = NULL;
+    thread_info[i]->next_atom     = nullptr;
     thread_info[i]->exec_flag     = 1;
     thread_info[i]->exec          = LMN_MALLOC<pthread_mutex_t>();
-    pthread_mutex_init(thread_info[i]->exec, NULL);
+    pthread_mutex_init(thread_info[i]->exec, nullptr);
     pthread_mutex_lock(thread_info[i]->exec);
     thread_info[i]->profile = LMN_MALLOC<normal_prof>();
     normal_profile_init(thread_info[i]->profile);
@@ -142,7 +141,7 @@ void normal_parallel_init(void) {
   fail_temp_check    = 0;
 }
 
-void normal_parallel_free(void) {
+void normal_parallel_free() {
   int i;
   lmn_env.enable_parallel = FALSE;
   for (i = 0; i < lmn_env.core_num; i++) {
@@ -212,13 +211,13 @@ BOOL check_exist(LmnSymbolAtomRef atom, LmnFunctor f) {
   return TRUE;
 }
 
-void rule_wall_time_start(void) {
+void rule_wall_time_start() {
   normal_parallel_flag = FALSE;
   walltime_temp        = get_wall_time();
   return;
 }
 
-void rule_wall_time_finish(void) {
+void rule_wall_time_finish() {
   double finish;
   finish   = get_wall_time();
   walltime += finish - walltime_temp;

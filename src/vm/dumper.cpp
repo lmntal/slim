@@ -982,19 +982,19 @@ static void lmn_dump_link_json(LmnSymbolAtomRef atom, int index) {
       break;
     case LMN_SP_ATOM_ATTR:
     case LMN_CONST_STR_ATTR:
-      fprintf(stdout, "\"data\":\"\\\"%s\\\"\"", ((LmnStringRef)data)->c_str());
+      fprintf(stdout, R"("data":"\"%s\"")", ((LmnStringRef)data)->c_str());
       break;
     case LMN_HL_ATTR: {
-      LmnSymbolAtomRef a    = (LmnSymbolAtomRef)data;
-      HyperLink       *root = LMN_HL_ATOM_ROOT_HL(a);
+      auto      *a    = (LmnSymbolAtomRef)data;
+      HyperLink *root = LMN_HL_ATOM_ROOT_HL(a);
       fprintf(stdout, "\"data\":%d", (int)root->id);
     } break;
     default:
       break;
     }
   } else {
-    LmnSymbolAtomRef a = (LmnSymbolAtomRef)data;
-    if (a != NULL) {
+    auto *a = (LmnSymbolAtomRef)data;
+    if (a != nullptr) {
       fprintf(stdout, "\"data\":%d", (int)a->get_id());
     }
   }
@@ -1006,7 +1006,7 @@ static void lmn_dump_atom_json(LmnSymbolAtomRef atom) {
   int arity;
   fprintf(stdout, "{");
   fprintf(stdout, "\"id\":%d,", (int)atom->get_id());
-  fprintf(stdout, "\"name\":\"%s\",", atom->str());
+  fprintf(stdout, R"("name":"%s",)", atom->str());
   fprintf(stdout, "\"links\":[");
   {
     BOOL needs_comma = FALSE;

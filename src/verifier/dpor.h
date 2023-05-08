@@ -110,8 +110,8 @@ void dpor_explore_redundunt_graph(StateSpaceRef ss);
 
 void dpor_start(StateSpaceRef ss, State *s, MCReactContext *rc, Vector *new_s, BOOL flag);
 
-void dpor_env_init(void);
-void dpor_env_destroy(void);
+void dpor_env_init();
+void dpor_env_destroy();
 
 void dpor_transition_gen_LHS(McDporData *mc, MemDeltaRoot *d, LmnReactCxtRef rc);
 BOOL dpor_transition_gen_RHS(McDporData *mc, MemDeltaRoot *d, MCReactContext *rc);

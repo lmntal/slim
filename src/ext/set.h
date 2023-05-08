@@ -103,7 +103,7 @@ class LmnSet {
 
 public:
   static int  mem_cmp(LmnMembraneRef m0, LmnMembraneRef m1);
-  static void init_set(void);
+  static void init_set();
 };
 class InnerToList {
   LmnMembraneRef       mem_data;

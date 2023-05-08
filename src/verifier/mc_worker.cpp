@@ -58,9 +58,9 @@ namespace c14 = slim::element;
 
 static inline void lmn_mc_obj_init(LmnMCObj *mc, LmnWorker *w) {
   mc->type     = 0x00U;
-  mc->obj      = NULL;
-  mc->init     = NULL;
-  mc->finalize = NULL;
+  mc->obj      = nullptr;
+  mc->init     = nullptr;
+  mc->finalize = nullptr;
   mc->owner    = w;
 }
 
@@ -70,12 +70,12 @@ static inline void lmn_mc_obj_init(LmnMCObj *mc, LmnWorker *w) {
 
 static void lmn_worker_start(void *arg);
 static void worker_TLS_init(unsigned int id);
-static void worker_TLS_finalize(void);
+static void worker_TLS_finalize();
 static void worker_set_env(LmnWorker *w);
 
 /* まっさらなLmnWorkerオブジェクトをmallocして返す */
 inline LmnWorker *lmn_worker_make_minimal() {
-  LmnWorker *w = new (LmnWorker);
+  auto *w = new (LmnWorker);
 
   w->id            = 0;
   w->f_safe        = 0x00U;
@@ -83,12 +83,12 @@ inline LmnWorker *lmn_worker_make_minimal() {
   w->f_end         = FALSE;
   w->f_end2        = FALSE;
   w->wait          = FALSE;
-  w->states        = NULL;
-  w->next          = NULL;
-  w->start         = NULL;
-  w->check         = NULL;
-  w->invalid_seeds = NULL;
-  w->cycles        = NULL;
+  w->states        = nullptr;
+  w->next          = nullptr;
+  w->start         = nullptr;
+  w->check         = nullptr;
+  w->invalid_seeds = nullptr;
+  w->cycles        = nullptr;
   w->expand        = 0;
   w->red           = 0;
 
@@ -169,8 +169,8 @@ static void worker_TLS_finalize() { env_my_TLS_finalize(); }
  *  Worker Group
  */
 LmnWorkerGroup::LmnWorkerGroup() {
-  workers = NULL;
-  ewlock  = NULL;
+  workers = nullptr;
+  ewlock  = nullptr;
 }
 LmnWorkerGroup::LmnWorkerGroup(AutomataRef a, Vector *psyms, int thread_num) {
 
@@ -186,14 +186,14 @@ LmnWorkerGroup::LmnWorkerGroup(AutomataRef a, Vector *psyms, int thread_num) {
   workers_unset_exit();
   workers_unfound_error();
 
-  workers_set_opt_end_state(NULL);
+  workers_set_opt_end_state(nullptr);
 
 #ifdef KWBT_OPT
   if (thread_num >= 2 && lmn_env.opt_mode != OPT_NONE) {
     workers_set_ewlock(ewlock_make(1U, DEFAULT_WLOCK_NUM));
   } else
 #endif
-    workers_set_ewlock(NULL);
+    workers_set_ewlock(nullptr);
 
   flags = flags_init(a);
 #ifdef OPT_WORKERS_SYNC
@@ -584,7 +584,7 @@ LmnWorker *LmnWorkerGroup::workers_get_my_worker() {
 /* WorkerPoolのid番目のLmnWorkerオブジェクトを返す */
 LmnWorker *LmnWorkerGroup::get_worker(unsigned long id) {
   if (id >= workers_get_entried_num()) {
-    return NULL;
+    return nullptr;
   } else {
     return workers_get_entry(id);
   }

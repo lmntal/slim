@@ -126,7 +126,7 @@ void nlmem_kill(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0, LmnLinkAtt
   lmn_mem_delete_atom(mem, a1, t1);
 }
 
-void init_nlmem(void) {
+void init_nlmem() {
   CCallback::lmn_register_c_fun("nlmem_copy", (void *)nlmem_copy, 3);
   CCallback::lmn_register_c_fun("nlmem_kill", (void *)nlmem_kill, 2);
 }

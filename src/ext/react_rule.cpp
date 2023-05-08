@@ -134,7 +134,7 @@ void cb_react_ruleset_nd(LmnReactCxtRef &rc, LmnMembraneRef mem, LmnAtomRef rule
   lmn_mem_delete_atom(mem, graph_mem_proxy, graph_mem_proxy_link_attr);
 }
 
-void init_react_rule(void) {
+void init_react_rule() {
   CCallback::lmn_register_c_fun("cb_react_rule", (void *)cb_react_rule, 4);
   CCallback::lmn_register_c_fun("cb_react_ruleset_nd", (void *)cb_react_ruleset_nd, 4);
 }

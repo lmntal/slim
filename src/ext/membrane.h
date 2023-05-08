@@ -54,7 +54,7 @@ class Membrane {
                             LmnLinkAttr ret_mem1_link_attr, LmnAtomRef res_link, LmnLinkAttr res_link_attr);
 
 public:
-  static void init_membrane(void);
+  static void init_membrane();
 };
 
 #endif /* EXT_MEMBRANE_H */
