@@ -127,6 +127,7 @@ include(CheckTypeSize)
 include(ProcessorCount)
 include(CheckIncludeFile)
 include(CheckCSourceCompiles)
+include(CheckCXXSourceCompiles)
 
 # Check header files
 check_include_file("omp.h" HAVE_OMP_H)
@@ -137,7 +138,7 @@ check_include_file("unistd.h" HAVE_UNISTD_H)
 check_include_file("execinfo.h" HAVE_EXECINFO_H)
 
 # Check library files
-if (CMAKE_USE_PTHREADS_INIT)
+if(CMAKE_USE_PTHREADS_INIT)
     set(HAVE_LIBPTHREAD 1)
     set(HAVE_PTHREAD 1)
 endif()
@@ -227,9 +228,21 @@ int main(void)
 }
 " HAVE_PTHREAD_BARRIER)
 
+# Check thread_local keyword
+check_cxx_source_compiles("
+int main(void)
+{
+    thread_local int x = 0;
+    return 0;
+}
+" HAVE_TLS)
+
+set(HAVE___THREAD ${HAVE_TLS})
+
 if(ZLIB_FOUND)
     set(HAVE_LIBZ 1)
 endif()
+
 # ================================
 
 # Include directories

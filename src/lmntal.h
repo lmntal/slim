@@ -447,7 +447,7 @@ static inline void lmn_barrier_wait(lmn_barrier_t *b) {
 
 #if defined(HAVE_MT_LIBRARY) && defined(HAVE___THREAD)
 #define USE_TLS_KEYWORD
-#define LMN_TLS_TYPE(T) __thread T
+#define LMN_TLS_TYPE(T) thread_local T
 #define ENABLE_PARALLEL
 #
 #elif defined(HAVE_LIBPTHREAD) && defined(__APPLE__)

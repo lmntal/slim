@@ -71,7 +71,7 @@ static inline void lmn_TLS_destroy(LmnTLS *p) { /* nothing now */
 
 static inline LmnTLS *lmn_TLS_make(unsigned int thread_id) LMN_UNUSED;
 static inline LmnTLS *lmn_TLS_make(unsigned int thread_id) {
-  struct LmnTLS *p = LMN_MALLOC<struct LmnTLS>();
+  auto *p = LMN_MALLOC<struct LmnTLS>();
   lmn_TLS_init(p, thread_id);
   return p;
 }
@@ -178,25 +178,25 @@ LmnEnv::LmnEnv() {
   this->optimize_hash          = TRUE;
   this->optimize_loadbalancing = TRUE;
 
-  this->opt_mode               = OPT_NONE;
+  this->opt_mode = OPT_NONE;
 
   /* only jni-interactive mode */
-  this->interactive              = FALSE;
-  this->normal_remain            = FALSE;
-  this->normal_remaining         = FALSE;
-  this->normal_cleaning          = FALSE;
-  this->nd_remain                = FALSE;
-  this->nd_remaining             = FALSE;
-  this->nd_cleaning              = FALSE;
+  this->interactive      = FALSE;
+  this->normal_remain    = FALSE;
+  this->normal_remaining = FALSE;
+  this->normal_cleaning  = FALSE;
+  this->nd_remain        = FALSE;
+  this->nd_remaining     = FALSE;
+  this->nd_cleaning      = FALSE;
 
-  this->enable_owcty             = FALSE;
-  this->enable_map               = FALSE;
-  this->enable_bledge            = FALSE;
-  this->bfs_layer_sync           = FALSE;
+  this->enable_owcty   = FALSE;
+  this->enable_map     = FALSE;
+  this->enable_bledge  = FALSE;
+  this->bfs_layer_sync = FALSE;
 
-  this->enable_map_heuristic     = TRUE;
+  this->enable_map_heuristic = TRUE;
 
-  this->show_reduced_graph       = FALSE;
+  this->show_reduced_graph = FALSE;
 
   this->hash_compaction          = FALSE;
   this->tree_compress            = FALSE;
@@ -220,8 +220,8 @@ LmnEnv::LmnEnv() {
   this->debug_por     = FALSE;
 #endif
 
-  this->shuffle_rule           = FALSE;
-  this->shuffle_atom           = FALSE;
+  this->shuffle_rule = FALSE;
+  this->shuffle_atom = FALSE;
 
   this->findatom_parallel_mode = FALSE;
   this->find_atom_parallel     = FALSE;

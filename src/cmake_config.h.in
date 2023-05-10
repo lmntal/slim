@@ -223,7 +223,7 @@
 #cmakedefine HAVE_TCMALLOC
 
 /* Define to 1 if compiler supports __thread */
-#define HAVE_TLS 1
+#cmakedefine01 HAVE_TLS
 
 /* Define to 1 if you have the <ucontext.h> header file. */
 /* #undef HAVE_UCONTEXT_H */
@@ -250,7 +250,7 @@
 /* #undef HAVE___INT64 */
 
 /* Define to 1 if the system has the TLS keyword `__thread'. */
-#define HAVE___THREAD 1
+#cmakedefine01 HAVE___THREAD
 
 /* prefix where we look for installed files */
 #define INSTALL_PREFIX "/usr/local"
