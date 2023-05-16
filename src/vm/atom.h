@@ -104,8 +104,8 @@ using LmnSymbolAtomRef = struct LmnSymbolAtom *;
  * 所属する膜へのポインタを持っている */
 
 #define LMN_ATOM_ATTR(X) ((LmnLinkAttr)(X))
-#define LMN_ATTR_MASK (0x7fU)
-#define LMN_ATTR_FLAG (0x80U)
+constexpr auto LMN_ATTR_MASK = 0x7fU;
+constexpr auto LMN_ATTR_FLAG = 0x80U;
 
 #define LMN_ATOM(X) ((LmnAtom)(X))
 #define LMN_SATOM(X) ((LmnSAtom)(X))

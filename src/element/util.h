@@ -101,20 +101,6 @@ static inline int lmn_byte_cmp(unsigned char const *a, long alen, unsigned char 
 #define ARY_SIZEOF(ARRAY) (sizeof(ARRAY) / sizeof(ARRAY[0]))
 
 char *int_to_str(long n);
-int   comp_int_f(void const *a, void const *b);
-int   comp_int_greater_f(void const *a_, void const *b_);
-
-/* n以上で最小の2の倍数を返す */
-static inline unsigned long round2up(unsigned long n) {
-  unsigned int v = 1;
-  while (v != 0 && v < n) {
-    v <<= 1;
-  }
-  if (v == 0) {
-    lmn_fatal("too large size");
-  }
-  return v;
-}
 
 #include <iterator>
 #include <memory>
@@ -154,10 +140,6 @@ public:
   bool operator!=(raw_pointer_iterator<T> const &a) { return !(*this == a); }
   bool operator==(raw_pointer_iterator<T> const &a) { return p == a.p; }
 };
-
-template <class T, class... Args> std::unique_ptr<T> make_unique(Args &&...args) {
-  return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
-}
 } // namespace slim::element
 
 /* @} */

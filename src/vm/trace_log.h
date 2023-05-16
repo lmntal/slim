@@ -132,7 +132,7 @@ struct TraceLog {
   using key_type = ProcessTable<TraceData>::key_type;
 
   TraceLog(unsigned long size) {}
-  TraceLog() {}
+  TraceLog() = default;
   unsigned int traversed_proc_count(LmnMembraneRef owner) {
     return table.find(owner->mem_id()) != table.end() ? table[owner->mem_id()].traversed_proc : 0;
   }
@@ -213,7 +213,9 @@ public:
 
 using TraceLogRef = struct TraceLog *;
 
-#define TLOG_MATCHED_ID_NONE (0U)
+enum {
+TLOG_MATCHED_ID_NONE = (0U)
+};
 
 /**
  * Function ProtoTypes

@@ -42,9 +42,9 @@
 
 #include <climits>
 
-struct Vector     *lmn_id_pool;
-struct LmnEnv      lmn_env;
-struct LmnProfiler lmn_prof;
+std::vector<LmnWord> *lmn_id_pool;
+struct LmnEnv         lmn_env;
+struct LmnProfiler    lmn_prof;
 LMN_TLS_TYPE(LmnTLS) lmn_tls;
 
 // static void env_init(void);

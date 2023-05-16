@@ -78,11 +78,11 @@ enum {
   TT_ATOM  = 1, /* symbol atom  */
   TT_MEM   = 2  /* membrane */
 };
-class Task {
+class Task final {
   static void task_init();     // 呼び出し元不明
   static void task_finalize(); // 呼び出し元不明. 判明したらpublicへ移動
   static void memstack_push(LmnMembraneRef mem); // どこもmemのメンバ関数である同名関数を呼び出しているらしい？
-  void lmn_dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr);
+  static void lmn_dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr);
 
 public:
   static void          lmn_run(Vector *rulesets);
@@ -91,7 +91,7 @@ public:
   static BOOL          react_all_rulesets(LmnReactCxtRef rc, LmnMembraneRef cur_mem);
   static struct Vector user_system_rulesets;
       /* system ruleset defined by user */ // ユーザーが書く部分となるとpublicにしておかざるを得ない
-  static HashSet *insertconnectors(slim::vm::RuleContext *rc, LmnMembraneRef mem, Vector const *links);
+  static HashSet *insertconnectors(slim::vm::RuleContext *rc, LmnMembraneRef mem, std::vector<LmnInstrVar> const &links);
 
   static Vector *links_from_idxs(Vector const *link_idxs, LmnReactCxtRef v);
   static void    free_links(Vector *links);

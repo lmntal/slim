@@ -43,6 +43,7 @@
 #include "mhash.h"
 #include "element/element.h"
 #include "visitlog.h"
+#include <bit>
 #ifdef PROFILE
 #include "runtime_status.h"
 #endif
@@ -71,7 +72,7 @@ void mhash_set_depth(int depth) {
 }
 
 mhash_t mhash(LmnMembraneRef mem) {
-  return mhash_sub(mem, round2up(env_next_id()));
+  return mhash_sub(mem, std::bit_ceil(env_next_id()));
   // return mhash_sub(mem, 1024);
   // return 10;
 }

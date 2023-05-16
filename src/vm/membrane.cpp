@@ -42,8 +42,10 @@
 #include "functor.h"
 #include "rule.h"
 #include "verifier/verifier.h"
+#include "vm/hyperlink.h"
 #include <cctype>
 #include <climits>
+#include <vector>
 
 #ifdef PROFILE
 #include "verifier/runtime_status.h"
@@ -1136,21 +1138,20 @@ static inline void mem_map_hlink(LmnMembraneRef mem, LmnSymbolAtomRef root_hlAto
   if (flg_search_hl && flg_local_hl) { // extended
     if (!proc_tbl_get_by_hlink(hlinkmap, hl->get_root(),
                                &t)) { // 同じハイパーリンクが接続されたアトムがスタックに積まれてる場合がある
-      int j, element_num;
       hlinkmap->put_new_hlink(hl->get_root(), (LmnWord)(lmn_hyperlink_at_to_hl(copied_root_hlAtom)));
-      Vector *hl_childs = new Vector(16);
+      std::vector<HyperLink *> hl_childs(16);
       hl->get_elements(hl_childs);
-      element_num = hl_childs->get_num() - 1;
+      auto element_num = hl_childs.size() - 1;
       //       fprintf(stderr,"root_hlAtom,copied_root_hlAtom: ID[%lu]/HL_ID[%lu] ID[%lu]/HL_ID[%lu], %d element(s)\n",
       //            root_hlAtom->get_id(), LMN_HL_ID(LMN_HL_ATOM_ROOT_HL(root_hlAtom)),
       // 	      copied_root_hlAtom->get_id(), LMN_HL_ID(LMN_HL_ATOM_ROOT_HL(copied_root_hlAtom)),
       // 	      element_num);
 
-      for (j = 0; j < element_num; j++) { // ハイパーリンクにつながるすべての接続先を探索
-        if (hl->mem != ((HyperLink *)hl_childs->get(j))->mem) { // root_hlAtomの所属膜と異なる膜内はコピーしない
+      for (auto j = 0; j < element_num; j++) { // ハイパーリンクにつながるすべての接続先を探索
+        if (hl->mem != hl_childs.at(j)->mem) { // root_hlAtomの所属膜と異なる膜内はコピーしない
           continue;
         }
-        LmnSymbolAtomRef hlAtom = ((HyperLink *)hl_childs->get(j))->atom;
+        LmnSymbolAtomRef hlAtom = hl_childs.at(j)->atom;
         if (LMN_ATTR_IS_DATA(hlAtom->get_attr(0))) {
           LmnSymbolAtomRef copied_hlAtom = lmn_copy_satom_with_data((hlAtom), FALSE);
           lmn_hyperlink_copy(copied_hlAtom, copied_root_hlAtom);
@@ -1159,7 +1160,7 @@ static inline void mem_map_hlink(LmnMembraneRef mem, LmnSymbolAtomRef root_hlAto
           // 	  hlAtom->str(), hlAtom->get_id(),
           // 	  copied_hlAtom->str(), copied_hlAtom->get_id());
         } else {
-          LmnSymbolAtomRef linked_hlAtom = (LmnSymbolAtomRef)hlAtom->get_link(0);
+          auto *linked_hlAtom = (LmnSymbolAtomRef)hlAtom->get_link(0);
           if (!proc_tbl_get_by_atom(atommap, linked_hlAtom,
                                     &t)) { // ハイパーリンクアトム及びそれにつながるシンボルアトムをコピー
             // まずシンボルアトムをコピー
@@ -1205,7 +1206,6 @@ static inline void mem_map_hlink(LmnMembraneRef mem, LmnSymbolAtomRef root_hlAto
           // proc_tbl_symbol_atom_dump("atommap", atommap); // ueda
         }
       }
-      delete hl_childs;
     } else { // 既にハイパーリンクをコピーしていればunify
       (lmn_hyperlink_at_to_hl(copied_root_hlAtom))
           ->lmn_unify((HyperLink *)t, LMN_HL_ATTRATOM((HyperLink *)t), LMN_HL_ATTRATOM_ATTR((HyperLink *)t));
@@ -1675,8 +1675,6 @@ BOOL ground_atoms(Vector *srcvec, Vector *avovec, ProcessTableRef *atoms, /* gro
   BOOL           result;
   HyperLink     *hl;
   LmnMembraneRef mem;
-  Vector        *hl_childs;
-  int            element_num;
 
   *natoms               = 0;
   *atoms                = new ProcessTbl(64);
@@ -1692,7 +1690,7 @@ BOOL ground_atoms(Vector *srcvec, Vector *avovec, ProcessTableRef *atoms, /* gro
 
   /* groundはつながったグラフなので1つの根からだけたどればよい */
   {
-    LinkObjRef l = (LinkObjRef)srcvec->get(0);
+    auto *l = (LinkObjRef)srcvec->get(0);
     unsearched_link_stack->push((LmnWord) new LinkObj(l->ap, l->pos));
   }
 
@@ -1757,19 +1755,19 @@ BOOL ground_atoms(Vector *srcvec, Vector *avovec, ProcessTableRef *atoms, /* gro
 
             if (flg_search_hl) {
               (*hlinks)->put_new_hlink(hl->get_root(), (LmnWord)hl);
-              hl_childs = new Vector(16);
+              std::vector<HyperLink *> hl_childs(16);
 
               hl->get_elements(hl_childs);
-              element_num = hl_childs->get_num() - 1;
-              mem         = hl->mem;
+              auto element_num = hl_childs.size() - 1;
+              mem              = hl->mem;
               for (i = 0; i < element_num; i++) {
-                if (mem != ((HyperLink *)hl_childs->get(i))->mem) { // 別の膜に移動したらFALSEに
+                if (mem != hl_childs.at(i)->mem) { // 別の膜に移動したらFALSEに
                   // 当初していたが，ハイパーリンク接続の場合は同一膜内の構造とマッチするように変更
                   // result = FALSE;
                   // goto returning;
                   continue;
                 }
-                LmnSymbolAtomRef hlAtom        = ((HyperLink *)hl_childs->get(i))->atom;
+                LmnSymbolAtomRef hlAtom        = hl_childs.at(i)->atom;
                 LmnAtomRef       linked_hlAtom = hlAtom->get_link(0);
                 LmnLinkAttr      linked_attr   = hlAtom->get_attr(0);
                 unsearched_link_stack->push((LmnWord) new LinkObj(hlAtom->get_link(0), hlAtom->get_attr(0)));
@@ -1787,7 +1785,7 @@ BOOL ground_atoms(Vector *srcvec, Vector *avovec, ProcessTableRef *atoms, /* gro
                   /* lがsrcvecにつながっていれば */
                   continue_flag = FALSE;
                   for (j = 0; j < srcvec->get_num(); j++) {
-                    LinkObjRef a = (LinkObjRef)srcvec->get(j);
+                    auto *a = (LinkObjRef)srcvec->get(j);
                     if (IS_BUDDY((LmnSymbolAtomRef)linked_hlAtom, linked_attr, (LmnSymbolAtomRef)a->ap, a->pos)) {
                       reached_root_count++;
                       continue_flag = TRUE;
@@ -1798,16 +1796,14 @@ BOOL ground_atoms(Vector *srcvec, Vector *avovec, ProcessTableRef *atoms, /* gro
                     unsearched_link_stack->pop();
                 }
               }
-              delete hl_childs;
             }
           }
         }
         (*natoms)++;
         continue;
-      } else {
-        result = FALSE; /* groundでないデータが出現したら終了 */
-        goto returning;
       }
+      result = FALSE; /* groundでないデータが出現したら終了 */
+      goto returning;
     } else { /* lがシンボルアトムを指していれば */
 
       /* lがavovecにつながっていれば */
@@ -2237,16 +2233,16 @@ void get_neighbours(Vector *avovec, Vector *neighbours, LmnAtomRef atom, LmnLink
 
     // explore this hyperlink sublinks
     if (flg_search_hl) {
-      Vector *hl_childs = new Vector(16);
+      // Vector *hl_childs = new Vector(16);
+      std::vector<HyperLink *> hl_childs(16);
 
       hl->get_elements(hl_childs);
-      int child_num = hl_childs->get_num() - 1;
+      auto child_num = hl_childs.size() - 1;
       // LmnMembraneRef *mem = hl->mem;  // probably wrong
       LmnMembraneRef mem = hl->mem;
 
-      int i;
-      for (i = 0; i < child_num; i++) {
-        if (mem != ((HyperLink *)hl_childs->get(i))->mem) {
+      for (auto i = 0; i < child_num; i++) {
+        if (mem != hl_childs.at(i)->mem) {
           continue;
         }
         /*   a(!H),b(!H).
@@ -2256,7 +2252,7 @@ void get_neighbours(Vector *avovec, Vector *neighbours, LmnAtomRef atom, LmnLink
          *   'hlAtom' is a part of linkobject       : H--->!
          *   'linked_hlAtom' is a part of linkobject: !--->b
          * */
-        LmnSymbolAtomRef hlAtom = ((HyperLink *)hl_childs->get(i))->atom;
+        auto *hlAtom = hl_childs.at(i)->atom;
         /* from hyperlink core points to ! atom  */
         LmnAtomRef  linked_hlAtom;
         LmnLinkAttr linked_attr;
@@ -3732,7 +3728,7 @@ BOOL LmnMembrane::nmems(unsigned int count) {
 }
 
 /* 子膜の数を返す */
-int LmnMembrane::child_mem_num() {
+int LmnMembrane::child_mem_num() const {
   unsigned int   i;
   LmnMembraneRef mp = this->mem_child_head();
   for (i = 0; mp; mp = mp->mem_next(), i++)
@@ -3750,7 +3746,7 @@ LmnSymbolAtomRef lmn_mem_newatom(LmnMembraneRef mem, LmnFunctor f) {
 }
 
 /* return # of child membranes */
-unsigned int LmnMembrane::count_children() {
+unsigned int LmnMembrane::count_children() const {
   LmnMembraneRef c;
   unsigned int   n = 0;
   for (c = this->mem_child_head(); c; c = c->mem_next())
@@ -3759,7 +3755,7 @@ unsigned int LmnMembrane::count_children() {
 }
 
 /* return # of descendant membranes */
-unsigned int LmnMembrane::count_descendants() {
+unsigned int LmnMembrane::count_descendants() const {
   LmnMembraneRef c;
   unsigned int   n = 0;
 

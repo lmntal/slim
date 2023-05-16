@@ -38,13 +38,18 @@
 #ifndef LMN_ATOMLIST_HPP
 #define LMN_ATOMLIST_HPP
 
-#include "atom.h"
-#include "vm/membrane.h"
-#include "vm/membrane.hpp"
+#include <cstddef>
 #include <functional>
 #include <iterator>
 #include <random>
 #include <vector>
+
+#include "fmt/color.h"
+#include "fmt/core.h"
+
+#include "atom.h"
+#include "vm/membrane.h"
+#include "vm/membrane.hpp"
 
 struct SimpleHashtbl;
 struct AtomListEntry;
@@ -59,11 +64,13 @@ struct AtomListEntry {
   int                   n_record = 0; // 履歴管理用アトムのための変数(nakata)
   struct SimpleHashtbl *record;
 
-  bool is_empty() { return this->head == reinterpret_cast<LmnSymbolAtomRef>(this); }
+  LmnSymbolAtomRef as_atom() { return reinterpret_cast<LmnSymbolAtomRef>(this); }
+
+  bool is_empty() { return this->head == as_atom(); }
 
   void set_empty() {
-    reinterpret_cast<LmnSymbolAtomRef>(this)->set_prev(reinterpret_cast<LmnSymbolAtomRef>(this));
-    reinterpret_cast<LmnSymbolAtomRef>(this)->set_next(reinterpret_cast<LmnSymbolAtomRef>(this));
+    tail    = as_atom();
+    head    = as_atom();
     this->n = 0;
   }
 
@@ -86,23 +93,22 @@ struct AtomListEntry {
     -> 非決定実行いけるかな？
    */
   void push(LmnSymbolAtomRef a) {
+    static std::random_device rnd;
     if (lmn_env.shuffle_atom) {
-      std::random_device rnd;
-      int                startpoint = rnd() % (n + 1);
-
+      auto startpoint = rnd() % (n + 1);
       if (startpoint == 0) { // head処理
         a->set_next(this->head);
-        a->set_prev(reinterpret_cast<LmnSymbolAtomRef>(this));
+        a->set_prev(as_atom());
         this->head->set_prev(a);
         this->head = a;
       } else if (startpoint == n) { // tail 処理
-        a->set_next(reinterpret_cast<LmnSymbolAtomRef>(this));
+        a->set_next(as_atom());
         a->set_prev(this->tail);
         this->tail->set_next(a);
         this->tail = a;
       } else {
         // 挿入するアトムまで移動するためのアトム
-        auto insertpoint_atom = this->head;
+        auto *insertpoint_atom = this->head;
         for (int i = 0; i < startpoint; i++) {
           insertpoint_atom = insertpoint_atom->get_next();
         }
@@ -113,7 +119,7 @@ struct AtomListEntry {
         a->get_next()->set_prev(a);
       }
     } else {
-      a->set_next(reinterpret_cast<LmnSymbolAtomRef>(this));
+      a->set_next(as_atom());
       a->set_prev(this->tail);
       this->tail->set_next(a);
       this->tail = a;
@@ -121,7 +127,7 @@ struct AtomListEntry {
     this->n += 1;
   }
 
-  int size() { return this->n; }
+  int size() const { return n; }
 
   void append(AtomListEntry *e2) {
     if (e2->is_empty())
@@ -129,7 +135,7 @@ struct AtomListEntry {
 
     this->tail->set_next(e2->head);
     e2->head->set_prev(this->tail);
-    e2->tail->set_next(reinterpret_cast<LmnSymbolAtomRef>(this));
+    e2->tail->set_next(as_atom());
     this->tail = e2->tail;
     this->n    += e2->size();
     e2->set_empty();
@@ -144,9 +150,9 @@ struct AtomListEntry {
     return nullptr;
   }
 
-  void put_record(int id, LmnAtomRef record) { hashtbl_put(this->record, id, (HashKeyType)record); }
+  void put_record(int id, LmnAtomRef record) const { hashtbl_put(this->record, id, (HashKeyType)record); }
 
-  void move_atom_to_atomlist_tail(LmnSymbolAtomRef a) {
+  void move_atom_to_atomlist_tail(LmnSymbolAtomRef a) const {
     a->get_next()->set_prev(a->get_prev());
     a->get_prev()->set_next(a->get_next());
     this->tail->set_next(a);
@@ -155,9 +161,9 @@ struct AtomListEntry {
   /* 以下, 履歴管理用アトムのためのコード(nakata) */
   void make_head_record() {
     // insert head atom
-    LmnSymbolAtomRef head_atom = new LmnSymbolAtom;
-    auto             funct     = lmn_functor_table->intern(ANONYMOUS, lmn_intern("head"), 0);
-    head_atom->procId          = -2;
+    auto *head_atom   = new LmnSymbolAtom;
+    auto  funct       = lmn_functor_table->intern(ANONYMOUS, lmn_intern("head"), 0);
+    head_atom->procId = -2;
     head_atom->set_functor(funct);
     head_atom->record_flag = true;
 
@@ -173,19 +179,19 @@ struct AtomListEntry {
   LmnSymbolAtomRef make_new_recordatom(bool record_flag, LmnFunctor f) {
     // exception
     if (!this->head->record_flag) {
-      fprintf(stdout, "\033[31mthere isn't the head atom for record\33[0m\n");
+      fmt::print(fmt::fg(fmt::color::red), "there isn't the head atom for record\n");
       make_head_record();
     }
 
     // make new record atom
-    LmnSymbolAtomRef newatom = new LmnSymbolAtom;
+    auto *newatom = new LmnSymbolAtom;
 
     newatom->procId = -1;
     newatom->set_functor(f);
     newatom->record_flag = true;
 
     // change the pointer
-    auto next_head_atom = this->head->get_next();
+    auto *next_head_atom = this->head->get_next();
 
     next_head_atom->set_prev(newatom);
     newatom->set_next(next_head_atom);
@@ -201,76 +207,72 @@ struct AtomListEntry {
   /* ここまで(nakata) */
 
   class const_iterator {
-    LmnSymbolAtomRef     a_index;
-    AtomListEntry const *a_ent;
+    LmnSymbolAtomRef     a_index{};
+    AtomListEntry const *a_ent{};
 
   public:
-    using difference_type   = intptr_t;
+    using difference_type   = std::ptrdiff_t;
     using value_type        = LmnSymbolAtomRef;
     using pointer           = LmnSymbolAtomRef *;
     using reference         = LmnSymbolAtomRef &;
     using iterator_category = std::bidirectional_iterator_tag;
 
-    const_iterator() : a_ent(nullptr), a_index(nullptr) {}
-    const_iterator(AtomListEntry const *ent, LmnSymbolAtomRef index) {
-      a_ent   = ent;
-      a_index = index;
-    };
+    const_iterator() = default;
+    const_iterator(AtomListEntry const *ent, LmnSymbolAtomRef index) : a_index(index), a_ent(ent) {}
 
     const_iterator &operator++() {
       a_index = a_index->get_next();
       return *this;
-    };
+    }
     const_iterator operator++(int) {
       auto ret = *this;
       ++ret;
       return ret;
-    };
-    const_iterator operator--() {
+    }
+    const_iterator &operator--() {
       a_index = a_index->get_prev();
       return *this;
     }
-    const_iterator operator--(int i) {
+    const_iterator operator--(int) {
       auto ret = *this;
-      ++ret;
+      --ret;
       return ret;
     }
-    LmnSymbolAtomRef       &operator*() { return this->a_index; };
-    LmnSymbolAtomRef const &operator*() const { return this->a_index; };
+
+    value_type       &operator*() { return this->a_index; }
+    value_type const &operator*() const { return this->a_index; }
 
     bool operator!=(const_iterator const &itr) const {
       return this->a_ent != itr.a_ent || this->a_index != itr.a_index;
-    };
-    bool operator==(const_iterator const &itr) const { return !(*this != itr); };
+    }
+    bool operator==(const_iterator const &itr) const { return !(*this != itr); }
   };
-  const_iterator begin() const { return const_iterator(this, head); }
-  const_iterator end() const {
-    return const_iterator(this, reinterpret_cast<LmnSymbolAtomRef>(const_cast<AtomListEntry *>(this)));
-  }
 
-  const_iterator make_iterator(LmnSymbolAtomRef atom) const { return const_iterator(this, atom); }
+  const_iterator begin() const { return {this, head}; }
+  const_iterator end() const { return {this, reinterpret_cast<LmnSymbolAtomRef>(const_cast<AtomListEntry *>(this))}; }
+
+  const_iterator make_iterator(LmnSymbolAtomRef atom) const { return {this, atom}; }
 
   const_iterator insert(int findatomid, LmnSymbolAtomRef record) {
     hashtbl_put(this->record, findatomid, (HashKeyType)record);
-    auto start_atom = atomlist_head(this);
+    auto *start_atom = atomlist_head(this);
     /* 履歴アトムを挿入する */
     ((LmnSymbolAtomRef)this)->set_next(record);
     record->set_prev((LmnSymbolAtomRef)this);
     record->set_next(start_atom);
     start_atom->set_prev(record);
-    return const_iterator(this, record);
+    return {this, record};
   }
 
   const_iterator find_record(int findatomid) {
     if (this->record) {
-      return const_iterator(this, (LmnSymbolAtomRef)hashtbl_get_default(this->record, findatomid, 0));
-    } else {
-      this->record = hashtbl_make(4);
-      return end();
+      return {this, (LmnSymbolAtomRef)hashtbl_get_default(this->record, findatomid, 0)};
     }
+    this->record = hashtbl_make(4);
+    return end();
   }
 
-  void splice(const_iterator position, AtomListEntry &x, const_iterator i) {
+  static void splice(const_iterator position, AtomListEntry &x, const_iterator i) {
     (*i)->get_next()->set_prev((*i)->get_prev());
     (*i)->get_prev()->set_next((*i)->get_next());
 
@@ -325,7 +327,7 @@ public:
 
   RecordList(int rule_number) { latest_rule_number = rule_number; }
 
-  int get_rule_number() { return latest_rule_number; }
+  int get_rule_number() const { return latest_rule_number; }
 
   void set_rule_number(int rule_number) { latest_rule_number = rule_number; }
 
@@ -342,13 +344,12 @@ public:
   void push_back_newatom(AtomListEntry *atomlist_ent, int rule_number, size_t reg) {
     if (rule_number >= this->atoms.size()) {
       // size error
-      fprintf(stdout, "\033[31mpush_back_newatom is fault : atomlist.hpp\33[0m\n");
+      fmt::print(fmt::fg(fmt::color::red), "push_back_newatom is fault : atomlist.hpp\n");
       exit(-1);
     }
 
-    auto        func_record = lmn_functor_table->intern(ANONYMOUS, lmn_intern("record"), 0);
-    RecordAtom *atom =
-        new RecordAtom(atomlist_ent->make_new_recordatom(true, func_record), atomlist_ent->head, rule_number);
+    auto  func_record = lmn_functor_table->intern(ANONYMOUS, lmn_intern("record"), 0);
+    auto *atom = new RecordAtom(atomlist_ent->make_new_recordatom(true, func_record), atomlist_ent->head, rule_number);
     this->atoms[rule_number].resize(reg);
     this->loop_flag[rule_number].resize(reg);
     this->atoms[rule_number][reg - 1]     = atom;
@@ -356,8 +357,8 @@ public:
   }
 
   void loop(AtomListEntry *atomlist_ent, int rule_number, int reg) {
-    auto recordatom = atoms[rule_number][reg - 1];
-    auto atom       = recordatom->get_record();
+    auto *recordatom = atoms[rule_number][reg - 1];
+    auto *atom       = recordatom->get_record();
     if (atom == atomlist_ent->tail && loop_flag[rule_number][reg - 1]) {
       loop_flag[rule_number][reg - 1] = false;
       recordatom->go_head();
@@ -368,8 +369,8 @@ public:
   }
 
   void loop_back(int rule_number, int reg) {
-    auto atom = atoms[rule_number][reg - 1]->get_record();
-    auto head = atoms[rule_number][reg - 1]->get_head();
+    auto *atom = atoms[rule_number][reg - 1]->get_record();
+    auto *head = atoms[rule_number][reg - 1]->get_head();
 
     if (atom->prev != head)
       atom->prev->atom_swap_forward();

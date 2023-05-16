@@ -40,8 +40,7 @@
 
 #include <utility>
 
-namespace slim {
-namespace element {
+namespace slim::element {
 
 template <typename T> class optional {
   bool empty;
@@ -128,8 +127,7 @@ public:
   T       *operator->() { return &value_; }
 };
 
-} // namespace element
-} // namespace slim
+} // namespace slim::element
 
 template <typename T, typename U> bool operator<(const slim::element::optional<T> opt, U const &value) {
   return (opt) ? (*opt < value) : true;

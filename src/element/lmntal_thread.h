@@ -113,7 +113,7 @@ using mtx_data_t = unsigned long;
 
 /* 2のべき乗を使うと, &演算で剰余を求めることができる.
  * というわけで, wlockの数は2のべき乗でないと, 困る */
-#define DEFAULT_WLOCK_NUM (16384U)
+constexpr auto DEFAULT_WLOCK_NUM = 16384U;
 #define READABLE (TRUE)
 #define DISREADABLE (FALSE)
 
@@ -148,8 +148,7 @@ void ewlock_release_enter(EWLock *lock, unsigned long something);
 void ewlock_reject_enter(EWLock *lock, unsigned long something);
 void ewlock_permit_enter(EWLock *lock, unsigned long something);
 
-namespace slim {
-namespace element {
+namespace slim::element {
 /** std::lock_guard/std::unique_lockのためのEWLockのラッパー */
 struct ewmutex {
 private:
@@ -179,8 +178,7 @@ public:
       tag.unlock(lck, id);
   }
 };
-} // namespace element
-} // namespace slim
+} // namespace slim::element
 
 /* @} */
 

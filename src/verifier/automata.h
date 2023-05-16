@@ -46,9 +46,12 @@
  * @{
  */
 
-#include "../lmntal.h"
+#include "ankerl/unordered_dense.hpp"
+
 #include "element/element.h"
+#include "lmntal.h"
 #include "vm/vm.h"
+#include <string>
 
 using AutomataRef           = struct Automata *;
 using AutomataStateRef      = struct AutomataState *;
@@ -57,26 +60,40 @@ using AutomataSCC           = struct AutomataSCC;
 
 using atmstate_id_t = BYTE; /* 性質ラベル(状態)数は256個まで */
 
+struct string_hash {
+  using is_transparent = void; // enable heterogeneous overloads
+  using is_avalanching = void; // mark class as high quality avalanching hash
+
+  [[nodiscard]] auto operator()(std::string_view str) const noexcept -> uint64_t {
+    return ankerl::unordered_dense::hash<std::string_view>{}(str);
+  }
+};
+
 struct Automata {
   atmstate_id_t init_state;
   unsigned int  prop_num;
   Vector        states; /* Vector of AutomataState */
-  st_table_t    state_name_to_id;
-  st_table_t    id_to_state_name;
-  st_table_t    prop_to_id;
-  Vector        sccs;
+
+  using strMap = ankerl::unordered_dense::map<std::string, unsigned int, string_hash, std::equal_to<>>;
+  using intMap = ankerl::unordered_dense::map<int, std::string>;
+
+  strMap state_name_to_id2{};
+  intMap id_to_state_name2{};
+  strMap prop_to_id2{};
+
+  Vector sccs;
 
   Automata();
   ~Automata();
-  atmstate_id_t    state_id(char const *);
-  char const      *state_name(atmstate_id_t);
-  void             add_state(AutomataStateRef);
-  AutomataStateRef get_state(atmstate_id_t);
-  atmstate_id_t    get_init_state();
-  void             set_init_state(atmstate_id_t);
-  unsigned int     propsym_to_id(char *prop_name);
-  void             analysis();
-  void             print_property();
+  atmstate_id_t      state_id(char const *);
+  std::string const &state_name(atmstate_id_t) const;
+  void               add_state(AutomataStateRef);
+  AutomataStateRef   get_state(atmstate_id_t) const;
+  atmstate_id_t      get_init_state() const;
+  void               set_init_state(atmstate_id_t);
+  unsigned int       propsym_to_id(char *prop_name);
+  void               analysis();
+  void               print_property() const;
 };
 
 struct AutomataState {
@@ -89,14 +106,14 @@ struct AutomataState {
   AutomataState(unsigned int, BOOL, BOOL);
   ~AutomataState();
   void                  add_transition(AutomataTransitionRef t);
-  atmstate_id_t         get_id();
-  unsigned int          get_transition_num();
-  AutomataTransitionRef get_transition(unsigned int index);
-  BOOL                  get_is_accept();
-  BOOL                  get_is_end();
+  atmstate_id_t         get_id() const;
+  unsigned int          get_transition_num() const;
+  AutomataTransitionRef get_transition(unsigned int index) const;
+  BOOL                  get_is_accept() const;
+  BOOL                  get_is_end() const;
   void                  set_scc(AutomataSCC *scc);
-  BYTE                  scc_type();
-  AutomataSCC          *get_scc();
+  BYTE                  scc_type() const;
+  AutomataSCC          *get_scc() const;
 };
 
 /* Propositional Logic Formula */
@@ -108,8 +125,8 @@ struct AutomataTransition {
 
   AutomataTransition(atmstate_id_t next, PLFormulaRef f);
   ~AutomataTransition();
-  atmstate_id_t get_next()const;
-  PLFormulaRef  get_formula()const;
+  atmstate_id_t get_next() const;
+  PLFormulaRef  get_formula() const;
 };
 
 struct AutomataSCC {
@@ -121,7 +138,7 @@ private:
 public:
   AutomataSCC();
   ~AutomataSCC() = default;
-  char const *get_name();
+  char const *get_name() const;
   /** CAUTION: MT-Unsafe */
   void issue_id() {
     id = unsafe_id_counter++;

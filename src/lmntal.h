@@ -43,6 +43,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <vector>
 
 #include "config.h"
 
@@ -166,7 +167,6 @@ using LmnHlinkRank = uint32_t;
  */
 
 struct Vector;
-using Vector = struct Vector;
 
 /* ---------------------------------------------------------------------
  * for Model Checking
@@ -467,8 +467,8 @@ struct LmnTLS {
   ProcessID     proc_next_id;
 };
 
-extern struct Vector *lmn_id_pool;
-extern struct LmnEnv  lmn_env;
+extern std::vector<LmnWord> *lmn_id_pool;
+extern struct LmnEnv         lmn_env;
 extern LMN_TLS_TYPE(LmnTLS) lmn_tls;
 
 void env_my_TLS_init(unsigned int th_id);
@@ -478,12 +478,12 @@ void lmn_stream_destroy();
 
 #define LMN_PRIMARY_ID (0U)
 
-#define env_proc_id_pool() (lmn_id_pool)
-#define env_set_proc_id_pool(V) (lmn_id_pool = (V))
-#define env_return_id(N)                                                                                               \
-  if (lmn_id_pool)                                                                                                     \
-  lmn_id_pool->push((vec_data_t)(N))
-
+static inline auto env_proc_id_pool() { return lmn_id_pool; }
+static inline auto env_set_proc_id_pool(std::vector<LmnWord> *v) { lmn_id_pool = v; }
+static inline auto env_return_id(LmnWord n) {
+  if (lmn_id_pool)
+    lmn_id_pool->emplace_back(n);
+}
 #if /**/ !defined(ENABLE_PARALLEL) || defined(USE_TLS_KEYWORD)
 static inline auto env_gen_state_id() {
   lmn_tls.state_id += lmn_tls.thread_num;
@@ -495,7 +495,14 @@ static inline auto env_threads_num() { return lmn_tls.thread_num; }
 static inline auto env_set_threads_num(unsigned int N) { lmn_tls.thread_num = N; }
 static inline auto env_reset_proc_ids() { lmn_tls.proc_next_id = 1U; }
 static inline auto env_set_next_id(ProcessID N) { lmn_tls.proc_next_id = N; }
-#define env_gen_next_id() ((lmn_id_pool && lmn_id_pool->get_num() > 0) ? lmn_id_pool->pop() : lmn_tls.proc_next_id++)
+static inline auto env_gen_next_id() {
+  if (lmn_id_pool && !lmn_id_pool->empty()) {
+    auto ret = lmn_id_pool->back();
+    lmn_id_pool->pop_back();
+    return ret;
+  }
+  return lmn_tls.proc_next_id++;
+}
 static inline auto env_next_id() { return lmn_tls.proc_next_id; }
 #
 #elif /**/ defined(USE_TLS_PTHREAD_KEY)

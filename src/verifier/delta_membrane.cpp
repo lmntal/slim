@@ -37,14 +37,13 @@
  * $Id$
  */
 #include "delta_membrane.h"
+#include <bit>
 #ifdef PROFILE
 #include "runtime_status.h"
 #endif
 
 MemDeltaRoot::MemDeltaRoot(LmnMembraneRef root_mem, LmnRuleRef rule, unsigned long next_id) {
-  int size;
-
-  size = round2up(next_id + 10); /* TODO: 引数に渡す適当なサイズは？ */
+  auto size = std::bit_ceil(next_id + 10); /* TODO: 引数に渡す適当なサイズは？ */
 
   this->next_id      = next_id;
   this->root_mem     = root_mem;

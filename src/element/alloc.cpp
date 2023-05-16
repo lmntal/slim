@@ -66,10 +66,10 @@ LmnSymbolAtomRef lmn_new_atom(LmnFunctor f) {
   arity = LMN_FUNCTOR_ARITY(lmn_functor_table, f);
   cid   = env_my_thread_id();
 
-  if (atom_memory_pools[arity][cid] == 0) {
-    atom_memory_pools[arity][cid] = memory_pool_new(LMN_SATOM_SIZE(arity));
+  if (atom_memory_pools[arity][cid] == nullptr) {
+    atom_memory_pools[arity][cid] = new memory_pool(LMN_SATOM_SIZE(arity));
   }
-  ap = (LmnSymbolAtomRef)memory_pool_malloc(atom_memory_pools[arity][cid]);
+  ap = (LmnSymbolAtomRef)atom_memory_pools[arity][cid]->allocate(0);
   ap->set_functor(f);
   ap->set_id(0);
 
@@ -84,7 +84,7 @@ void lmn_delete_atom(LmnSymbolAtomRef ap) {
 
   arity = LMN_FUNCTOR_ARITY(lmn_functor_table, ap->get_functor());
   cid   = env_my_thread_id();
-  memory_pool_free(atom_memory_pools[arity][cid], ap);
+  atom_memory_pools[arity][cid]->deallocate(ap, 0);
 }
 
 void free_atom_memory_pools() {
@@ -95,7 +95,7 @@ void free_atom_memory_pools() {
   for (i = 0; i < arity_num; i++) {
     for (j = 0; j < core_num; j++) {
       if (atom_memory_pools[i][j]) {
-        memory_pool_delete(atom_memory_pools[i][j]);
+        delete atom_memory_pools[i][j];
       }
     }
     free(atom_memory_pools[i]);

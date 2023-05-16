@@ -69,16 +69,15 @@ namespace c14 = slim::element;
 
 /** Macros
  */
-#define POR_TABLE_SIZE (512U)
-#define POR_VEC_SIZE (32U)
-#define POR_STRANS_SIZE (4U)
-#define POR_ID_INITIALIZER (1U)
+enum { POR_TABLE_SIZE = (512U), POR_VEC_SIZE = (32U), POR_STRANS_SIZE = (4U), POR_ID_INITIALIZER = (1U) };
 
-#define INDEPENDENCY_CHECKED_MASK (0x01U)
-#define REPRESENTATIVE_MASK (0x01U << 1)
-#define POR_EXPANDED_MASK (0x01U << 2)
-#define POR_INSERTED_MASK (0x01U << 3)
-#define POR_OUTSIDE_MASK (0x01U << 4)
+enum {
+  INDEPENDENCY_CHECKED_MASK = (0x01U),
+  REPRESENTATIVE_MASK       = (0x01U << 1),
+  POR_EXPANDED_MASK         = (0x01U << 2),
+  POR_INSERTED_MASK         = (0x01U << 3),
+  POR_OUTSIDE_MASK          = (0x01U << 4)
+};
 
 void McPorData::set_independency_checked(State *s) { s->flags3 |= INDEPENDENCY_CHECKED_MASK; }
 void McPorData::unset_independency_checked(State *s) { s->flags3 &= ~INDEPENDENCY_CHECKED_MASK; }
@@ -127,7 +126,7 @@ void McPorData::free_por_vars() {
 
 void McPorData::por_calc_ampleset(StateSpaceRef ss, State *s, MCReactContext *rc, Vector *new_s, BOOL f) {
   if (!this->rc) {
-    this->rc    = c14::make_unique<MCReactContext>(nullptr);
+    this->rc    = std::make_unique<MCReactContext>(nullptr);
     this->flags = f;
     mc_unset_por(this->flags);
     mc_set_trans(this->flags);

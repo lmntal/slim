@@ -18,6 +18,7 @@ bison_target(
 
 target_include_directories(lmn_loader PRIVATE
     ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}/third_party
 )
 
 target_sources(lmn_loader PRIVATE

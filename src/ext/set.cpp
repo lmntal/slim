@@ -97,8 +97,8 @@ LmnBinStrRef LmnSet::lmn_inner_mem_encode(LmnMembraneRef m) {
   AtomListEntryRef plus_atom_list = m->get_atomlist(LMN_UNARY_PLUS_FUNCTOR);
   LMN_ASSERT(plus_atom_list != NULL);
   auto *plus = (LmnAtomRef)atomlist_head(plus_atom_list);
-  LmnAtomRef in   = ((LmnSymbolAtomRef)plus)->get_link(0);
-  LmnAtomRef out  = ((LmnSymbolAtomRef)in)->get_link(0);
+  auto *in   = ((LmnSymbolAtomRef)plus)->get_link(0);
+  auto *out  = ((LmnSymbolAtomRef)in)->get_link(0);
 
   mem_remove_symbol_atom(m, (LmnSymbolAtomRef)in);
   lmn_delete_atom((LmnSymbolAtomRef)in);
@@ -315,8 +315,8 @@ void LmnSet::cb_set_to_list(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0
                             LmnLinkAttr t1) {
   LmnAtomRef cons = lmn_mem_newatom(mem, LMN_LIST_FUNCTOR);
   lmn_mem_newlink(mem, a1, t1, LMN_ATTR_GET_VALUE(t1), cons, LMN_ATTR_MAKE_LINK(2), 2);
-  st_table_t                  tbl = ((LmnSet::LmnSetRef)a0)->tbl;
-  InnerToList::InnerToListRef itl = LMN_MALLOC<struct InnerToList>();
+  st_table_t tbl = ((LmnSet::LmnSetRef)a0)->tbl;
+  auto      *itl = LMN_MALLOC<struct InnerToList>();
   itl->set_cons_as(cons);
   itl->set_mem_as(mem);
   itl->set_ht_as(tbl->type);
@@ -334,15 +334,15 @@ void LmnSet::cb_set_to_list(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0
  * @private
  */
 int LmnSet::inner_set_to_list(st_data_t key, st_data_t rec, st_data_t obj) {
-  InnerToList::InnerToListRef itl = (InnerToList::InnerToListRef)obj;
+  auto *itl = (InnerToList::InnerToListRef)obj;
   if (itl->ht() == &(LmnSet::type_id_hash)) {
     lmn_mem_newlink(itl->mem(), itl->cons(), LMN_ATTR_MAKE_LINK(0), 0, (LmnAtomRef)key, LMN_INT_ATTR, 0);
     lmn_mem_push_atom(itl->mem(), (LmnAtomRef)key, LMN_INT_ATTR);
   } else if (itl->ht() == &(LmnSet::type_mem_hash)) {
     AtomListEntryRef in_atom_list = ((LmnMembraneRef)key)->get_atomlist(LMN_IN_PROXY_FUNCTOR);
     LMN_ASSERT(in_atom_list != NULL);
-    LmnAtomRef in  = (LmnAtomRef)atomlist_head(in_atom_list);
-    LmnAtomRef out = lmn_mem_newatom(itl->mem(), LMN_OUT_PROXY_FUNCTOR);
+    auto *in  = (LmnAtomRef)atomlist_head(in_atom_list);
+    auto *out = lmn_mem_newatom(itl->mem(), LMN_OUT_PROXY_FUNCTOR);
     lmn_newlink_in_symbols((LmnSymbolAtomRef)in, 0, (LmnSymbolAtomRef)out, 0);
     lmn_mem_newlink(itl->mem(), itl->cons(), LMN_ATTR_MAKE_LINK(0), 0, out, LMN_ATTR_MAKE_LINK(1), 1);
     (itl->mem())->add_child_mem((LmnMembraneRef)key);

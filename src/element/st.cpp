@@ -15,8 +15,8 @@ struct st_table_entry {
   st_table_entry *next;
 };
 
-#define ST_DEFAULT_MAX_DENSITY 5
-#define ST_DEFAULT_INIT_TABLE_SIZE 11
+constexpr auto ST_DEFAULT_MAX_DENSITY     = 5;
+constexpr auto ST_DEFAULT_INIT_TABLE_SIZE = 11;
 
 /*
  * DEFAULT_MAX_DENSITY is the default for the largest we allow the
@@ -29,16 +29,19 @@ struct st_table_entry {
  */
 
 /* ST Objective-C additions */
-static int                 st_ptrcmp(void *p1, void *p2);
-static long                st_ptrhash(void *p);
+static int                 st_ptrcmp(void *x, void *y);
+static long                st_ptrhash(void *n);
 static struct st_hash_type type_ptrhash   = {st_ptrcmp, st_ptrhash};
 static struct st_hash_type type_numhash   = {(st_cmp_func)st_numcmp, (st_hash_func)st_numhash};
 static struct st_hash_type type_strhash   = {(st_cmp_func)strcmp, (st_hash_func)st_strhash};
 static struct st_hash_type type_statehash = {(st_cmp_func)state_cmp_with_compress, (st_hash_func)st_statehash};
 
-static void rehash(st_table_t tbl);
+static void rehash(st_table_t table);
 
-#define EQUAL(table, x, y) ((x) == (y) || (*table->type->compare)((void *)(x), (void *)(y)) == 0)
+#define EQUAL(table, x, y) ((x) == (y) || (*(table)->type->compare)((void *)(x), (void *)(y)) == 0)
+constexpr auto equal(st_table_t table, st_data_t x, st_data_t y) -> bool {
+  return (x == y || (*(table)->type->compare)((void *)x, (void *)y) == 0);
+}
 
 #define do_hash(key, table) (unsigned long)(*(table)->type->hash)((key))
 #define do_hash_bin(key, table) (do_hash(key, table) % (table)->num_bins)
@@ -47,7 +50,7 @@ static void rehash(st_table_t tbl);
  * MINSIZE is the minimum size of a dictionary.
  */
 
-#define MINSIZE 8
+constexpr auto MINSIZE = 8;
 
 /* Table of prime numbers 2^n+a, 2<=n<=30. */
 static long primes[] = {8 + 3,
@@ -149,20 +152,20 @@ st_table_t st_init_ptrtable() { return st_init_table(&type_ptrhash); }
 
 st_table_t st_init_ptrtable_with_size(int size) { return st_init_table_with_size(&type_ptrhash, size); }
 
-void st_free_table(st_table_t table) {
+void st_free_table(st_table_t tbl) {
   st_table_entry *ptr, *next;
   int             i;
 
-  for (i = 0; i < table->num_bins; i++) {
-    ptr = table->bins[i];
-    while (ptr != 0) {
+  for (i = 0; i < tbl->num_bins; i++) {
+    ptr = tbl->bins[i];
+    while (ptr != nullptr) {
       next = ptr->next;
       LMN_FREE(ptr);
       ptr = next;
     }
   }
-  LMN_FREE(table->bins);
-  LMN_FREE(table);
+  LMN_FREE(tbl->bins);
+  LMN_FREE(tbl);
 }
 
 unsigned long st_table_space(st_table_t tbl) {
@@ -174,7 +177,11 @@ unsigned long st_table_space(st_table_t tbl) {
 }
 
 #define PTR_NOT_EQUAL(table, ptr, hash_val, key)                                                                       \
-  ((ptr) != 0 && (ptr->hash != (hash_val) || !EQUAL((table), (key), (ptr)->key)))
+  ((ptr) != 0 && ((ptr)->hash != (hash_val) || !EQUAL((table), (key), (ptr)->key)))
+
+constexpr auto ptr_not_equal(st_table_t table, st_table_entry *ptr, unsigned long hash_val, st_data_t key) {
+  return ptr != nullptr && (ptr->hash != hash_val || !equal(table, key, ptr->key));
+}
 
 #ifdef HASH_LOG
 #define COLLISION collision++
@@ -239,13 +246,12 @@ int st_lookup_with_col(st_table_t table, st_data_t key, st_data_t *value, long *
   hash_val = do_hash((void *)key, table);
   FIND_ENTRY_WITH_COL(table, ptr, hash_val, bin_pos, *n_col);
 
-  if (ptr == 0) {
+  if (ptr == nullptr) {
     return 0;
-  } else {
-    if (value != 0)
-      *value = ptr->record;
-    return 1;
   }
+  if (value != nullptr)
+    *value = ptr->record;
+  return 1;
 }
 
 int st_contains(st_table_t table, st_data_t key) {

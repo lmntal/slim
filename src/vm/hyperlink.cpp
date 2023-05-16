@@ -827,18 +827,15 @@ static inline void sameproccxt_destroy(SimpleHashtbl *hl_sameproccxt) {
 }
 
 /* rootの子を全てtreeに格納する(withoutは除く) */
-void HyperLink::get_children_without(Vector *tree, HyperLink *without) {
-  HashSetIterator it;
-  for (it = hashset_iterator(this->children); !hashsetiter_isend(&it); hashsetiter_next(&it)) {
-    //    printf("%p\n", (void *)((HyperLink *)hashsetiter_entry(&it))->atom);
-    //    pro1++;
-    HyperLink *hl = (HyperLink *)hashsetiter_entry(&it);
+void HyperLink::get_children_without(std::vector<HyperLink *> &tree, HyperLink *without) const {
+  for (auto it = hashset_iterator(this->children); !hashsetiter_isend(&it); hashsetiter_next(&it)) {
+    auto *hl = (HyperLink *)hashsetiter_entry(&it);
     if (hl->children && hl->rank > 0) { /* hlが子を持つならば */
       hl->get_children_without(tree, without);
     }
 
     if (hl != without) {
-      tree->push((LmnWord)hl);
+      tree.emplace_back(hl);
     }
   }
 }
@@ -846,13 +843,13 @@ void HyperLink::get_children_without(Vector *tree, HyperLink *without) {
 /* start_hlと同じ集合に属するhyperlinkを全てVectorに格納して返す.
  * fidnproccxtで使用する関係上,
  * start_hlは探索対象外のHyperLinkであるため, treeの最後に追加する  */
-void HyperLink::get_elements(Vector *tree) {
+void HyperLink::get_elements(std::vector<HyperLink *> &tree) {
   HyperLink *root = this->get_root();
   if (root->rank > 0)
     root->get_children_without(tree, this);
   if (root != this)
-    tree->push((LmnWord)root);
-  tree->push((LmnWord)this);
+    tree.emplace_back(root);
+  tree.emplace_back(this);
 }
 
 /* ハイパーリンクhlのハッシュ値を返す. */

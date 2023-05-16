@@ -153,9 +153,9 @@ BOOL LMN_IS_EX_FUNCTOR(LmnFunctor FUNC) { return FUNC == LMN_HL_FUNC; }
 LmnAtomRef lmn_copy_atom(LmnAtomRef atom, LmnLinkAttr attr) {
   if (LMN_ATTR_IS_DATA(attr)) {
     return (LmnAtomRef)lmn_copy_data_atom((LmnDataAtomRef)atom, attr);
-  } else { /* symbol atom */
-    return lmn_copy_satom((LmnSymbolAtomRef)atom);
   }
+  /* symbol atom */
+  return lmn_copy_satom((LmnSymbolAtomRef)atom);
 }
 
 LmnSymbolAtomRef lmn_copy_satom(LmnSymbolAtomRef atom) {

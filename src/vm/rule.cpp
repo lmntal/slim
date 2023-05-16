@@ -37,6 +37,7 @@
  */
 
 #include "rule.h"
+#include "ankerl/unordered_dense.hpp"
 #include "lmntal.h"
 #include "rule.hpp"
 #include "system_ruleset.h"
@@ -156,36 +157,28 @@ void lmn_add_initial_system_rule(LmnRuleRef rule) { initial_system_ruleset->put(
  * Module
  */
 
-st_table_t module_table;
-
-static void init_module_table() { module_table = st_init_numtable(); }
-
-static void destroy_module_table() { st_free_table(module_table); }
+ankerl::unordered_dense::map<lmn_interned_str, LmnRuleSetRef> mod_table{};
 
 /* Associates module_name with ruleset */
 void lmn_set_module(lmn_interned_str module_name, LmnRuleSetRef ruleset) {
-  st_insert(module_table, (st_data_t)module_name, (st_data_t)ruleset);
+  mod_table[module_name] = ruleset;
 }
 
 /* Returns RuleSet associated with module_name. If nothing is, returns NULL. */
 LmnRuleSetRef lmn_get_module_ruleset(lmn_interned_str module_name) {
-  LmnRuleSetRef ruleset;
-
-  if (st_lookup(module_table, (st_data_t)module_name, (st_data_t *)&ruleset))
-    return ruleset;
+  if (auto it = mod_table.find(module_name); it != mod_table.end())
+    return it->second;
   return nullptr;
 }
 
 /*----------------------------------------------------------------------*/
 
 void init_rules() {
-  init_module_table();
   init_system_ruleset();
   init_initial_ruleset();
 }
 
 void destroy_rules() {
-  destroy_module_table();
   destroy_system_ruleset();
   destroy_initial_ruleset();
 }

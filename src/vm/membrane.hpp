@@ -165,9 +165,9 @@ struct LmnMembrane {
   void         delete_mem(LmnMembraneRef mem);
   void         activate_ancestors();
   BOOL         nmems(unsigned int count);
-  int          child_mem_num();
-  unsigned int count_children();
-  unsigned int count_descendants();
+  int          child_mem_num() const;
+  unsigned int count_children() const;
+  unsigned int count_descendants() const;
   BOOL         nfreelinks(unsigned int count);
   void         copy_rules(LmnMembraneRef src);
   void         clearrules();

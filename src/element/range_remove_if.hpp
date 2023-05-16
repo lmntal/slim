@@ -37,8 +37,7 @@
 
 #include <iterator>
 
-namespace slim {
-namespace element {
+namespace slim::element {
 
 template <typename Function, typename InputIterator> struct range_remove_if {
   struct remove_if_iterator {
@@ -102,5 +101,4 @@ range_remove_if<Function, InputIterator> make_range_remove_if(InputIterator begi
   return range_remove_if<Function, InputIterator>(begin_, end_, f);
 }
 
-} // namespace element
-} // namespace slim
+} // namespace slim::element

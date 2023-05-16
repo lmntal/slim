@@ -37,6 +37,8 @@
 
 #include "state_dumper.h"
 
+#include "fmt/core.h"
+
 #include "statespace.h"
 
 namespace state_dumper {
@@ -368,11 +370,12 @@ void CUI::dump_state_data(State *s, unsigned long print_id, StateSpace *owner) {
 #ifdef KWBT_OPT
   fprintf(_fp, "%lu::", cost);
 #endif
-  fprintf(_fp, "%s", has_property ? owner->automata()->state_name(state_property_state(s)) : "");
+  fmt::print(_fp, "{}", has_property ? owner->automata()->state_name(state_property_state(s)) : "");
   state_print_mem(s);
 }
 
-void CUI::print_state_label(State *s, StateSpace *owner) { /* 状態のグローバルルート膜の膜名としてdump済 */ }
+void CUI::print_state_label(State *s, StateSpace *owner) { /* 状態のグローバルルート膜の膜名としてdump済 */
+}
 
 void LaViT::dump_state_data(State *s, unsigned long print_id, StateSpace *owner) {
   fprintf(_fp, "%lu::", print_id);
@@ -380,9 +383,9 @@ void LaViT::dump_state_data(State *s, unsigned long print_id, StateSpace *owner)
 }
 
 void LaViT::print_state_label(State *s, StateSpace *owner) {
-  auto a = owner->automata();
-  fprintf(_fp, "%lu::", state_format_id(s, owner->is_formatted()));
-  fprintf(_fp, "%s\n", a->state_name(state_property_state(s)));
+  auto *a = owner->automata();
+  fmt::print(_fp, "{}::", state_format_id(s, owner->is_formatted()));
+  fmt::print(_fp, "{}\n", a->state_name(state_property_state(s)));
 }
 
 void LaViT::print_mem(LmnMembrane *mem) { fprintf(_fp, "%s\n", slim::to_string(mem).c_str()); }

@@ -96,8 +96,8 @@ struct HyperLink {
   int              lmn_rank();
   int              element_num();
   BOOL             eq_hl(HyperLink *hl2);
-  void             get_children_without(Vector *tree, HyperLink *without);
-  void             get_elements(Vector *tree);
+  void             get_children_without(std::vector<HyperLink *> &tree, HyperLink *without) const;
+  void             get_elements(std::vector<HyperLink *> &tree);
   unsigned long    hash();
 };
 
@@ -146,20 +146,16 @@ struct ProcCxt {
     if (!LMN_ATTR_IS_HL(linked_attr))
       return false;
 
-    auto linked_atom = (LmnSymbolAtomRef)atom->get_link(i);
-    auto linked_hl   = lmn_hyperlink_at_to_hl(linked_atom);
+    auto *linked_atom = (LmnSymbolAtomRef)atom->get_link(i);
+    auto *linked_hl   = lmn_hyperlink_at_to_hl(linked_atom);
 
-    if (original_ && original_->start && !linked_hl->eq_hl(original_->start)) {
-      return false;
-    }
-
-    return true;
+    return !original_ || !original_->start || linked_hl->eq_hl(original_->start);
   }
 
   void match(LmnSymbolAtomRef atom, int i) {
-    auto linked_atom = (LmnSymbolAtomRef)atom->get_link(i);
-    auto linked_hl   = lmn_hyperlink_at_to_hl(linked_atom);
-    start            = linked_hl;
+    auto *linked_atom = (LmnSymbolAtomRef)atom->get_link(i);
+    auto *linked_hl   = lmn_hyperlink_at_to_hl(linked_atom);
+    start             = linked_hl;
   }
 
   ProcCxt *original() { return original_; }
@@ -178,7 +174,7 @@ struct SameProcCxt {
   SameProcCxt(int length) : start_attr(0), proccxts(length) {}
 
   ~SameProcCxt() {
-    for (auto pc : proccxts)
+    for (auto *pc : proccxts)
       delete pc;
   }
 
@@ -197,7 +193,7 @@ struct SameProcCxt {
   // いい名前が見つかったら変える
   bool is_clone(int n) {
     for (int i = 0; i < n; i++) {
-      auto pc = proccxts[i];
+      auto *pc = proccxts[i];
       if (pc && pc->is_clone()) { /* clone proccxtを持つ */
         return true;              /* hyperlinkからfindatomを行なう */
       }
@@ -224,7 +220,7 @@ struct SameProcCxt {
       if (!proccxts[i]->original())
         continue;
 
-      auto hl            = proccxts[i]->original()->start;
+      auto *hl           = proccxts[i]->original()->start;
       proccxts[i]->start = hl;
       //      /* オリジナル側で探索始点のハイパーリンクが指定されていない
       //       *

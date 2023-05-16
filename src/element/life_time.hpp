@@ -46,8 +46,7 @@
 #include <iostream>
 #endif
 
-namespace slim {
-namespace element {
+namespace slim::element {
 
 /**
  * A system for profiling object's lifetime.
@@ -154,7 +153,6 @@ public:
   ~profile_lifetime() { LifetimeProfiler::destruct(this); }
 };
 
-} // namespace element
-} // namespace slim
+} // namespace slim::element
 
 #endif

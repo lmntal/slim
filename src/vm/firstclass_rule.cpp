@@ -36,12 +36,15 @@
 
 #include "firstclass_rule.h"
 
+#include <cstdio>
+
+#include "ankerl/unordered_dense.hpp"
+
 #include "element/st.h"
 #include "ffi/lmntal_system_adapter.h"
+#include "lmntal.h"
 #include "loader/loader.h"
 #include "vm/atom.h"
-
-#include <cstdio>
 
 #define LINK_PREFIX "L"
 #define LINKCONNECTION_MAX 100000
@@ -79,7 +82,7 @@ int linkconnection_make_linkno(Vector *link_connections, auto *satom, int link_p
   }
 
   for (int i = 0; i < link_connections->get_num(); i++) {
-    struct LinkConnection *c = (struct LinkConnection *)link_connections->get(i);
+    auto *c = (LinkConnection *)link_connections->get(i);
     if (c->atom == satom && c->link_pos == link_p) {
       return c->link_name;
     }
@@ -120,14 +123,16 @@ int linkconnection_make_linkno(Vector *link_connections, auto *satom, int link_p
 std::string string_of_data_atom(LmnDataAtomRef data, LmnLinkAttr attr) {
   if (attr == LMN_INT_ATTR) {
     return std::to_string((long)data);
-  } else if (attr == LMN_DBL_ATTR) {
+  }
+
+  if (attr == LMN_DBL_ATTR) {
     return std::to_string(lmn_get_double(data));
   }
 
   return "";
 }
 
-std::string string_of_template_membrane(Vector *link_connections, LmnMembraneRef mem, auto *cm_atom) {
+std::string string_of_template_membrane(Vector *link_connections, LmnMembraneRef mem, LmnSymbolAtom *cm_atom) {
   std::string      result;
   AtomListEntryRef ent;
   LmnFunctor       f;
@@ -236,7 +241,7 @@ std::string string_of_template_membrane(Vector *link_connections, LmnMembraneRef
   return result;
 }
 
-std::string string_of_guard_op(auto *satom) {
+std::string string_of_guard_op(LmnSymbolAtom *satom) {
   std::string result;
   char const *atom_name = lmn_id_to_name(LMN_FUNCTOR_NAME_ID(lmn_functor_table, satom->get_functor()));
   int         arity     = LMN_FUNCTOR_GET_LINK_NUM(satom->get_functor());
@@ -265,7 +270,7 @@ std::string string_of_guard_op(auto *satom) {
   return result;
 }
 
-std::string string_of_guard_mem(LmnMembraneRef mem, auto *cm_atom) {
+std::string string_of_guard_mem(LmnMembraneRef mem, LmnSymbolAtom *cm_atom) {
   AtomListEntryRef ent;
   LmnFunctor       f;
 
@@ -313,11 +318,12 @@ std::string string_of_guard_mem(LmnMembraneRef mem, auto *cm_atom) {
   return result;
 }
 
-std::string string_of_firstclass_rule(LmnMembraneRef h_mem, LmnMembraneRef g_mem, LmnMembraneRef b_mem, auto *imply)
+std::string string_of_firstclass_rule(LmnMembraneRef h_mem, LmnMembraneRef g_mem, LmnMembraneRef b_mem,
+                                      LmnSymbolAtom *imply)
 /* 3引数の':-' のアトムで接続先が全て膜．
    引数は第一引数から順につながってる膜 */
 {
-  Vector *link_connections = new Vector(10);
+  auto *link_connections = new Vector(10);
 
   auto head  = string_of_template_membrane(link_connections, h_mem, imply);
   auto guard = string_of_guard_mem(g_mem, imply);
@@ -338,32 +344,26 @@ std::string string_of_firstclass_rule(LmnMembraneRef h_mem, LmnMembraneRef g_mem
   return result;
 }
 
-LmnMembraneRef get_mem_linked_atom(auto *target_atom, int link_n) {
+LmnMembraneRef get_mem_linked_atom(LmnSymbolAtom *target_atom, int link_n) {
   auto *atom = (LmnSymbolAtomRef)target_atom->get_link(link_n);
   return LMN_PROXY_GET_MEM((LmnSymbolAtomRef)atom->get_link(0));
 }
 
 void delete_ruleset(LmnMembraneRef mem, LmnRulesetId del_id) { mem->delete_ruleset(del_id); }
 
-st_table_t first_class_rule_tbl;
+ankerl::unordered_dense::map<void *, LmnRulesetId> first_class_rule_tbl{};
 
-static int colon_minus_cmp(auto *x, auto *y) { return x != y; }
+void first_class_rule_tbl_init() {}
 
-static long colon_minus_hash(auto *x) { return (long)x; }
-
-static struct st_hash_type type_colon_minushash = {(st_cmp_func)colon_minus_cmp, (st_hash_func)colon_minus_hash};
-
-void first_class_rule_tbl_init() { first_class_rule_tbl = st_init_table(&type_colon_minushash); }
-
-LmnRulesetId imply_to_rulesetid(auto *imply) {
+LmnRulesetId imply_to_rulesetid(LmnSymbolAtom *imply) {
   st_data_t entry;
-  if (st_lookup(first_class_rule_tbl, (st_data_t)imply, &entry)) {
-    return (LmnRulesetId)entry;
+  if (auto entry = first_class_rule_tbl.find(imply); entry != first_class_rule_tbl.end()) {
+    return entry->second;
   }
   return -1;
 }
 
-LmnRuleSetRef firstclass_ruleset_create(auto *imply) {
+LmnRuleSetRef firstclass_ruleset_create(LmnSymbolAtom *imply) {
   /* ':-'_3アトムがプロキシにつながっていなければ中止 */
   for (int j = 0; j < 3; j++) {
     auto *pa = (LmnSymbolAtomRef)imply->get_link(j);
@@ -379,27 +379,23 @@ LmnRuleSetRef firstclass_ruleset_create(auto *imply) {
   auto           compiled_rulesets = lmntal_compile_rule_str(rule_str.c_str());
 
   /* コンパイルされたルールからルールセットを生成 */
-  auto          ruleAST = il_parse_rule(std::move(compiled_rulesets));
-  LmnRulesetId  id      = LmnRuleSetTable::gen_id();
-  LmnRuleSetRef ruleset = new LmnRuleSet(id, 1);
-  auto          rule    = load_rule(*ruleAST);
+  auto         ruleAST = il_parse_rule(std::move(compiled_rulesets));
+  LmnRulesetId id      = LmnRuleSetTable::gen_id();
+  auto        *ruleset = new LmnRuleSet(id, 1);
+  auto         rule    = load_rule(*ruleAST);
   ruleset->put(rule.get());
   LmnRuleSetTable::add(ruleset, id);
-  rule.release();
+  auto *_ = rule.release();
 
-  /* :-アトムとコンパイルされたルールセットIDを対応付けるハッシュテーブルへ追加
-   */
-  st_insert(first_class_rule_tbl, (st_data_t)imply, (st_data_t)id);
+  // :-アトムとコンパイルされたルールセットIDを対応付けるハッシュテーブルへ追加
+  first_class_rule_tbl[imply] = id;
 
   return ruleset;
 }
 
-void firstclass_ruleset_release(auto *imply) {
-  LMN_ASSERT(st_contains(first_class_rule_tbl, (st_data_t)imply));
-  st_delete(first_class_rule_tbl, (st_data_t)imply, nullptr);
-}
+void firstclass_ruleset_release(LmnSymbolAtom *imply) { first_class_rule_tbl.erase(imply); }
 
-LmnRuleSetRef firstclass_ruleset_lookup(auto *imply) {
+LmnRuleSetRef firstclass_ruleset_lookup(LmnSymbolAtom *imply) {
   LmnRulesetId id = imply_to_rulesetid(imply);
   return (id > 0) ? LmnRuleSetTable::at(id) : nullptr;
 }

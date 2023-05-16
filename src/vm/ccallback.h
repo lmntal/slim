@@ -46,29 +46,35 @@
  * @{
  */
 
+#include "ankerl/unordered_dense.hpp"
+
 #include "element/element.h"
 #include "lmntal.h"
 #include "symbol.h"
 
 /* LMNtalから呼ばれるCのコールバック */
 class CCallback {
-  void             *f;
-  int               arity;
-  static st_table_t ccallback_tbl;
-  static int        free_v(st_data_t key, st_data_t v, st_data_t _t);
-  CCallback(CCallback *);
+  void *f{};
+  int   arity;
+
+  inline static ankerl::unordered_dense::map<lmn_interned_str, CCallback *> ccallback_map{};
 
 public:
-  CCallback();
-  ~CCallback();
+  CCallback(void *f, int arity);
+  ~CCallback() = default;
   int   get_arity() const;
   void *get_f() const;
 
-  static void ccallback_init();
   /**
    * @brief initialize ccallback module.
    */
+  static void ccallback_init();
+
+  /**
+   * @brief get a function with its name.
+   */
   static const struct CCallback *get_ccallback(lmn_interned_str name);
+
   /**
    * @brief register a function as a callback.
    *
@@ -77,9 +83,7 @@ public:
    * @param arity the number of arguments of the callback.
    */
   static void lmn_register_c_fun(char const *name, void *f, int arity);
-  /**
-   * @brief get a function with its name.
-   */
+
   /**
    * @brief finalize ccallback module.
    */

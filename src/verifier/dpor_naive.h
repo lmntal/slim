@@ -45,8 +45,8 @@
  * @{
  */
 
-#include "../lmntal.h"
 #include "element/element.h"
+#include "lmntal.h"
 #include "statespace.h"
 
 class McPorData {

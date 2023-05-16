@@ -216,7 +216,7 @@ void tr_instr_commit_ready(LmnReactCxtRef rc, LmnRuleRef rule, lmn_interned_str 
 BOOL tr_instr_commit_finish(LmnReactCxtRef rc, LmnRuleRef rule, lmn_interned_str rule_name, LmnLineNum line_num,
                             LmnMembraneRef *ptmp_global_root, LmnRegisterArray *p_v_tmp, unsigned int warray_use_org,
                             unsigned int warray_size_org);
-BOOL tr_instr_jump(LmnTranslated f, LmnReactCxtRef rc, LmnMembraneRef thisisrootmembutnotused, LmnRuleRef rule,
+BOOL tr_instr_jump(LmnTranslated const&f, LmnReactCxtRef rc, LmnMembraneRef thisisrootmembutnotused, LmnRuleRef rule,
                    int newid_num, int const *newid);
 
 /* @} */

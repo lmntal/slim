@@ -41,12 +41,15 @@
 #define YY_TYPEDEF_YY_SCANNER_T
 using yyscan_t = void *;
 #endif
+
 #include "propositional_symbol.h"
-#include "../lmntal.h"
+
 #include "ffi/lmntal_system_adapter.h"
+#include "lmntal.h"
 #include "loader/loader.h"
 #include "propsym_lexer.hpp"
 #include "propsym_parser.hpp"
+
 struct SymbolDefinition {
   unsigned int   sym_id;
   PropositionRef prop;

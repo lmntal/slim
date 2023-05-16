@@ -80,7 +80,7 @@ void thread_yield_CPU() { sched_yield(); }
 /* TODO: stripeの粒度を呼出側で指定できた方が汎用的だと思う */
 EWLock::EWLock(unsigned int e_num, unsigned int w_num) {
   unsigned int i;
-  w_num            = round2up(w_num);
+  w_num            = std::bit_ceil(w_num);
   this->elock_used = nullptr;
   this->elock_num  = e_num;
   this->elock      = nullptr;

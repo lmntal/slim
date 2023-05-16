@@ -2,6 +2,7 @@ add_library(lmn_ffi STATIC)
 
 target_include_directories(lmn_ffi PRIVATE
     ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}/third_party
 )
 
 target_sources(lmn_ffi PRIVATE

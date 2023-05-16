@@ -790,18 +790,18 @@ void mc_print_vec_states(StateSpaceRef ss, Vector *v, State *seed) {
       char const *m;
       s = (State *)v->get(i);
       m = (s == seed) ? "*" : " ";
-      fprintf(out, "%s%2lu::%s", m, state_format_id(s, ss->is_formatted()),
-              ss->automata()->state_name(state_property_state(s)));
+      fmt::print(out, "{}{:2}::{}", m, state_format_id(s, ss->is_formatted()),
+                 ss->automata()->state_name(state_property_state(s)));
       StateDumper::from_env(out)->state_print_mem(s);
     } else {
       s = (State *)v->get(i);
-      fprintf(out, "path%lu_%s", state_format_id(s, ss->is_formatted()),
-              ss->automata()->state_name(state_property_state(s)));
+      fmt::print(out, "path{}_{}", state_format_id(s, ss->is_formatted()),
+                 ss->automata()->state_name(state_property_state(s)));
       StateDumper::from_env(out)->state_print_mem(s);
       fprintf(out, ".\n");
 
-      fprintf(out, "path%lu_%s", state_format_id(s, ss->is_formatted()),
-              ss->automata()->state_name(state_property_state(s)));
+      fmt::print(out, "path{}_{}", state_format_id(s, ss->is_formatted()),
+                 ss->automata()->state_name(state_property_state(s)));
       StateDumper::from_env(out)->state_print_mem(s);
       fprintf(out, ":- ");
     }

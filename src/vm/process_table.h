@@ -48,8 +48,8 @@ using ProcessTableRef = ProcessTbl *;
 #include "process_table.hpp"
 
 struct ProcessTbl : ProcessTable<LmnWord> {
+  ProcessTbl() = default;
   ProcessTbl(unsigned long size) : ProcessTable<LmnWord>(size){};
-  ProcessTbl() : ProcessTable<LmnWord>(){};
   void tbl_clear();
   int  tbl_foreach(int (*func)(LmnWord key, LmnWord val, LmnWord arg), LmnWord arg);
   BOOL tbl_eq(ProcessTableRef b);

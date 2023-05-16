@@ -64,17 +64,3 @@ char *int_to_str(long n) {
 
   return s;
 }
-
-/* ソート用。intの昇順比較を行う。*/
-int comp_int_f(void const *a_, void const *b_) {
-  int a = *(int *)a_;
-  int b = *(int *)b_;
-  return a > b ? 1 : (a == b ? 0 : -1);
-}
-
-/* ソート用。intの昇順比較を行う。*/
-int comp_int_greater_f(void const *a_, void const *b_) {
-  int a = *(int *)a_;
-  int b = *(int *)b_;
-  return a > b ? -1 : (a == b ? 0 : 1);
-}

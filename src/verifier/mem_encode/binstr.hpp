@@ -281,8 +281,6 @@ public:
   }
 };
 
-using slim::element::make_unique;
-
 #define BS_TBL_SIZE (128)
 
 #define BS_SET(a, pos, v)                                                                                              \
@@ -307,9 +305,9 @@ public:
 
   ~BinStr() { LMN_FREE(v); }
 
-  std::unique_ptr<BinStrCursor> head() { return make_unique<BinStrCursor>(this); }
+  std::unique_ptr<BinStrCursor> head() { return std::make_unique<BinStrCursor>(this); }
 
-  std::unique_ptr<BinStrCursor> head_direct() { return make_unique<BinStrCursor>(this, true); }
+  std::unique_ptr<BinStrCursor> head_direct() { return std::make_unique<BinStrCursor>(this, true); }
 
 public:
   /* bsの位置posにbの下位4ビットを書き込む。書き込みに成功した場合は真を

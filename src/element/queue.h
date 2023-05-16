@@ -79,14 +79,16 @@ struct Queue {
   unsigned long   entry_num();
 };
 
-/* single dequeue(reader), single enqueue(writer) */
-#define LMN_Q_SRSW 0
-/* single dequeue(reader), multiple enqueue(writer) */
-#define LMN_Q_SRMW 1
-/* multiple dequeue(reader), single enqueue(writer) */
-#define LMN_Q_MRSW 2
-/* multiple dequeue(reader), multiple enqueue(writer) */
-#define LMN_Q_MRMW 4
+enum {
+  /* single dequeue(reader), single enqueue(writer) */
+  LMN_Q_SRSW = 0,
+  /* single dequeue(reader), multiple enqueue(writer) */
+  LMN_Q_SRMW = 1,
+  /* multiple dequeue(reader), single enqueue(writer) */
+  LMN_Q_MRSW = 2,
+  /* multiple dequeue(reader), multiple enqueue(writer) */
+  LMN_Q_MRMW = 4
+};
 
 /** ==========
  *  DeQue (KaWaBaTa code)
@@ -94,8 +96,18 @@ struct Queue {
 
 using deq_data_t = LmnWord;
 
-#define DEQ_DEC(X, C) (X = X != 0 ? X - 1 : C - 1)
-#define DEQ_INC(X, C) (X = X != C - 1 ? X + 1 : 0)
+constexpr auto DEQ_DEC(unsigned int X, unsigned int C) -> unsigned int {
+  if (X != 0) {
+    return X = X - 1;
+  }
+  return X = C - 1;
+}
+constexpr auto DEQ_INC(unsigned int X, unsigned int C) -> unsigned int {
+  if (X != C - 1) {
+    return X = X + 1;
+  }
+  return X = 0;
+}
 
 struct Deque {
   LmnWord     *tbl;

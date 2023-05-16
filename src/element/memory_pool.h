@@ -45,20 +45,34 @@
  * @{
  */
 
-struct memory_pool {
-  int   sizeof_element;
-  void *block_head;
-  void *free_head;
-};
+#include <cstddef>
+#include <memory_resource>
 
-/* 要素サイズsのメモリプールを作成 */
-memory_pool *memory_pool_new(int s);
-/* メモリプールから1要素分メモリを取得 */
-void *memory_pool_malloc(memory_pool *p);
-/* メモリプールへメモリを返却 */
-void memory_pool_free(memory_pool *p, void *e);
-/* メモリプールを破棄 */
-void memory_pool_delete(memory_pool *p);
+/* each element must be bigger than void*, so align everything in sizeof(void*)
+ * !! */
+/* after alignment, X byte object needs ALIGNED_SIZE(X) byte. */
+constexpr auto aligned_size(int x) { return ((x + sizeof(void *) - 1) / sizeof(void *)) * sizeof(void *); }
+
+struct memory_pool : std::pmr::memory_resource {
+  size_t sizeof_element;
+  void  *block_head{};
+  void  *free_head{};
+
+  memory_pool(int s) : sizeof_element(aligned_size(s)) {}
+  ~memory_pool() override {
+    auto *blockhead = block_head;
+
+    while (blockhead) {
+      auto *next_blockhead = *(void **)blockhead;
+      std::free(blockhead);
+      blockhead = next_blockhead;
+    }
+  }
+
+  void *do_allocate(size_t bytes, size_t alignment) override;
+  void  do_deallocate(void *p, size_t bytes, size_t alignment) override;
+  bool  do_is_equal(std::pmr::memory_resource const &other) const noexcept override;
+};
 
 /* @} */
 

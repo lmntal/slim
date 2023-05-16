@@ -99,3 +99,4 @@ third_party/google-perftools-1.8.3/test-suite.log
 build/
 compile_commands.json
 .cache/
+omp.h

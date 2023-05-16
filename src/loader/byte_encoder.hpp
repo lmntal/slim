@@ -163,7 +163,7 @@ private:
     *(T *)(byte_seq + loc) = (value);
   }
 
-  void load(c17::monostate const &){};
+  void load(std::monostate const &){};
   void load(il::functor::symbol const &functor) {
     write_forward<LmnLinkAttr>(LMN_ATTR_MAKE_LINK(0));
     write_forward<LmnFunctor>(functor.value);
@@ -203,10 +203,10 @@ private:
   void load(il::instr_arg::functor const &arg) { c17::visit(loader(*this), arg.value); }
   void load(il::instr_arg::ruleset const &arg) { write_forward<LmnRulesetId>(arg.value); }
   void load(il::instr_arg::var_list const &arg) {
-    auto &var_list = arg.value;
+    const auto &var_list = arg.value;
 
     write_forward<LmnInstrVar>(var_list.size());
-    for (auto &v : var_list)
+    for (const auto &v : var_list)
       c17::visit(loader(*this), v);
   }
   void load(il::instr_arg::inst_list const &arg) {
@@ -215,7 +215,7 @@ private:
     auto start = loc;
     move_by<LmnSubInstrSize>();
 
-    for (auto &inst : arg.value)
+    for (const auto &inst : arg.value)
       load(inst);
 
     /* startの位置に現在の位置との差を書き込む */

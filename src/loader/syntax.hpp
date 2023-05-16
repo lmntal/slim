@@ -41,6 +41,7 @@
 
 #include <memory>
 #include <type_traits>
+#include <variant>
 #include <vector>
 
 #include "element/element.h"
@@ -91,7 +92,7 @@ struct var_list;
 struct inst_list;
 } // namespace instr_arg
 
-using InstrArg = c17::variant<c17::monostate, instr_arg::var, instr_arg::label, instr_arg::string, instr_arg::lineno,
+using InstrArg = c17::variant<std::monostate, instr_arg::var, instr_arg::label, instr_arg::string, instr_arg::lineno,
                               instr_arg::functor, instr_arg::ruleset, instr_arg::var_list, instr_arg::inst_list>;
 
 namespace instr_arg {
@@ -113,7 +114,7 @@ struct lineno {
 };
 struct functor {
   il::Functor value;
-  functor(il::Functor &&value) : value(std::move(value)) {}
+  functor(il::Functor &&value) : value(value) {}
 };
 struct ruleset {
   int value;
@@ -132,9 +133,9 @@ struct inst_list {
 
 struct Instruction {
   LmnInstruction            id;
-  std::vector<il::InstrArg> args;
+  std::vector<il::InstrArg> args{};
 
-  Instruction() : id(INSTR_DUMMY), args() {}
+  Instruction() : id(INSTR_DUMMY) {}
   Instruction(LmnInstruction id, std::vector<il::InstrArg> &&args) : id(id), args(std::move(args)) {}
 };
 
@@ -157,7 +158,7 @@ struct Rule {
   InstBlock        guard;
   InstBlock        body;
 
-  Rule() {}
+  Rule() = default;
   Rule(BOOL hasuniq, InstBlock &&amatch, InstBlock &&mmatch, InstBlock &&guard, InstBlock &&body)
       : hasuniq(hasuniq), name(ANONYMOUS), amatch(std::move(amatch)), mmatch(std::move(mmatch)),
         guard(std::move(guard)), body(std::move(body)) {}
@@ -172,11 +173,12 @@ struct Subrule {
 };
 
 struct RuleSet {
-  BOOL                                         is_system_ruleset;
-  int                                          id;
+  BOOL is_system_ruleset;
+  int  id;
+
   std::vector<il::c17::variant<Rule, Subrule>> rules;
 
-  RuleSet() {}
+  RuleSet() = default;
   RuleSet(int id, std::vector<il::c17::variant<Rule, Subrule>> &&rules, BOOL is_system_ruleset)
       : id(id), rules(std::move(rules)), is_system_ruleset(is_system_ruleset) {}
 };

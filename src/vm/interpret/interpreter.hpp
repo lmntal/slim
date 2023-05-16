@@ -45,10 +45,10 @@ struct SameProcCxt;
 #include "lmntal.h"
 
 #include <functional>
+#include <utility>
 #include <vector>
 
-namespace slim {
-namespace vm {
+namespace slim::vm {
 struct interpreter {
   LmnReactCxt *rc;
   LmnRule     *rule;
@@ -69,7 +69,7 @@ struct interpreter {
     // called when this frame is popped out
     std::function<command_result(interpreter &, bool)> callback;
 
-    stack_frame(std::function<command_result(interpreter &, bool)> const &callback) : callback(callback) {}
+    stack_frame(std::function<command_result(interpreter &, bool)> callback) : callback(std::move(callback)) {}
   };
 
   interpreter(LmnReactCxt *rc, LmnRule *rule, LmnRuleInstr instr) : rc(rc), rule(rule), instr(instr) {}
@@ -126,7 +126,6 @@ private:
 
   std::vector<stack_frame> callstack;
 };
-} // namespace vm
-} // namespace slim
+} // namespace slim::vm
 
 #endif /* SLIM_VM_INTERPRETER_HPP */

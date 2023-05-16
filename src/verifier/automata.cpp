@@ -38,13 +38,14 @@
  */
 
 #include "automata.h"
+
+#include "fmt/core.h"
+
 #include "lmntal.h"
 #include "nc_lexer.hpp"
 #include "nc_parser.hpp"
 #include "propositional_symbol.h"
 
-static int  free_key_str_f(st_data_t key_, st_data_t v_, st_data_t x_);
-static int  free_val_str_f(st_data_t key_, st_data_t v_, st_data_t x_);
 static void automata_analysis_dfs1(AutomataRef a, BYTE *on_stack_list, AutomataStateRef s);
 static void automata_analysis_dfs2(AutomataRef a, AutomataStateRef s);
 
@@ -55,27 +56,12 @@ static void automata_analysis_dfs2(AutomataRef a, AutomataStateRef s);
 Automata::Automata() {
   this->states.init(32);
   this->sccs.init(4);
-  this->state_name_to_id = st_init_strtable();
-  this->id_to_state_name = st_init_numtable();
-  this->prop_to_id       = st_init_strtable();
-  this->prop_num         = 0;
-  this->init_state       = 0; /* デフォルトでは最初の状態が初期状態 */
+  this->prop_num   = 0;
+  this->init_state = 0; /* デフォルトでは最初の状態が初期状態 */
 }
 
 Automata::~Automata() {
   unsigned int i;
-
-  /* free key strings */
-  st_foreach(this->state_name_to_id, (st_iter_func)free_key_str_f, (st_data_t)0);
-  st_free_table(this->state_name_to_id);
-
-  /* free value strings */
-  st_foreach(this->id_to_state_name, (st_iter_func)free_val_str_f, (st_data_t)0);
-  st_free_table(this->id_to_state_name);
-
-  /* free key strings */
-  st_foreach(this->prop_to_id, (st_iter_func)free_key_str_f, (st_data_t)0);
-  st_free_table(this->prop_to_id);
 
   /* free states */
   for (i = 0; i < this->states.get_num(); i++) {
@@ -91,44 +77,29 @@ Automata::~Automata() {
   this->sccs.destroy();
 }
 
-static int free_key_str_f(st_data_t key_, st_data_t v_, st_data_t x_) {
-  free((char *)key_);
-  return ST_CONTINUE;
-}
-
-static int free_val_str_f(st_data_t key_, st_data_t v_, st_data_t x_) {
-  free((char *)v_);
-  return ST_CONTINUE;
-}
-
 atmstate_id_t Automata::state_id(char const *state_name) {
   st_data_t id;
 
-  if (st_lookup(this->state_name_to_id, (st_data_t)state_name, &id)) {
-    return id;
+  if (auto it = this->state_name_to_id2.find(state_name); it != this->state_name_to_id2.end()) {
+    return it->second;
   }
   /* 0から順にIDを付ける */
-  char *str0;
-  char *str1;
-  int   new_id;
+  auto new_id = static_cast<int>(this->state_name_to_id2.size());
+  auto str0   = std::string(state_name);
+  auto str1   = std::string(state_name);
 
-  new_id = st_num(this->state_name_to_id);
-  str0   = strdup(state_name);
-  str1   = strdup(state_name);
-
-  st_add_direct(this->state_name_to_id, (st_data_t)str0, (st_data_t)new_id);
-  st_add_direct(this->id_to_state_name, (st_data_t)new_id, (st_data_t)str1);
+  this->state_name_to_id2[str0]   = new_id;
+  this->id_to_state_name2[new_id] = str1;
   return new_id;
 }
 
-char const *Automata::state_name(atmstate_id_t id) {
-  char *name;
-
-  if (st_lookup(this->id_to_state_name, (st_data_t)(int)id, (st_data_t *)&name)) {
-    return name;
+std::string const &Automata::state_name(atmstate_id_t id) const {
+  static std::string empty;
+  if (auto it = this->id_to_state_name2.find(id); it != this->id_to_state_name2.end()) {
+    return it->second;
   }
   lmn_fatal("implementation error\n");
-  return nullptr;
+  return empty;
 }
 
 void Automata::add_state(AutomataStateRef s) {
@@ -138,36 +109,31 @@ void Automata::add_state(AutomataStateRef s) {
   this->states.set(s->id, (vec_data_t)s);
 }
 
-AutomataStateRef Automata::get_state(atmstate_id_t state_id) {
+AutomataStateRef Automata::get_state(atmstate_id_t state_id) const {
   LMN_ASSERT(this->states.get(state_id) != 0);
   return (AutomataStateRef)this->states.get(state_id);
 }
 
-atmstate_id_t Automata::get_init_state() { return this->init_state; }
+atmstate_id_t Automata::get_init_state() const { return this->init_state; }
 
 void Automata::set_init_state(atmstate_id_t id) { this->init_state = id; }
 
 unsigned int Automata::propsym_to_id(char *prop_name) {
-  st_data_t id;
-
-  if (st_lookup(this->prop_to_id, (st_data_t)prop_name, &id)) {
-    return id;
+  if (auto it = this->prop_to_id2.find(prop_name); it != this->prop_to_id2.end()) {
+    return it->second;
   }
 
-  unsigned int new_id;
-  char        *str;
-
-  /* 0から順にIDを付ける */
-  new_id = st_num(this->prop_to_id);
-  str    = strdup(prop_name);
-  st_add_direct(this->prop_to_id, (st_data_t)str, (st_data_t)new_id);
+  // 0から順にIDを付ける
+  auto new_id            = static_cast<unsigned int>(this->prop_to_id2.size());
+  auto str               = std::string(prop_name);
+  this->prop_to_id2[str] = new_id;
   return new_id;
 }
 
 /* for debug only
  * 通常の状態遷移グラフと同様の形式で性質オートマトンを出力する.
  * そのままlavitに喰わせて解析することが目的 */
-void Automata::print_property() {
+void Automata::print_property() const {
   AutomataStateRef init;
   unsigned long    i, n;
 
@@ -176,8 +142,8 @@ void Automata::print_property() {
 
   for (i = 0; i < n; i++) {
     AutomataStateRef s = this->get_state(i);
-    fprintf(stdout, "%lu::%s{scc(id=%d, name=%s)}.\n", (unsigned long)s->get_id(), this->state_name(i),
-            s->get_scc()->get_id(), s->get_scc()->get_name());
+    fmt::print("{}::{}{{scc(id={}, name={})}}.\n", (unsigned long)s->get_id(), this->state_name(i),
+               s->get_scc()->get_id(), s->get_scc()->get_name());
   }
 
   fprintf(stdout, "\nTransitions\n");
@@ -222,23 +188,23 @@ AutomataState::~AutomataState() {
 
 void AutomataState::add_transition(AutomataTransitionRef t) { this->transitions.push((vec_data_t)t); }
 
-atmstate_id_t AutomataState::get_id() { return this->id; }
+atmstate_id_t AutomataState::get_id() const { return this->id; }
 
-unsigned int AutomataState::get_transition_num() { return this->transitions.get_num(); }
+unsigned int AutomataState::get_transition_num() const { return this->transitions.get_num(); }
 
-AutomataTransitionRef AutomataState::get_transition(unsigned int index) {
+AutomataTransitionRef AutomataState::get_transition(unsigned int index) const {
   return (AutomataTransitionRef)this->transitions.get(index);
 }
 
-BOOL AutomataState::get_is_accept() { return this->is_accept; }
+BOOL AutomataState::get_is_accept() const { return this->is_accept; }
 
-BOOL AutomataState::get_is_end() { return this->is_end; }
+BOOL AutomataState::get_is_end() const { return this->is_end; }
 
 void inline AutomataState::set_scc(AutomataSCC *scc) { this->scc = scc; }
 
-BYTE AutomataState::scc_type() { return this->get_scc()->get_type(); }
+BYTE AutomataState::scc_type() const { return this->get_scc()->get_type(); }
 
-AutomataSCC inline *AutomataState::get_scc() { return this->scc; }
+AutomataSCC inline *AutomataState::get_scc() const { return this->scc; }
 
 /*----------------------------------------------------------------------
  * SCC analysis for property automata
@@ -259,7 +225,7 @@ void Automata::analysis() {
 }
 
 /* for debug */
-char const *AutomataSCC::get_name() {
+char const *AutomataSCC::get_name() const {
   char const *ret = nullptr;
   switch (this->get_type()) {
   case SCC_TYPE_UNKNOWN:

@@ -41,8 +41,7 @@
 
 #include <functional>
 
-namespace slim {
-namespace element {
+namespace slim::element {
 /**
  * @brief Calls a function before exiting the current scope.
  *
@@ -63,13 +62,12 @@ class scope {
   std::function<void()> f;
 
 public:
-  explicit scope(std::function<void()> f) : f(f) {}
+  explicit scope(std::function<void()> &f) : f(f) {}
   scope(scope const &)          = delete;
   void operator=(scope const &) = delete;
 
   ~scope() { f(); }
 };
-} // namespace element
-} // namespace slim
+} // namespace slim::element
 
 #endif /* ELEMENT_SCOPE_HPP */

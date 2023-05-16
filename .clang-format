@@ -10,4 +10,3 @@ AlignConsecutiveAssignments:
   AcrossComments: false
   AlignCompound: true
   PadOperators: true
-QualifierAlignment: Right

@@ -49,8 +49,10 @@
 #include "lmntal.h"
 #include "vm/vm.h"
 #include <cstdarg>
+#include <cstddef>
 #include <optional>
 #include <string_view>
+#include <vector>
 
 /* この辺の読み込みマクロはインタプリタ出力時も使えるはず */
 /* translate.c内でも使えるはず */
@@ -118,22 +120,22 @@ struct trans_maindata {
 };
 
 /* 自動生成される 1つ命令を変換して出力し,次変換する位置を返す */
-const BYTE *translate_instruction_generated(const BYTE *instr,       /* 変換する場所 */
-                                            Vector     *jump_points, /* 変換対象の場所 */
-                                            char const *header,      /* その場所が属する */
-                                            char const *successcode, /* 成功時実行するコード */
-                                            char const *failcode,    /* */
-                                            int         indent,      /* */
+const BYTE *translate_instruction_generated(const BYTE          *instr,       /* 変換する場所 */
+                                            std::vector<BYTE *> &jump_points, /* 変換対象の場所 */
+                                            char const          *header,      /* その場所が属する */
+                                            char const          *successcode, /* 成功時実行するコード */
+                                            char const          *failcode,    /* */
+                                            int                  indent,      /* */
                                             int *finishflag); /* 変換の結果(正なら成功+継続,0なら成功+終了,負なら失敗 */
 
 /* 手動生成 1つ命令を変換して出力し,次変換する位置を返す */
-const BYTE *translate_instruction(const BYTE *instr, Vector *jump_points, char const *header, char const *successcode,
-                                  char const *failcode, int indent, int *finishflag);
+const BYTE *translate_instruction(const BYTE *instr, std::vector<BYTE *> &jump_points, std::string_view header,
+                                  std::string_view successcode, std::string_view failcode, int indent, int *finishflag);
 
 /* 1ブロック相当を変換して出力し,読み込み終わった次の位置を返す */
 /* findatomのような再帰的な変換が必要な場合に呼び出す */
-const BYTE *translate_instructions(const BYTE *p, Vector *jump_points, char const *header, char const *successcode,
-                                   char const *failcode, int indent);
+const BYTE *translate_instructions(const BYTE *p, std::vector<BYTE *> &jump_points, std::string_view header,
+                                   std::string_view successcode, std::string_view failcode, int indent);
 
 /* 出力ファイル内で一時的に使うconst vectorをconst LmnWord[]から作る
  * vectorの中を触るので注意 */
@@ -142,7 +144,7 @@ Vector vec_const_temporary_from_array(int size, LmnWord const *w);
 
 /* vにwが含まれる場合そのindexを返す.
  * 含まれない場合wをvの最後に追加してそのindexを返す */
-int vec_inserted_index(Vector *v, LmnWord w);
+size_t vec_inserted_index(std::vector<BYTE *> &v, LmnWord w);
 
 /* トランスレート時に使う targX (X=argi)の名前でlistとlist_numを出力 */
 void tr_print_list(int indent, int argi, int list_num, LmnWord const *list);

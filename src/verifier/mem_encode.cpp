@@ -136,8 +136,6 @@
 #include "runtime_status.h"
 #endif
 
-using slim::element::make_unique;
-
 /* ファンクタ優先度付けの実装 cf) mem_idの高速化 @hori */
 uint16_t functor_priority[FUNCTOR_MAX + 1];
 
@@ -258,7 +256,7 @@ LmnBinStrRef lmn_mem_encode(LmnMembraneRef mem) {
 #endif
 
   // ret = lmn_mem_encode_sub(mem, 1024);
-  auto *ret = lmn_mem_encode_sub(mem, round2up(env_next_id() + 1));
+  auto *ret = lmn_mem_encode_sub(mem, std::bit_ceil(env_next_id() + 1));
 
 #ifdef PROFILE
   if (lmn_env.profile_level >= 3) {
@@ -340,7 +338,7 @@ LmnBinStrRef lmn_mem_to_binstr(LmnMembraneRef mem) {
   }
 #endif
   // ret = lmn_mem_to_binstr_sub(mem, 128);
-  auto *ret = lmn_mem_to_binstr_sub(mem, round2up(env_next_id() + 1));
+  auto *ret = lmn_mem_to_binstr_sub(mem, std::bit_ceil(env_next_id() + 1));
 
 #ifdef PROFILE
   if (lmn_env.profile_level >= 3) {
@@ -377,7 +375,7 @@ static BOOL mem_equals_enc_sub(LmnBinStrRef bs, LmnMembraneRef mem, unsigned lon
 #else
 
   /* **とりあえず**これなら参照の数以上のサイズになる */
-  BsDecodeLog        *ref_log = LMN_NALLOC(BsDecodeLog, round2up(binstr_byte_size(bs) * TAG_IN_BYTE));
+  BsDecodeLog        *ref_log = LMN_NALLOC(BsDecodeLog, std::bit_ceil(binstr_byte_size(bs) * TAG_IN_BYTE));
   auto                log     = visitlog_make_with_size(log, tbl_size);
   equalizer<VisitLog> e;
   auto                t = e.mem_eq_enc_mols(bs, &i_bs, mem, ref_log, &i_ref, log)
@@ -400,10 +398,10 @@ static BOOL mem_equals_enc_sub(LmnBinStrRef bs, LmnMembraneRef mem, unsigned lon
 BOOL lmn_mem_equals_enc(LmnBinStrRef bs, LmnMembraneRef mem) {
   if (is_comp_z(bs)) {
     auto target = std::unique_ptr<LmnBinStr>(lmn_bscomp_z_decode(bs));
-    return mem_equals_enc_sub(target.get(), mem, round2up(env_next_id() + 1));
+    return mem_equals_enc_sub(target.get(), mem, std::bit_ceil(env_next_id() + 1));
   }
 
-  return mem_equals_enc_sub(bs, mem, round2up(env_next_id() + 1));
+  return mem_equals_enc_sub(bs, mem, std::bit_ceil(env_next_id() + 1));
 }
 
 /* 膜のダンプ or エンコードと、膜の同型性判定を行う */

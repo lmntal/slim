@@ -48,7 +48,7 @@
 #__echo_t
 # トランスレータ用の関数宣言
 const BYTE *translate_instruction_generated(const BYTE *instr,
-                                            Vector *jump_points,
+                                            std::vector<BYTE*> &jump_points,
                                             const char *header,
                                             const char *successcode,
                                             const char *failcode,

@@ -42,8 +42,7 @@
 #include <type_traits>
 #include <utility>
 
-namespace slim {
-namespace element {
+namespace slim::element {
 
 template <typename...> struct variant_storage_info;
 
@@ -216,8 +215,7 @@ constexpr bool operator>=(monostate, monostate) noexcept { return true; }
 constexpr bool operator==(monostate, monostate) noexcept { return true; }
 constexpr bool operator!=(monostate, monostate) noexcept { return false; }
 
-} // namespace element
-} // namespace slim
+} // namespace slim::element
 
 template <class... Types>
 constexpr bool operator==(slim::element::variant<Types...> const &v, slim::element::variant<Types...> const &w) {

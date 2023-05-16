@@ -39,39 +39,29 @@
 
 #include "ccallback.h"
 
-CCallback::CCallback() { f = nullptr; }
-CCallback::~CCallback() { f = nullptr; }
 int   CCallback::get_arity() const { return arity; }
 void *CCallback::get_f() const { return f; }
 
-st_table_t CCallback::ccallback_tbl;
+CCallback::CCallback(void *f, int arity) : f(f), arity(arity) {}
 
-void CCallback::ccallback_init() { ccallback_tbl = st_init_numtable(); }
+void CCallback::ccallback_init() {}
 
 void CCallback::ccallback_finalize() {
-  st_foreach(ccallback_tbl, (st_iter_func)free_v, 0);
-  st_free_table(ccallback_tbl);
+  for (auto &kv : ccallback_map) {
+    delete kv.second;
+  }
 }
 
-int CCallback::free_v(st_data_t key, st_data_t v, st_data_t _t) {
-  delete (CCallback *)v;
-  return ST_CONTINUE;
-}
 /* コールバックを名前nameで登録する。arityはコールバックに引数として
    渡されるアトムのリンク数 */
 void CCallback::lmn_register_c_fun(char const *name, void *f, int arity) {
-  CCallback *c = new CCallback;
-  c->f         = f;
-  c->arity     = arity;
-  st_insert(ccallback_tbl, (st_data_t)lmn_intern(name), (st_data_t)c);
+  ccallback_map[lmn_intern(name)] = new CCallback(f, arity);
 }
 
 /* nameで登録されたコールバック返す */
 const struct CCallback *CCallback::get_ccallback(lmn_interned_str name) {
-  st_data_t t;
-
-  if (st_lookup(ccallback_tbl, name, &t)) {
-    return (struct CCallback *)t;
+  if (auto it = ccallback_map.find(name); it != ccallback_map.end()) {
+    return it->second;
   }
   return nullptr;
 }

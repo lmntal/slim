@@ -44,6 +44,7 @@
 #include "util.h"
 
 #include <string>
+#include <string_view>
 
 using LmnStringRef = struct LmnString *;
 struct LmnString : LmnSPAtomHeader {
@@ -52,7 +53,7 @@ struct LmnString : LmnSPAtomHeader {
 
   LmnString() : LmnSPAtomHeader(string_atom_type) {}
   LmnString(char const *s) : str(s), LmnSPAtomHeader(string_atom_type) {}
-  LmnString(const std::string s) : str(s), LmnSPAtomHeader(string_atom_type) {}
+  LmnString(std::string_view s) : str(s), LmnSPAtomHeader(string_atom_type) {}
 
   char const                *c_str() const { return str.c_str(); }
   unsigned long              hash() const { return lmn_byte_hash((unsigned char const *)str.c_str(), str.size() + 1); }

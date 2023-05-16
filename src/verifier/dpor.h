@@ -45,7 +45,7 @@
  * @{
  */
 
-#include "../lmntal.h"
+#include "lmntal.h"
 #include "delta_membrane.h"
 #include "element/element.h"
 #include "statespace.h"
@@ -81,26 +81,30 @@ extern McDporData **dpor_data;
 
 #define DPOR_DATA() (dpor_data[env_my_thread_id()])
 
-#define LHS_DEFAULT (0x00U)
-#define LHS_MEM_GROOT (0x01U)
-#define LHS_MEM_NATOMS (0x01U << 1)
-#define LHS_MEM_NMEMS (0x01U << 2)
-#define LHS_MEM_NFLINKS (0x01U << 3)
-#define LHS_MEM_NORULES (0x01U << 4)
-#define LHS_MEM_STABLE (0x01U << 5)
+enum {
+  LHS_DEFAULT     = (0x00U),
+  LHS_MEM_GROOT   = (0x01U),
+  LHS_MEM_NATOMS  = (0x01U << 1),
+  LHS_MEM_NMEMS   = (0x01U << 2),
+  LHS_MEM_NFLINKS = (0x01U << 3),
+  LHS_MEM_NORULES = (0x01U << 4),
+  LHS_MEM_STABLE  = (0x01U << 5)
+};
 
 #define LHS_FL_SET(F, N) ((F) |= (N))
 #define LHS_FL_UNSET(F, N) ((F) &= ~(N))
 #define LHS_FL(F, S) ((F) & (S))
 
-#define OP_NONE (0x00U)
-#define OP_DEP_EXISTS (0x01U)
-#define OP_DEP_EXISTS_EX_GROOT (0x01U << 1)
-#define OP_DEP_NATOMS (0x01U << 2)
-#define OP_DEP_NMEMS (0x01U << 3)
-#define OP_DEP_NFLINKS (0x01U << 4)
-#define OP_DEP_NORULES (0x01U << 5)
-#define OP_DEP_STABLE (0x01U << 6)
+enum {
+  OP_NONE                = (0x00U),
+  OP_DEP_EXISTS          = (0x01U),
+  OP_DEP_EXISTS_EX_GROOT = (0x01U << 1),
+  OP_DEP_NATOMS          = (0x01U << 2),
+  OP_DEP_NMEMS           = (0x01U << 3),
+  OP_DEP_NFLINKS         = (0x01U << 4),
+  OP_DEP_NORULES         = (0x01U << 5),
+  OP_DEP_STABLE          = (0x01U << 6)
+};
 
 #define RHS_OP_SET(F, S) ((F) |= (S))
 #define RHS_OP_UNSET(F, S) ((F) &= ~(S))

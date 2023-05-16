@@ -86,7 +86,7 @@ static struct HashEntry *hashtbl_get_p(SimpleHashtbl *ht, HashKeyType key);
 /* HashMap <HashKeyType, HashValueType> */
 void hashtbl_init(SimpleHashtbl *ht, unsigned int init_size) {
   ht->num = 0;
-  ht->cap = round2up(init_size);
+  ht->cap = std::bit_ceil(init_size);
   ht->tbl = (HashEntry *)malloc(sizeof(struct HashEntry) * ht->cap);
   memset(ht->tbl, 0xffU, sizeof(struct HashEntry) * ht->cap);
 }
@@ -185,7 +185,7 @@ void hashtbliter_next(HashIterator *iter) {
 /* HashSet <HashKeyType> */
 HashSet::HashSet(unsigned int init_size) {
   this->num = 0;
-  this->cap = round2up(init_size);
+  this->cap = std::bit_ceil(init_size);
   this->tbl = (HashKeyType *)malloc(sizeof(HashKeyType) * this->cap);
   memset(this->tbl, 0xffU, sizeof(HashKeyType) * this->cap);
 }

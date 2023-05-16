@@ -56,15 +56,15 @@
 namespace c14 = slim::element;
 
 void StateSpace::make_table_pair(TablePair &t) {
-  t.tbl = c14::make_unique<StateTable>(this->thread_num);
+  t.tbl = std::make_unique<StateTable>(this->thread_num);
   if (this->has_property())
-    t.acc = c14::make_unique<StateTable>(this->thread_num);
+    t.acc = std::make_unique<StateTable>(this->thread_num);
 }
 
 void StateSpace::make_table_pair(TablePair &t, TablePair &rehasher) {
-  t.tbl = c14::make_unique<StateTable>(this->thread_num, rehasher.tbl.get());
+  t.tbl = std::make_unique<StateTable>(this->thread_num, rehasher.tbl.get());
   if (this->has_property())
-    t.acc = c14::make_unique<StateTable>(this->thread_num, rehasher.acc.get());
+    t.acc = std::make_unique<StateTable>(this->thread_num, rehasher.acc.get());
 }
 
 /** StateSpace
