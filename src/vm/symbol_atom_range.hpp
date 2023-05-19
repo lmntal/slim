@@ -50,10 +50,10 @@
 class symbol_atom_range {
   class symbol_atom_iterator {
     LmnMembrane const            *mem;
-    int                           functor;
+    int                           functor{-1};
     AtomListEntry::const_iterator iter, iter_end;
 
-    symbol_atom_iterator() : functor(-1) {}
+    symbol_atom_iterator() = default;
 
   public:
     using difference_type   = intptr_t;
@@ -65,7 +65,7 @@ class symbol_atom_range {
     static symbol_atom_iterator begin(LmnMembrane *mem) {
       symbol_atom_iterator result;
       for (int i = (int)mem->mem_max_functor() - 1; i >= 0; i--) {
-        auto ent = mem->get_atomlist(i);
+        auto *ent = mem->get_atomlist(i);
         if (ent && !LMN_IS_PROXY_FUNCTOR(i) && ent->begin() != ent->end()) {
           result.mem      = mem;
           result.functor  = i;
@@ -90,7 +90,7 @@ class symbol_atom_range {
         functor--;
         for (; functor >= 0; functor--) {
 
-          auto ent = mem->get_atomlist(functor);
+          const auto *ent = mem->get_atomlist(functor);
           if (ent && !LMN_IS_PROXY_FUNCTOR(functor)) {
             iter     = ent->begin();
             iter_end = ent->end();

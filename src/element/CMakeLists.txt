@@ -13,7 +13,6 @@ target_sources(lmn_elm PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/alloc.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/clock.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/error.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/file_util.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/instruction.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/internal_hash.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/life_time.cpp

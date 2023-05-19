@@ -248,8 +248,8 @@ static void contextC1_expand_RHS_inner(ContextC1Ref c, struct MemDelta *d) {
 
   /* アトムの数が変化した場合,
    * memに対するnatoms命令が左辺に出現した遷移に依存する */
-  if (d->new_atoms.get_num() > 0 || d->del_atoms.get_num() > 0 || d->data_atom_diff != 0) {
-    int n = d->new_atoms.get_num() + d->data_atom_diff - d->del_atoms.get_num();
+  if (!d->new_atoms.empty() || !d->del_atoms.empty() || d->data_atom_diff != 0) {
+    int n = d->new_atoms.size() + d->data_atom_diff - d->del_atoms.size();
     if (mem->atom_num() != n) {
       contextC1_RHS_tbl_put(c->RHS_procs, mem->mem_id(), OP_DEP_NATOMS);
     }
@@ -258,15 +258,15 @@ static void contextC1_expand_RHS_inner(ContextC1Ref c, struct MemDelta *d) {
 
   /* 子膜の数が変化した場合, memに対するnmems命令が左辺に出現した遷移に依存する
    */
-  if (d->new_mems.get_num() > 0 || d->del_mems.get_num() > 0) {
-    int n = d->new_mems.get_num() - d->del_mems.get_num();
+  if (!d->new_mems.empty() || !d->del_mems.empty()) {
+    auto n = d->new_mems.size() - d->del_mems.size();
     if (mem->child_mem_num() != n) {
       contextC1_RHS_tbl_put(c->RHS_procs, mem->mem_id(), OP_DEP_NMEMS);
     }
     need_act_check = TRUE;
   }
 
-  if (!d->new_proxies.is_empty()) {
+  if (!d->new_proxies.empty()) {
     contextC1_RHS_tbl_put(c->RHS_procs, mem->mem_id(), OP_DEP_NFLINKS);
     need_act_check = TRUE;
   }
@@ -286,8 +286,8 @@ static void contextC1_expand_RHS_inner(ContextC1Ref c, struct MemDelta *d) {
   }
 
   /* アトムが削除されるなら, そのアトムが左辺に出現した遷移に依存する */
-  for (i = 0; i < d->del_atoms.get_num(); i++) {
-    LmnSymbolAtomRef a = (LmnSymbolAtomRef)d->del_atoms.get(i);
+  for (i = 0; i < d->del_atoms.size(); i++) {
+    LmnSymbolAtomRef a = d->del_atoms.at(i);
     contextC1_RHS_tbl_put(c->RHS_procs, a->get_id(), OP_DEP_EXISTS);
     if (a->get_functor() == LMN_IN_PROXY_FUNCTOR) {
       need_flink_check = TRUE;
@@ -301,8 +301,8 @@ static void contextC1_expand_RHS_inner(ContextC1Ref c, struct MemDelta *d) {
   }
 
   /* 子膜が削除されるなら, その膜が左辺に出現した遷移に依存する */
-  for (i = 0; i < d->del_mems.get_num(); i++) {
-    auto *m = (LmnMembraneRef)d->del_mems.get(i);
+  for (i = 0; i < d->del_mems.size(); i++) {
+    auto *m = (LmnMembraneRef)d->del_mems.at(i);
     contextC1_RHS_tbl_put(c->RHS_procs, m->mem_id(), OP_DEP_EXISTS);
   }
 
@@ -326,8 +326,8 @@ static void contextC1_expand_RHS_inner(ContextC1Ref c, struct MemDelta *d) {
 static void contextC1_expand_RHS(McDporData *mc, ContextC1Ref c, MemDeltaRoot *d) {
   unsigned int i;
   /* 修正の加えられる膜に対する操作 */
-  for (i = 0; i < d->mem_deltas.get_num(); i++) {
-    contextC1_expand_RHS_inner(c, (struct MemDelta *)d->mem_deltas.get(i));
+  for (i = 0; i < d->mem_deltas.size(); i++) {
+    contextC1_expand_RHS_inner(c, (struct MemDelta *)d->mem_deltas.at(i));
   }
 
   /* リンクの繋ぎ替えは考慮しなくてよいはず.
@@ -557,7 +557,7 @@ static BOOL dpor_explore_subgraph(McDporData *mc, ContextC1Ref c, Vector *cur_ch
   unsigned int   i;
   BOOL           ret;
 
-  cur = DMEM_ROOT_MEM(c->d);
+  cur = dmem_root_mem(c->d);
   nxt_checked_ids.init(4);
   MCReactContext rc(cur);
 
@@ -883,7 +883,7 @@ static void dpor_ample_set_to_succ_tbl(StateSpaceRef ss, Vector *ample_set, Vect
       src_t = transition_make(src_succ, lmn_intern("reduced"));
 
       dmem_root_commit(succ_d); /* src_succに対応したグラフ構造へ */
-      src_succ->state_set_mem(DMEM_ROOT_MEM(succ_d));
+      src_succ->state_set_mem(dmem_root_mem(succ_d));
       src_succ->state_calc_hash(src_succ->state_mem(), ss->use_memenc()); /* それを元にハッシュ値やmem_idを計算 */
       if (!src_succ->is_encoded()) {
         src_succ->state_set_binstr(state_calc_mem_dump(src_succ));

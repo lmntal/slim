@@ -7,6 +7,7 @@
 #include "react_context.hpp"
 #include "rule.h"
 #include "rule.hpp"
+#include <string_view>
 
 class InteractiveDebugger {
 private:
@@ -50,10 +51,10 @@ private:
     instr_execution_stop_at = 0;
   }
 
-  void set_breakpoint_rule(std::string rule);
-  void set_breakpoint_instr(std::string instr);
-  void delete_breakpoint_rule(std::string rule);
-  void delete_breakpoint_instr(std::string instr);
+  void set_breakpoint_rule(std::string_view rule);
+  void set_breakpoint_instr(std::string_view instr);
+  void delete_breakpoint_rule(std::string_view rule);
+  void delete_breakpoint_instr(std::string_view instr);
   void list_breakpoints();
 
 public:

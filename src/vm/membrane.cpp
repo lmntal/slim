@@ -37,6 +37,7 @@
  */
 
 #include "membrane.h"
+#include "ankerl/unordered_dense.hpp"
 #include "atom.h"
 #include "dumper.h" /* for debug */
 #include "functor.h"
@@ -45,6 +46,8 @@
 #include "vm/hyperlink.h"
 #include <cctype>
 #include <climits>
+#include <cstdlib>
+#include <stack>
 #include <vector>
 
 #ifdef PROFILE
@@ -66,6 +69,8 @@
 
 /* この構造体をAtomとして扱うことで,この構造体自身が
    HeadとTailの両方の役目を果たしている */
+
+using ankerl::unordered_dense::map;
 
 LmnSymbolAtomRef atomlist_head(AtomListEntryRef lst) { return lst->head; }
 LmnSymbolAtomRef lmn_atomlist_end(AtomListEntryRef lst) { return (LmnSymbolAtomRef)lst; }
@@ -136,9 +141,7 @@ static inline void free_atomlist(AtomListEntry *as) {
   /* lmn_mem_move_cellsでアトムリストの再利用を行っていて
    * ポインタがNULLになる場合があるので、検査を行う必要がある。*/
   if (as) {
-    if (as->record) {
-      hashtbl_free(as->record);
-    }
+    delete (as->record);
     LMN_FREE(as);
   }
 }
@@ -158,8 +161,8 @@ LmnMembrane::LmnMembrane() {
   this->atomset       = LMN_CALLOC<struct AtomListEntry *>(this->atomset_size);
   this->set_id(env_gen_next_id());
 }
-char const   *LmnMembrane::MEM_NAME() { return LMN_SYMBOL_STR(this->NAME_ID()); }
-LmnRuleSetRef lmn_mem_get_ruleset(LmnMembraneRef m, int i) { return (LmnRuleSetRef)m->get_rulesets()[i]; }
+std::string_view LmnMembrane::MEM_NAME() { return LMN_SYMBOL_STR(this->NAME_ID()); }
+LmnRuleSetRef    lmn_mem_get_ruleset(LmnMembraneRef m, int i) { return (LmnRuleSetRef)m->get_rulesets()[i]; }
 
 /* 膜memの解放を行う.
  * 膜memに所属する子膜とアトムのメモリ管理は呼び出し側で行う. */
@@ -169,10 +172,7 @@ LmnMembrane::~LmnMembrane() {
     if (!this->atomset[i])
       continue;
     auto &as = this->atomset[i];
-    if (as->record) {
-      hashtbl_free(as->record);
-    }
-    // delete as;
+    delete (as->record);
     lmn_free(as);
   }
 
@@ -194,8 +194,7 @@ LmnMembrane::~LmnMembrane() {
 }
 #ifdef USE_FIRSTCLASS_RULE
 void LmnMembrane::clear_firstclass_rulesets() {
-  for (int i = 0; i < this->firstclass_rulesets.size(); i++) {
-    auto rs = this->firstclass_rulesets[i];
+  for (auto *rs : this->firstclass_rulesets) {
     if (rs->is_copy()) {
       delete rs;
     }
@@ -363,7 +362,7 @@ unsigned long LmnMembrane::space() {
                   LmnSymbolAtomRef atom;
                   ret += sizeof(struct AtomListEntry);
                   if (ent->record) {
-                    ret += internal_hashtbl_space(ent->record);
+                    ret += ent->record_size();
                   }
                   EACH_ATOM(atom, ent,
                             ({ ret += LMN_SATOM_SIZE(LMN_FUNCTOR_ARITY(lmn_functor_table, atom->get_functor())); }));
@@ -1460,62 +1459,63 @@ void lmn_mem_copy_hlground(LmnMembraneRef mem, Vector *srcvec, Vector **ret_dstl
  *
  * TODO: 構造化 */
 BOOL lmn_mem_cmp_ground(Vector const *srcvec, Vector const *dstvec) {
-  unsigned int  i, j;
-  BOOL          ret_flag = TRUE;
-  Vector        stack1, stack2;
-  SimpleHashtbl map; /* 比較元->比較先 */
-  LinkObjRef    start1, start2;
+  unsigned int                i, j;
+  bool                        ret_flag{true};
+  std::vector<LinkObjRef>     stack1;
+  std::vector<LinkObjRef>     stack2;
+  map<LmnAtomRef, LmnAtomRef> map; /* 比較元->比較先 */
 
-  hashtbl_init(&map, 256);
+  map.reserve(256);
 
-  stack1.init(16);
-  stack2.init(16);
+  stack1.reserve(16);
+  stack2.reserve(16);
 
   /* startはstackにつまれるので処理中に壊されるためコピー */
-  start1 = new LinkObj(((LinkObjRef)srcvec->get(0))->ap, ((LinkObjRef)srcvec->get(0))->pos);
-  start2 = new LinkObj(((LinkObjRef)dstvec->get(0))->ap, ((LinkObjRef)dstvec->get(0))->pos);
+  auto *start1 = new LinkObj(((LinkObjRef)srcvec->get(0))->ap, ((LinkObjRef)srcvec->get(0))->pos);
+  auto *start2 = new LinkObj(((LinkObjRef)dstvec->get(0))->ap, ((LinkObjRef)dstvec->get(0))->pos);
 
   if (!LMN_ATTR_IS_DATA(start1->pos) && !LMN_ATTR_IS_DATA(start2->pos)) {
     /* ともにシンボルアトムの場合 */
-    stack1.push((LmnWord)start1);
-    stack2.push((LmnWord)start2);
+    stack1.emplace_back(start1);
+    stack2.emplace_back(start2);
   } else { /* data atom は積まない */
     if (!lmn_data_atom_eq((LmnDataAtomRef)start1->ap, start1->pos, (LmnDataAtomRef)start2->ap, start2->pos)) {
-      ret_flag = FALSE;
+      ret_flag = false;
     }
     LMN_FREE(start1);
     LMN_FREE(start2);
   }
 
-  while (!stack1.is_empty()) { /* main loop: start */
-    LinkObjRef l1, l2;
-    BOOL       contains1, contains2;
+  while (!stack1.empty()) { /* main loop: start */
+    bool contains1{false};
+    bool contains2{false};
 
-    l1        = (LinkObjRef)stack1.pop();
-    l2        = (LinkObjRef)stack2.pop();
-    contains1 = FALSE;
-    contains2 = FALSE;
+    auto *l1 = (LinkObjRef)stack1.back();
+    auto *l2 = (LinkObjRef)stack2.back();
+
+    stack1.pop_back();
+    stack2.pop_back();
 
     for (i = 0; i < srcvec->get_num(); i++) {
-      LinkObjRef lobj = (LinkObjRef)srcvec->get(i);
+      auto *lobj = (LinkObjRef)srcvec->get(i);
       if (l1->ap == ((LmnSymbolAtomRef)lobj->ap)->get_link(lobj->pos) &&
           l1->pos == ((LmnSymbolAtomRef)lobj->ap)->get_attr(lobj->pos)) {
-        contains1 = TRUE;
+        contains1 = true;
         break;
       }
     }
     for (j = 0; j < dstvec->get_num(); j++) {
-      LinkObjRef lobj = (LinkObjRef)dstvec->get(j);
+      auto *lobj = (LinkObjRef)dstvec->get(j);
       if (l2->ap == ((LmnSymbolAtomRef)lobj->ap)->get_link(lobj->pos) &&
           l2->pos == ((LmnSymbolAtomRef)lobj->ap)->get_attr(lobj->pos)) {
-        contains2 = TRUE;
+        contains2 = true;
         break;
       }
     }
     if (i != j) { /* 根の位置が違う */
       LMN_FREE(l1);
       LMN_FREE(l2);
-      ret_flag = FALSE;
+      ret_flag = false;
       break;
     }
     if (contains1) { /* 根に到達した場合 */
@@ -1527,7 +1527,7 @@ BOOL lmn_mem_cmp_ground(Vector const *srcvec, Vector const *dstvec) {
     if (l1->pos != l2->pos) { /* 引数検査 */
       LMN_FREE(l1);
       LMN_FREE(l2);
-      ret_flag = FALSE;
+      ret_flag = false;
       break;
     }
 
@@ -1535,18 +1535,18 @@ BOOL lmn_mem_cmp_ground(Vector const *srcvec, Vector const *dstvec) {
       /* ファンクタ検査 */
       LMN_FREE(l1);
       LMN_FREE(l2);
-      ret_flag = FALSE;
+      ret_flag = false;
       break;
     }
 
-    if (!hashtbl_contains(&map, (HashKeyType)l1->ap)) {
+    if (!map.contains(l1->ap)) {
       /* 未出 */
-      hashtbl_put(&map, (HashKeyType)l1->ap, (HashValueType)l2->ap);
-    } else if ((LmnAtomRef)hashtbl_get(&map, (HashKeyType)l1->ap) != l2->ap) {
+      map[l1->ap] = l2->ap;
+    } else if (map[l1->ap] != l2->ap) {
       /* 既出で不一致 */
       LMN_FREE(l1);
       LMN_FREE(l2);
-      ret_flag = FALSE;
+      ret_flag = false;
       break;
     } else {
       /* 既出で一致 */
@@ -1563,15 +1563,15 @@ BOOL lmn_mem_cmp_ground(Vector const *srcvec, Vector const *dstvec) {
                          LMN_ATTR_GET_VALUE(((LmnSymbolAtomRef)l1->ap)->get_attr(i)));
         n2 = new LinkObj(((LmnSymbolAtomRef)l2->ap)->get_link(i),
                          LMN_ATTR_GET_VALUE(((LmnSymbolAtomRef)l2->ap)->get_attr(i)));
-        stack1.push((LmnWord)n1);
-        stack2.push((LmnWord)n2);
+        stack1.emplace_back(n1);
+        stack2.emplace_back(n2);
       } else { /* data atom は積まない */
         if (!lmn_data_atom_eq(
                 (LmnDataAtomRef)((LmnSymbolAtomRef)l1->ap)->get_link(i), ((LmnSymbolAtomRef)l1->ap)->get_attr(i),
                 (LmnDataAtomRef)((LmnSymbolAtomRef)l2->ap)->get_link(i), ((LmnSymbolAtomRef)l2->ap)->get_attr(i))) {
           LMN_FREE(l1);
           LMN_FREE(l2);
-          ret_flag = FALSE;
+          ret_flag = false;
           goto CMPGROUND_BREAK;
         }
       }
@@ -1582,13 +1582,10 @@ BOOL lmn_mem_cmp_ground(Vector const *srcvec, Vector const *dstvec) {
   } /* main loop: end */
 
 CMPGROUND_BREAK:
-  for (i = 0; i < stack1.get_num(); i++)
-    LMN_FREE((LinkObjRef)stack1.get(i));
-  for (i = 0; i < stack2.get_num(); i++)
-    LMN_FREE((LinkObjRef)stack2.get(i));
-  stack1.destroy();
-  stack2.destroy();
-  hashtbl_destroy(&map);
+  for (auto &p : stack1)
+    LMN_FREE(p);
+  for (auto &p : stack2)
+    LMN_FREE(p);
 
   return ret_flag;
 }

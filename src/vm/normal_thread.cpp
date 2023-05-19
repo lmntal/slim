@@ -64,7 +64,7 @@ void *normal_thread(void *arg) {
 
   thread_data = thread_info[*idp];
 
-  while (1) {
+  while (true) {
     op_lock(thread_data->id, 1);
     if (!lmn_env.enable_parallel)
       break;
@@ -77,8 +77,7 @@ void *normal_thread(void *arg) {
                            slim::vm::interpreter it(thread_data->rc, thread_data->rule, thread_instr);
                            thread_data->rc->reg(thread_data->atomi) = {(LmnWord)atom, LMN_ATTR_MAKE_LINK(0), TT_ATOM};
                            if (rc_hlink_opt(thread_data->atomi, thread_data->rc)) {
-                             spc = (SameProcCxt *)hashtbl_get(thread_data->rc->get_hl_sameproccxt(),
-                                                              (HashKeyType)thread_data->atomi);
+                             spc = thread_data->rc->get_hl_sameproccxt()[thread_data->atomi];
                              if (spc->is_consistent_with((LmnSymbolAtomRef)thread_data->rc->wt(thread_data->atomi))) {
                                spc->match((LmnSymbolAtomRef)thread_data->rc->wt(thread_data->atomi));
                                if (it.interpret(thread_data->rc, thread_data->rule, thread_instr)) {
@@ -180,7 +179,6 @@ void op_lock(int id, int flag) {
     ;
   pthread_mutex_lock(thread_info[id]->exec);
   thread_info[id]->exec_flag = 1 - thread_info[id]->exec_flag;
-  return;
 }
 
 void normal_parallel_prof_dump(FILE *f) {
@@ -200,7 +198,6 @@ void normal_parallel_prof_dump(FILE *f) {
   fprintf(f, "Fail Check:%18lu \n", fail_temp_check);
   fprintf(f, "Main Rule Wall Time:%9.2lf\n", walltime);
   fprintf(f, "============================================================\n");
-  return;
 }
 
 BOOL check_exist(LmnSymbolAtomRef atom, LmnFunctor f) {
@@ -214,12 +211,10 @@ BOOL check_exist(LmnSymbolAtomRef atom, LmnFunctor f) {
 void rule_wall_time_start() {
   normal_parallel_flag = FALSE;
   walltime_temp        = get_wall_time();
-  return;
 }
 
 void rule_wall_time_finish() {
   double finish;
   finish   = get_wall_time();
   walltime += finish - walltime_temp;
-  return;
 }

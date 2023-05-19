@@ -36,6 +36,7 @@
  */
 
 #include "process_table.h"
+#include "fmt/core.h"
 
 #include <algorithm>
 #include <climits>
@@ -51,7 +52,7 @@ template <> ProcessID process_id<HyperLink *>(HyperLink *hl) { return LMN_HL_ID(
 } // namespace slim
 
 void ProcessTbl::tbl_clear() { this->clear(); }
-int  ProcessTbl::tbl_foreach(int (*func)(LmnWord key, LmnWord val, LmnWord arg), LmnWord arg) {
+int  ProcessTbl::tbl_foreach(std::function<int(LmnWord key, LmnWord val, LmnWord arg)> const&func, LmnWord arg) {
   this->foreach (func, arg);
   return 0;
 }
@@ -161,7 +162,7 @@ void proc_tbl_symbol_atom_dump(char const *name, ProcessTableRef map) {
   map->tbl_foreach(
       [](LmnWord k, LmnWord v, LmnWord _arg) {
         LmnFunctor f = ((LmnSymbolAtomRef)v)->get_functor();
-        fprintf(stderr, "  key=%ld, value=%s\n", k, LMN_FUNCTOR_STR(f));
+        fmt::print(stderr, "  key={}, value={}\n", k, LMN_FUNCTOR_STR(f));
         return 1;
       },
       (LmnWord)0);

@@ -38,6 +38,7 @@
  */
 #include "port.h"
 #include "error.h"
+#include "fmt/core.h"
 #include "lmnstring.h"
 #include "lmntal.h"
 #include "util.h"
@@ -371,7 +372,7 @@ int port_put_raw_c(LmnPortRef port, int c) {
 
 /* Cの文字列をポートに出力する。エラーが起きた場合はEOFを返す。 正常に
    処理された場合は負でない数を返す*/
-int port_put_raw_s(LmnPortRef port, char const *str) {
+int port_put_raw_s(LmnPortRef port, std::string_view str) {
   if (lmn_port_closed(port))
     return EOF;
   if (LMN_PORT_DIR(port) != LMN_PORT_OUTPUT)
@@ -380,7 +381,7 @@ int port_put_raw_s(LmnPortRef port, char const *str) {
   switch (LMN_PORT_TYPE(port)) {
   case LMN_PORT_FILE: {
     FILE *f = (FILE *)LMN_PORT_DATA(port);
-    return fputs(str, f);
+    return fputs(str.data(), f);
   } break;
   case LMN_PORT_OSTR:
     ((LmnStringRef)LMN_PORT_DATA(port))->append(str);

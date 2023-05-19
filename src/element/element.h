@@ -47,7 +47,6 @@
 #include "conditional_ostream.hpp"
 #include "error.h"
 #include "exception.hpp"
-#include "file_util.h"
 #include "instruction.hpp"
 #include "internal_hash.h"
 #include "life_time.hpp"

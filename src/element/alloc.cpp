@@ -48,28 +48,25 @@
  * memory allocation for atom
  */
 
-static memory_pool **atom_memory_pools[128];
+static std::array<memory_pool **, 128> atom_memory_pools;
 
 void mpool_init() {
-  int i, core_num, arity_num;
-  arity_num = ARY_SIZEOF(atom_memory_pools);
-  core_num  = lmn_env.core_num;
-  for (i = 0; i < arity_num; i++) {
+  auto arity_num = atom_memory_pools.size();
+  auto core_num  = lmn_env.core_num;
+  for (auto i = 0; i < arity_num; i++) {
     atom_memory_pools[i] = (memory_pool **)malloc(sizeof(memory_pool *) * core_num);
     memset(atom_memory_pools[i], 0, sizeof(memory_pool *) * core_num);
   }
 }
 
 LmnSymbolAtomRef lmn_new_atom(LmnFunctor f) {
-  LmnSymbolAtomRef ap;
-  int              arity, cid;
-  arity = LMN_FUNCTOR_ARITY(lmn_functor_table, f);
-  cid   = env_my_thread_id();
+  auto arity = LMN_FUNCTOR_ARITY(lmn_functor_table, f);
+  auto cid   = env_my_thread_id();
 
   if (atom_memory_pools[arity][cid] == nullptr) {
     atom_memory_pools[arity][cid] = new memory_pool(LMN_SATOM_SIZE(arity));
   }
-  ap = (LmnSymbolAtomRef)atom_memory_pools[arity][cid]->allocate(0);
+  auto *ap = (LmnSymbolAtomRef)atom_memory_pools[arity][cid]->allocate(0);
   ap->set_functor(f);
   ap->set_id(0);
 
@@ -78,25 +75,18 @@ LmnSymbolAtomRef lmn_new_atom(LmnFunctor f) {
 }
 
 void lmn_delete_atom(LmnSymbolAtomRef ap) {
-  int arity, cid;
-
   env_return_id(ap->get_id());
-
-  arity = LMN_FUNCTOR_ARITY(lmn_functor_table, ap->get_functor());
-  cid   = env_my_thread_id();
+  auto arity = LMN_FUNCTOR_ARITY(lmn_functor_table, ap->get_functor());
+  auto cid   = env_my_thread_id();
   atom_memory_pools[arity][cid]->deallocate(ap, 0);
 }
 
 void free_atom_memory_pools() {
-  unsigned int i, j, arity_num, core_num;
-
-  arity_num = ARY_SIZEOF(atom_memory_pools);
-  core_num  = lmn_env.core_num;
-  for (i = 0; i < arity_num; i++) {
-    for (j = 0; j < core_num; j++) {
-      if (atom_memory_pools[i][j]) {
-        delete atom_memory_pools[i][j];
-      }
+  auto arity_num = atom_memory_pools.size();
+  auto core_num  = lmn_env.core_num;
+  for (auto i = 0; i < arity_num; i++) {
+    for (auto j = 0; j < core_num; j++) {
+      delete atom_memory_pools[i][j];
     }
     free(atom_memory_pools[i]);
   }

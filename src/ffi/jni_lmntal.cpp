@@ -43,7 +43,6 @@
 #include "vm/vm.h"
 #include <cctype>
 
-
 #define JNI_CYGPATH "/usr/bin/cygpath"
 #define JNI_LMNTAL_JAR_REL_PATH "/bin/lmntal.jar"
 #define JNI_OPTION_JAVA_CLASS_PATH "-Djava.class.path="
@@ -353,27 +352,23 @@ static BOOL jni_lmntal_compile(char **result, char const *code) {
 using file_ptr = std::unique_ptr<FILE, decltype(&fclose)>;
 
 static void _run(file_ptr fp) {
-  Vector       *start_rulesets;
-  LmnRuleSetRef t;
+  std::vector<LmnRuleSetRef> start_rulesets;
+  LmnRuleSetRef              t{load(std::move(fp))};
 
-  t              = load(std::move(fp));
-  start_rulesets = new Vector(2);
-
-  start_rulesets->push((vec_data_t)t);
+  start_rulesets.reserve(2);
+  start_rulesets.emplace_back(t);
 
   /* まともな入力ファイルが無ければ抜ける */
-  if (start_rulesets->is_empty()) {
+  if (start_rulesets.empty()) {
     fprintf(stderr, "bad script.\n");
     return;
   }
 
   if (lmn_env.nd) {
-    run_mc(start_rulesets, NULL, NULL);
+    run_mc(start_rulesets, nullptr, nullptr);
   } else {
     Task::lmn_run(start_rulesets);
   }
-
-  delete start_rulesets;
 }
 
 static void show_help() {

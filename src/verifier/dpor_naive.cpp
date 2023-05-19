@@ -310,7 +310,7 @@ inline State *McPorData::por_state_insert(State *succ, struct MemDeltaRoot *d) {
 
   if (d) {
     dmem_root_commit(d);
-    succ->state_set_mem(DMEM_ROOT_MEM(d));
+    succ->state_set_mem(dmem_root_mem(d));
     succ->state_calc_hash(succ->state_mem(), lmn_env.mem_enc);
     tmp_m = nullptr;
   } else {
@@ -1072,7 +1072,7 @@ int McPorData::dump__tmp_graph(st_data_t _k, st_data_t _v, st_data_t _a) {
         for (j = 0; j < transition_rule_num(t); j++) {
           if (j > 0)
             fprintf(f, " ");
-          fprintf(f, "%s", lmn_id_to_name(transition_rule(t, j)));
+          fmt::print(f, "{}", lmn_id_to_name(transition_rule(t, j)));
         }
         fprintf(f, ")");
       }

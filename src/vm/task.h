@@ -85,13 +85,14 @@ class Task final {
   static void lmn_dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr);
 
 public:
-  static void          lmn_run(Vector *rulesets);
+  static void          lmn_run(std::vector<LmnRuleSetRef> const &rulesets);
   static BOOL          react_rule(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule);
-  static void          react_start_rulesets(LmnMembraneRef mem, Vector *rulesets);
+  static void          react_start_rulesets(LmnMembraneRef mem, std::vector<LmnRuleSetRef> const &rulesets);
   static BOOL          react_all_rulesets(LmnReactCxtRef rc, LmnMembraneRef cur_mem);
-  static struct Vector user_system_rulesets;
-      /* system ruleset defined by user */ // ユーザーが書く部分となるとpublicにしておかざるを得ない
-  static HashSet *insertconnectors(slim::vm::RuleContext *rc, LmnMembraneRef mem, std::vector<LmnInstrVar> const &links);
+  static std::vector<LmnRuleSetRef> user_system_rulesets;
+  /* system ruleset defined by user */ // ユーザーが書く部分となるとpublicにしておかざるを得ない
+  static HashSet *insertconnectors(slim::vm::RuleContext *rc, LmnMembraneRef mem,
+                                   std::vector<LmnInstrVar> const &links);
 
   static Vector *links_from_idxs(Vector const *link_idxs, LmnReactCxtRef v);
   static void    free_links(Vector *links);

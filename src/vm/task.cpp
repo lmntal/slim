@@ -84,7 +84,7 @@ using callback_5 = void (*)(LmnReactCxtRef, LmnMembraneRef, LmnAtomRef, LmnLinkA
 // using callback_5 = std::function<void(LmnReactCxtRef, LmnMembraneRef, LmnAtomRef, LmnLinkAttr, LmnAtomRef,
 // LmnLinkAttr, LmnAtomRef, LmnLinkAttr, LmnAtomRef, LmnLinkAttr, LmnAtomRef, LmnLinkAttr)>;
 
-struct Vector user_system_rulesets; /* system ruleset defined by user */
+std::vector<LmnRuleSetRef> user_system_rulesets; /* system ruleset defined by user */
 
 /**
   Javaによる処理系ではリンクはリンクオブジェクトで表現するが、SLIMでは
@@ -147,7 +147,6 @@ void Task::lmn_dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr i
   dmem_interpret(rc, rule, instr);
 }
 
-namespace c14 = slim::element;
 namespace c17 = slim::element;
 
 /** 通常実行時の入口.
@@ -158,7 +157,7 @@ namespace c17 = slim::element;
  *    4. 後始末     通常モード時
  *    5. 継続フラグ 通常モードならON、normal_remainモードならOFFにセットする
  */
-void Task::lmn_run(Vector *start_rulesets) {
+void Task::lmn_run(std::vector<LmnRuleSetRef> const &start_rulesets) {
   static LmnMembraneRef                   mem;
   static std::unique_ptr<MemReactContext> mrc = nullptr;
 
@@ -266,11 +265,7 @@ void Task::lmn_run(Vector *start_rulesets) {
     delete mem;
     mrc = nullptr;
   }
-  if (env_proc_id_pool()) {
-    delete env_proc_id_pool();
-  }
-
-  delete start_rulesets; // ueda
+  delete env_proc_id_pool();
 }
 
 /** 膜スタックに基づいた通常実行 */
@@ -438,7 +433,7 @@ BOOL Task::react_rule(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule) {
       } else if (lmn_env.show_laststep_only) {
         rc->increment_reaction_count();
       } else {
-        fprintf(stdout, "---->%s\n", lmn_id_to_name(rule->name));
+        fmt::print(stdout, "---->{}\n", lmn_id_to_name(rule->name));
         rc->increment_reaction_count();
         fprintf(stdout, "%d: ", rc->get_reaction_count());
         lmn_dump_cell_stdout(rc->get_global_root());
@@ -448,7 +443,7 @@ BOOL Task::react_rule(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule) {
     }
   }
 
-  if (rc->get_hl_sameproccxt()) {
+  if (rc->get_hl_sameproccxt_init()) {
     rc->clear_hl_spc(); /* とりあえずここに配置 */
     // normal parallel destroy
     if (lmn_env.enable_parallel && !lmn_env.nd) {
@@ -464,12 +459,12 @@ BOOL Task::react_rule(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule) {
 
 /* 膜memでrulesetsのルールの適用を行う.
  * 適用結果は無視する */
-void Task::react_start_rulesets(LmnMembraneRef mem, Vector *rulesets) {
+void Task::react_start_rulesets(LmnMembraneRef mem, std::vector<LmnRuleSetRef> const &rulesets) {
   LmnReactCxt rc(mem, REACT_STAND_ALONE);
   int         i;
 
-  for (i = 0; i < rulesets->get_num(); i++) {
-    react_ruleset(&rc, mem, (LmnRuleSetRef)rulesets->get(i));
+  for (i = 0; i < rulesets.size(); i++) {
+    react_ruleset(&rc, mem, (LmnRuleSetRef)rulesets.at(i));
   }
   react_initial_rulesets(&rc, mem);
   react_zerostep_recursive(&rc, mem);
@@ -1366,9 +1361,9 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule, bool 
 
     if (rc_hlink_opt(atomi, rc)) {
       /* hyperlink の接続関係を利用したルールマッチング最適化 */
-      if (!rc->get_hl_sameproccxt())
+      if (!rc->get_hl_sameproccxt_init())
         rc->prepare_hl_spc();
-      auto *spc = (SameProcCxt *)hashtbl_get(rc->get_hl_sameproccxt(), (HashKeyType)atomi);
+      auto *spc = rc->get_hl_sameproccxt()[atomi];
       findatom_through_hyperlink(rc, rule, instr, spc, mem, f, atomi);
     } else {
       if (lmn_env.history_management)
@@ -1422,7 +1417,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule, bool 
       std::transform(filtered.begin(), filtered.end(), std::back_inserter(candidates),
                      [=](AtomListEntry::const_iterator const &it) {
                        return [=]() {
-                         atomlist_ent->splice(std::prev(it, 1), *atomlist_ent, record);
+                         AtomListEntry::splice(std::prev(it, 1), *atomlist_ent, record);
                          return LmnRegister({(LmnWord)*it, LMN_ATTR_MAKE_LINK(0), TT_ATOM});
                        };
                      });
@@ -1468,17 +1463,17 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule, bool 
       if (rc_hlink_opt(atomi, rc)) {
         SameProcCxt *spc;
 
-        if (!rc->get_hl_sameproccxt()) {
+        if (!rc->get_hl_sameproccxt_init()) {
           rc->prepare_hl_spc();
         }
 
         /* 型付きプロセス文脈atomiがoriginal/cloneのどちらであるか判別 */
-        spc = (SameProcCxt *)hashtbl_get(rc->get_hl_sameproccxt(), (HashKeyType)atomi);
+        spc = rc->get_hl_sameproccxt()[atomi];
         if (spc->is_clone(atom_arity)) {
           lmn_fatal("Can't use hyperlink searching in parallel-runtime mode.\n");
         }
       }
-      auto atomlist_ent = ((LmnMembraneRef)rc->wt(memi))->get_atomlist(f);
+      auto *atomlist_ent = ((LmnMembraneRef)rc->wt(memi))->get_atomlist(f);
       if (atomlist_ent)
         return false;
       ///
@@ -1495,7 +1490,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule, bool 
         if (check_exist(atom, f)) {
           rc->reg(atomi) = {(LmnWord)atom, LMN_ATTR_MAKE_LINK(0), TT_ATOM};
           if (rc_hlink_opt(atomi, rc)) {
-            auto spc = (SameProcCxt *)hashtbl_get(rc->get_hl_sameproccxt(), (HashKeyType)atomi);
+            auto *spc = rc->get_hl_sameproccxt()[atomi];
 
             if (spc->is_consistent_with((LmnSymbolAtomRef)rc->wt(atomi))) {
               spc->match((LmnSymbolAtomRef)rc->wt(atomi));
@@ -1594,14 +1589,16 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule, bool 
     SKIP_VAL(LmnInstrVar, instr);
     READ_VAL(lmn_interned_str, instr, memn);
 
-    rc->at(mem1)                      = 0;
-    rc->tt(mem1)                      = TT_MEM;
-    auto                     children = slim::vm::membrane_children((LmnMembraneRef)rc->wt(mem2));
-    auto                     filtered = slim::element::make_range_remove_if(children.begin(), children.end(),
-                                                                            [=](LmnMembrane &m) { return (&m)->NAME_ID() != memn; });
+    rc->at(mem1) = 0;
+    rc->tt(mem1) = TT_MEM;
+
+    auto children = slim::vm::membrane_children((LmnMembraneRef)rc->wt(mem2));
+    auto filtered = slim::element::make_range_remove_if(children.begin(), children.end(),
+                                                        [=](LmnMembrane &m) { return (&m)->NAME_ID() != memn; });
+
     std::vector<LmnRegister> v;
     for (auto &m : filtered)
-      v.push_back(LmnRegister({(LmnWord)&m, 0, TT_MEM}));
+      v.emplace_back((LmnWord)&m, 0, TT_MEM);
 
     this->false_driven_enumerate(mem1, std::move(v));
     return false;
@@ -1617,9 +1614,9 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule, bool 
     }
 
     if (rc->has_mode(REACT_ND)) {
-      auto mcrc = dynamic_cast<MCReactContext *>(rc);
+      auto *mcrc = dynamic_cast<MCReactContext *>(rc);
       if (mcrc->has_optmode(DynamicPartialOrderReduction) && !rc->is_zerostep) {
-        LmnMembraneRef m = (LmnMembraneRef)rc->wt(memi);
+        auto *m = (LmnMembraneRef)rc->wt(memi);
         dpor_LHS_flag_add(RC_POR_DATA(rc), m->mem_id(), LHS_MEM_NMEMS);
         this->push_stackframe([=](interpreter &itr, bool result) {
           dpor_LHS_flag_remove(RC_POR_DATA(rc), m->mem_id(), LHS_MEM_NMEMS);
@@ -2189,20 +2186,18 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule, bool 
       LmnLinkAttr attr   = ((LmnSymbolAtomRef)rc->wt(atomi))->get_attr(posi);
       if (attr != LMN_HL_ATTR) {
         return FALSE;
-      } else {
-        HyperLink *hl   = lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)hlAtom);
-        auto       v    = lmn_hyperlink_get_elements(hl);
-        auto       regs = std::vector<LmnRegister>();
-        std::transform(v.begin(), v.end(), std::back_inserter(regs), [](HyperLink *h) -> LmnRegister {
-          auto child_hlAtom = h->atom;
-          auto linked_atom  = child_hlAtom->get_link(0);
-          return {(LmnWord)linked_atom, child_hlAtom->get_attr(0), TT_ATOM};
-        });
-
-        this->false_driven_enumerate(linki, std::move(regs));
-        return false;
       }
-      break;
+      HyperLink *hl   = lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)hlAtom);
+      auto       v    = lmn_hyperlink_get_elements(hl);
+      auto       regs = std::vector<LmnRegister>();
+      std::transform(v.begin(), v.end(), std::back_inserter(regs), [](HyperLink *h) -> LmnRegister {
+        auto *child_hlAtom = h->atom;
+        auto *linked_atom  = child_hlAtom->get_link(0);
+        return {(LmnWord)linked_atom, child_hlAtom->get_attr(0), TT_ATOM};
+      });
+
+      this->false_driven_enumerate(linki, std::move(regs));
+      return false;
     }
   case INSTR_UNIFY: {
     LmnInstrVar atom1, pos1, atom2, pos2, memi;
@@ -2402,7 +2397,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule, bool 
       lmn_mem_add_ruleset((LmnMembraneRef)rc->wt(memi), ruleset);
     } else {
       /* テーブル内にルールセットがない場合 */
-      fprintf(stderr, "Undefined module %s\n", lmn_id_to_name(module_name_id));
+      fmt::print(stderr, "Undefined module {}\n", lmn_id_to_name(module_name_id));
     }
     break;
   }
@@ -2491,13 +2486,13 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule, bool 
           return FALSE;
         }
         if (rc_hlink_opt(atomi, rc)) {
-          auto spc = ((SameProcCxt *)hashtbl_get(rc->get_hl_sameproccxt(), (HashKeyType)atomi));
+          auto *spc = rc->get_hl_sameproccxt()[atomi];
 
-          auto atom = (LmnSymbolAtomRef)rc->wt(atomi);
+          auto *atom = (LmnSymbolAtomRef)rc->wt(atomi);
           for (int i = 0; i < spc->proccxts.size(); i++) {
             if (spc->proccxts[i]) {
               if (spc->proccxts[i]->is_argument_of(atom, i)) {
-                auto linked_hl          = lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)atom->get_link(i));
+                auto *linked_hl         = lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)atom->get_link(i));
                 spc->proccxts[i]->start = linked_hl;
               } else {
                 return false;
@@ -2604,8 +2599,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule, bool 
     if (rc->has_mode(REACT_ND)) {
       auto *mcrc = dynamic_cast<MCReactContext *>(rc);
       if (mcrc->has_optmode(DynamicPartialOrderReduction) && !rc->is_zerostep) {
-        auto *addr = atoms.get();
-        atoms.release();
+        auto *addr = atoms.release();
         dpor_LHS_add_ground_atoms(RC_POR_DATA(rc), addr);
 
         this->push_stackframe([=](interpreter &itr, bool result) {
@@ -2861,22 +2855,22 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule, bool 
     READ_VAL(LmnInstrVar, instr, length2);
     READ_VAL(LmnInstrVar, instr, arg2);
 
-    if (!rc->get_hl_sameproccxt()) {
+    if (!rc->get_hl_sameproccxt_init()) {
       rc->prepare_hl_spc();
     }
 
-    if (!hashtbl_contains(rc->get_hl_sameproccxt(), (HashKeyType)atom1)) {
-      spc1 = new SameProcCxt(length1);
-      hashtbl_put(rc->get_hl_sameproccxt(), (HashKeyType)atom1, (HashValueType)spc1);
+    if (!rc->get_hl_sameproccxt().contains(atom1)) {
+      spc1                            = new SameProcCxt(length1);
+      rc->get_hl_sameproccxt()[atom1] = spc1;
     } else {
-      spc1 = (SameProcCxt *)hashtbl_get(rc->get_hl_sameproccxt(), (HashKeyType)atom1);
+      spc1 = rc->get_hl_sameproccxt()[atom1];
     }
 
-    if (!hashtbl_contains(rc->get_hl_sameproccxt(), (HashKeyType)atom2)) {
-      spc2 = new SameProcCxt(length2);
-      hashtbl_put(rc->get_hl_sameproccxt(), (HashKeyType)atom2, (HashValueType)spc2);
+    if (!rc->get_hl_sameproccxt().contains(atom2)) {
+      spc2                            = new SameProcCxt(length2);
+      rc->get_hl_sameproccxt()[atom2] = spc2;
     } else {
-      spc2 = (SameProcCxt *)hashtbl_get(rc->get_hl_sameproccxt(), (HashKeyType)atom2);
+      spc2 = rc->get_hl_sameproccxt()[atom2];
     }
 
     spc1->add_proccxt_if_absent(atom1, arg1);
@@ -2885,22 +2879,22 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule, bool 
     ////normal parallel init
     if (lmn_env.enable_parallel && !lmn_env.nd) {
       for (i = 0; i < lmn_env.core_num; i++) {
-        if (!thread_info[i]->rc->get_hl_sameproccxt()) {
+        if (!thread_info[i]->rc->get_hl_sameproccxt_init()) {
           thread_info[i]->rc->prepare_hl_spc();
         }
 
-        if (!hashtbl_contains(thread_info[i]->rc->get_hl_sameproccxt(), (HashKeyType)atom1)) {
-          spc1 = new SameProcCxt(length1);
-          hashtbl_put(thread_info[i]->rc->get_hl_sameproccxt(), (HashKeyType)atom1, (HashValueType)spc1);
+        if (!thread_info[i]->rc->get_hl_sameproccxt().contains(atom1)) {
+          spc1                                            = new SameProcCxt(length1);
+          thread_info[i]->rc->get_hl_sameproccxt()[atom1] = spc1;
         } else {
-          spc1 = (SameProcCxt *)hashtbl_get(thread_info[i]->rc->get_hl_sameproccxt(), (HashKeyType)atom1);
+          spc1 = thread_info[i]->rc->get_hl_sameproccxt()[atom1];
         }
 
-        if (!hashtbl_contains(thread_info[i]->rc->get_hl_sameproccxt(), (HashKeyType)atom2)) {
-          spc2 = new SameProcCxt(length2);
-          hashtbl_put(thread_info[i]->rc->get_hl_sameproccxt(), (HashKeyType)atom2, (HashValueType)spc2);
+        if (!thread_info[i]->rc->get_hl_sameproccxt().contains(atom2)) {
+          spc2                                            = new SameProcCxt(length2);
+          thread_info[i]->rc->get_hl_sameproccxt()[atom2] = spc2;
         } else {
-          spc2 = (SameProcCxt *)hashtbl_get(thread_info[i]->rc->get_hl_sameproccxt(), (HashKeyType)atom2);
+          spc2 = thread_info[i]->rc->get_hl_sameproccxt()[atom2];
         }
 
         spc1->add_proccxt_if_absent(atom1, arg1);
@@ -3302,7 +3296,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule, bool 
   }
   case INSTR_NEWLIST: {
     LmnInstrVar listi;
-    Vector     *listvec = new Vector(16);
+    auto       *listvec = new Vector(16);
     READ_VAL(LmnInstrVar, instr, listi);
     rc->reg(listi) = {(LmnWord)listvec, 0, TT_OTHER};
 
@@ -4113,7 +4107,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule, bool 
     LmnSubInstrSize subinstr_size;
     READ_VAL(LmnSubInstrSize, instr, subinstr_size);
 
-    if (rc->get_hl_sameproccxt()) {
+    if (rc->get_hl_sameproccxt_init()) {
       /*branchとhyperlinkを同時起動するための急場しのぎ */
       rc->clear_hl_spc();
     }
@@ -4149,7 +4143,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule, bool 
         break;
 
       if (arity - 1 != c->get_arity()) {
-        fprintf(stderr, "EXTERNAL FUNC: invalid arity - %s\n", LMN_SYMBOL_STR(name));
+        fmt::print(stderr, "EXTERNAL FUNC: invalid arity - {}\n", LMN_SYMBOL_STR(name));
         break;
       }
 
@@ -4743,7 +4737,7 @@ static bool dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr inst
         lmn_mem_add_ruleset((LmnMembraneRef)rc->wt(memi), ruleset);
       } else {
         /* テーブル内にルールセットがない場合 */
-        fprintf(stderr, "Undefined module %s\n", lmn_id_to_name(module_name_id));
+        fmt::print(stderr, "Undefined module {}\n", lmn_id_to_name(module_name_id));
       }
       break;
     }
@@ -5087,7 +5081,7 @@ static bool dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr inst
           break;
 
         if (arity - 1 != c->get_arity()) {
-          fprintf(stderr, "EXTERNAL FUNC: invalid arity - %s\n", LMN_SYMBOL_STR(name));
+          fmt::print(stderr, "EXTERNAL FUNC: invalid arity - {}\n", LMN_SYMBOL_STR(name));
           break;
         }
 

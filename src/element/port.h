@@ -112,7 +112,7 @@ int port_unget_raw_c(LmnPortRef port_atom, int c);
 int port_putc(LmnPortRef port_atom, LmnSAtom unary_atom);
 int port_puts(LmnPortRef port_atom, LmnStringRef str);
 int port_put_raw_c(LmnPortRef port_atom, int c);
-int port_put_raw_s(LmnPortRef port_atom, char const *str);
+int port_put_raw_s(LmnPortRef port_atom, std::string_view str);
 
 /* @} */
 

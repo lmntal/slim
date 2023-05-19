@@ -343,12 +343,12 @@ void StateDumper::state_print_transition(State *s, StateSpace const *_owner) {
 
       if (s->has_trans_obj()) {
         fprintf(_fp, "%s", label_begin().c_str());
-        auto t = transition(s, i);
+        auto *t = transition(s, i);
 
         for (int j = 0; j < transition_rule_num(t); j++) {
           if (j > 0)
             fprintf(_fp, " "); /* ルール名の区切りは半角スペース1文字 */
-          fprintf(_fp, "%s", lmn_id_to_name(transition_rule(t, j)));
+          fmt::print(_fp, "{}", lmn_id_to_name(transition_rule(t, j)));
         }
         fprintf(_fp, "%s", label_end().c_str());
       }

@@ -191,7 +191,7 @@ static inline bool load_input_files(std::vector<LmnRuleSetRef> &start_rulesets, 
 static inline void slim_exec(std::vector<LmnRuleSetRef> const &start_rulesets) {
   if (lmn_env.nd == FALSE) {
     /* プログラム実行 */
-    Task::lmn_run(new Vector(start_rulesets));
+    Task::lmn_run(start_rulesets);
   } else {
     /* プログラム検証 */
     AutomataRef automata;
@@ -219,7 +219,7 @@ static inline void slim_exec(std::vector<LmnRuleSetRef> const &start_rulesets) {
       }
     }
 
-    run_mc(new Vector(start_rulesets), automata, prop_defs);
+    run_mc(start_rulesets, automata, prop_defs);
 
     if (ret == FALSE) {
       delete automata;

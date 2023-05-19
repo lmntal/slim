@@ -37,87 +37,76 @@
  */
 
 #include "symbol.h"
-#include "element/element.h"
-#include <cstdarg>
 
-static struct st_table  *sym_tbl;
-static struct st_table  *sym_rev_tbl;
-static lmn_interned_str *next_sym_id;
-static lmn_mutex_t       sym_mtx;
+#include <cstddef>
+#include <mutex>
+#include <string>
+#include <vector>
+
+#include "ankerl/unordered_dense.hpp"
+#include "element/element.h"
+#include "element/map_utils.hpp"
+#include "lmntal.h"
+
+using SymbolRevMap = ankerl::unordered_dense::map<lmn_interned_str, std::string>;
+using SymbolMap    = mapStrKey<lmn_interned_str>;
+using NextSymbolId = std::vector<lmn_interned_str>;
+
+static SymbolMap    sym_tbl{};
+static SymbolRevMap sym_rev_tbl{};
+static NextSymbolId next_sym_id{};
+static std::mutex   sym_mtx{};
 
 /* prototypes */
 
 void             sym_tbl_init();
-int              free_sym_tbl_entry(st_data_t name, st_data_t _v, int _i);
 void             sym_tbl_destroy();
 lmn_interned_str create_new_id();
 
 void sym_tbl_init() {
-  int i, n;
-  sym_tbl     = st_init_strtable();
-  sym_rev_tbl = st_init_numtable();
-  n           = lmn_env.core_num;
-  next_sym_id = LMN_NALLOC<lmn_interned_str>(n);
-  for (i = 0; i < n; i++) {
+  auto n = lmn_env.core_num;
+  next_sym_id.resize(n);
+  for (auto i = 0; i < n; i++) {
     next_sym_id[i] = i + 1; /* 0はIDに使わない */
   }
-
-  if (lmn_env.core_num >= 2)
-    lmn_mutex_init(&(sym_mtx));
 }
 
-int free_sym_tbl_entry(st_data_t name, st_data_t _v, int _i) {
-  LMN_FREE(name);
-  return ST_DELETE;
-}
-
-void sym_tbl_destroy() {
-  /* テーブル中の文字列の領域を解放 */
-  st_foreach(sym_tbl, (st_iter_func)free_sym_tbl_entry, 0);
-
-  st_free_table(sym_tbl);
-  st_free_table(sym_rev_tbl);
-  free(next_sym_id);
-
-  if (lmn_env.core_num >= 2)
-    lmn_mutex_destroy(&(sym_mtx));
-}
+void sym_tbl_destroy() {}
 
 lmn_interned_str create_new_id() {
-  int              cid    = env_my_thread_id();
-  lmn_interned_str new_id = next_sym_id[cid];
-  next_sym_id[cid]        += env_threads_num();
+  auto cid         = env_my_thread_id();
+  auto new_id      = next_sym_id[cid];
+  next_sym_id[cid] += env_threads_num();
   return new_id;
 }
 
-lmn_interned_str lmn_intern(char const *name) {
-  st_data_t new_id;
-  char     *name2;
-
+lmn_interned_str lmn_intern(std::string_view name) {
   /* すでにnameに対応する値があるならそれを返す */
-  if (st_lookup(sym_tbl, (st_data_t)name, &new_id))
-    return new_id;
+  if (auto it = sym_tbl.find(name); it != sym_tbl.end())
+    return it->second;
 
   /* 新しいIDを作る */
-  new_id = create_new_id();
-  name2  = strdup(name);
-  if (env_threads_num() >= 2)
-    lmn_mutex_lock(&(sym_mtx));
-  st_add_direct(sym_tbl, (st_data_t)name2, (st_data_t)new_id);
-  st_add_direct(sym_rev_tbl, (st_data_t)new_id, (st_data_t)name2);
-  if (env_threads_num() >= 2)
-    lmn_mutex_unlock(&(sym_mtx));
+  auto        new_id = create_new_id();
+  std::string name2{name};
+
+  if (env_threads_num() >= 2) [[likely]] {
+    std::lock_guard<std::mutex> lock{sym_mtx};
+    sym_tbl[name2]      = new_id;
+    sym_rev_tbl[new_id] = name2;
+  } else [[unlikely]] {
+    sym_tbl[name2]      = new_id;
+    sym_rev_tbl[new_id] = name2;
+  }
+
   return new_id;
 }
 
-char const *lmn_id_to_name(lmn_interned_str id) {
-  char *name;
-
+std::string_view lmn_id_to_name(lmn_interned_str id) {
   if (id == ANONYMOUS)
     return "";
-  if (st_lookup(sym_rev_tbl, (st_data_t)id, (st_data_t *)&name))
-    return name;
-  return nullptr;
+  if (auto it = sym_rev_tbl.find(id); it != sym_rev_tbl.end())
+    return it->second;
+  return {};
 }
 
-int count_symbols() { return st_num(sym_tbl) + 1; /* symbol 0 is out of table */ }
+size_t count_symbols() { return sym_tbl.size() + 1; /* symbol 0 is out of table */ }

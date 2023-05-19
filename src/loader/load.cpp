@@ -36,36 +36,43 @@
  * $Id: load.c,v 1.13 2008/10/17 08:40:50 sasaki Exp $
  */
 
-#include <map>
-
-#include "arch.h"
-#include "element/element.h"
-#include "ffi/lmntal_system_adapter.h"
-#include "lmntal.h"
 #include "load.h"
-#include "so.h"
-#include "vm/vm.h"
-#include <cctype>
+
+#include <cstddef>
 #include <dirent.h>
 #include <dlfcn.h>
-#include <limits.h>
+#include <iterator>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
-/* prototypes */
-
-void build_cmd(char *buf, char *file_name);
-
-#include "byte_encoder.hpp"
-#include "exception.hpp"
-#include "il_lexer.hpp"
-#include "il_parser.hpp"
-#include "syntax.hpp"
 
 #include <algorithm>
+#include <cctype>
+#include <climits>
+#include <filesystem>
 #include <map>
 #include <set>
 #include <string>
+
+#include "fmt/core.h"
+
+#include "arch.h"
+#include "byte_encoder.hpp"
+#include "element/element.h"
+#include "exception.hpp"
+#include "ffi/lmntal_system_adapter.h"
+#include "il_lexer.hpp"
+#include "il_parser.hpp"
+#include "lmntal.h"
+#include "so.h"
+#include "syntax.hpp"
+#include "vm/vm.h"
+
+/* prototypes */
+using std::string;
+using std::filesystem::path;
+
+void build_cmd(char *buf, char *file_name);
 
 using loader_error = slim::loader::exception;
 namespace c17      = slim::element;
@@ -163,7 +170,7 @@ static LmnRuleSetRef load_il(const IL &il) {
 void helloworld(char const *s) { fprintf(stdout, "hello %s world!\n", s); }
 
 LmnRuleSetRef load_and_setting_trans_maindata(struct trans_maindata *maindata) {
-  LmnRuleSetRef ret = 0; /* ワーニング抑制 */
+  LmnRuleSetRef ret = nullptr; /* ワーニング抑制 */
 
   /* シンボルを読み込み+変換テーブルを設定 */
   for (int i = 1; i < maindata->count_of_symbol; i++)
@@ -205,7 +212,7 @@ LmnRuleSetRef load_and_setting_trans_maindata(struct trans_maindata *maindata) {
   for (int i = FIRST_ID_OF_NORMAL_RULESET; i < maindata->count_of_ruleset; i++) {
     auto &tr  = maindata->ruleset_table[i];
     auto  gid = LmnRuleSetTable::gen_id();
-    auto  rs  = new LmnRuleSet(gid, tr.size);
+    auto *rs  = new LmnRuleSet(gid, tr.size);
     LmnRuleSetTable::add(rs, gid);
 
     for (auto &r : tr)
@@ -246,8 +253,8 @@ LmnRuleSetRef load_compiled_il(std::string const &filename, void *sohandle) {
   (*init_f)();
 
   /* データオブジェクトを取得 */
-  auto maindata_str = std::string("trans_") + basename + "_maindata";
-  auto maindata     = (trans_maindata *)dlsym(sohandle, maindata_str.c_str());
+  auto  maindata_str = std::string("trans_") + basename + "_maindata";
+  auto *maindata     = (trans_maindata *)dlsym(sohandle, maindata_str.c_str());
 
   if (!maindata)
     throw loader_error(std::string("maindata \"") + maindata_str + " not found in " + basename + ".");
@@ -285,24 +292,22 @@ static std::vector<void *> opened_so_files;
 void                       init_so_handles() {}
 
 void finalize_so_handles() {
-  for (auto v : opened_so_files)
+  for (auto *v : opened_so_files)
     dlclose(v);
   opened_so_files.clear();
 }
-
-namespace fs = slim::element::filesystem;
 
 /* 拡張子がsoならリンクする */
 /* dlopenは環境変数にLD_LIBRARY_PATH="."と設定しないとカレントディレクトリを検索してくれないので注意
  */
 LmnRuleSetRef load_so_file(std::string const &file_name) {
-  auto sohandle = dlopen(file_name.c_str(), RTLD_LAZY);
+  auto *sohandle = dlopen(file_name.c_str(), RTLD_LAZY);
   if (!sohandle)
     throw loader_error(std::string("Failed to open ") + file_name + " (" + dlerror() + ")");
 
   dlerror();
   opened_so_files.push_back(sohandle);
-  return load_compiled_il(file_name.c_str(), sohandle);
+  return load_compiled_il(file_name, sohandle);
 }
 
 /* 拡張子がlmnならばJavaによる処理系で中間言語にコンパイルする */
@@ -311,7 +316,7 @@ LmnRuleSetRef load_lmn_file(std::string const &file_name) {
   if (!lmntal_home)
     throw loader_error("environment variable \"LMNTAL_HOME\" is not set");
 
-  if (fs::exists(std::string(lmntal_home)))
+  if (!std::filesystem::exists(lmntal_home))
     throw loader_error(std::string("Failed to run lmntal compiler (lmntal don't exist at ") + lmntal_home + ")");
 
   return load(lmntal_compile_file(file_name.c_str()));
@@ -323,24 +328,25 @@ LmnRuleSetRef load_lmn_file(std::string const &file_name) {
  * dlcloseはfinalize()でされる */
 
 LmnRuleSetRef load_file(std::string const &file_name) {
-  fs::path filepath(file_name);
+  std::filesystem::path const &path{file_name};
 
-  if (filepath.extension().string() == "so")
+  if (path.extension().string() == ".so")
     return load_so_file(file_name);
 
-  if (filepath.extension().string() == "lmn")
+  if (path.extension().string() == ".lmn")
     return load_lmn_file(file_name);
 
   return load(file_name);
 }
 
-static std::string extension_table[] = {"", "lmn", "il", "so"};
-static int         file_type(fs::path const &filename) {
-  auto ext = filename.extension().string();
-  auto i   = std::find(std::begin(extension_table), std::end(extension_table), ext);
+static std::array<string, 4> extension_table = {"", ".lmn", ".il", ".so"};
+
+static size_t file_type(std::filesystem::path const &filename) {
+  auto  ext = filename.extension();
+  auto *i   = std::find(std::begin(extension_table), std::end(extension_table), ext);
   if (i == std::end(extension_table))
     return 0;
-  return i - std::begin(extension_table);
+  return std::distance(std::begin(extension_table), i);
 }
 
 /* pathのディレクトリ内のファイルを中間コードとしてロードする.
@@ -348,14 +354,14 @@ static int         file_type(fs::path const &filename) {
  */
 void load_il_files(char const *path_string) {
   try {
-    fs::path               path(path_string);
-    fs::directory_iterator dir = path;
+    std::filesystem::path               path{path_string};
+    std::filesystem::directory_iterator dir{path};
 
-    std::map<std::string, int> loading_files_type;
+    std::map<std::string, size_t> loading_files_type;
 
     /* 読み込むファイルをリストアップする */
-    for (auto dp : dir) {
-      if (!fs::is_regular_file(dp.status()))
+    for (const auto &dp : dir) {
+      if (dp.is_regular_file())
         continue;
 
       auto dname    = dp.path().filename();
@@ -369,15 +375,16 @@ void load_il_files(char const *path_string) {
     }
 
     /* 読み込む */
-    for (auto &p : loading_files_type) {
-      fs::path basename(p.first);
-      auto     filetype  = p.second;
-      auto     extension = extension_table[filetype];
+    for (auto &[base, type] : loading_files_type) {
+      std::filesystem::path basename{base};
+
+      auto filetype  = type;
+      auto extension = extension_table[filetype];
 
       auto file = path / basename.replace_extension(extension);
-      load_file(file.string());
+      load_file(file);
     }
-  } catch (fs::filesystem_error const &e) {
+  } catch (std::filesystem::filesystem_error const &e) {
     fprintf(stderr, "%s\n", e.what());
   }
 }

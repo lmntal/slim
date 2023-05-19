@@ -44,6 +44,7 @@
 #include <random>
 #include <vector>
 
+#include "ankerl/unordered_dense.hpp"
 #include "fmt/color.h"
 #include "fmt/core.h"
 
@@ -51,18 +52,19 @@
 #include "vm/membrane.h"
 #include "vm/membrane.hpp"
 
-struct SimpleHashtbl;
 struct AtomListEntry;
 
 LmnSymbolAtomRef atomlist_head(AtomListEntry *lst);
 LmnSymbolAtomRef lmn_atomlist_end(AtomListEntry *lst);
 
+using Record = ankerl::unordered_dense::map<int, LmnAtomRef>;
+
 struct AtomListEntry {
   LmnSymbolAtomRef tail, head;
   //  LmnSymbolAtomRef shuffle_tail, shuffle_head;
-  int                   n;
-  int                   n_record = 0; // 履歴管理用アトムのための変数(nakata)
-  struct SimpleHashtbl *record;
+  int     n;
+  int     n_record = 0; // 履歴管理用アトムのための変数(nakata)
+  Record *record{nullptr};
 
   LmnSymbolAtomRef as_atom() { return reinterpret_cast<LmnSymbolAtomRef>(this); }
 
@@ -144,13 +146,21 @@ struct AtomListEntry {
   /* return NULL when atomlist doesn't exist. */
   LmnSymbolAtomRef get_record(int findatomid) {
     if (this->record) {
-      return (LmnSymbolAtomRef)hashtbl_get_default(this->record, findatomid, 0);
+      return (LmnSymbolAtomRef)(*this->record)[findatomid];
     }
-    this->record = hashtbl_make(4);
+    this->record = new Record;
+    this->record->reserve(4);
     return nullptr;
   }
 
-  void put_record(int id, LmnAtomRef record) const { hashtbl_put(this->record, id, (HashKeyType)record); }
+  size_t record_size() const {
+    if (record)
+      return sizeof(*record) + record->values().capacity() * sizeof(Record::value_type) +
+             record->bucket_count() * sizeof(Record::bucket_type);
+    return 0;
+  }
+
+  void put_record(int id, LmnAtomRef record) const { (*this->record)[id] = record; }
 
   void move_atom_to_atomlist_tail(LmnSymbolAtomRef a) const {
     a->get_next()->set_prev(a->get_prev());
@@ -254,8 +264,8 @@ struct AtomListEntry {
   const_iterator make_iterator(LmnSymbolAtomRef atom) const { return {this, atom}; }
 
   const_iterator insert(int findatomid, LmnSymbolAtomRef record) {
-    hashtbl_put(this->record, findatomid, (HashKeyType)record);
-    auto *start_atom = atomlist_head(this);
+    (*this->record)[findatomid] = record;
+    auto *start_atom            = atomlist_head(this);
     /* 履歴アトムを挿入する */
     ((LmnSymbolAtomRef)this)->set_next(record);
     record->set_prev((LmnSymbolAtomRef)this);
@@ -265,10 +275,9 @@ struct AtomListEntry {
   }
 
   const_iterator find_record(int findatomid) {
-    if (this->record) {
-      return {this, (LmnSymbolAtomRef)hashtbl_get_default(this->record, findatomid, 0)};
+    if (this->record->contains(findatomid)) {
+      return {this, (LmnSymbolAtomRef)(*this->record)[findatomid]};
     }
-    this->record = hashtbl_make(4);
     return end();
   }
 

@@ -7,8 +7,7 @@
 
 #include <sstream>
 
-namespace slim {
-namespace debug_printer {
+namespace slim::debug_printer {
 /**
  * 数値の16進表現を返す
  * 必ず先頭に0xが付加される
@@ -103,18 +102,17 @@ inline std::string print_object_ids(void const *address, unsigned long id) {
  * 各種データ構造に典型的な名前およびIDの文字列表現を返す
  */
 inline std::string print_object_ids(lmn_interned_str name, unsigned long id) {
-  std::string str = name == ANONYMOUS ? "ANONYMOUS" : lmn_id_to_name(name);
+  std::string str = name == ANONYMOUS ? "ANONYMOUS" : std::string{lmn_id_to_name(name)};
   return "Name[" + str + "], ID[" + std::to_string(id) + "]";
 }
 /**
  * 各種データ構造に典型的な名前・識別子・IDの文字列表現を返す
  */
 inline std::string print_object_ids(lmn_interned_str name, void const *address, unsigned long id) {
-  std::string str = name == ANONYMOUS ? "ANONYMOUS" : lmn_id_to_name(name);
+  std::string str = name == ANONYMOUS ? "ANONYMOUS" : std::string{lmn_id_to_name(name)};
   return "Name[" + str + "], " + print_object_ids(address, id);
 }
 
-} // namespace debug_printer
-} // namespace slim
+} // namespace slim::debug_printer
 
 #endif

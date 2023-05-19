@@ -711,8 +711,8 @@ void dump_profile_data(FILE *f) {
             r_others->backtrack        += rp->backtrack;
           } else {
             /* 一応ナノセックまで取得できるが, 精度は環境依存 */
-            fprintf(f, "@%-3d %8.8s : %9lu %9lu %9lu %13.1lf\n", rp->ref_rs_id, lmn_id_to_name(rp->src->name),
-                    rp->trial.called_num, rp->apply, rp->backtrack, rp->trial.total_time / 1e-6);
+            fmt::print(f, "@{:<3} {:8.8s} : {:9} {:9} {:9} {:13.1}\n", rp->ref_rs_id, lmn_id_to_name(rp->src->name),
+                       rp->trial.called_num, rp->apply, rp->backtrack, rp->trial.total_time / 1e-6);
           }
           r_total->apply            += rp->apply;
           r_total->backtrack        += rp->backtrack;

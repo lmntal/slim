@@ -109,7 +109,7 @@ LMN_EXTERN void lmn_dump_atom(LmnPortRef port, LmnAtomRef atom, LmnLinkAttr attr
 /**
  * @brief print an escaped string.
  */
-void dump_escaped(LmnPortRef port, char const *s);
+void dump_escaped(LmnPortRef port, std::string_view s);
 
 extern char char_to_escape_char[];
 

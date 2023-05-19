@@ -85,8 +85,7 @@ PropositionRef proposition_make(char const *head, char const *guard, char const 
   lmn_env.optimization_level = optimization_level_org;
 
   auto rule = load_rule(*il_parse_rule(std::move(fp)));
-  p->rule   = rule.get();
-  rule.release();
+  p->rule   = rule.release();
   return p;
 }
 

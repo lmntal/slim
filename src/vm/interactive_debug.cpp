@@ -1,6 +1,7 @@
 #include "vm/interactive_debug.hpp"
 
 #include <iostream>
+#include <string_view>
 #include <sys/ioctl.h>
 #include <termios.h>
 #include <unistd.h>
@@ -54,10 +55,16 @@ static const std::map<DebugCommand, std::vector<std::string>> debug_commands = {
 
 // prototype
 // container
-template <class T> static inline bool vector_contains(std::vector<T> const &vector, T value);
+template <class T, class TR>
+  requires std::equality_comparable_with<T, TR>
+static inline bool vector_contains(std::vector<T> const &vector, TR value) {
+  auto end = vector.cend();
+  auto res = std::find(vector.cbegin(), end, value);
+  return res != end;
+}
 
 // string
-static inline bool string_starts_with(std::string const &str1, std::string const &str2);
+static inline bool string_starts_with(std::string_view str1, std::string_view str2);
 
 // commands
 static std::pair<DebugCommand, std::vector<std::string>> parse_command(std::string const &command);
@@ -70,13 +77,7 @@ static void print_section(std::string const &string, size_t from_pos, size_t end
                           int screen_width);
 // prototype end
 
-template <class T> static inline bool vector_contains(std::vector<T> const &vector, T value) {
-  auto end = vector.cend();
-  auto res = std::find(vector.cbegin(), end, value);
-  return res != end;
-}
-
-static inline bool string_starts_with(std::string const &str1, std::string const &str2) {
+static inline bool string_starts_with(std::string_view str1, std::string_view str2) {
   return str1.size() < str2.size() ? false : std::equal(str2.cbegin(), str2.cend(), str1.cbegin());
 }
 
@@ -106,10 +107,10 @@ static std::pair<DebugCommand, std::vector<std::string>> parse_command(std::stri
   bool has_ambiguous_arg = false;
   for (size_t i = 0; i < argc && !has_ambiguous_arg; i++) {
     std::vector<std::string> argument_candidate;
-    for (auto &p : debug_commands) {
+    for (const auto &p : debug_commands) {
       if (i < p.second.size()) {
         if (std::equal(p.second.begin(), p.second.begin() + i, command_vec.begin())) {
-          if (string_starts_with(p.second.at(i), command_vec.at(i))) {
+          if (p.second.at(i).starts_with(command_vec.at(i))) {
             if (!vector_contains(argument_candidate, p.second.at(i))) {
               argument_candidate.push_back(p.second.at(i));
             }
@@ -134,10 +135,9 @@ static std::pair<DebugCommand, std::vector<std::string>> parse_command(std::stri
 
   if (cmd_iter_found == cmd_iter_end) { // not found
     return {DebugCommand::__UNKNOWN, {}};
-  } else { // found
-    command_vec.erase(command_vec.begin(), command_vec.begin() + (*cmd_iter_found).second.size());
-    return {(*cmd_iter_found).first, command_vec};
-  }
+  } // found
+  command_vec.erase(command_vec.begin(), command_vec.begin() + (*cmd_iter_found).second.size());
+  return {(*cmd_iter_found).first, command_vec};
 }
 
 static std::string get_membrane_tree(const LmnMembraneRef mem, std::string prefix, const LmnMembraneRef global,
@@ -180,12 +180,12 @@ static std::string get_membrane_tree(const LmnMembraneRef mem, std::string prefi
 static LmnMembraneRef get_pointer_to_membrane_by_id(const LmnMembraneRef mem, ProcessID id) {
   if (mem == nullptr) {
     return nullptr;
-  } else if (mem->mem_id() == id) {
-    return mem;
-  } else {
-    LmnMembraneRef ref = get_pointer_to_membrane_by_id(mem->child_head, id);
-    return ref != nullptr ? ref : get_pointer_to_membrane_by_id(mem->next, id);
   }
+  if (mem->mem_id() == id) {
+    return mem;
+  }
+  LmnMembraneRef ref = get_pointer_to_membrane_by_id(mem->child_head, id);
+  return ref != nullptr ? ref : get_pointer_to_membrane_by_id(mem->next, id);
 }
 
 InteractiveDebugger::InteractiveDebugger() {
@@ -197,17 +197,17 @@ InteractiveDebugger::InteractiveDebugger() {
 
 InteractiveDebugger::~InteractiveDebugger() {}
 
-void InteractiveDebugger::set_breakpoint_rule(std::string rule) {
+void InteractiveDebugger::set_breakpoint_rule(std::string_view rule) {
   if (vector_contains(breakpoints_on_rule, rule)) {
     std::cout << "Breakpoint is already set to rule: " << rule << "\n";
   } else {
-    breakpoints_on_rule.push_back(rule);
+    breakpoints_on_rule.emplace_back(rule);
     std::cout << "Breakpoint is set to rule: " << rule << "\n";
   }
 }
 
-void InteractiveDebugger::set_breakpoint_instr(std::string instr) {
-  int instr_id = get_instr_id(instr.c_str());
+void InteractiveDebugger::set_breakpoint_instr(std::string_view instr) {
+  int instr_id = get_instr_id(instr.data());
   if (instr_id == -1) {
     std::cerr << "Unknown Instruction: breakpoint is not set.\n";
   } else if (vector_contains(breakpoints_on_instr, (LmnInstruction)instr_id)) {
@@ -218,7 +218,7 @@ void InteractiveDebugger::set_breakpoint_instr(std::string instr) {
   }
 }
 
-void InteractiveDebugger::delete_breakpoint_rule(std::string rule) {
+void InteractiveDebugger::delete_breakpoint_rule(std::string_view rule) {
   auto end = breakpoints_on_rule.end();
   auto res = std::find(breakpoints_on_rule.begin(), end, rule);
   if (res == end) {
@@ -229,8 +229,8 @@ void InteractiveDebugger::delete_breakpoint_rule(std::string rule) {
   }
 }
 
-void InteractiveDebugger::delete_breakpoint_instr(std::string instr) {
-  int instr_id = get_instr_id(instr.c_str());
+void InteractiveDebugger::delete_breakpoint_instr(std::string_view instr) {
+  int instr_id = get_instr_id(instr.data());
   if (instr_id == -1) {
     std::cerr << "Unknown Instruction: no breakpoint is deleted\n";
   } else {
@@ -437,7 +437,7 @@ void InteractiveDebugger::start_session_with_interpreter(slim::vm::interpreter c
       // info registers (dev) <N>...
       else {
         bool        dev = opt_argc > 1 && opt_argv.at(0) == "dev";
-        std::string s   = "";
+        std::string s;
         for (size_t i = (dev ? 1 : 0); i < opt_argc; i++) {
           size_t l;
           try {
@@ -499,8 +499,8 @@ void InteractiveDebugger::start_session_with_interpreter(slim::vm::interpreter c
         if (res == end) { // not found
           std::cerr << "Atomlist with specified functor could not be found.\n";
         } else { // found
-          size_t      i   = 0;
-          std::string str = "";
+          size_t      i = 0;
+          std::string str;
           for (auto &s : *(*res).second) {
             if (i == input_n) {
               if (dev) {
@@ -922,10 +922,12 @@ void InteractiveDebugger::print_feeding(std::string str) {
     if (c == EOF) { // eof may not be returned
       input_eof = true;
       break;
-    } else if (c == 'q') {
+    }
+    if (c == 'q') {
       std::cout << "\e[2K\e[0G";
       break;
-    } else if (c == '\n' || c == 'j') {
+    }
+    if (c == '\n' || c == 'j') {
       new_line += 1;
     } else if (c == 'd') {
       new_line += screen_height / 2;

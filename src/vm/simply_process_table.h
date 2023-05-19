@@ -51,7 +51,7 @@
 using SimplyProcessTableRef = struct SimpleProcessTable *;
 
 struct SimpleProcessTable : ProcessTable<BYTE> {
-  SimpleProcessTable() : ProcessTable<BYTE>(){};
+  SimpleProcessTable() = default;;
   SimpleProcessTable(unsigned long size) : ProcessTable<BYTE>(size){};
 
   bool get_flag(key_type key, value_type flag) { return this->contains(key) ? ((*this)[key] & flag) : false; }

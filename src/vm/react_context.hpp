@@ -53,13 +53,15 @@ using LmnRegisterRef = LmnRegister *;
 struct LmnReactCxt;
 using LmnReactCxtRef = LmnReactCxt *;
 
+#include "ankerl/unordered_dense.hpp"
+
 #include "element/element.h"
 #include "hyperlink.h"
 #include "lmntal.h"
 #include "rule.h"
 
 struct LmnMembrane;
-struct SimpleHashtbl;
+struct SameProcCxt;
 
 /**
  * SLIMはSPEC命令で指定される本数のレジスタを確保する。
@@ -75,45 +77,42 @@ struct LmnRegister {
   LmnWord wt;
   LmnByte at;
   LmnByte tt;
-  LmnWord register_wt() { return this->wt; }
-  LmnByte register_at() { return this->at; }
-  LmnByte register_tt() { return this->tt; }
+  LmnWord register_wt() const { return this->wt; }
+  LmnByte register_at() const { return this->at; }
+  LmnByte register_tt() const { return this->tt; }
   void    register_set_wt(LmnWord wt) { this->wt = wt; }
   void    register_set_at(LmnByte at) { this->at = at; }
   void    register_set_tt(LmnByte tt) { this->tt = tt; }
 };
 
 using LmnRegisterArray = std::vector<LmnRegister>;
+using LmnHlCtx         = ankerl::unordered_dense::map<LmnInstrVar, SameProcCxt *>;
 
-namespace slim {
-namespace vm {
+namespace slim::vm {
 
 /**
  *  ルール適用中に使用する情報を保持する.
  */
 struct RuleContext {
-  LmnRegisterArray work_array;     /* ルール適用レジスタ */
-  SimpleHashtbl   *hl_sameproccxt; /* findatom
-                                      時のアトム番号と、同名型付きプロセス文脈を持つアトム引数との対応関係を保持
-                                    */
+  LmnRegisterArray work_array; // ルール適用レジスタ
+  LmnHlCtx hl_sameproccxt; // findatom 時のアトム番号と、同名型付きプロセス文脈を持つアトム引数との対応関係を保持
+  bool hl_sameproccxt_init{false}; // hl_sameproccxtの初期化フラグ
 
-  RuleContext() : hl_sameproccxt(nullptr), work_array(1024) {
+  RuleContext() : work_array(1024) {
 #ifdef USE_FIRSTCLASS_RULE
     insertion_events = new Vector(4);
 #endif
   }
   virtual ~RuleContext() {
-    if (hl_sameproccxt) {
-      clear_hl_spc();
-    }
+    clear_hl_spc();
 #ifdef USE_FIRSTCLASS_RULE
-    if (this->insertion_events) {
-      delete this->insertion_events;
-    }
+    delete this->insertion_events;
 #endif
   }
 
   RuleContext &operator=(RuleContext const &cxt) {
+    if (this == &cxt)
+      return *this;
     this->work_array = cxt.work_array;
 #ifdef USE_FIRSTCLASS_RULE
     delete this->insertion_events;
@@ -136,16 +135,20 @@ struct RuleContext {
   LmnByte &at(unsigned int i) { return reg(i).at; }
   LmnByte &tt(unsigned int i) { return reg(i).tt; }
 
-  void prepare_hl_spc() { hl_sameproccxt = hashtbl_make(2); }
+  void prepare_hl_spc() {
+    hl_sameproccxt.reserve(4);
+    hl_sameproccxt_init = true;
+  }
   void clear_hl_spc();
 };
-} // namespace vm
-} // namespace slim
+} // namespace slim::vm
 
-#define REACT_MEM_ORIENTED (0x01U)     /* 膜主導テスト */
-#define REACT_ND (0x01U << 1)          /* 非決定実行: 状態の展開 */
-#define REACT_STAND_ALONE (0x01U << 2) /* 非決定実行: 状態は展開しない */
-#define REACT_PROPERTY (0x01U << 3)    /* LTLモデル検査: 性質ルールのマッチングのみ */
+enum {
+  REACT_MEM_ORIENTED = (0x01U),      /* 膜主導テスト */
+  REACT_ND           = (0x01U << 1), /* 非決定実行: 状態の展開 */
+  REACT_STAND_ALONE  = (0x01U << 2), /* 非決定実行: 状態は展開しない */
+  REACT_PROPERTY     = (0x01U << 3)  /* LTLモデル検査: 性質ルールのマッチングのみ */
+};
 
 struct LmnReactCxt : slim::vm::RuleContext {
   LmnMembrane *global_root; /* ルール適用対象となるグローバルルート膜. != wt[0] */
@@ -165,6 +168,8 @@ public:
       : is_zerostep(false), keep_process_id_in_nd_mode(false), trace_num(0), mode(mode), global_root(groot) {}
 
   LmnReactCxt &operator=(LmnReactCxt const &from) {
+    if (this == &from)
+      return *this;
     this->RuleContext::operator=(from);
     this->mode        = from.mode;
     this->global_root = from.global_root;
@@ -176,8 +181,9 @@ public:
 
   bool has_mode(BYTE mode) const { return (this->mode & mode) != 0; }
 
-  LmnMembrane   *get_global_root() { return global_root; }
-  SimpleHashtbl *get_hl_sameproccxt() { return hl_sameproccxt; }
+  LmnMembrane *get_global_root() const { return global_root; }
+  LmnHlCtx    &get_hl_sameproccxt() { return hl_sameproccxt; }
+  bool         get_hl_sameproccxt_init() const { return hl_sameproccxt_init; }
 };
 
 /*----------------------------------------------------------------------

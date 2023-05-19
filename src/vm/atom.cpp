@@ -65,7 +65,7 @@ LmnAtomRef const *LmnSymbolAtom::get_plink(int n) const { return &this->links[LM
 
 BOOL LmnSymbolAtom::is_proxy() const { return LMN_IS_PROXY_FUNCTOR(this->get_functor()); }
 
-char const *LmnSymbolAtom::str() const {
+std::string_view LmnSymbolAtom::str() const {
   return LMN_SYMBOL_STR(LMN_FUNCTOR_NAME_ID(lmn_functor_table, this->get_functor()));
 }
 
@@ -95,7 +95,7 @@ void LmnSymbolAtom::swap_to_head(LmnSymbolAtomRef head) {
   head->set_next(this);
 }
 
-void LmnSymbolAtom::remove_atom() {
+void LmnSymbolAtom::remove_atom() const {
   LmnSymbolAtomRef atom_prev = this->prev;
   LmnSymbolAtomRef atom_next = this->next;
   this->prev->next           = this->next;
@@ -132,13 +132,13 @@ void LMN_ATTR_SET_VALUE(LmnLinkAttr *PATTR, int X) { *PATTR = (X & ~LMN_ATTR_MAS
 
 LmnMembraneRef LMN_PROXY_GET_MEM(LmnSymbolAtomRef PROXY_ATM) { return (LmnMembraneRef)PROXY_ATM->get_link(2); }
 void           LMN_PROXY_SET_MEM(LmnSymbolAtomRef PROXY_ATM, LmnMembraneRef X) { PROXY_ATM->set_link(2, X); }
-#define LMN_PROXY_FUNCTOR_NUM (3)
+enum { LMN_PROXY_FUNCTOR_NUM = 3 };
 BOOL LMN_IS_PROXY_FUNCTOR(LmnFunctor FUNC) { return FUNC < LMN_PROXY_FUNCTOR_NUM; }
 BOOL LMN_IS_SYMBOL_FUNCTOR(LmnFunctor FUNC) { return FUNC >= LMN_PROXY_FUNCTOR_NUM; }
 
 /////
 
-char const *LMN_FUNCTOR_STR(LmnFunctor F) { return LMN_SYMBOL_STR(LMN_FUNCTOR_NAME_ID(lmn_functor_table, F)); }
+std::string_view LMN_FUNCTOR_STR(LmnFunctor F) { return LMN_SYMBOL_STR(LMN_FUNCTOR_NAME_ID(lmn_functor_table, F)); }
 
 /////
 
@@ -196,7 +196,7 @@ LmnDataAtomRef lmn_copy_data_atom(LmnDataAtomRef atom, LmnLinkAttr attr) {
 LmnSymbolAtomRef lmn_copy_satom_with_data(LmnSymbolAtomRef atom, BOOL is_new_hl) {
   LmnFunctor       f;
   LmnSymbolAtomRef newatom;
-  unsigned int     i, arity = atom->get_link_num();
+  auto             arity = atom->get_link_num();
 
   f       = ((LmnSymbolAtomRef)atom)->get_functor();
   newatom = lmn_new_atom(f);
@@ -205,7 +205,7 @@ LmnSymbolAtomRef lmn_copy_satom_with_data(LmnSymbolAtomRef atom, BOOL is_new_hl)
 
   memcpy((void *)newatom, (void *)atom, LMN_SATOM_SIZE(LMN_FUNCTOR_ARITY(lmn_functor_table, f)));
   /* リンク先のデータアトムをコピーする */
-  for (i = 0; i < arity; i++) {
+  for (auto i = 0; i < arity; i++) {
     if (LMN_ATTR_IS_DATA(atom->get_attr(i))) {
       if (is_new_hl && atom->get_attr(i) == LMN_HL_ATTR) {
         // fprintf(stderr,"new hyperlink being created, %d\n", i);  // extended
@@ -267,10 +267,9 @@ void lmn_free_atom(LmnAtomRef atom, LmnLinkAttr attr) {
 
 /* シンボルアトムとリンクで接続しているデータアトムを解放する */
 void free_symbol_atom_with_buddy_data(LmnSymbolAtomRef atom) {
-  unsigned int i;
-  unsigned int end = LMN_FUNCTOR_GET_LINK_NUM(atom->get_functor());
+  auto const end = LMN_FUNCTOR_GET_LINK_NUM(atom->get_functor());
   /* free linked data atoms */
-  for (i = 0; i < end; i++) {
+  for (auto i = 0; i < end; i++) {
     if (LMN_ATTR_IS_DATA(atom->get_attr(i))) {
       free_data_atom((LmnDataAtomRef)atom->get_link(i), atom->get_attr(i));
     }
@@ -317,20 +316,19 @@ BOOL lmn_data_atom_is_ground(LmnDataAtomRef atom, LmnLinkAttr attr, ProcessTable
 BOOL lmn_data_atom_eq(LmnDataAtomRef atom1, LmnLinkAttr attr1, LmnDataAtomRef atom2, LmnLinkAttr attr2) {
   if (attr1 != attr2) {
     return FALSE;
-  } else {
-    switch (attr1) {
-    case LMN_INT_ATTR:
-      return atom1 == atom2;
-    case LMN_DBL_ATTR:
-      return lmn_get_double(atom1) == lmn_get_double(atom2);
-    case LMN_SP_ATOM_ATTR:
-      return SP_ATOM_EQ(atom1, atom2);
-    case LMN_HL_ATTR:
-      return lmn_hyperlink_eq((LmnSymbolAtomRef)atom1, attr1, (LmnSymbolAtomRef)atom2, attr2);
-    default:
-      lmn_fatal("Implementation error");
-      return FALSE;
-    }
+  }
+  switch (attr1) {
+  case LMN_INT_ATTR:
+    return atom1 == atom2;
+  case LMN_DBL_ATTR:
+    return lmn_get_double(atom1) == lmn_get_double(atom2);
+  case LMN_SP_ATOM_ATTR:
+    return SP_ATOM_EQ(atom1, atom2);
+  case LMN_HL_ATTR:
+    return lmn_hyperlink_eq((LmnSymbolAtomRef)atom1, attr1, (LmnSymbolAtomRef)atom2, attr2);
+  default:
+    lmn_fatal("Implementation error");
+    return FALSE;
   }
 }
 

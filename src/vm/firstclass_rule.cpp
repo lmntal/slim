@@ -148,8 +148,8 @@ std::string string_of_template_membrane(Vector *link_connections, LmnMembraneRef
       continue;
 
     EACH_ATOM(satom, ent, ({
-                int         arity     = LMN_FUNCTOR_GET_LINK_NUM(satom->get_functor());
-                const char *atom_name = lmn_id_to_name(LMN_FUNCTOR_NAME_ID(lmn_functor_table, satom->get_functor()));
+                int  arity     = LMN_FUNCTOR_GET_LINK_NUM(satom->get_functor());
+                auto atom_name = lmn_id_to_name(LMN_FUNCTOR_NAME_ID(lmn_functor_table, satom->get_functor()));
 
                 if (f == LMN_UNARY_PLUS_FUNCTOR) {
                   auto *in_proxy  = (LmnSymbolAtomRef)satom->get_link(0);
@@ -161,7 +161,7 @@ std::string string_of_template_membrane(Vector *link_connections, LmnMembraneRef
                   result += atom_name;
                   result += LINK_PREFIX;
                   result += istr;
-                } else if (strcmp(atom_name, "==") == 0) {
+                } else if (atom_name == "==") {
                   result += LINK_PREFIX;
                   sprintf(istr, "%d", linkconnection_make_linkno(link_connections, satom, 0));
                   result += istr;
@@ -185,11 +185,11 @@ std::string string_of_template_membrane(Vector *link_connections, LmnMembraneRef
 
                   result += ']';
                 } else {
-                  if (strcmp(atom_name, ":-") == 0) {
+                  if (atom_name == ":-") {
                     result += "':-'";
-                  } else if (strcmp(atom_name, ".") == 0) {
+                  } else if (atom_name == ".") {
                     result += "'.'";
-                  } else if (strcmp(atom_name, "[]") == 0) {
+                  } else if (atom_name == "[]") {
                     result += "'[]'";
                   } else {
                     result += atom_name;
@@ -243,7 +243,7 @@ std::string string_of_template_membrane(Vector *link_connections, LmnMembraneRef
 
 std::string string_of_guard_op(LmnSymbolAtom *satom) {
   std::string result;
-  char const *atom_name = lmn_id_to_name(LMN_FUNCTOR_NAME_ID(lmn_functor_table, satom->get_functor()));
+  auto        atom_name = lmn_id_to_name(LMN_FUNCTOR_NAME_ID(lmn_functor_table, satom->get_functor()));
   int         arity     = LMN_FUNCTOR_GET_LINK_NUM(satom->get_functor());
   LmnLinkAttr attr;
   if (arity == 1)
@@ -255,7 +255,7 @@ std::string string_of_guard_op(LmnSymbolAtom *satom) {
     else
       result += string_of_guard_op((LmnSymbolAtomRef)satom->get_link(0));
 
-    if (strcmp(":=", atom_name) == 0)
+    if (":=" == atom_name)
       result += "=";
     else
       result += atom_name;
@@ -286,7 +286,7 @@ std::string string_of_guard_mem(LmnMembraneRef mem, LmnSymbolAtom *cm_atom) {
       continue;
     LmnSymbolAtomRef satom;
     EACH_ATOM(satom, ent, ({
-                const char *atom_name = lmn_id_to_name(LMN_FUNCTOR_NAME_ID(lmn_functor_table, satom->get_functor()));
+                auto atom_name = lmn_id_to_name(LMN_FUNCTOR_NAME_ID(lmn_functor_table, satom->get_functor()));
 
                 if (f == LMN_UNARY_PLUS_FUNCTOR) {
                   auto *in_proxy  = (LmnSymbolAtomRef)satom->get_link(0);
@@ -295,10 +295,10 @@ std::string string_of_guard_mem(LmnMembraneRef mem, LmnSymbolAtom *cm_atom) {
                     continue;
                 } else {
                   for (int i = 0; i < ARY_SIZEOF(constraint_name); i++) {
-                    if (strcmp(constraint_name[i], atom_name) != 0)
+                    if (constraint_name[i] != atom_name)
                       continue;
-                    auto       *typed_pc_atom = (LmnSymbolAtomRef)satom->get_link(0);
-                    const char *typed_pc_atom_name =
+                    auto *typed_pc_atom = (LmnSymbolAtomRef)satom->get_link(0);
+                    auto  typed_pc_atom_name =
                         lmn_id_to_name(LMN_FUNCTOR_NAME_ID(lmn_functor_table, typed_pc_atom->get_functor()));
                     result += constraint_name[i];
                     result += "(";
@@ -306,7 +306,7 @@ std::string string_of_guard_mem(LmnMembraneRef mem, LmnSymbolAtom *cm_atom) {
                     result += "),";
                   }
                   for (int i = 0; i < ARY_SIZEOF(op_name); i++) {
-                    if (strcmp(op_name[i], atom_name) != 0)
+                    if (op_name[i] != atom_name)
                       continue;
                     result += string_of_guard_op(satom);
                     result += ",";
@@ -383,9 +383,8 @@ LmnRuleSetRef firstclass_ruleset_create(LmnSymbolAtom *imply) {
   LmnRulesetId id      = LmnRuleSetTable::gen_id();
   auto        *ruleset = new LmnRuleSet(id, 1);
   auto         rule    = load_rule(*ruleAST);
-  ruleset->put(rule.get());
+  ruleset->put(rule.release());
   LmnRuleSetTable::add(ruleset, id);
-  auto *_ = rule.release();
 
   // :-アトムとコンパイルされたルールセットIDを対応付けるハッシュテーブルへ追加
   first_class_rule_tbl[imply] = id;

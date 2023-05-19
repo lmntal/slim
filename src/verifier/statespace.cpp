@@ -170,7 +170,7 @@ State *StateSpace::insert_delta(State *s, struct MemDeltaRoot *d) {
   /* d->mem (parentに対応する階層グラフ構造)を,
    * sに対応する階層グラフ構造Xへ書換え */
   dmem_root_commit(d);
-  s->state_set_mem(DMEM_ROOT_MEM(d));
+  s->state_set_mem(dmem_root_mem(d));
 
   /* Xを基に, ハッシュ値/mem_idなどの状態データを計算する */
   s->state_calc_hash(s->state_mem(), this->use_memenc());

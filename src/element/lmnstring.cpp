@@ -83,7 +83,7 @@ void cb_string_make(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0, LmnLin
       break;
     }
   } else { /* symbol atom */
-    s = ((LmnSymbolAtomRef)a0)->str();
+    s = ((LmnSymbolAtomRef)a0)->str().data();
   }
 
   LINK_STR(mem, a1, t1, new LmnString(s));

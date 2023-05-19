@@ -40,6 +40,7 @@
 #include "hyperlink.h"
 #include "atom.h"
 #include "atomlist.hpp"
+#include "fmt/core.h"
 
 #if SIZEOF_LONG == 4
 #define EMPTY_KEY 0xffffffffUL
@@ -64,7 +65,6 @@
 /* prototype */
 void               sht_print(SimpleHashtbl *sht);
 void               hs_print(HashSet *hs);
-static inline void sameproccxt_destroy(SimpleHashtbl *sht);
 
 static inline unsigned long hyperlink_new_id() { return env_gen_next_id(); /* nd実行のために変更 */ }
 
@@ -556,7 +556,7 @@ BOOL hyperlink_print(LmnMembraneRef mem, BOOL *flag, int *group, int *element) {
 
                 /* linked with */
                 if (!LMN_ATTR_IS_DATA(atom->get_attr(0)) && atom->get_link(0)) {
-                  fprintf(f, " %13s", ((LmnSymbolAtomRef)atom->get_link(0))->str());
+                  fmt::print(f, " {:13}", ((LmnSymbolAtomRef)atom->get_link(0))->str());
                 } else {
                   fprintf(f, " %13s", "---");
                 }
@@ -811,20 +811,6 @@ void hs_print(HashSet *hs) {
 //  findproccxt = NULL;
 //  commit      = FALSE;
 //}
-
-static inline void sameproccxt_destroy(SimpleHashtbl *hl_sameproccxt) {
-  HashIterator it;
-
-  if (!hl_sameproccxt)
-    return;
-
-  for (it = hashtbl_iterator(hl_sameproccxt); !hashtbliter_isend(&it); hashtbliter_next(&it)) {
-    auto *spc = (SameProcCxt *)(hashtbliter_entry(&it)->data);
-    delete spc;
-  }
-
-  hashtbl_free(hl_sameproccxt);
-}
 
 /* rootの子を全てtreeに格納する(withoutは除く) */
 void HyperLink::get_children_without(std::vector<HyperLink *> &tree, HyperLink *without) const {

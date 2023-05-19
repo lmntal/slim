@@ -267,7 +267,7 @@ const std::map<LmnInstruction, InstrSpec> instr_spec = {
     {INSTR_CELLDUMP, {"celldump", {}}}};
 
 int get_instr_id(char const *name) {
-  for (auto &p : instr_spec)
+  for (const auto &p : instr_spec)
     if (!strcmp(name, p.second.op_str))
       return p.first;
   return -1;

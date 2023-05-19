@@ -81,22 +81,20 @@
 void slim::vm::RuleContext::clear_hl_spc() {
   HashIterator it;
 
-  if (!hl_sameproccxt)
+  if (!hl_sameproccxt_init)
     return;
 
-  for (it = hashtbl_iterator(hl_sameproccxt); !hashtbliter_isend(&it); hashtbliter_next(&it)) {
-    SameProcCxt *spc = (SameProcCxt *)(hashtbliter_entry(&it)->data);
-    delete spc;
+  for (auto &hl : hl_sameproccxt) {
+    delete hl.second;
   }
 
-  hashtbl_free(hl_sameproccxt);
-  hl_sameproccxt = nullptr;
+  hl_sameproccxt_init = false;
 }
 
 BOOL rc_hlink_opt(LmnInstrVar atomi, LmnReactCxtRef rc) {
   /*  return hl_sameproccxtが初期化済み && atomiは同名プロセス文脈を持つアトム
    */
-  return rc->get_hl_sameproccxt() && hashtbl_contains(rc->get_hl_sameproccxt(), (HashKeyType)atomi);
+  return rc->get_hl_sameproccxt_init() && rc->get_hl_sameproccxt().contains(atomi);
 }
 
 void react_context_copy(LmnReactCxtRef to, LmnReactCxtRef from) { *to = *from; }
@@ -159,16 +157,16 @@ BOOL lmn_rc_has_insertion(LmnReactCxtRef rc) { return !rc->insertion_events->is_
 
 void lmn_rc_push_insertion(LmnReactCxtRef rc, LmnSymbolAtomRef satom, LmnMembraneRef mem) {
   LMN_ASSERT(satom && mem);
-  LRCInsertEventRef e = LMN_MALLOC<struct LRCInsertEvent>();
-  e->satom            = satom;
-  e->mem              = mem;
+  auto *e  = LMN_MALLOC<struct LRCInsertEvent>();
+  e->satom = satom;
+  e->mem   = mem;
   rc->insertion_events->push((LmnWord)e);
 }
 void lmn_rc_pop_insertion(LmnReactCxtRef rc, LmnSymbolAtomRef *satom, LmnMembraneRef *mem) {
   LMN_ASSERT(lmn_rc_has_insertion(rc));
-  LRCInsertEventRef e = (LRCInsertEventRef)rc->insertion_events->pop();
-  *satom              = e->satom;
-  *mem                = e->mem;
+  auto *e = (LRCInsertEventRef)rc->insertion_events->pop();
+  *satom  = e->satom;
+  *mem    = e->mem;
   LMN_FREE(e);
 }
 

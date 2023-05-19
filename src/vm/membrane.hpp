@@ -100,7 +100,7 @@ struct LmnMembrane {
   unsigned int   data_atom_num() const { return this->atom_data_num; }
   void           data_atom_set(unsigned int n) { this->atom_data_num = n; }
   unsigned int   atom_num() const { return this->symb_atom_num() + this->data_atom_num(); }
-  BOOL           natoms(unsigned int n) { return this->atom_num() == n; }
+  BOOL           natoms(unsigned int n) const { return this->atom_num() == n; }
   void           symb_atom_add(int n) { this->atom_symb_num += n; }
   void           symb_atom_sub(int n) { this->atom_symb_num -= n; }
   void           symb_atom_inc() { this->atom_symb_num++; }
@@ -140,7 +140,7 @@ struct LmnMembrane {
     }
     return nullptr;
   }
-  char const   *MEM_NAME();
+  std::string_view MEM_NAME();
   void          drop();
   unsigned long space();
   unsigned long root_space();

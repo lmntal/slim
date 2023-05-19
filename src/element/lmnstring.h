@@ -52,7 +52,6 @@ struct LmnString : LmnSPAtomHeader {
   std::string str;
 
   LmnString() : LmnSPAtomHeader(string_atom_type) {}
-  LmnString(char const *s) : str(s), LmnSPAtomHeader(string_atom_type) {}
   LmnString(std::string_view s) : str(s), LmnSPAtomHeader(string_atom_type) {}
 
   char const                *c_str() const { return str.c_str(); }

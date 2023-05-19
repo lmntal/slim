@@ -137,8 +137,8 @@ public:
     return it;
   }
 
-  bool operator!=(raw_pointer_iterator<T> const &a) { return !(*this == a); }
-  bool operator==(raw_pointer_iterator<T> const &a) { return p == a.p; }
+  bool operator!=(raw_pointer_iterator const &a) const = default;
+  bool operator==(raw_pointer_iterator const &a) const = default;
 };
 } // namespace slim::element
 

@@ -40,8 +40,7 @@
 
 #include <ostream>
 
-namespace slim {
-namespace element {
+namespace slim::element {
 
 /**
  * @brief Outputs values to std::ostream conditionally.
@@ -73,8 +72,7 @@ struct conditional_ostream {
     return *this;
   }
 };
-} // namespace element
-} // namespace slim
+} // namespace slim::element
 
 template <typename T>
 slim::element::conditional_ostream &operator<<(slim::element::conditional_ostream &ds, T const &v) {

@@ -66,7 +66,7 @@ static inline void do_mc(LmnMembraneRef world_mem, AutomataRef a, Vector *psyms,
 static void        mc_dump(LmnWorkerGroup *wp);
 
 /* 非決定実行を行う. run_mcもMT-unsafeなので子ルーチンとしては使えない */
-void run_mc(Vector *start_rulesets, AutomataRef a, Vector *psyms) {
+void run_mc(std::vector<LmnRuleSetRef> const&start_rulesets, AutomataRef a, Vector *psyms) {
   static LmnMembraneRef mem;
 
   if (lmn_env.nd_cleaning) {
@@ -95,8 +95,6 @@ void run_mc(Vector *start_rulesets, AutomataRef a, Vector *psyms) {
   if (lmn_env.interactive_debug) {
     InteractiveDebugger::get_instance().finish_debugging();
   }
-
-  delete start_rulesets;
 }
 
 static inline void do_mc(LmnMembraneRef world_mem_org, AutomataRef a, Vector *psyms, int thread_num) {

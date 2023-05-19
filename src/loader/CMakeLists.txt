@@ -38,8 +38,12 @@ target_sources(lmn_loader PRIVATE
     ${PARSER_OUTPUT}
 )
 
-target_link_libraries(lmn_loader PRIVATE
+target_link_libraries(lmn_loader PUBLIC
     lmn_elm lmn_ffi
+)
+
+target_compile_definitions(lmn_loader PUBLIC
+    FMT_HEADER_ONLY
 )
 
 execute_process(

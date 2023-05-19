@@ -41,6 +41,7 @@
 #include "lmntal.h"
 
 #include <set>
+#include <utility>
 #include <vector>
 
 #include "membrane.h"
@@ -71,16 +72,16 @@ public:
   LmnCost cost;
 
 private:
-  LmnRule(LmnRuleInstr inst_seq, int inst_seq_len, LmnTranslated translated, lmn_interned_str name, bool is_unique_,
+  LmnRule(LmnRuleInstr inst_seq, int inst_seq_len, LmnTranslated translated, lmn_interned_str name, bool is_unique,
           bool is_subrule = false)
-      : inst_seq(inst_seq), inst_seq_len(inst_seq_len), translated(translated), name(name), latest_history_(ANONYMOUS),
-        is_unique_(is_unique_), is_subrule_(is_subrule) {}
+      : inst_seq(inst_seq), inst_seq_len(inst_seq_len), translated(std::move(translated)), name(name),
+        latest_history_(ANONYMOUS), is_unique_(is_unique), is_subrule_(is_subrule) {}
 
 public:
   /* 関数によるルールの処理の表現。トランスレータにより、ルールを変換して
      生成された関数を想定している。戻り値は適用に成功した場合TRUE,失敗し
      た場合FALSEを返す */
-  LmnRule(LmnTranslated translated, lmn_interned_str name) : LmnRule(nullptr, 0, translated, name, false) {}
+  LmnRule(const LmnTranslated &translated, lmn_interned_str name) : LmnRule(nullptr, 0, translated, name, false) {}
 
   LmnRule(LmnRuleInstr inst_seq, int inst_seq_len, lmn_interned_str name, bool is_unique = false,
           bool is_subrule = false)
@@ -156,9 +157,9 @@ public:
 
 /* structure of RuleSet */
 class LmnRuleSet {
-  bool                   is_copied;
-  bool                   has_uniqrule;
-  bool                   is_0step;
+  bool                   is_copied{};
+  bool                   has_uniqrule{};
+  bool                   is_0step{};
   std::vector<LmnRule *> rules;
   std::vector<LmnRule *> subrules;
 
@@ -167,23 +168,23 @@ class LmnRuleSet {
 public:
   LmnRulesetId id;
 
-  LmnRuleSet(LmnRulesetId id, int init_size) : id(id), is_copied(false), has_uniqrule(false), is_0step(false) {}
+  LmnRuleSet(LmnRulesetId id, int init_size) : id(id) {}
 
   LmnRuleSet(LmnRuleSet const &rs) : LmnRuleSet(rs.id, rs.rules.capacity()) {
     is_copied = true;
     is_0step  = rs.is_0step;
 
     /* ルール単位のオブジェクト複製 */
-    for (auto r : rs.rules)
+    for (auto *r : rs.rules)
       put(new LmnRule(*r));
-    for (auto r : rs.subrules)
+    for (auto *r : rs.subrules)
       put(new LmnRule(*r));
   }
 
   ~LmnRuleSet() {
-    for (auto r : rules)
+    for (auto *r : rules)
       delete r;
-    for (auto r : subrules)
+    for (auto *r : subrules)
       delete r;
   }
 
@@ -202,8 +203,7 @@ public:
   }
 
   void put(std::unique_ptr<LmnRule> rule) {
-    put(rule.get());
-    rule.release();
+    put(rule.release());
   }
 
   /* 2つのrulesetが同じruleを持つか判定する.
@@ -243,9 +243,11 @@ public:
       return 0;
 
     unsigned long ret = 0;
-    ret               += sizeof(struct LmnRuleSet);
-    ret               += sizeof(struct LmnRule *) * (rules.size() + subrules.size());
-    for (auto r : rules)
+
+    ret += sizeof(struct LmnRuleSet);
+    ret += sizeof(struct LmnRule *) * (rules.size() + subrules.size());
+
+    for (auto *r : rules)
       ret += r->history_table_size();
     return ret;
   }
@@ -262,7 +264,7 @@ public:
   /* query subrule in the ruleset. */
   // TODO: more efficient search.
   LmnRule *get_subrule(lmn_interned_str name) {
-    for (auto r : subrules) {
+    for (auto *r : subrules) {
       if (r->name == name)
         return r;
     }
@@ -292,7 +294,7 @@ class LmnRuleSetTable {
   LmnRuleSetTable(unsigned int size) : entry(size) {}
 
   ~LmnRuleSetTable() {
-    for (auto rs : entry)
+    for (auto *rs : entry)
       delete (rs);
   }
 

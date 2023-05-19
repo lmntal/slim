@@ -75,7 +75,7 @@ void mc_gen_successors(State *src, LmnMembraneRef mem, BYTE prop_labels, MCReact
 void mc_store_successors(const StateSpaceRef ss, State *s, MCReactContext *rc, Vector *new_ss, BOOL f);
 BOOL mc_expand_inner(MCReactContext *rc, LmnMembraneRef cur_mem);
 
-void run_mc(Vector *start_rulesets, AutomataRef a, Vector *psyms);
+void run_mc(std::vector<LmnRuleSetRef> const &start_rulesets, AutomataRef a, Vector *psyms);
 
 int         mc_load_property(AutomataRef *a, PVector *prop_defs);
 void        mc_explain_error(int error_id);

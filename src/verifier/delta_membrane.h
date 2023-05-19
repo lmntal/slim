@@ -49,73 +49,21 @@
 #include "../lmntal.h"
 #include "element/element.h"
 #include "visitlog.h"
+#include "vm/membrane.hpp"
 #include "vm/vm.h"
+#include <functional>
+#include <vector>
 
 #define dmem_get_attr(d, m, atom, i) ((atom)->get_attr(i))
 
-#define DMEM_ORG_EACH_FUNC_ATOM(D, MEM, F, V, CODE)                                                                    \
-  do {                                                                                                                 \
-    AtomListEntryRef __ent = (MEM)->get_atomlist((F));                                                                 \
-    LmnSymbolAtomRef __next;                                                                                           \
-    if (__ent) {                                                                                                       \
-      for ((V) = atomlist_head(__ent); (V) != lmn_atomlist_end(__ent); (V) = __next) {                                 \
-        __next = (V)->get_next();                                                                                      \
-        if ((V)->get_functor() != LMN_RESUME_FUNCTOR && !((D) && dmem_is_removed_atom((D), (MEM), (V)))) {             \
-          (CODE);                                                                                                      \
-        }                                                                                                              \
-      }                                                                                                                \
-    }                                                                                                                  \
-  } while (0)
+struct MemDelta;
 
-#define DMEM_EACH_FUNC_ATOM(D, MEM, F, V, CODE)                                                                        \
-  do {                                                                                                                 \
-    int __i;                                                                                                           \
-    DMEM_ORG_EACH_FUNC_ATOM(D, MEM, F, V, CODE);                                                                       \
-    if ((D)) {                                                                                                         \
-      for (__i = 0; __i < (D)->new_proxies.get_num(); __i++) {                                                         \
-        (V) = (LmnSymbolAtomRef)(D)->new_proxies.get(__i);                                                             \
-        if ((V)->get_functor() == F && !dmem_is_removed_atom((D), (MEM), (V))) {                                       \
-          (CODE);                                                                                                      \
-        }                                                                                                              \
-      }                                                                                                                \
-    }                                                                                                                  \
-  } while (0)
-
-#define DMEM_ALL_ATOMS(D, MEM, V, CODE)                                                                                \
-  do {                                                                                                                 \
-    if (!(D)) {                                                                                                        \
-      ALL_ATOMS(MEM, V, CODE);                                                                                         \
-    } else {                                                                                                           \
-      int __i, i_atomlist;                                                                                             \
-      for (i_atomlist = 0; i_atomlist <= (D)->max_functor; i_atomlist++) {                                             \
-        DMEM_ORG_EACH_FUNC_ATOM(D, MEM, i_atomlist, V, CODE);                                                          \
-      }                                                                                                                \
-      for (__i = 0; __i < (D)->new_atoms.get_num(); __i++) {                                                           \
-        (V) = (LmnSymbolAtomRef)(D)->new_atoms.get(__i);                                                               \
-        if (!dmem_is_removed_atom((D), (MEM), (V))) {                                                                  \
-          (CODE);                                                                                                      \
-        }                                                                                                              \
-      }                                                                                                                \
-    }                                                                                                                  \
-  } while (0)
-
-#define DMEM_ALL_MEMS(D, MEM, V, CODE)                                                                                 \
-  do {                                                                                                                 \
-    unsigned int   i;                                                                                                  \
-    LmnMembraneRef __next;                                                                                             \
-    for ((V) = MEM->mem_child_head(); (V); (V) = __next) {                                                             \
-      __next = V->mem_next();                                                                                          \
-      if (!(D) || !dmem_is_removed_mem((D), (MEM), (V))) {                                                             \
-        (CODE);                                                                                                        \
-      }                                                                                                                \
-    }                                                                                                                  \
-    if ((D)) {                                                                                                         \
-      for (i = 0; i < (D)->new_mems.get_num(); i++) {                                                                  \
-        (V) = (LmnMembraneRef)(D)->new_mems.get(i);                                                                    \
-        (CODE);                                                                                                        \
-      }                                                                                                                \
-    }                                                                                                                  \
-  } while (0)
+static inline void dmem_org_each_func_atom(MemDelta *delta, LmnMembraneRef mem, int functor,
+                                           std::function<void(LmnSymbolAtomRef)> const &f);
+static inline void dmem_each_func_atom(MemDelta *delta, LmnMembraneRef mem, int functor,
+                                       std::function<void(LmnSymbolAtomRef)> const &f);
+static inline void dmem_all_atoms(MemDelta *delta, LmnMembraneRef mem, std::function<void(LmnSymbolAtomRef)> const &f);
+static inline void dmem_all_mems(MemDelta *delta, LmnMembraneRef mem, std::function<void(LmnMembraneRef)> const &f);
 
 enum {
   TAG_DEL_MEM       = 1U /* 0000 0001 */,
@@ -210,6 +158,10 @@ static inline void dmem_relink(struct MemDelta *d, LmnMembraneRef m, LmnSymbolAt
 static void        dmem_unify_atom_args(struct MemDelta *d, LmnMembraneRef m, LmnSymbolAtomRef atom1, int pos1,
                                         LmnSymbolAtomRef atom2, int pos2);
 
+using AtomVector    = std::vector<LmnSymbolAtomRef>;
+using MemVector     = std::vector<LmnMembraneRef>;
+using RuleSetVector = std::vector<LmnRuleSetRef>;
+
 struct MemDeltaRoot {
   LmnMembraneRef root_mem;
 
@@ -217,10 +169,9 @@ struct MemDeltaRoot {
   SimplyProcessTableRef flag_tbl;
   ProcessTableRef       owner_tbl;
 
-  Vector modified_atoms;
-
-  struct Vector new_mems;
-  struct Vector mem_deltas;
+  AtomVector              modified_atoms{};
+  MemVector               new_mems{};
+  std::vector<MemDelta *> mem_deltas{};
 
   unsigned long next_id;
 
@@ -258,17 +209,17 @@ struct MemDelta {
   struct MemDeltaRoot *root_d;
   LmnMembraneRef       mem;
 
-  Vector del_atoms;
-  Vector new_atoms;
+  AtomVector del_atoms{};
+  AtomVector new_atoms{};
 
-  Vector del_mems;
-  Vector new_mems;
+  MemVector del_mems{};
+  MemVector new_mems{};
 
-  Vector *new_rulesets;
-  BOOL    ruleset_removed;
-  Vector *org_rulesets; /* commit, revertの作業用 */
+  bool           ruleset_removed;
+  RuleSetVector *new_rulesets;
+  RuleSetVector *org_rulesets; /* commit, revertの作業用 */
 
-  Vector new_proxies;
+  AtomVector new_proxies;
 
   LmnFunctor max_functor;
 
@@ -280,11 +231,11 @@ struct MemDelta {
 
 struct NewMemInfo {
   LmnMembraneRef mem;
-  Vector         new_child_mems;
-  Vector         removed_child_mems;
+  MemVector      new_child_mems{};
+  MemVector      removed_child_mems{};
 
   NewMemInfo(LmnMembraneRef mem);
-  ~NewMemInfo();
+  ~NewMemInfo() = default;
 };
 
 /* static  inline LmnAtomRef datom_get_link(struct MemDelta *d, LmnSymbolAtomRef
@@ -294,7 +245,7 @@ struct NewMemInfo {
  * atom, int i); */
 
 /* とりあえず */
-#define DMEM_ROOT_MEM(d) ((d)->root_mem)
+constexpr auto dmem_root_mem(MemDeltaRoot *delta) { return delta->root_mem; }
 
 /* @} */
 

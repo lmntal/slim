@@ -38,6 +38,7 @@
 #ifndef PROCESS_TABLE_HPP
 #define PROCESS_TABLE_HPP
 
+#include <functional>
 #include <iterator>
 #include <limits>
 #include <stdexcept>
@@ -154,7 +155,7 @@ public:
     }
   }
 
-  void foreach (int (*func)(key_type key, value_type val, LmnWord arg), LmnWord arg) {
+  void foreach (std::function<int(LmnWord key, LmnWord val, LmnWord arg)> const&func, LmnWord arg) {
     unsigned long n = 0;
 
     for (int i = 0; i < this->num_buckets; i++) {

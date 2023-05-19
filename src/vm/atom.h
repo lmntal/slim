@@ -247,12 +247,12 @@ struct LmnSymbolAtom {
    * @brief get a string representation of a symbol atom.
    * @memberof LmnSymbolAtom
    */
-  char const *str() const;
+  std::string_view str() const;
 
   /* 以下, 履歴管理用アトム(nakata)の追加関数*/
   void atom_swap_forward();
   void swap_to_head(LmnSymbolAtomRef head);
-  void remove_atom();
+  void remove_atom() const;
   /* ここまで(nakata)*/
 };
 
@@ -260,7 +260,7 @@ struct LmnSymbolAtom {
  * @brief ファンクタから価数を取得する
  * @memberof LmnSymbolAtom
  */
-int LMN_FUNCTOR_GET_LINK_NUM(LmnFunctor atom);
+int LMN_FUNCTOR_GET_LINK_NUM(LmnFunctor functor);
 
 /* リンク番号のタグのワード数。ファンクタと同じワードにある分も数える */
 int LMN_ATTR_WORDS(int arity);
@@ -336,7 +336,7 @@ BOOL LMN_IS_SYMBOL_FUNCTOR(LmnFunctor FUNC);
  * @brief get a string representation of a functor.
  * @memberof LmnFunctor
  */
-char const *LMN_FUNCTOR_STR(LmnFunctor F);
+std::string_view LMN_FUNCTOR_STR(LmnFunctor F);
 
 /**
  * @brief check whether a link attribute is for data except an exclamation atom.

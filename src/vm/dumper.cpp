@@ -129,7 +129,7 @@ static BOOL is_direct_printable(LmnFunctor f) {
     return TRUE;
   }
 
-  s = LMN_FUNCTOR_STR(f);
+  s = LMN_FUNCTOR_STR(f).data();
   if (isalpha((unsigned char)*s) == 0 || islower((unsigned char)*s) == 0) {
     return FALSE;
   }
@@ -162,7 +162,7 @@ static void dump_atomname(LmnPortRef port, LmnFunctor f) {
 
   /* dump atom name */
   {
-    char const *atom_name = lmn_id_to_name(LMN_FUNCTOR_NAME_ID(lmn_functor_table, f));
+    auto atom_name = lmn_id_to_name(LMN_FUNCTOR_NAME_ID(lmn_functor_table, f));
 
     if (is_direct_printable(f)) {
       port_put_raw_s(port, atom_name);
@@ -1006,7 +1006,7 @@ static void lmn_dump_atom_json(LmnSymbolAtomRef atom) {
   int arity;
   fprintf(stdout, "{");
   fprintf(stdout, "\"id\":%d,", (int)atom->get_id());
-  fprintf(stdout, R"("name":"%s",)", atom->str());
+  fmt::print(stdout, R"("name":"{}",)", atom->str());
   fprintf(stdout, "\"links\":[");
   {
     BOOL needs_comma = FALSE;
@@ -1027,7 +1027,7 @@ static void lmn_dump_mem_json(LmnMembraneRef mem) {
 
   fprintf(stdout, "{");
   fprintf(stdout, "\"id\":%d,", (int)mem->mem_id());
-  fprintf(stdout, "\"name\":\"%s\",", mem->MEM_NAME());
+  fmt::print(stdout, R"("name":"{}",)", mem->MEM_NAME());
   fprintf(stdout, "\"atoms\":[");
   {
     AtomListEntryRef ent;
@@ -1086,15 +1086,14 @@ void dumper_init() { CCallback::lmn_register_c_fun("cb_dump_mem", (void *)cb_dum
 
 void dumper_finalize() {}
 
-void dump_escaped(LmnPortRef port, char const *s) {
-  while (*s) {
-    if (char_to_escape_char[(int)*s]) {
+void dump_escaped(LmnPortRef port, std::string_view s) {
+  for (auto c : s) {
+    if (char_to_escape_char[(int)c]) {
       port_put_raw_c(port, '\\');
-      port_put_raw_c(port, char_to_escape_char[(int)*s]);
+      port_put_raw_c(port, char_to_escape_char[(int)c]);
     } else {
-      port_put_raw_c(port, *s);
+      port_put_raw_c(port, c);
     }
-    s++;
   }
 }
 
