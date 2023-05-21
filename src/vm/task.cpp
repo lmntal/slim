@@ -2657,9 +2657,8 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule, bool 
       if (LMN_ATTR_IS_DATA(attr)) {
         switch (attr) {
         case LMN_INT_ATTR: {
-          char *s = int_to_str(rc->wt(srcvec->get(0)));
+          auto s = std::to_string(rc->wt(srcvec->get(0)));
           port_put_raw_s(port, s);
-          LMN_FREE(s);
           break;
         }
         case LMN_DBL_ATTR: {

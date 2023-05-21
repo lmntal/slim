@@ -37,6 +37,7 @@
  * $Id$
  */
 
+#pragma once
 #ifndef LMN_MC_WORKER_H
 #define LMN_MC_WORKER_H
 
@@ -106,15 +107,15 @@ public:
   LmnWorkerGroup(AutomataRef a, Vector *psyms, int thread_num);
   ~LmnWorkerGroup();
   BOOL workers_are_exit();
-  void          workers_set_exit();
-  void          workers_unset_exit();
-  BOOL          workers_have_error();
-  void          workers_found_error();
-  void          workers_unfound_error();
-  BOOL          workers_get_do_palgorithm();
-  void          workers_set_do_palgorithm();
-  void          workers_unset_do_palgorithm();
-  FILE          workers_out();
+  void workers_set_exit();
+  void workers_unset_exit();
+  BOOL workers_have_error();
+  void workers_found_error();
+  void workers_unfound_error();
+  BOOL workers_get_do_palgorithm();
+  void workers_set_do_palgorithm();
+  void workers_unset_do_palgorithm();
+  FILE workers_out();
 
   State  *workers_get_opt_end_state();
   void    workers_set_opt_end_state(State *s);
@@ -130,8 +131,8 @@ public:
   void workers_unset_terminated();
 
   BOOL workers_are_stop();
-  void          workers_set_stop();
-  void          workers_unset_stop();
+  void workers_set_stop();
+  void workers_unset_stop();
 
   BOOL workers_are_do_search();
   void workers_set_do_search();
@@ -207,8 +208,8 @@ struct LmnWorker {
   LmnWorker                      *next;   /* Pointer to Neighbor Worker */
   LmnWorkerGroup                 *group;
 
-  Vector *invalid_seeds;
-  Vector *cycles;
+  std::vector<struct State *>                *invalid_seeds;
+  std::vector<std::vector<struct State *> *> *cycles;
 
   int expand; // for debug
   int red;

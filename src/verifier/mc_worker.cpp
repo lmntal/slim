@@ -301,8 +301,8 @@ void LmnWorkerGroup::workers_free(unsigned int worker_num) {
     if (worker_group(w)->workers_are_do_search()) {
       delete w->invalid_seeds;
 
-      for (j = 0; j < w->cycles->get_num(); j++) {
-        delete (Vector *)w->cycles->get(j);
+      for (auto &cycle : *w->cycles) {
+        delete (Vector *)cycle;
       }
       delete w->cycles;
     }
@@ -335,8 +335,10 @@ void LmnWorkerGroup::workers_gen(unsigned int worker_num, AutomataRef a, Vector 
     w->group = this;
 
     if (workers_are_do_search()) {
-      w->invalid_seeds = new Vector(4);
-      w->cycles        = new Vector(4);
+      w->invalid_seeds = new std::vector<State *>();
+      w->invalid_seeds->reserve(4);
+      w->cycles        = new std::vector<std::vector<struct State *> *>();
+      w->cycles->reserve(4);
     }
 
     /* アルゴリズムの割り当てと初期化 */

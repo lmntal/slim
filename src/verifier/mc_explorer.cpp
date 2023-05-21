@@ -37,12 +37,15 @@
  * $Id$
  */
 #include "mc_explorer.h"
+#include "ankerl/unordered_dense.hpp"
 #include "element/element.h"
+#include "lmntal.h"
 #include "mc.h"
 #include "mc_worker.h"
 #include "state.h"
 #include "state.hpp"
 #include "state_table.hpp"
+#include <vector>
 
 #ifdef PROFILE
 #include "runtime_status.h"
@@ -63,40 +66,40 @@
 #define TRANS_BETWEEN_DIFF_SCCs(W, U, T, A) (worker_use_opt_scc(W) && (state_scc_id(A, U) != state_scc_id(A, T)))
 #define STATE_PROP_SCC_N(W, S, A) (worker_use_opt_scc(W) && (state_scc_id(A, S) == SCC_TYPE_NON_ACCEPT))
 
+using StateSetRef = ankerl::unordered_dense::set<State *> *;
+
 /* DFSにより状態seedから状態goalへのパスをVector pathに積む.
  * ただし, 既にon_cycle_flagが立っている状態はpathに含まない. */
-static BOOL state_to_state_path(State *seed, State *goal, Vector *search, Vector *path, st_table_t traversed) {
-  search->push((vec_data_t)seed);
+static bool state_to_state_path(State *seed, State *goal, std::vector<State *> &search, std::vector<State *> &path,
+                                StateSetRef traversed) {
+  search.push_back(seed);
 
-  while (search->get_num() > 0) {
-    State       *s;
-    unsigned int i;
-
-    s = (State *)search->peek();
-    if (st_contains(traversed, (st_data_t)s)) {
-      State *s_pop = (State *)search->pop();
-      if (path->get_num() > 0 && (State *)path->peek() == s_pop) {
-        path->pop();
+  while (!search.empty()) {
+    auto *s = search.back();
+    if (traversed->contains(s)) {
+      auto *s_pop = search.back();
+      search.pop_back();
+      if (!path.empty() && path.back() == s_pop) {
+        path.pop_back();
       }
     } else {
-      st_add_direct(traversed, (st_data_t)s, (st_data_t)s);
-      path->push((vec_data_t)s);
+      traversed->insert(s);
+      path.push_back(s);
 
-      for (i = 0; i < s->successor_num; i++) {
+      for (auto i = 0; i < s->successor_num; i++) {
         State *succ = state_succ_state(s, i);
 
         if (succ->is_on_cycle() || !s->is_expanded())
           continue;
-        else if (succ == goal) {
-          return TRUE;
-        } else {
-          search->push((vec_data_t)succ);
+        if (succ == goal) {
+          return true;
         }
+        search.push_back(succ);
       }
     }
   }
 
-  return FALSE;
+  return false;
 }
 
 /** ==================================
@@ -162,10 +165,10 @@ void ndfs_start(LmnWorker *w, State *seed) {
 }
 
 void ndfs_found_accepting_cycle(LmnWorker *w, State *seed, Vector *cycle_path) {
-  LmnWorkerGroup *wp;
-  Vector         *v;
-  unsigned long   i;
-  BOOL            gen_counter_example;
+  LmnWorkerGroup       *wp;
+  std::vector<State *> *v{nullptr};
+  unsigned long         i;
+  BOOL                  gen_counter_example;
 
   wp = worker_group(w);
   wp->workers_found_error();
@@ -173,15 +176,18 @@ void ndfs_found_accepting_cycle(LmnWorker *w, State *seed, Vector *cycle_path) {
   gen_counter_example = lmn_env.dump;
   seed->set_on_cycle(); /* 受理サイクルに含まれるフラグを立てる */
 
-  v = gen_counter_example ? new Vector(cycle_path->get_num()) : nullptr;
+  if (gen_counter_example) {
+    v = new std::vector<State *>();
+    v->reserve(cycle_path->get_num());
+  }
 
   /* 受理サイクル上の状態にフラグを立てていく */
   for (i = 0; i < cycle_path->get_num(); i++) {
-    State *s = (State *)cycle_path->get(i);
+    auto *s = (State *)cycle_path->get(i);
     s->set_on_cycle();
 
     if (gen_counter_example)
-      v->push((vec_data_t)s);
+      v->push_back(s);
   }
 
   /* サイクルを登録 */
@@ -194,11 +200,11 @@ void ndfs_found_accepting_cycle(LmnWorker *w, State *seed, Vector *cycle_path) {
 
 static BOOL ndfs_loop(State *seed, Vector *search, Vector *path) {
   while (search->get_num() > 0) {
-    State *s = (State *)search->peek();
+    auto *s = (State *)search->peek();
 
     if (s->is_snd()) { /* 訪問済み */
       /** DFS2 BackTracking */
-      State *s_pop = (State *)search->pop();
+      auto *s_pop = (State *)search->pop();
       if (path->get_num() > 0 && (State *)path->peek() == s_pop) {
         path->pop();
       }
@@ -211,14 +217,14 @@ static BOOL ndfs_loop(State *seed, Vector *search, Vector *path) {
 
         if (succ->is_on_cycle()) {
           return FALSE;
-        } else if (!succ->is_expanded()) {
-          continue;
-        } else if (succ == seed /* || succ->is_on_stack() */) {
-          return TRUE; /* 同一のseedから探索する閉路が1つ見つかったならば探索を打ち切る
-                        */
-        } else {
-          search->push((vec_data_t)succ);
         }
+        if (!succ->is_expanded()) {
+          continue;
+        }
+        if (succ == seed /* || succ->is_on_stack() */) {
+          return TRUE; // 同一のseedから探索する閉路が1つ見つかったならば探索を打ち切る
+        }
+        search->push((vec_data_t)succ);
       }
     }
   }
@@ -235,7 +241,7 @@ struct McSearchOWCTY {
   Queue        *accepts2;
   unsigned long old;
   unsigned long iteration;
-  st_table_t    traversed; /* 反例生成用 */
+  StateSetRef   traversed; /* 反例生成用 */
 };
 
 #define OWCTY_WORKER_OBJ(W) ((McSearchOWCTY *)worker_explorer_obj(W))
@@ -251,7 +257,7 @@ static inline void owcty_termination_detection(LmnWorker *w);
 static void        owcty_found_accepting_cycle(LmnWorker *w, AutomataRef a);
 
 void owcty_worker_init(LmnWorker *w) {
-  McSearchOWCTY *mc = LMN_MALLOC<McSearchOWCTY>();
+  auto *mc = LMN_MALLOC<McSearchOWCTY>();
 
   /* 全ワーカでオブジェクトを共有 */
 
@@ -269,7 +275,7 @@ void owcty_worker_init(LmnWorker *w) {
     mc->accepts2       = OWCTY_WORKER_AQ2(primary);
   }
 
-  mc->traversed = st_init_ptrtable();
+  mc->traversed = new ankerl::unordered_dense::set<State *>();
   mc->old       = 0;
   mc->iteration = 0;
 
@@ -281,7 +287,7 @@ void owcty_worker_finalize(LmnWorker *w) {
     delete OWCTY_WORKER_AQ1(w);
     delete OWCTY_WORKER_AQ2(w);
   }
-  st_free_table(OWCTY_WORKER_HASHSET(w));
+  delete OWCTY_WORKER_HASHSET(w);
   LMN_FREE(OWCTY_WORKER_OBJ(w));
 }
 
@@ -463,37 +469,32 @@ static void owcty_found_accepting_cycle(LmnWorker *w, AutomataRef a) {
     wp->workers_found_error();
 
     if (lmn_env.dump) {
-      Vector search, path;
+      std::vector<State *> search, path;
 
-      search.init(64);
-      path.init(32);
+      search.reserve(64);
+      path.reserve(32);
       while (!OWCTY_WORKER_AQ1(w)->is_empty()) {
-        State *seed = (State *)OWCTY_WORKER_AQ1(w)->dequeue();
+        auto *seed = (State *)OWCTY_WORKER_AQ1(w)->dequeue();
 
         if (state_is_end(a, seed)) {
           mc_found_invalid_state(wp, seed);
         } else if (!seed->is_on_cycle()) {
-          if (state_to_state_path(seed, seed, &search, &path, OWCTY_WORKER_HASHSET(w))) {
-            Vector      *v;
-            unsigned int i;
-
-            v = new Vector(path.get_num());
-            for (i = 0; i < path.get_num(); i++) {
-              State *tmp = (State *)path.get(i);
+          if (state_to_state_path(seed, seed, search, path, OWCTY_WORKER_HASHSET(w))) {
+            auto *v = new std::vector<State *>();
+            v->reserve(path.size());
+            for (auto &i : path) {
+              auto *tmp = (State *)i;
               tmp->set_on_cycle();
-              v->push((vec_data_t)tmp);
+              v->push_back(tmp);
             }
 
             mc_found_invalid_path(wp, v);
           }
-          st_clear(OWCTY_WORKER_HASHSET(w));
+          OWCTY_WORKER_HASHSET(w)->clear();
           search.clear();
           path.clear();
         }
       }
-
-      search.destroy();
-      path.destroy();
     }
   }
 }
@@ -505,9 +506,9 @@ static void owcty_found_accepting_cycle(LmnWorker *w, AutomataRef a) {
 #include <cstdarg>
 
 struct McSearchMAP {
-  Queue     *propagate;
-  Queue     *waitingSeed;
-  st_table_t traversed;
+  Queue      *propagate;
+  Queue      *waitingSeed;
+  StateSetRef traversed;
 };
 
 #define MAP_WORKER_OBJ(W) ((McSearchMAP *)worker_explorer_obj(W))
@@ -524,7 +525,7 @@ static void          map_propagate(LmnWorker *w, State *s, State *t, State *prop
 static State        *map_ordering_propagate_state(LmnWorker *w, State *u, AutomataRef a);
 
 void map_worker_init(LmnWorker *w) {
-  McSearchMAP *mc = LMN_MALLOC<McSearchMAP>();
+  auto *mc = LMN_MALLOC<McSearchMAP>();
 
   if (worker_id(w) == LMN_PRIMARY_ID) {
     if (worker_group(w)->workers_get_entried_num() > 1) {
@@ -540,7 +541,7 @@ void map_worker_init(LmnWorker *w) {
     mc->waitingSeed = MAP_WORKER_DEL_G(prim);
   }
 
-  mc->traversed = st_init_ptrtable();
+  mc->traversed = new ankerl::unordered_dense::set<State *>();
 
   MAP_WORKER_OBJ_SET(w, mc);
 }
@@ -550,7 +551,7 @@ void map_worker_finalize(LmnWorker *w) {
     delete MAP_WORKER_PROPAG_G(w);
     delete MAP_WORKER_DEL_G(w);
   }
-  st_free_table(MAP_WORKER_HASHSET(w));
+  delete MAP_WORKER_HASHSET(w);
   LMN_FREE(MAP_WORKER_OBJ(w));
 }
 
@@ -748,37 +749,33 @@ static void map_found_accepting_cycle(LmnWorker *w, State *s) {
   if (lmn_env.dump && !s->is_on_cycle()) {
     /* TODO: とりあえず単純なself reachability testで実装しているので,
      *        MAP値の等しい状態だけを辿るようにしたself reachabilityに直す */
-    Vector     search, path;
-    st_table_t traversed;
+    std::vector<State *> search, path;
+    StateSetRef          traversed;
 
-    search.init(64);
-    path.init(32);
+    search.reserve(64);
+    path.reserve(32);
     if (worker_use_weak_map(w)) {
-      traversed = st_init_ptrtable();
+      traversed = new ankerl::unordered_dense::set<State *>();
     } else {
       traversed = MAP_WORKER_HASHSET(w);
     }
 
-    if (state_to_state_path(s, s, &search, &path, traversed)) {
-      Vector      *v;
-      unsigned int i;
-
-      v = new Vector(path.get_num());
-      for (i = 0; i < path.get_num(); i++) {
-        State *tmp = (State *)path.get(i);
+    if (state_to_state_path(s, s, search, path, traversed)) {
+      auto *v = new std::vector<State *>();
+      v->reserve(path.size());
+      for (auto &i : path) {
+        auto *tmp = (State *)i;
         tmp->set_on_cycle();
-        v->push((vec_data_t)tmp);
+        v->push_back(tmp);
       }
       mc_found_invalid_path(wp, v);
     }
 
     if (worker_use_weak_map(w)) {
-      st_free_table(traversed);
+      delete traversed;
     } else {
-      st_clear(MAP_WORKER_HASHSET(w));
+      MAP_WORKER_HASHSET(w)->clear();
     }
-    search.destroy();
-    path.destroy();
   }
 }
 
@@ -788,10 +785,10 @@ static void map_found_accepting_cycle(LmnWorker *w, State *s) {
  */
 
 struct McSearchBLE {
-  Queue     *layer;
-  Vector    *path;
-  Vector    *search;
-  st_table_t traversed;
+  Queue                *layer;
+  std::vector<State *> *path;
+  std::vector<State *> *search;
+  StateSetRef           traversed;
 };
 
 #define BLE_WORKER_OBJ(W) ((McSearchBLE *)worker_explorer_obj(W))
@@ -801,7 +798,7 @@ struct McSearchBLE {
 #define BLE_WORKER_SEARCH_VEC(W) (BLE_WORKER_OBJ(W)->search)
 #define BLE_WORKER_HASHSET(W) (BLE_WORKER_OBJ(W)->traversed)
 
-static void bledge_found_accepting_cycle(LmnWorker *w, Vector *cycle_path);
+static void bledge_found_accepting_cycle(LmnWorker *w, std::vector<struct State *> &cycle_path);
 
 void bledge_env_set(LmnWorker *w) {
   worker_set_ble(w);
@@ -814,7 +811,7 @@ void bledge_env_set(LmnWorker *w) {
 }
 
 void bledge_worker_init(LmnWorker *w) {
-  McSearchBLE *mc = LMN_MALLOC<McSearchBLE>();
+  auto *mc = LMN_MALLOC<McSearchBLE>();
   if (worker_id(w) == LMN_PRIMARY_ID) {
     if (worker_group(w)->workers_get_entried_num() > 1) {
       mc->layer = new Queue(LMN_Q_MRMW);
@@ -825,9 +822,11 @@ void bledge_worker_init(LmnWorker *w) {
     mc->layer = BLE_WORKER_LAYER_Q(worker_group(w)->get_worker(LMN_PRIMARY_ID));
   }
 
-  mc->path      = new Vector(32);
-  mc->search    = new Vector(64);
-  mc->traversed = st_init_ptrtable();
+  mc->path = new std::vector<State *>();
+  mc->path->reserve(32);
+  mc->search = new std::vector<State *>();
+  mc->search->reserve(64);
+  mc->traversed = new ankerl::unordered_dense::set<State *>();
 
   BLE_WORKER_OBJ_SET(w, mc);
 }
@@ -838,26 +837,18 @@ void bledge_worker_finalize(LmnWorker *w) {
   }
   delete BLE_WORKER_PATH_VEC(w);
   delete BLE_WORKER_SEARCH_VEC(w);
-  st_free_table(BLE_WORKER_HASHSET(w));
+  delete BLE_WORKER_HASHSET(w);
 }
 
 /* State Vectorの各状態に受理頂点が含まれていたら真を返す */
-static BOOL bledge_path_accepting(Vector *v, AutomataRef a) {
-  unsigned int i;
-
-  for (i = 0; i < v->get_num(); i++) {
-    State *t = (State *)v->get(i);
-    if (state_is_accept(a, t))
-      return TRUE;
-  }
-
-  return FALSE;
+static bool bledge_path_accepting(std::vector<struct State *> &v, AutomataRef a) {
+  return std::any_of(v.begin(), v.end(), [a](State *t) { return state_is_accept(a, t); });
 }
 
 static BOOL bledge_explorer_accepting_cycle(LmnWorker *w, State *u, State *v) {
   AutomataRef a = worker_states(w)->automata();
-  return state_to_state_path(v, u, BLE_WORKER_SEARCH_VEC(w), BLE_WORKER_PATH_VEC(w), BLE_WORKER_HASHSET(w)) &&
-         bledge_path_accepting(BLE_WORKER_PATH_VEC(w), a);
+  return state_to_state_path(v, u, *BLE_WORKER_SEARCH_VEC(w), *BLE_WORKER_PATH_VEC(w), BLE_WORKER_HASHSET(w)) &&
+         bledge_path_accepting(*BLE_WORKER_PATH_VEC(w), a);
 }
 
 void bledge_start(LmnWorker *w) {
@@ -876,11 +867,11 @@ void bledge_start(LmnWorker *w) {
 
       if (v->is_expanded()) { /* detected back level edge:t where [u]--t-->[v] */
         if (!u->is_on_cycle() && !v->is_on_cycle() && bledge_explorer_accepting_cycle(w, u, v)) {
-          BLE_WORKER_PATH_VEC(w)->push((vec_data_t)u);
-          bledge_found_accepting_cycle(w, BLE_WORKER_PATH_VEC(w));
+          BLE_WORKER_PATH_VEC(w)->push_back(u);
+          bledge_found_accepting_cycle(w, *BLE_WORKER_PATH_VEC(w));
         }
 
-        st_clear(BLE_WORKER_HASHSET(w));
+        BLE_WORKER_HASHSET(w)->clear();
         BLE_WORKER_PATH_VEC(w)->clear();
         BLE_WORKER_SEARCH_VEC(w)->clear();
       }
@@ -896,24 +887,26 @@ void bledge_store_layer(LmnWorker *w, State *s) {
   }
 }
 
-static void bledge_found_accepting_cycle(LmnWorker *w, Vector *cycle_path) {
-  LmnWorkerGroup *wp;
-  Vector         *v;
-  unsigned long   i;
-  BOOL            gen_counter_example;
+static void bledge_found_accepting_cycle(LmnWorker *w, std::vector<struct State *> &cycle_path) {
+  LmnWorkerGroup       *wp;
+  std::vector<State *> *v{nullptr};
+  BOOL                  gen_counter_example;
 
   wp = worker_group(w);
   wp->workers_found_error();
 
   gen_counter_example = lmn_env.dump;
-  v                   = gen_counter_example ? new Vector(cycle_path->get_num()) : nullptr;
+  if (gen_counter_example) {
+    v = new std::vector<State *>();
+    v->reserve(cycle_path.size());
+  }
 
   /* 受理サイクル上の状態にフラグを立てていく */
-  for (i = 0; i < cycle_path->get_num(); i++) {
-    State *s = (State *)cycle_path->get(i);
+  for (auto &i : cycle_path) {
+    auto *s = (State *)i;
     s->set_on_cycle();
     if (gen_counter_example)
-      v->push((vec_data_t)s);
+      v->push_back(s);
   }
 
   /* サイクルを登録 */
@@ -941,9 +934,9 @@ static void mapndfs_found_accepting_cycle(LmnWorker *w, State *seed, Vector *cyc
  */
 struct McSearchMAPNDFS {
 #ifdef MAPNDFS_USE_MAP
-  Queue     *propagate;
-  Queue     *waitingSeed;
-  st_table_t traversed;
+  Queue      *propagate;
+  Queue      *waitingSeed;
+  StateSetRef traversed;
 #endif
   Vector *open;
   Vector *path;
@@ -993,8 +986,8 @@ void mapndfs_worker_finalize(LmnWorker *w) {
     delete MAP_WORKER_PROPAG_G(w);
     delete MAP_WORKER_DEL_G(w);
   }
-  if (MAP_WORKER_HASHSET(w))
-    st_free_table(MAP_WORKER_HASHSET(w));
+
+  delete (MAP_WORKER_HASHSET(w));
 #endif
 
   LMN_FREE(MAPNDFS_WORKER_OBJ(w));
@@ -1045,10 +1038,10 @@ void mapndfs_start(LmnWorker *w, State *seed) {
 }
 
 void mapndfs_found_accepting_cycle(LmnWorker *w, State *seed, Vector *cycle_path) {
-  LmnWorkerGroup *wp;
-  Vector         *v;
-  unsigned long   i;
-  BOOL            gen_counter_example;
+  LmnWorkerGroup       *wp;
+  std::vector<State *> *v{nullptr};
+  unsigned long         i;
+  BOOL                  gen_counter_example;
 
   wp = worker_group(w);
   wp->workers_found_error();
@@ -1056,15 +1049,18 @@ void mapndfs_found_accepting_cycle(LmnWorker *w, State *seed, Vector *cycle_path
   gen_counter_example = lmn_env.dump;
   seed->set_on_cycle(); /* 受理サイクルに含まれるフラグを立てる */
 
-  v = gen_counter_example ? new Vector(cycle_path->get_num()) : nullptr;
+  if (gen_counter_example) {
+    v = new std::vector<State *>();
+    v->reserve(cycle_path->get_num());
+  }
 
   /* 受理サイクル上の状態にフラグを立てていく */
   for (i = 0; i < cycle_path->get_num(); i++) {
-    State *s = (State *)cycle_path->get(i);
+    auto *s = (State *)cycle_path->get(i);
     s->set_on_cycle();
 
     if (gen_counter_example)
-      v->push((vec_data_t)s);
+      v->push_back(s);
   }
 
   /* サイクルを登録 */
@@ -1077,7 +1073,7 @@ void mapndfs_found_accepting_cycle(LmnWorker *w, State *seed, Vector *cycle_path
 
 static BOOL mapndfs_loop(State *seed, Vector *search, Vector *path) {
   while (search->get_num() > 0) {
-    State *s = (State *)search->peek();
+    auto *s = (State *)search->peek();
 
     if (s->is_snd()) { /* 訪問済み */
       /** DFS2 BackTracking */
@@ -1151,8 +1147,8 @@ void mcndfs_worker_finalize(LmnWorker *w) {
     delete MAP_WORKER_PROPAG_G(w);
     delete MAP_WORKER_DEL_G(w);
   }
-  if (MAP_WORKER_HASHSET(w))
-    st_free_table(MAP_WORKER_HASHSET(w));
+
+  delete (MAP_WORKER_HASHSET(w));
 #endif
 
   LMN_FREE(MAPNDFS_WORKER_OBJ(w));
@@ -1198,10 +1194,10 @@ void mcndfs_start(LmnWorker *w, State *seed, Vector *red_states) {
 }
 
 void mcndfs_found_accepting_cycle(LmnWorker *w, State *seed, Vector *cycle_path) {
-  LmnWorkerGroup *wp;
-  Vector         *v;
-  unsigned long   i;
-  BOOL            gen_counter_example;
+  LmnWorkerGroup       *wp;
+  std::vector<State *> *v{nullptr};
+  unsigned long         i;
+  BOOL                  gen_counter_example;
 
   wp = worker_group(w);
   wp->workers_found_error();
@@ -1209,15 +1205,18 @@ void mcndfs_found_accepting_cycle(LmnWorker *w, State *seed, Vector *cycle_path)
   gen_counter_example = lmn_env.dump;
   seed->set_on_cycle(); /* 受理サイクルに含まれるフラグを立てる */
 
-  v = gen_counter_example ? new Vector(cycle_path->get_num()) : nullptr;
+  if (gen_counter_example) {
+    v = new std::vector<State *>();
+    v->reserve(cycle_path->get_num());
+  }
 
   /* 受理サイクル上の状態にフラグを立てていく */
   for (i = 0; i < cycle_path->get_num(); i++) {
-    State *s = (State *)cycle_path->get(i);
+    auto *s = (State *)cycle_path->get(i);
     s->set_on_cycle();
 
     if (gen_counter_example)
-      v->push((vec_data_t)s);
+      v->push_back(s);
   }
 
   /* サイクルを登録 */

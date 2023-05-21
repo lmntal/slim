@@ -43,6 +43,7 @@
 #include "lmntal.h"
 #include "util.h"
 #include "vm/vm.h"
+#include <string>
 
 static int        port_atom_type; /* special atom type */
 static LmnFunctor eof_functor;
@@ -517,7 +518,7 @@ void cb_port_putc(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0, LmnLinkA
   if (LMN_ATTR_IS_DATA_WITHOUT_EX(t1)) {
     switch (t1) {
     case LMN_INT_ATTR: {
-      char *s = int_to_str((long)a1);
+      auto s = std::to_string((long)a1);
       port_put_raw_s(LMN_PORT(a0), s);
     } break;
 

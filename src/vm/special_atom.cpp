@@ -43,18 +43,16 @@
 #include "lmntal.h"
 #include "symbol.h"
 
-std::vector<SpecialAtomCallback *> *sp_atom_callback_tbl;
+std::vector<SpecialAtomCallback *> sp_atom_callback_tbl{};
 
 void sp_atom_init() {
-  sp_atom_callback_tbl = new std::vector<SpecialAtomCallback *>();
-  sp_atom_callback_tbl->reserve(64);
+  sp_atom_callback_tbl.reserve(64);
 }
 
 void sp_atom_finalize() {
-  for (auto &c : *sp_atom_callback_tbl) {
+  for (auto &c : sp_atom_callback_tbl) {
     LMN_FREE(c);
   }
-  delete sp_atom_callback_tbl;
 }
 
 int lmn_sp_atom_register(char const *name, f_copy f_copy, f_free f_free, f_eq f_eq, f_dump f_dump,
@@ -68,8 +66,8 @@ int lmn_sp_atom_register(char const *name, f_copy f_copy, f_free f_free, f_eq f_
   c->encode    = nullptr;
   c->decode    = nullptr;
 
-  sp_atom_callback_tbl->emplace_back(c);
-  return sp_atom_callback_tbl->size() - 1;
+  sp_atom_callback_tbl.push_back(c);
+  return sp_atom_callback_tbl.size() - 1;
 }
 
 int lmn_sp_atom_register(char const *name, f_copy f_copy, f_free f_free, f_eq f_eq, f_dump f_dump,
@@ -83,11 +81,11 @@ int lmn_sp_atom_register(char const *name, f_copy f_copy, f_free f_free, f_eq f_
   c->encode    = encoder;
   c->decode    = decoder;
 
-  sp_atom_callback_tbl->emplace_back(c);
-  return sp_atom_callback_tbl->size() - 1;
+  sp_atom_callback_tbl.push_back(c);
+  return sp_atom_callback_tbl.size() - 1;
 }
 
 struct SpecialAtomCallback *sp_atom_get_callback(int id) {
   LMN_ASSERT(sp_atom_callback_tbl->size() > id);
-  return sp_atom_callback_tbl->at(id);
+  return sp_atom_callback_tbl.at(id);
 }

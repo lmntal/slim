@@ -206,9 +206,8 @@ static void dump_link(LmnPortRef port, LmnSymbolAtomRef atom, int i, SimpleHasht
 static void dump_link_name(LmnPortRef port, int link_num) {
   port_put_raw_s(port, LINK_PREFIX);
   {
-    char *s = int_to_str(link_num);
+    auto s = std::to_string(link_num);
     port_put_raw_s(port, s);
-    LMN_FREE(s);
   }
 }
 
@@ -216,9 +215,8 @@ static BOOL dump_data_atom(LmnPortRef port, LmnAtomRef data, LmnLinkAttr attr) {
   /* print only data (no link) */
   switch (attr) {
   case LMN_INT_ATTR: {
-    char *s = int_to_str((long)data);
+    auto s = std::to_string((long)data);
     port_put_raw_s(port, s);
-    LMN_FREE(s);
   } break;
   case LMN_DBL_ATTR: {
     char buf[64];
@@ -524,10 +522,9 @@ static void dump_ruleset(LmnPortRef port, std::vector<LmnRuleSet *> const &v) {
 
   for (i = 0; i < v.size(); i++) {
     LmnRuleSetRef rs;
-    char         *s;
 
     rs = v[i];
-    s  = int_to_str(rs->id);
+    auto s  = std::to_string(rs->id);
     if (lmn_env.sp_dump_format == LMN_SYNTAX) {
       if (i > 0) {
         port_put_raw_s(port, ",");
@@ -545,7 +542,6 @@ static void dump_ruleset(LmnPortRef port, std::vector<LmnRuleSet *> const &v) {
       port_put_raw_s(port, "'");
     }
     port_put_raw_s(port, ". ");
-    LMN_FREE(s);
   }
 }
 

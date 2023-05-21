@@ -46,11 +46,13 @@
  * @{
  */
 
+#include "ankerl/unordered_dense.hpp"
 #include "element/element.h"
 #include "lmntal.h"
 #include "mc_worker.h"
 #include "vm/vm.h"
 
+// NOLINTBEGIN
 enum PROFILE_SPACE {
   PROFILE_SPACE__TOTAL,          /* トータル */
   PROFILE_SPACE__STATE_BINSTR,   /* バイナリストリング */
@@ -104,10 +106,11 @@ enum PROFILE_HTABLE_COUNT {
                                            */
   PCOUNT_TAIL,                            /* dummy */
 };
+// NOLINTEND
 
 struct PeakCounter {
-  long cur;  /* 現在の数 */
-  long peak; /* ピーク値 */
+  unsigned long cur;  /* 現在の数 */
+  unsigned long peak; /* ピーク値 */
 };
 
 struct MemoryProfiler {
@@ -124,7 +127,7 @@ struct TimeProfiler {
 struct MCProfiler2 {
   unsigned long invalid_end_num, accept_num, transition_num, mhash_num, rehashed_num, midhash_num;
   unsigned long statespace_space, transition_space, state_space, binstr_space, membrane_space;
-  st_table_t    hashes;
+  ankerl::unordered_dense::set<unsigned long> *hashes;
 };
 
 struct MCProfiler3 {
@@ -163,9 +166,9 @@ struct LmnProfiler {
   /* for profile level3 (configure --enable-profile)
    * 実行中に, 詳細に各状態から情報収集する.
    * (実行性能に影響するためベンチマークテストの際には使用しない) */
-  MCProfiler3         *lv3; /* for verifier only */
-  struct RuleProfiler *cur;
-  st_table_t           prules; /* Set of Rule Profiler */
+  MCProfiler3                                              *lv3; /* for verifier only */
+  struct RuleProfiler                                      *cur;
+  ankerl::unordered_dense::map<LmnRuleRef, RuleProfiler *> *prules; /* Set of Rule Profiler */
 };
 
 /* RuleProfiler Interface */

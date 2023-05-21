@@ -38,8 +38,10 @@
  */
 #include "mc.h"
 
+#include "ankerl/unordered_dense.hpp"
 #include "fmt/color.h"
 
+#include "lmntal.h"
 #include "verifier/binstr_compress.h"
 #include "verifier/delta_membrane.h"
 #include "verifier/dpor.h"
@@ -65,8 +67,10 @@
 static inline void do_mc(LmnMembraneRef world_mem, AutomataRef a, Vector *psyms, int thread_num);
 static void        mc_dump(LmnWorkerGroup *wp);
 
+using GraphMap = ankerl::unordered_dense::map<State *, Vector *>;
+
 /* 非決定実行を行う. run_mcもMT-unsafeなので子ルーチンとしては使えない */
-void run_mc(std::vector<LmnRuleSetRef> const&start_rulesets, AutomataRef a, Vector *psyms) {
+void run_mc(std::vector<LmnRuleSetRef> const &start_rulesets, AutomataRef a, Vector *psyms) {
   static LmnMembraneRef mem;
 
   if (lmn_env.nd_cleaning) {
@@ -639,7 +643,7 @@ void mc_found_invalid_state(LmnWorkerGroup *wp, State *s) {
   wp->workers_found_error();
   if (s) {
     LmnWorker *w = wp->workers_get_my_worker();
-    worker_invalid_seeds(w)->push((vec_data_t)s);
+    worker_invalid_seeds(w)->push_back(s);
   }
 
   if (!wp->workers_are_do_exhaustive()) {
@@ -649,13 +653,11 @@ void mc_found_invalid_state(LmnWorkerGroup *wp, State *s) {
 
 /* エラーを示すサイクルパスを載せたVectorを登録する.
  * MT-Unsafe, but ok  */
-void mc_found_invalid_path(LmnWorkerGroup *wp, Vector *v) {
+void mc_found_invalid_path(LmnWorkerGroup *wp, std::vector<State *> *path) {
   wp->workers_found_error();
 
-  if (v) {
-    LmnWorker *w = wp->workers_get_my_worker();
-    worker_cycles(w)->push((vec_data_t)v);
-  }
+  LmnWorker *w = wp->workers_get_my_worker();
+  worker_cycles(w)->push_back(path);
 
   if (!wp->workers_are_do_exhaustive()) {
     wp->workers_set_exit();
@@ -668,7 +670,7 @@ unsigned long mc_invalids_get_num(LmnWorkerGroup *wp) {
 
   ret = 0;
   for (i = 0; i < wp->workers_get_entried_num(); i++) {
-    ret += worker_invalid_seeds(wp->get_worker(i))->get_num();
+    ret += worker_invalid_seeds(wp->get_worker(i))->size();
   }
 
   return ret;
@@ -712,7 +714,7 @@ static Vector *mc_gen_invalids_path(State *seed) {
 
 /* Vectorに積まれた状態を, 遷移元の状態idをkeyに, 遷移先の集合をvalueとした
  * ハッシュ表に登録する */
-static void mc_store_invalids_graph(AutomataRef a, st_table_t g, Vector *v) {
+static void mc_store_invalids_graph(AutomataRef a, GraphMap *g, Vector *v) {
   unsigned int i, j;
 
   for (i = 0, j = 1; i < v->get_num() && j < v->get_num(); i++, j++) {
@@ -722,12 +724,36 @@ static void mc_store_invalids_graph(AutomataRef a, st_table_t g, Vector *v) {
     s1 = (State *)v->get(i);
     s2 = (State *)v->get(j);
 
-    MC_INSERT_INVALIDS(g, s1, s2);
+    do {
+      Vector   *succs;
+      st_data_t t;
+      t = 0;
+      if (g->contains(s1)) {
+        succs = g->at(s1);
+        if (!succs->contains((vec_data_t)s2)) {
+          succs->push((vec_data_t)s2);
+        }
+      } else {
+        succs = new Vector(2);
+        succs->push((vec_data_t)s2);
+        g->emplace(s1, succs);
+      }
+    } while (false);
   }
 
   if (state_is_end(a, (State *)v->peek())) {
-    State *s = (State *)v->peek();
-    MC_INSERT_INVALIDS(g, s, nullptr);
+    auto   *s = (State *)v->peek();
+    Vector *succs;
+    if (g->contains(s)) {
+      succs = (Vector *)g->at(s);
+      if (!succs->contains((vec_data_t) nullptr)) {
+        succs->push((vec_data_t) nullptr);
+      }
+    } else {
+      succs = new Vector(2);
+      succs->push((vec_data_t) nullptr);
+      g->emplace(s, succs);
+    }
   }
 }
 
@@ -814,96 +840,110 @@ void mc_print_vec_states(StateSpaceRef ss, Vector *v, State *seed) {
 void mc_dump_all_errors(LmnWorkerGroup *wp, FILE *f) {
   if (!wp->workers_have_error()) {
     fprintf(f, "%s\n", lmn_env.mc_dump_format == CUI ? "No Accepting Cycle (or Invalid State) exists." : "");
-  } else {
-    switch (lmn_env.mc_dump_format) {
-    case LaViT:
-    case CUI: {
-      st_table_t   invalids_graph;
-      unsigned int i, j;
-      BOOL         cui_dump;
+    return;
+  }
 
-      fprintf(f, "%s\n", lmn_env.sp_dump_format == LMN_SYNTAX ? "counter_exapmle." : "CounterExamplePaths");
+  switch (lmn_env.mc_dump_format) {
+  case LaViT:
+  case CUI: {
+    fprintf(f, "%s\n", lmn_env.sp_dump_format == LMN_SYNTAX ? "counter_exapmle." : "CounterExamplePaths");
 
-      cui_dump       = (lmn_env.mc_dump_format == CUI);
-      invalids_graph = cui_dump ? nullptr : st_init_ptrtable();
+    auto      cui_dump       = (lmn_env.mc_dump_format == CUI);
+    GraphMap *invalids_graph = cui_dump ? nullptr : new GraphMap();
 
-      /* state property */
-      for (i = 0; i < wp->workers_get_entried_num(); i++) {
-        LmnWorker    *w;
-        Vector       *v;
-        StateSpaceRef ss;
+    /* state property */
+    for (auto i = 0; i < wp->workers_get_entried_num(); i++) {
+      auto *w  = wp->get_worker(i);
+      auto *v  = worker_invalid_seeds(w);
+      auto *ss = worker_states(w);
 
-        w  = wp->get_worker(i);
-        v  = worker_invalid_seeds(w);
-        ss = worker_states(w);
+      for (auto &j : *v) {
+        Vector *path = mc_gen_invalids_path((State *)j);
 
-        for (j = 0; j < v->get_num(); j++) {
-          Vector *path = mc_gen_invalids_path((State *)v->get(j));
-
-          if (cui_dump) { /* 出力 */
-            mc_print_vec_states(ss, path, nullptr);
-            fprintf(f, "\n");
-          } else { /* ハッシュ表に追加 */
-            mc_store_invalids_graph(ss->automata(), invalids_graph, path);
-          }
-          delete path;
+        if (cui_dump) { /* 出力 */
+          mc_print_vec_states(ss, path, nullptr);
+          fprintf(f, "\n");
+        } else { /* ハッシュ表に追加 */
+          mc_store_invalids_graph(ss->automata(), invalids_graph, path);
         }
+        delete path;
       }
-
-      /* path property */
-      for (i = 0; i < wp->workers_get_entried_num(); i++) {
-        LmnWorker    *w;
-        Vector       *v;
-        StateSpaceRef ss;
-
-        w  = wp->get_worker(i);
-        v  = worker_cycles(w);
-        ss = worker_states(w);
-
-        for (j = 0; j < v->get_num(); j++) {
-          Vector *cycle, *path;
-          State  *seed;
-
-          cycle = (Vector *)v->get(j);
-          seed  = (State *)cycle->get(0);
-          path  = mc_gen_invalids_path(seed);
-
-          cycle->push((vec_data_t)seed); /* seed to seedのパスを取得するため */
-
-          if (cui_dump) {
-            path->pop(); /* cycle Vectorとpath
-                              Vectorでseedが重複して積まれているため */
-            mc_print_vec_states(ss, path, nullptr);
-            mc_print_vec_states(ss, cycle, seed);
-            fprintf(f, "\n");
-          } else {
-            LMN_ASSERT(invalids_graph);
-            mc_store_invalids_graph(ss->automata(), invalids_graph, path);
-            mc_store_invalids_graph(ss->automata(), invalids_graph, cycle);
-          }
-
-          delete path;
-        }
-      }
-
-      if (!cui_dump) {
-        StateSpaceRef represent = worker_states(wp->get_worker(LMN_PRIMARY_ID));
-        st_foreach(invalids_graph, (st_iter_func)mc_dump_invalids_f, (st_data_t)represent);
-        st_foreach(invalids_graph, (st_iter_func)mc_free_succ_vec_f, (st_data_t)0);
-        st_free_table(invalids_graph);
-      }
-
-      break;
     }
 
-    case Dir_DOT: /* TODO:
-                     反例パスをサブグラフとして指定させたら分かりやすくなりそう
-                   */
-        ;
-    default:
-      lmn_fatal("unexpected.");
-      break;
+    /* path property */
+    for (auto i = 0; i < wp->workers_get_entried_num(); i++) {
+
+      auto *w  = wp->get_worker(i);
+      auto *v  = worker_cycles(w);
+      auto *ss = worker_states(w);
+
+      for (auto &j : *v) {
+        Vector *cycle, *path;
+        State  *seed;
+
+        cycle = (Vector *)j;
+        seed  = (State *)cycle->get(0);
+        path  = mc_gen_invalids_path(seed);
+
+        cycle->push((vec_data_t)seed); /* seed to seedのパスを取得するため */
+
+        if (cui_dump) {
+          path->pop(); /* cycle Vectorとpath
+                            Vectorでseedが重複して積まれているため */
+          mc_print_vec_states(ss, path, nullptr);
+          mc_print_vec_states(ss, cycle, seed);
+          fprintf(f, "\n");
+        } else {
+          LMN_ASSERT(invalids_graph);
+          mc_store_invalids_graph(ss->automata(), invalids_graph, path);
+          mc_store_invalids_graph(ss->automata(), invalids_graph, cycle);
+        }
+
+        delete path;
+      }
     }
+
+    if (!cui_dump) {
+      StateSpaceRef represent = worker_states(wp->get_worker(LMN_PRIMARY_ID));
+      for (auto &[k, v] : *invalids_graph) {
+        StateSpaceRef ss;
+        State        *s;
+        Vector       *succs;
+        unsigned int  i;
+
+        ss    = represent;
+        s     = k;
+        succs = v;
+
+        /* TODO: Rehashされていた場合には状態データが出力できない
+         *       オリジナルテーブル側のdummy状態に対応するmemid状態を探索して引っ張ってくる必要がある
+         */
+
+        auto *out = ss->output();
+        fprintf(out, "%lu::", state_format_id(s, ss->is_formatted()));
+        for (i = 0; i < succs->get_num(); i++) {
+          auto *succ = (State *)succs->get(i);
+          if (succ) {
+            fprintf(out, "%s%lu", (i > 0) ? ", " : "", state_format_id(succ, ss->is_formatted()));
+          }
+        }
+        fprintf(out, "\n");
+
+        delete succs;
+      }
+      delete invalids_graph;
+    }
+
+    break;
+  }
+
+  case Dir_DOT: /* TODO:
+                   反例パスをサブグラフとして指定させたら分かりやすくなりそう
+                 */
+      ;
+  default:
+    lmn_fatal("unexpected.");
+    break;
   }
 }
 

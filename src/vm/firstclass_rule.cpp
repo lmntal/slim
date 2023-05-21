@@ -208,8 +208,7 @@ std::string string_of_template_membrane(Vector *link_connections, LmnMembraneRef
                         result += istr;
                       } else if (LMN_ATTR_IS_DATA(attr) && LMN_INT_ATTR == attr) {
                         LmnAtomRef data = satom->get_link(i);
-                        char      *s    = int_to_str((long)data);
-                        result          += s;
+                        result          += std::to_string((long)data);
                       } else if (LMN_ATTR_IS_DATA(attr) && LMN_DBL_ATTR == attr) {
                         LmnAtomRef data = satom->get_link(i);
                         char       buf[64];

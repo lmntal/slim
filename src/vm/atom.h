@@ -36,6 +36,7 @@
  * $Id: atom.h,v 1.8 2008/09/19 05:18:17 taisuke Exp $
  */
 
+#pragma once
 #ifndef LMN_ATOM_H
 #define LMN_ATOM_H
 

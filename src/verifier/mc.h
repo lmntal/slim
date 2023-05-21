@@ -82,7 +82,7 @@ void        mc_explain_error(int error_id);
 char const *mc_error_msg(int error_id);
 
 void          mc_found_invalid_state(LmnWorkerGroup *wp, State *seed);
-void          mc_found_invalid_path(LmnWorkerGroup *wp, Vector *path);
+void          mc_found_invalid_path(LmnWorkerGroup *wp, std::vector<State *> *path);
 unsigned long mc_invalids_get_num(LmnWorkerGroup *wp);
 void          mc_dump_all_errors(LmnWorkerGroup *wp, FILE *f);
 

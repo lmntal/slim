@@ -38,12 +38,16 @@
  */
 #include "runtime_status.h"
 
+#include "ankerl/unordered_dense.hpp"
+#include "element/st.h"
 #include "fmt/color.h"
 
 #include "state.h"
 #include "state.hpp"
 #include "statespace.h"
 #include "vm/vm.h"
+#include <algorithm>
+#include <new>
 
 struct RuleProfiler {
   LmnRulesetId  ref_rs_id;
@@ -95,20 +99,6 @@ void rule_profiler_free(RuleProfiler *p) {
   LMN_FREE(p);
 }
 
-static int rule_profiler_free_f(st_data_t _key, st_data_t _v, st_data_t _arg) {
-  auto *p = (RuleProfiler *)_v;
-  rule_profiler_free(p);
-  return ST_CONTINUE;
-}
-
-static int comp_prule_id_greater_f(void const *a_, void const *b_) {
-  RuleProfiler *p1, *p2;
-  p1 = *(RuleProfiler **)a_;
-  p2 = *(RuleProfiler **)b_;
-
-  return p1->ref_rs_id - p2->ref_rs_id;
-}
-
 /** ----------------------------
  *  MC Profiler
  */
@@ -124,12 +114,12 @@ static void mc_profiler2_init(MCProfiler2 *p) {
   p->state_space      = 0;
   p->binstr_space     = 0;
   p->membrane_space   = 0;
-  p->hashes           = st_init_numtable();
+  p->hashes           = new ankerl::unordered_dense::set<unsigned long>();
 }
 
 static void mc_profiler2_destroy(MCProfiler2 *p) {
   if (p->hashes) {
-    st_free_table(p->hashes);
+    p->hashes->~table();
   }
 }
 
@@ -272,7 +262,7 @@ void lmn_profiler_init(unsigned int threads_num) {
       }
     }
   } else if (lmn_env.profile_level >= 2) {
-    lmn_prof.prules = st_init_ptrtable();
+    lmn_prof.prules = new ankerl::unordered_dense::map<LmnRuleRef, RuleProfiler *>();
   }
 }
 
@@ -294,8 +284,10 @@ void lmn_profiler_finalize() {
   }
 
   if (lmn_prof.prules) {
-    st_foreach(lmn_prof.prules, (st_iter_func)rule_profiler_free_f, (st_data_t)0);
-    st_free_table(lmn_prof.prules);
+    for (auto &p : *lmn_prof.prules) {
+      rule_profiler_free(p.second);
+    }
+    lmn_prof.prules->~table();
   }
 }
 
@@ -373,12 +365,12 @@ void profile_count_add(int type, unsigned long num) { lmn_prof.lv3[env_my_thread
 
 void profile_rule_obj_set(LmnRuleSetRef src, LmnRuleRef r) {
   st_data_t t = 0;
-  if (st_lookup(lmn_prof.prules, (st_data_t)r, &t)) {
-    lmn_prof.cur = (RuleProfiler *)t;
+  if (auto it = lmn_prof.prules->find(r); it != lmn_prof.prules->end()) {
+    lmn_prof.cur = it->second;
   } else {
-    RuleProfiler *p = rule_profiler_make(src->id, r);
-    lmn_prof.cur    = p;
-    st_add_direct(lmn_prof.prules, (st_data_t)r, (st_data_t)p);
+    RuleProfiler *p       = rule_profiler_make(src->id, r);
+    lmn_prof.cur          = p;
+    (*lmn_prof.prules)[r] = p;
   }
 }
 
@@ -486,9 +478,8 @@ static void profile_state_f(State *s, LmnWord arg) {
   }
 
   /* ハッシュ値の種類数 */
-  if (!st_contains(p->hashes, (st_data_t)state_hash(s))) {
-    st_insert(p->hashes, (st_data_t)state_hash(s), 0);
-
+  if (!p->hashes->contains(state_hash(s))) {
+    p->hashes->insert(state_hash(s));
     if (s->is_encoded()) {
       p->midhash_num++;
       if (s->is_dummy()) {
@@ -502,7 +493,7 @@ static void profile_state_f(State *s, LmnWord arg) {
   if (!s->next) {
     /* 同じハッシュ値は同じリストにのみ存在するので,
      * リストが切り替わったらクリア */
-    st_clear(p->hashes);
+    p->hashes->clear();
   }
 }
 
@@ -593,10 +584,9 @@ void dump_profile_data(FILE *f) {
   double        tmp_total_wall_time, tmp_total_wall_time_main;
   double        tmp_total_mem;
   unsigned long total_hash_num;
-  unsigned int  i;
 
   tmp_total_cpu_time_main = 0.0;
-  for (i = 0; i < lmn_prof.thread_num; i++) {
+  for (auto i = 0; i < lmn_prof.thread_num; i++) {
     tmp_total_cpu_time_main +=
         lmn_prof.end_cpu_time_main[i] - lmn_prof.start_cpu_time_main[i] + lmn_prof.thread_cpu_time_main[i];
   }
@@ -660,7 +650,7 @@ void dump_profile_data(FILE *f) {
       // fprintf(f, "%-18s%10s  : %15.2lf\n", " ", "Exec Avg.",
       // tmp_total_cpu_time_main);
       fprintf(f, "%-18s%10s  : %15s\n", " ", "---------", "--------------------------");
-      for (i = 0; i < lmn_prof.thread_num; i++) {
+      for (auto i = 0; i < lmn_prof.thread_num; i++) {
         fprintf(f, "%-12s%13s%3u  : %15.2lf\n", " ", "Thread", i, lmn_prof.thread_cpu_time_main[i]);
       }
 #else
@@ -675,7 +665,7 @@ void dump_profile_data(FILE *f) {
 #ifdef HAVE_LIBRT
     fprintf(f, "%-18s%10s  : %15.2lf\n", "CPU Usage (sec)", "Exec Avg.", tmp_total_cpu_time_main);
     fprintf(f, "%-18s%10s  : %15s\n", " ", "---------", "-------------------");
-    for (i = 0; i < lmn_prof.thread_num; i++) {
+    for (auto i = 0; i < lmn_prof.thread_num; i++) {
       fprintf(f, "%-12s%13s%3u  : %15.2lf\n", " ", "Thread", i,
               lmn_prof.end_cpu_time_main[i] - lmn_prof.start_cpu_time_main[i]);
     }
@@ -687,22 +677,22 @@ void dump_profile_data(FILE *f) {
   if (!lmn_env.nd) {
     fprintf(f, "============================================================\n");
     if (lmn_env.profile_level >= 2) {
-      RuleProfiler *r_total, *r_others;
-      struct Vector v;
-      unsigned int  i;
+      RuleProfiler               *r_total, *r_others;
+      std::vector<RuleProfiler *> v{};
 
       r_total  = rule_profiler_make(ANONYMOUS, nullptr);
       r_others = rule_profiler_make(ANONYMOUS, nullptr);
 
-      v.init(st_num(lmn_prof.prules));
-      st_get_entries_value(lmn_prof.prules, &v);
-      v.sort(comp_prule_id_greater_f);
+      v.reserve(lmn_prof.prules->size());
+      std::transform(lmn_prof.prules->begin(), lmn_prof.prules->end(), std::back_inserter(v),
+                     [](auto &p) { return p.second; });
+      std::sort(v.begin(), v.end(), [](auto &a, auto &b) { return a->ref_rs_id < b->ref_rs_id; });
 
       fprintf(f, "\n== On-The-Fly Analyzer Report ==============================\n");
       fprintf(f, "%4s %8s : %9s %9s %9s %12s", "[id]", "[name]", "[# Tr.]", "[# Ap.]", "[# Ba.]", "[CPU U.(usec)]\n");
 
-      for (i = 0; i < v.get_num(); i++) {
-        auto *rp = (RuleProfiler *)v.get(i);
+      for (auto &i : v) {
+        auto *rp = (RuleProfiler *)i;
         if (rp->trial.called_num > 0) {
           if (rp->src->name == ANONYMOUS) {
             /* 一度もマッチングに成功しなかったルールはまとめる */
@@ -725,12 +715,13 @@ void dump_profile_data(FILE *f) {
       fprintf(f, "------------------------------------------------------------\n");
       fprintf(f, "%4s %8s : %9lu %9lu %9lu %13.1lf\n", " - ", "Total", r_total->trial.called_num, r_total->apply,
               r_total->backtrack, r_total->trial.total_time / 1e-6);
-
-      v.destroy();
       rule_profiler_free(r_others);
       fprintf(f, "============================================================\n");
     }
-  } else if (lmn_env.profile_level < 2) {
+    return;
+  }
+  
+  if (lmn_env.profile_level < 2) {
     fprintf(f, "------------------------------------------------------------\n");
     fprintf(f, "%-20s%8s  : %15lu\n", "# of States", "Stored", lmn_prof.state_num_stored);
     fprintf(f, "%-18s%10s  : %15lu\n", " ", "Terminates", lmn_prof.state_num_end);
@@ -738,107 +729,106 @@ void dump_profile_data(FILE *f) {
       fprintf(f, "%-1s%27s  : %15s\n", " ", "Accepting Cycle / Error", lmn_prof.found_err ? "FOUND" : "NOT FOUND");
     }
     fprintf(f, "============================================================\n");
-  } else {
-    fprintf(f, "------------------------------------------------------------\n");
-    fprintf(f, "%-20s%8s  : %15lu\n", "# of States", "Stored", lmn_prof.state_num_stored);
-    fprintf(f, "%-18s%10s  : %15lu\n", " ", "Successors", lmn_prof.lv2->transition_num);
-    fprintf(f, "%-18s%10s  : %15lu\n", " ", "Terminates", lmn_prof.state_num_end);
-    if (lmn_prof.has_property) {
-      fprintf(f, "%-10s%18s  : %15lu\n", " ", "Accepted", lmn_prof.lv2->accept_num);
-      fprintf(f, "%-10s%18s  : %15lu\n", " ", "Invalid Ends", lmn_prof.lv2->invalid_end_num);
-      fprintf(f, "%-10s%18s  : %15s\n", " ", "Accepting Cycle", lmn_prof.found_err ? "FOUND" : "NOT FOUND");
-    }
-    fprintf(f, "------------------------------------------------------------\n");
-    fprintf(f, "%-20s%8s  : %15lu\n", "# of Hash Values", "Total", total_hash_num);
-    fprintf(f, "%-6s%22s  : %15lu\n", " ", "Default -  M_Hash", lmn_prof.lv2->mhash_num);
-    fprintf(f, "%-6s%22s  : %15lu\n", " ", "ReHashed -  M_Hash", lmn_prof.lv2->rehashed_num);
-    fprintf(f, "%-6s%22s  : %15lu\n", " ", "Optimized - BS_Hash", lmn_prof.lv2->midhash_num);
-    fprintf(f, "------------------------------------------------------------\n");
-    fprintf(f, "%-16s%12s    %12s %12s\n", "Memory Usage ", "", "[Amount(MB)]", "[Per State(B)]");
-    fprintf(f, "%-10s%18s  : %12.2lf %12.2lf\n", " ", "Total", tmp_total_mem / 1024 / 1024,
-            tmp_total_mem / lmn_prof.state_num_stored);
-    fprintf(f, "%-10s%18s  : %12.2lf %12.2lf\n", " ", "State Descriptors",
-            (double)lmn_prof.lv2->state_space / 1024 / 1024,
-            (double)lmn_prof.lv2->state_space / lmn_prof.state_num_stored);
-    if (lmn_env.enable_compress_mem) {
-      fprintf(f, "%-10s%18s  : %12.2lf %12.2lf\n", " ", "Binary Strings",
-              (double)lmn_prof.lv2->binstr_space / 1024 / 1024,
-              (double)lmn_prof.lv2->binstr_space / lmn_prof.state_num_stored);
-    } else {
-      fprintf(f, "%-10s%18s  : %12.2lf %12.2lf\n", " ", "State Membranes",
-              (double)lmn_prof.lv2->membrane_space / 1024 / 1024,
-              (double)lmn_prof.lv2->membrane_space / lmn_prof.state_num_stored);
-    }
-    fprintf(f, "%-10s%18s  : %12.2lf %12.2lf\n", " ", "Transitions",
-            (double)lmn_prof.lv2->transition_space / 1024 / 1024,
-            (double)lmn_prof.lv2->transition_space / lmn_prof.state_num_stored);
-    fprintf(f, "%-10s%18s  : %12.2lf %12.2lf\n", " ", "StateSpace",
-            (double)lmn_prof.lv2->statespace_space / 1024 / 1024,
-            (double)lmn_prof.lv2->statespace_space / lmn_prof.state_num_stored);
-    fprintf(f, "============================================================\n");
-
-    if (lmn_env.profile_level < 3)
-      return;
-
-    MCProfiler3 total;
-    double      total_time;
-
-    for (i = 0; i < lmn_prof.thread_num; i++) { /* 計測したactive時間をidle時間へ変換 */
-      lmn_prof.lv3[i].times[PROFILE_TIME__ACTIVE_FOR_IDLE_PROF].total_time =
-          lmn_prof.thread_num == 1 ? 0
-                                   : lmn_prof.end_cpu_time_main[i] - lmn_prof.start_cpu_time_main[i] -
-                                         lmn_prof.lv3[i].times[PROFILE_TIME__ACTIVE_FOR_IDLE_PROF].total_time;
-      /* startからfinishまで回したCPU時間から指定したactiveブロックに費やしたCPU時間を引けばidle時間になる.
-       * (一見冗長に見えるが, spin-waitが費やしたCPU時間を除くことができる.)
-       */
-    }
-
-    mc_profiler3_init(&total);
-    mc_profiler3_makeup_report(&total);
-    total_time = 0.0;
-
-    total.times[PROFILE_TIME__TRANS_RULE].total_time -= total.times[PROFILE_TIME__STATE_COPY_IN_COMMIT].total_time;
-
-    fprintf(f, "\n== On-The-Fly Analyzer Report ==============================\n");
-    fprintf(f, "-- Time Performance ----------------------------------------\n");
-    fprintf(f, "%-24s %10s%10s%8s\n", "", "[calls]", "[total]", "[%]");
-    for (i = 0; i < ARY_SIZEOF(total.times); i++) {
-      total_time += total.times[i].total_time;
-      fprintf(f, "%-24s:%10lu%10.2lf%8.1lf\n", profile_time_id_to_name(i), total.times[i].called_num,
-              total.times[i].total_time, 100.0 * total.times[i].total_time / tmp_total_cpu_time_main);
-    }
-    fprintf(f, "%-24s:%10s%10.2lf%8.1lf\n", "other", "", (tmp_total_cpu_time_main - total_time),
-            (double)(tmp_total_cpu_time_main - total_time) / tmp_total_cpu_time_main * 100.0);
-    fprintf(f, "------------------------------------------------------------\n");
-    fprintf(f, "%-24s:%10s%10.2lf%8.1lf\n", lmn_prof.thread_num > 2 ? "CPU Usage AVG. (sec)" : "CPU Usage (sec)", "",
-            tmp_total_cpu_time_main, 100.0);
-    fprintf(f, "------------------------------------------------------------\n");
-    fprintf(f, "\n");
-    fprintf(f, "-- Memory Performance --------------------------------------\n");
-    fprintf(f, "%-24s  %10s %10s %10s\n", " ", "[Fin.(MB)]", "[Peak(MB)]", "[Peak Num]");
-    for (i = 0; i < ARY_SIZEOF(total.spaces); i++) {
-      if (lmn_prof.thread_num >= 2) {
-        fprintf(f, "%-24s: %10.2lf\n", profile_space_id_to_name(i), (double)total.spaces[i].space.cur / 1024 / 1024);
-      } else {
-        fprintf(f, "%-24s: %10.2lf %10.2lf %10lu\n", profile_space_id_to_name(i),
-                (double)total.spaces[i].space.cur / 1024 / 1024, (double)total.spaces[i].space.peak / 1024 / 1024,
-                total.spaces[i].num.peak);
-      }
-    }
-    fprintf(f, "------------------------------------------------------------\n");
-    fprintf(f, "\n");
-    if (lmn_env.tree_compress) {
-      fprintf(f, "-- Tree Compressin Info ------------------------------------\n");
-      lmn_bscomp_tree_profile(f);
-      fprintf(f, "------------------------------------------------------------\n");
-      fprintf(f, "\n");
-    }
-    fprintf(f, "-- State Management System (Open Hashing) ------------------\n");
-    for (i = 0; i < ARY_SIZEOF(total.counters); i++) {
-      fmt::print(f, "{:24}: {:10}\n", profile_counter_id_to_name(i), total.counters[i]);
-    }
-    fprintf(f, "============================================================\n");
+    return;
   }
+
+  fprintf(f, "------------------------------------------------------------\n");
+  fprintf(f, "%-20s%8s  : %15lu\n", "# of States", "Stored", lmn_prof.state_num_stored);
+  fprintf(f, "%-18s%10s  : %15lu\n", " ", "Successors", lmn_prof.lv2->transition_num);
+  fprintf(f, "%-18s%10s  : %15lu\n", " ", "Terminates", lmn_prof.state_num_end);
+  if (lmn_prof.has_property) {
+    fprintf(f, "%-10s%18s  : %15lu\n", " ", "Accepted", lmn_prof.lv2->accept_num);
+    fprintf(f, "%-10s%18s  : %15lu\n", " ", "Invalid Ends", lmn_prof.lv2->invalid_end_num);
+    fprintf(f, "%-10s%18s  : %15s\n", " ", "Accepting Cycle", lmn_prof.found_err ? "FOUND" : "NOT FOUND");
+  }
+  fprintf(f, "------------------------------------------------------------\n");
+  fprintf(f, "%-20s%8s  : %15lu\n", "# of Hash Values", "Total", total_hash_num);
+  fprintf(f, "%-6s%22s  : %15lu\n", " ", "Default -  M_Hash", lmn_prof.lv2->mhash_num);
+  fprintf(f, "%-6s%22s  : %15lu\n", " ", "ReHashed -  M_Hash", lmn_prof.lv2->rehashed_num);
+  fprintf(f, "%-6s%22s  : %15lu\n", " ", "Optimized - BS_Hash", lmn_prof.lv2->midhash_num);
+  fprintf(f, "------------------------------------------------------------\n");
+  fprintf(f, "%-16s%12s    %12s %12s\n", "Memory Usage ", "", "[Amount(MB)]", "[Per State(B)]");
+  fprintf(f, "%-10s%18s  : %12.2lf %12.2lf\n", " ", "Total", tmp_total_mem / 1024 / 1024,
+          tmp_total_mem / lmn_prof.state_num_stored);
+  fprintf(f, "%-10s%18s  : %12.2lf %12.2lf\n", " ", "State Descriptors",
+          (double)lmn_prof.lv2->state_space / 1024 / 1024,
+          (double)lmn_prof.lv2->state_space / lmn_prof.state_num_stored);
+  if (lmn_env.enable_compress_mem) {
+    fprintf(f, "%-10s%18s  : %12.2lf %12.2lf\n", " ", "Binary Strings",
+            (double)lmn_prof.lv2->binstr_space / 1024 / 1024,
+            (double)lmn_prof.lv2->binstr_space / lmn_prof.state_num_stored);
+  } else {
+    fprintf(f, "%-10s%18s  : %12.2lf %12.2lf\n", " ", "State Membranes",
+            (double)lmn_prof.lv2->membrane_space / 1024 / 1024,
+            (double)lmn_prof.lv2->membrane_space / lmn_prof.state_num_stored);
+  }
+  fprintf(f, "%-10s%18s  : %12.2lf %12.2lf\n", " ", "Transitions", (double)lmn_prof.lv2->transition_space / 1024 / 1024,
+          (double)lmn_prof.lv2->transition_space / lmn_prof.state_num_stored);
+  fprintf(f, "%-10s%18s  : %12.2lf %12.2lf\n", " ", "StateSpace", (double)lmn_prof.lv2->statespace_space / 1024 / 1024,
+          (double)lmn_prof.lv2->statespace_space / lmn_prof.state_num_stored);
+  fprintf(f, "============================================================\n");
+
+  if (lmn_env.profile_level < 3)
+    return;
+
+  MCProfiler3 total;
+  double      total_time;
+
+  for (auto i = 0; i < lmn_prof.thread_num; i++) { /* 計測したactive時間をidle時間へ変換 */
+    lmn_prof.lv3[i].times[PROFILE_TIME__ACTIVE_FOR_IDLE_PROF].total_time =
+        lmn_prof.thread_num == 1 ? 0
+                                 : lmn_prof.end_cpu_time_main[i] - lmn_prof.start_cpu_time_main[i] -
+                                       lmn_prof.lv3[i].times[PROFILE_TIME__ACTIVE_FOR_IDLE_PROF].total_time;
+    /* startからfinishまで回したCPU時間から指定したactiveブロックに費やしたCPU時間を引けばidle時間になる.
+     * (一見冗長に見えるが, spin-waitが費やしたCPU時間を除くことができる.)
+     */
+  }
+
+  mc_profiler3_init(&total);
+  mc_profiler3_makeup_report(&total);
+  total_time = 0.0;
+
+  total.times[PROFILE_TIME__TRANS_RULE].total_time -= total.times[PROFILE_TIME__STATE_COPY_IN_COMMIT].total_time;
+
+  fprintf(f, "\n== On-The-Fly Analyzer Report ==============================\n");
+  fprintf(f, "-- Time Performance ----------------------------------------\n");
+  fprintf(f, "%-24s %10s%10s%8s\n", "", "[calls]", "[total]", "[%]");
+  for (auto i = 0; i < ARY_SIZEOF(total.times); i++) {
+    total_time += total.times[i].total_time;
+    fprintf(f, "%-24s:%10lu%10.2lf%8.1lf\n", profile_time_id_to_name(i), total.times[i].called_num,
+            total.times[i].total_time, 100.0 * total.times[i].total_time / tmp_total_cpu_time_main);
+  }
+  fprintf(f, "%-24s:%10s%10.2lf%8.1lf\n", "other", "", (tmp_total_cpu_time_main - total_time),
+          (double)(tmp_total_cpu_time_main - total_time) / tmp_total_cpu_time_main * 100.0);
+  fprintf(f, "------------------------------------------------------------\n");
+  fprintf(f, "%-24s:%10s%10.2lf%8.1lf\n", lmn_prof.thread_num > 2 ? "CPU Usage AVG. (sec)" : "CPU Usage (sec)", "",
+          tmp_total_cpu_time_main, 100.0);
+  fprintf(f, "------------------------------------------------------------\n");
+  fprintf(f, "\n");
+  fprintf(f, "-- Memory Performance --------------------------------------\n");
+  fprintf(f, "%-24s  %10s %10s %10s\n", " ", "[Fin.(MB)]", "[Peak(MB)]", "[Peak Num]");
+  for (auto i = 0; i < ARY_SIZEOF(total.spaces); i++) {
+    if (lmn_prof.thread_num >= 2) {
+      fprintf(f, "%-24s: %10.2lf\n", profile_space_id_to_name(i), (double)total.spaces[i].space.cur / 1024 / 1024);
+    } else {
+      fprintf(f, "%-24s: %10.2lf %10.2lf %10lu\n", profile_space_id_to_name(i),
+              (double)total.spaces[i].space.cur / 1024 / 1024, (double)total.spaces[i].space.peak / 1024 / 1024,
+              total.spaces[i].num.peak);
+    }
+  }
+  fprintf(f, "------------------------------------------------------------\n");
+  fprintf(f, "\n");
+  if (lmn_env.tree_compress) {
+    fprintf(f, "-- Tree Compressin Info ------------------------------------\n");
+    lmn_bscomp_tree_profile(f);
+    fprintf(f, "------------------------------------------------------------\n");
+    fprintf(f, "\n");
+  }
+  fprintf(f, "-- State Management System (Open Hashing) ------------------\n");
+  for (auto i = 0; i < ARY_SIZEOF(total.counters); i++) {
+    fmt::print(f, "{:24}: {:10}\n", profile_counter_id_to_name(i), total.counters[i]);
+  }
+  fprintf(f, "============================================================\n");
 }
 
 constexpr char const *profile_time_id_to_name(int type) {

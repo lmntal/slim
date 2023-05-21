@@ -36,6 +36,8 @@
  *
  * $Id$
  */
+#include <string>
+
 #include "array.h"
 #include "element/element.h"
 #include "element/lmnstring.cpp"
@@ -373,7 +375,7 @@ void LmnArray::sp_cb_array_dump(void *array, LmnPortRef port) {
   data = LMN_ARRAY_DATA(array).data();
   if (size > 0) {
     if (type == LMN_INT_ATTR) {
-      port_put_raw_s(port, int_to_str((LmnWord)data[0]));
+      port_put_raw_s(port, std::to_string((LmnWord)data[0]));
     } else if (type == LMN_DBL_ATTR) {
       sprintf(buf, "%#g", lmn_get_double((LmnDataAtomRef)data[0]));
       port_put_raw_s(port, buf);
@@ -385,7 +387,7 @@ void LmnArray::sp_cb_array_dump(void *array, LmnPortRef port) {
     for (i = 1; i < size; i++) {
       port_put_raw_s(port, ",");
       if (type == LMN_INT_ATTR) {
-        port_put_raw_s(port, int_to_str((LmnWord)data[i]));
+        port_put_raw_s(port, std::to_string((LmnWord)data[i]));
       } else if (type == LMN_DBL_ATTR) {
         sprintf(buf, "%#g", lmn_get_double((LmnDataAtomRef)data[i]));
         port_put_raw_s(port, buf);
