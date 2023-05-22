@@ -117,11 +117,7 @@ static void mc_profiler2_init(MCProfiler2 *p) {
   p->hashes           = new ankerl::unordered_dense::set<unsigned long>();
 }
 
-static void mc_profiler2_destroy(MCProfiler2 *p) {
-  if (p->hashes) {
-    p->hashes->~table();
-  }
-}
+static void mc_profiler2_destroy(MCProfiler2 *p) { delete p->hashes; }
 
 static void mc_profiler2_makeup_report(MCProfiler2 *total) {
   unsigned int i;
@@ -287,7 +283,7 @@ void lmn_profiler_finalize() {
     for (auto &p : *lmn_prof.prules) {
       rule_profiler_free(p.second);
     }
-    lmn_prof.prules->~table();
+    delete lmn_prof.prules;
   }
 }
 
@@ -720,7 +716,7 @@ void dump_profile_data(FILE *f) {
     }
     return;
   }
-  
+
   if (lmn_env.profile_level < 2) {
     fprintf(f, "------------------------------------------------------------\n");
     fprintf(f, "%-20s%8s  : %15lu\n", "# of States", "Stored", lmn_prof.state_num_stored);

@@ -45,20 +45,25 @@
  * @{
  */
 
+#include "ankerl/unordered_dense.hpp"
 #include "element/element.h"
+#include "element/map_utils.hpp"
 #include "lmntal.h"
 #include "statespace.h"
+#include <vector>
+
+using STransTable = ankerl::unordered_dense::map<unsigned long, std::vector<unsigned long> *>;
 
 class McPorData {
-  State     *root;
-  st_table_t strans_independency; /* 独立性情報テーブル:
-                                   *   構造体StateTransitionのidをキーとし
-                                   *   bins[id]は高々1個のエントリー(Vector)を持つ．
-                                   *   Vectorには,
-                                   * キーであるidの遷移と独立関係にある遷移idが積まれる.
-                                   */
-  st_table_t states;              /* ample(s)計算中のみ使用．展開されたすべてのStateを管理． */
-  Queue     *queue;               /* C1のチェックにあたってstate graphを展開する際に使用 */
+  State       *root;
+  STransTable *strans_independency; /* 独立性情報テーブル:
+                                     *   構造体StateTransitionのidをキーとし
+                                     *   bins[id]は高々1個のエントリー(Vector)を持つ．
+                                     *   Vectorには,
+                                     * キーであるidの遷移と独立関係にある遷移idが積まれる.
+                                     */
+  StateSet *states;                 /* ample(s)計算中のみ使用．展開されたすべてのStateを管理． */
+  Queue    *queue;                  /* C1のチェックにあたってstate graphを展開する際に使用 */
   static Vector
       *ample_candidate; /* ample(s)の候補を管理するVector．本Vector内のすべての遷移が，C0〜C3のチェック対象となる
                          */
@@ -110,12 +115,12 @@ public:
   void             init_por_vars();                                                                       // public
   void             free_por_vars();                                                                       // public
   void       por_calc_ampleset(StateSpaceRef ss, State *s, MCReactContext *rc, Vector *new_s, BOOL flag); // public
-  static int independency_vec_free(st_data_t _k, st_data_t vec, st_data_t _a);                            // public
-  static int destroy_tmp_state_graph(State *s, LmnWord _a);                                               // public
+  static int destroy_tmp_state_graph(State *s, BOOL org_f);                                               // public
   void       por_gen_successors(State *s, MCReactContext *rc, AutomataRef a,
                                 Vector *psyms);                                 // called by only independency check
   void       por_store_successors(State *s, MCReactContext *rc, BOOL is_store); // called by only independency check
-  static int build_ample_satisfying_lemma(st_data_t key, st_data_t val, st_data_t current_state); // public
+  static int build_ample_satisfying_lemma(unsigned long key, std::vector<unsigned long> *val,
+                                          State *current_state); // public
 };
 // extern McPorData mc_por;
 

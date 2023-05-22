@@ -45,9 +45,10 @@
  * @{
  */
 
-#include "lmntal.h"
+#include "ankerl/unordered_dense.hpp"
 #include "delta_membrane.h"
 #include "element/element.h"
+#include "lmntal.h"
 #include "statespace.h"
 #ifdef DEBUG
 #include "vm/dumper.h"
@@ -61,6 +62,7 @@
 
 using ContextC2Ref = struct ContextC2 *;
 using ContextC1Ref = struct ContextC1 *;
+using DeltaTable   = ankerl::unordered_dense::map<MemDeltaRoot *, ContextC1Ref>;
 
 struct McDporData {
   unsigned int cur_depth;
@@ -72,7 +74,7 @@ struct McDporData {
   ProcessTableRef wt_flags;  /* マッチング中, プロセスIDに対するフラグを設定していく作業場 */
 
   Vector      *ample_cand;  /* ample setに含める予定のContextC1へのポインタを積む */
-  st_table_t   delta_tbl;   /* MemDeltaRootをkey, ContextC1をvalue */
+  DeltaTable  *delta_tbl;   /* MemDeltaRootをkey, ContextC1をvalue */
   Vector      *free_deltas; /* ゴミ置き場 */
   unsigned int nxt_tr_id;   /* 遷移に割り当てる遷移番号 */
 };

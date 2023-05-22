@@ -47,7 +47,7 @@
  * @{
  */
 
-#include "../lmntal.h"
+#include "lmntal.h"
 #include "automata.h"
 #include "element/element.h"
 
