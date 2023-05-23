@@ -50,7 +50,7 @@
  * @{
  */
 
-#include "../lmntal.h"
+#include "lmntal.h"
 #include "lmntal_thread.h"
 
 struct Node {

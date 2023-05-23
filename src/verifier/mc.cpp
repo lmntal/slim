@@ -553,7 +553,7 @@ void mc_gen_successors_with_property(State *s, LmnMembraneRef mem, AutomataState
       if (mc_has_trans(f)) {
         data = transition_make(new_s, transition_rule(src_succ_t, 0));
 #ifdef KWBT_OPT
-        transition_set_cost((Transition)data, transition_cost(src_succ_t));
+        transition_set_cost((Transition*)data, transition_cost(src_succ_t));
 #endif
         s->set_trans_obj();
       } else {

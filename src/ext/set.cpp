@@ -79,13 +79,13 @@ unsigned long LmnSet::tuple_hash(LmnSymbolAtomRef cons) {
 int LmnSet::tuple_cmp(LmnSymbolAtomRef cons0, LmnSymbolAtomRef cons1) {
   int num0 = cons0->get_arity();
   int num1 = cons1->get_arity();
-  int i;
-  int ret = 0;
   if (num0 != num1)
     return 1;
-  for (i = 0; i < num0 - 1; i++)
-    ret = ret || (cons0->get_link(i) != cons1->get_link(i));
-  return ret;
+  for (auto i = 0; i < num0 - 1; i++) {
+    if (cons0->get_link(i) != cons1->get_link(i))
+      return 1;
+  }
+  return 0;
 }
 
 /* mem set */

@@ -42,6 +42,7 @@
 
 #include "element/error.h"
 #include "lmntal.h"
+#include <vector>
 
 /**
  * @ingroup  Element
@@ -141,6 +142,11 @@ public:
   bool operator==(raw_pointer_iterator const &a) const = default;
 };
 } // namespace slim::element
+
+template <typename T>
+bool contains(std::vector<T> const &v, T const &e){
+  return std::find(v.begin(), v.end(), e) != v.end();
+}
 
 /* @} */
 

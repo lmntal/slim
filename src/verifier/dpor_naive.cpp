@@ -43,6 +43,8 @@
 
 #include "delta_membrane.h"
 #include "dpor.h"
+#include "element/concurrent_queue.hpp"
+#include "element/util.h"
 #include "lmntal.h"
 #include "mc.h"
 #include "mc_worker.h"
@@ -96,8 +98,8 @@ void McPorData::set_outside_exist(State *s) { s->flags3 |= POR_OUTSIDE_MASK; }
 void McPorData::unset_outside_exist(State *s) { s->flags3 &= ~POR_OUTSIDE_MASK; }
 bool McPorData::is_outside_exist(State *s) { return s->flags3 & POR_OUTSIDE_MASK; }
 
-McPorData McPorData::mc_por;
-Vector   *McPorData::ample_candidate;
+McPorData    McPorData::mc_por;
+AmpleVector *McPorData::ample_candidate;
 McPorData::McPorData() = default; // don't make 2 instance
 
 /**
@@ -107,11 +109,12 @@ void McPorData::init_por_vars() { // instance tsukurareta toki shokika niha joke
   root                = nullptr;
   strans_independency = new STransTable();
   states              = new StateSet();
-  queue               = new Queue();
-  ample_candidate     = new Vector(POR_VEC_SIZE);
+  queue               = new TransQueue();
+  ample_candidate     = new AmpleVector{};
   next_strans_id      = POR_ID_INITIALIZER; /* 0は使用しない */
   rc                  = nullptr;
   flags               = 0x00U;
+  ample_candidate->reserve(POR_VEC_SIZE);
 }
 
 void McPorData::free_por_vars() {
@@ -219,12 +222,12 @@ BOOL McPorData::ample(StateSpaceRef ss, State *s, MCReactContext *rc, Vector *ne
 
   /* ここでample_candidateが空の場合は，sで可能なすべての遷移が互いに独立であることになるので，
    * その中でC2，C3を共に満足する1本をample_candidateの要素とする */
-  if (ample_candidate->is_empty()) {
+  if (ample_candidate->empty()) {
     unsigned int i;
     for (i = 0; i < s->successor_num; i++) {
       TransitionRef t = transition(s, i);
       set_ample(transition_next_state(t));
-      ample_candidate->push((vec_data_t)transition_id(t));
+      ample_candidate->push_back(transition_id(t));
       //      if (check_C2(s) && check_C3(ss, s, rc, new_s, org_f)) {
       if (check_C1(s, ss->automata(), ss->prop_symbols()) && check_C2(s)) {
         break;
@@ -236,7 +239,7 @@ BOOL McPorData::ample(StateSpaceRef ss, State *s, MCReactContext *rc, Vector *ne
 
     /* sにおいてC1を満たす遷移は存在したものの
      * さらにC2もC3も満たすものが1本も存在しない場合はen(s)を返して終了する */
-    if (ample_candidate->is_empty()) {
+    if (ample_candidate->empty()) {
       return FALSE;
     }
   } else {
@@ -252,7 +255,7 @@ BOOL McPorData::ample(StateSpaceRef ss, State *s, MCReactContext *rc, Vector *ne
      */
     //    if (mc_por.ample_candidate->get_num() == state_succ_num(s) ||
     //        !check_C2(s) || !check_C3(ss, s, rc, new_s, org_f)) {
-    if (ample_candidate->get_num() == s->successor_num || !check_C1(s, ss->automata(), ss->prop_symbols()) ||
+    if (ample_candidate->size() == s->successor_num || !check_C1(s, ss->automata(), ss->prop_symbols()) ||
         !check_C2(s)) {
       return FALSE;
     }
@@ -644,15 +647,15 @@ BOOL McPorData::check_C1(State *s, AutomataRef a, Vector *psyms) {
   unsigned int i;
 
   for (i = 0; i < s->successor_num; i++) {
-    TransitionRef t = transition(s, i);
-    if (!ample_candidate->contains((vec_data_t)transition_id(t))) {
-      /* sで可能かつample(s)の候補に含まれない遷移をスタック上に乗せる */
-      mc_por.queue->enqueue((vec_data_t)t);
+    auto *t = transition(s, i);
+    if (!contains(*ample_candidate, transition_id(t))) {
+      /* sで可能かつample(s)の候補に含まれる遷移をスタック上に乗せる */
+      mc_por.queue->enqueue(t);
     }
   }
 
-  while (!queue->is_empty()) {
-    auto *succ_t = (TransitionRef)queue->dequeue();
+  while (!queue->empty()) {
+    TransitionRef succ_t =queue->dequeue();
     if (!is_independent_of_ample(succ_t)) {
       /* Fに反する経路Pが検出されたので偽を返して終了する */
       POR_DEBUG({
@@ -674,9 +677,9 @@ BOOL McPorData::check_C1(State *s, AutomataRef a, Vector *psyms) {
       mc_por.independency_check(succ_s, a, psyms);
       for (i = 0; i < succ_s->successor_num; i++) {
         TransitionRef succ_succ_t = transition(succ_s, i);
-        if (!ample_candidate->contains((vec_data_t)transition_id(succ_succ_t))) {
-          /* ample(s)内に含まれない遷移はさらにチェックする必要がある */
-          queue->enqueue((LmnWord)succ_succ_t);
+        if (!contains(*ample_candidate, transition_id(succ_succ_t))) {
+          // ample(s)内に含まれない遷移はさらにチェックする必要がある
+          mc_por.queue->enqueue(succ_succ_t);
         }
       }
     }
@@ -699,9 +702,9 @@ BOOL McPorData::check_C2(State *s) {
     unsigned int i;
     for (i = 0; i < s->successor_num; i++) {
       TransitionRef t = transition(s, i);
-      if (ample_candidate->contains((vec_data_t)transition_id(t))) {
+      if (std::find(ample_candidate->begin(), ample_candidate->end(), transition_id(t)) != ample_candidate->end()) {
         /* TODO: 設計と実装 */
-        return FALSE;
+        return false;
       }
     }
   }
@@ -719,15 +722,21 @@ inline BOOL McPorData::C3_cycle_proviso_satisfied(State *succ, State *t) {
      *  Hash-Based分割と併用するとサクセッサの情報を取得するための通信で遅くなる.
      */
     return TRUE;
-  } else if (t == root) {
+  }
+
+  if (t == root) {
     /* self-loop detection */
     return FALSE;
-  } else if (t->is_on_stack()) {
+  }
+
+  if (t->is_on_stack()) {
     /* Stack Proviso:
      *  Stack上の状態に戻るということは閉路であるということ
      *  DFS Stackによる空間構築(逐次)が前提 */
     return FALSE;
-  } else if (lmn_env.bfs && t->is_expanded() && lmn_env.core_num == 1) {
+  }
+
+  if (lmn_env.bfs && t->is_expanded() && lmn_env.core_num == 1) {
     /* Open Set Proviso:
      *  閉路形成を行なう遷移は,
      *  展開済み状態へ再訪問する遷移のサブセットである.(逐次限定) */
@@ -756,7 +765,7 @@ BOOL McPorData::check_C3(StateSpaceRef ss, State *s, LmnReactCxtRef rc, Vector *
     succ_t = transition(s, i);
     succ_s = transition_next_state(succ_t);
 
-    if (!ample_candidate->contains((vec_data_t)transition_id(succ_t))) {
+    if (std::find(ample_candidate->begin(), ample_candidate->end(), transition_id(succ_t)) == ample_candidate->end()) {
       continue;
     }
 
@@ -776,10 +785,8 @@ BOOL McPorData::check_C3(StateSpaceRef ss, State *s, LmnReactCxtRef rc, Vector *
  * 遷移stransがample(s)内のすべての遷移と互いに独立であれば真を返す
  */
 BOOL McPorData::is_independent_of_ample(TransitionRef strans) {
-  unsigned int i;
-
-  for (i = 0; i < ample_candidate->get_num(); i++) {
-    auto id = (unsigned long)ample_candidate->get(i);
+  for (unsigned long i : *ample_candidate) {
+    auto id = (unsigned long)i;
     if (auto it = strans_independency->find(id); it != strans_independency->end()) {
       auto trans_id = transition_id(strans);
       if (!std::any_of(it->second->begin(), it->second->end(), [=](unsigned long id) { return id == trans_id; })) {
@@ -926,15 +933,15 @@ int McPorData::build_ample_satisfying_lemma(unsigned long key, std::vector<unsig
 
       if (is_dependent) {
         need_to_push_id_key = TRUE;
-        if (!ample_candidate->contains((vec_data_t)checked_id)) {
-          ample_candidate->push((vec_data_t)checked_id);
+        if (!contains(*ample_candidate, checked_id)) {
+          ample_candidate->push_back(checked_id);
           set_ample(transition_next_state(check));
         }
       }
     }
 
-    if (need_to_push_id_key && !ample_candidate->contains((vec_data_t)id_key)) {
-      ample_candidate->push((vec_data_t)id_key);
+    if (need_to_push_id_key && !contains(*ample_candidate, id_key)) {
+      ample_candidate->push_back(id_key);
       set_ample(transition_next_state(trans_key));
     }
 
@@ -958,7 +965,7 @@ void McPorData::push_ample_to_expanded(StateSpaceRef ss, State *s, LmnReactCxtRe
       if (is_inserted(succ_s) && is_outside_exist(succ_s)) {
         /* C3 check時, 探索空間への追加に成功してしまっていた場合 */
         tmp.push_back(succ_t);
-      } else if (!ample_candidate->contains((vec_data_t)transition_id(succ_t))) {
+      } else if (!contains(*ample_candidate, transition_id(succ_t))) {
         /* amplesetに含まれない遷移は除去 */
         transition_free(succ_t);
       } else {
@@ -1018,10 +1025,9 @@ int McPorData::dump__strans_independency(unsigned long key, std::vector<unsigned
 
 /* FOR DEBUG ONLY */
 void McPorData::dump__ample_candidate() {
-  unsigned int i;
   fprintf(stdout, "ample:");
-  for (i = 0; i < ample_candidate->get_num(); ++i) {
-    fprintf(stdout, " %lu", (unsigned long)ample_candidate->get(i));
+  for (unsigned long i : *ample_candidate) {
+    fprintf(stdout, " %lu", (unsigned long)i);
   }
   fprintf(stdout, "\n");
 }

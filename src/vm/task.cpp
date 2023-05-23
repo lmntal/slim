@@ -1055,7 +1055,6 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule, bool 
 
     READ_VAL(LmnInstrVar, instr, seti);
     READ_VAL(LmnInstrVar, instr, list_num);
-    fmt::print("list_num: {} in INSTR_INSERTCONNECTORSINNULL\n", list_num);
     std::vector<LmnInstrVar> links{};
     links.reserve(list_num + 1);
     for (i = 0; i < list_num; i++) {
@@ -1082,7 +1081,6 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule, bool 
 
     READ_VAL(LmnInstrVar, instr, seti);
     READ_VAL(LmnInstrVar, instr, list_num);
-    fmt::print("list_num: {} in INSTR_INSERTCONNECTORS\n", list_num);
     links.reserve(list_num + 1);
 
     for (i = 0; i < list_num; i++) {
@@ -2563,9 +2561,13 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule, bool 
     switch (op) {
     case INSTR_ISHLGROUND:
     case INSTR_ISHLGROUNDINDIRECT: {
-      std::vector<LmnFunctor>  attr_functors(16);
-      std::vector<LmnWord>     attr_dataAtoms(16);
-      std::vector<LmnLinkAttr> attr_dataAtom_attrs(16);
+      std::vector<LmnFunctor>  attr_functors{};
+      std::vector<LmnWord>     attr_dataAtoms{};
+      std::vector<LmnLinkAttr> attr_dataAtom_attrs{};
+
+      attr_functors.reserve(16);
+      attr_dataAtoms.reserve(16);
+      attr_dataAtom_attrs.reserve(16);
 
       auto args = (op == INSTR_ISHLGROUNDINDIRECT) ? read_unary_atoms_indirect(rc, instr) : read_unary_atoms(rc, instr);
 
@@ -4435,7 +4437,6 @@ static bool dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr inst
 
       READ_VAL(LmnInstrVar, instr, seti);
       READ_VAL(LmnInstrVar, instr, list_num);
-      fmt::print("list_num: {} in INSTR_INSERTCONNECTORSINNULL\n", list_num);
       std::vector<LmnInstrVar> links{};
       links.reserve(list_num + 1);
       for (i = 0; i < list_num; i++) {
@@ -4462,7 +4463,6 @@ static bool dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr inst
 
       READ_VAL(LmnInstrVar, instr, seti);
       READ_VAL(LmnInstrVar, instr, list_num);
-      fmt::print("list_num: {} in INSTR_INSERTCONNECTORS\n", list_num);
       links.reserve(list_num + 1);
 
       for (i = 0; i < list_num; i++) {

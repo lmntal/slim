@@ -45,14 +45,19 @@
  * @{
  */
 
+#include <vector>
+
 #include "ankerl/unordered_dense.hpp"
+
+#include "element/concurrent_queue.hpp"
 #include "element/element.h"
 #include "element/map_utils.hpp"
 #include "lmntal.h"
 #include "statespace.h"
-#include <vector>
 
 using STransTable = ankerl::unordered_dense::map<unsigned long, std::vector<unsigned long> *>;
+using TransQueue  = SPSCQueue<TransitionRef>;
+using AmpleVector = std::vector<unsigned long>;
 
 class McPorData {
   State       *root;
@@ -62,11 +67,11 @@ class McPorData {
                                      *   Vectorには,
                                      * キーであるidの遷移と独立関係にある遷移idが積まれる.
                                      */
-  StateSet *states;                 /* ample(s)計算中のみ使用．展開されたすべてのStateを管理． */
-  Queue    *queue;                  /* C1のチェックにあたってstate graphを展開する際に使用 */
-  static Vector
-      *ample_candidate; /* ample(s)の候補を管理するVector．本Vector内のすべての遷移が，C0〜C3のチェック対象となる
-                         */
+  StateSet   *states;               /* ample(s)計算中のみ使用．展開されたすべてのStateを管理． */
+  TransQueue *queue;                /* C1のチェックにあたってstate graphを展開する際に使用 */
+  static AmpleVector
+      *ample_candidate; // ample(s)の候補を管理するVector．本Vector内のすべての遷移が，C0〜C3のチェック対象となる
+
   std::unique_ptr<MCReactContext> rc;
   unsigned long                   next_strans_id;
   BOOL                            flags;

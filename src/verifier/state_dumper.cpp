@@ -368,7 +368,7 @@ void CUI::dump_state_data(State *s, unsigned long print_id, StateSpace *owner) {
   BOOL has_property = owner && owner->has_property();
   fprintf(_fp, "%lu::", print_id);
 #ifdef KWBT_OPT
-  fprintf(_fp, "%lu::", cost);
+  // fprintf(_fp, "%lu::", cost);
 #endif
   fmt::print(_fp, "{}", has_property ? owner->automata()->state_name(state_property_state(s)) : "");
   state_print_mem(s);
@@ -397,7 +397,7 @@ void Dir_DOT::dump_state_data(State *s, unsigned long print_id, StateSpace *owne
 }
 
 void Dir_DOT::print_state_label(State *s, StateSpace *owner) {
-  auto a = owner->automata();
+  auto *a = owner->automata();
   if (state_is_accept(a, s) || state_is_end(a, s)) {
     fprintf(_fp, "  %lu [peripheries = 2]\n", state_format_id(s, owner->is_formatted()));
   }

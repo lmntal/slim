@@ -37,7 +37,12 @@
  * $Id$
  */
 #include "mc_explorer.h"
+
+#include <vector>
+
 #include "ankerl/unordered_dense.hpp"
+
+#include "element/concurrent_queue.hpp"
 #include "element/element.h"
 #include "lmntal.h"
 #include "mc.h"
@@ -45,7 +50,6 @@
 #include "state.h"
 #include "state.hpp"
 #include "state_table.hpp"
-#include <vector>
 
 #ifdef PROFILE
 #include "runtime_status.h"
@@ -237,11 +241,11 @@ static BOOL ndfs_loop(State *seed, Vector *search, Vector *path) {
  *  ==================================
  */
 struct McSearchOWCTY {
-  Queue        *accepts1;
-  Queue        *accepts2;
-  unsigned long old;
-  unsigned long iteration;
-  StateSetRef   traversed; /* 反例生成用 */
+  CQueue<State *> *accepts1;
+  CQueue<State *> *accepts2;
+  unsigned long    old;
+  unsigned long    iteration;
+  StateSetRef      traversed; /* 反例生成用 */
 };
 
 #define OWCTY_WORKER_OBJ(W) ((McSearchOWCTY *)worker_explorer_obj(W))
@@ -250,7 +254,8 @@ struct McSearchOWCTY {
 #define OWCTY_WORKER_AQ2(W) (OWCTY_WORKER_OBJ(W)->accepts2)
 #define OWCTY_WORKER_HASHSET(W) (OWCTY_WORKER_OBJ(W)->traversed)
 
-static inline void owcty_reachability(LmnWorker *w, Queue *primary, Queue *secondary, BOOL set_flag, BOOL is_up);
+static inline void owcty_reachability(LmnWorker *w, CQueue<State *> *primary, CQueue<State *> *secondary, BOOL set_flag,
+                                      BOOL is_up);
 static inline BOOL owcty_traversed_owner_is_me(State *succ, BOOL set_flag, BOOL is_up);
 static inline void owcty_report_midterm(LmnWorker *w);
 static inline void owcty_termination_detection(LmnWorker *w);
@@ -263,11 +268,11 @@ void owcty_worker_init(LmnWorker *w) {
 
   if (worker_id(w) == LMN_PRIMARY_ID) {
     if (worker_group(w)->workers_get_entried_num() > 1) {
-      mc->accepts1 = new Queue(LMN_Q_MRMW);
-      mc->accepts2 = new Queue(LMN_Q_MRMW);
+      mc->accepts1 = new MPMCQueue<State *>();
+      mc->accepts2 = new MPMCQueue<State *>();
     } else {
-      mc->accepts1 = new Queue();
-      mc->accepts2 = new Queue();
+      mc->accepts1 = new SPSCQueue<State *>();
+      mc->accepts2 = new SPSCQueue<State *>();
     }
   } else {
     LmnWorker *primary = worker_group(w)->get_worker(LMN_PRIMARY_ID);
@@ -307,9 +312,9 @@ void owcty_env_set(LmnWorker *w) {
   }
 }
 
-void statetable_to_state_queue(StateTable &st, Queue *q) {
+void statetable_to_state_queue(StateTable &st, CQueue<State *> *q) {
   for (auto &ptr : st)
-    q->enqueue((LmnWord)ptr);
+    q->enqueue(ptr);
 }
 
 static void owcty_env_init(LmnWorker *w) {
@@ -358,14 +363,14 @@ void owcty_start(LmnWorker *w) {
     FINISH_CYCLE_SEARCH();
   }
 
-  if (!OWCTY_WORKER_AQ1(w)->is_empty()) {
+  if (!OWCTY_WORKER_AQ1(w)->empty()) {
     owcty_found_accepting_cycle(w, worker_states(w)->automata());
   }
 }
 
 static inline void owcty_report_midterm(LmnWorker *w) {
   McSearchOWCTY *mc = OWCTY_WORKER_OBJ(w);
-  mc->old           = mc->accepts2->entry_num();
+  mc->old           = mc->accepts2->size();
 }
 
 /* owctyアルゴリズムの停止を判定した場合, mc_exitフラグを真にする.
@@ -380,7 +385,7 @@ static inline void owcty_termination_detection(LmnWorker *w) {
   MC_DEBUG(fprintf(stderr, "iter%3lu[S=%10lu, old=%10lu]  %s", mc->iteration, mc->accepts1->entry_num(), mc->old,
                    (mc->iteration % 3 == 0) ? "\n" : ""));
 
-  q_num = mc->accepts1->entry_num();
+  q_num = mc->accepts1->size();
   if (q_num == 0 || q_num == mc->old) {
     MC_DEBUG(fprintf(stderr, "\n"));
     worker_group(w)->workers_set_exit();
@@ -393,16 +398,16 @@ static inline void owcty_termination_detection(LmnWorker *w) {
  *   is_upが真ならset_flagを真に
  *   is_upが偽ならset_flagを偽に
  * 設定する */
-static inline void owcty_reachability(LmnWorker *w, Queue *primary, Queue *secondary, BOOL set_flag, BOOL is_up) {
+static inline void owcty_reachability(LmnWorker *w, CQueue<State *> *primary, CQueue<State *> *secondary, BOOL set_flag,
+                                      BOOL is_up) {
   StateSpaceRef ss = worker_states(w);
-  while (!primary->is_empty()) {
-    State       *s;
-    unsigned int i, cnt;
-
-    s = (State *)primary->dequeue();
+  while (!primary->empty()) {
+    State       *s = primary->dequeue();
+    unsigned int cnt;
     if (!s) {
       continue;
-    } else if (STATE_PROP_SCC_N(w, s, ss->automata()) || smap_is_deleted(s) || (MAP_COND(w) && !s->map)) {
+    }
+    if (STATE_PROP_SCC_N(w, s, ss->automata()) || smap_is_deleted(s) || (MAP_COND(w) && !s->map)) {
       /* A. 性質オートマトン上でSCCを跨ぐ遷移ならば受理サイクルを形成しない
        * B. 既に削除マーキング済
        * C. map
@@ -412,7 +417,7 @@ static inline void owcty_reachability(LmnWorker *w, Queue *primary, Queue *secon
       continue;
     }
 
-    for (i = 0, cnt = 0; i < s->successor_num; i++) {
+    for (auto i = 0, cnt = 0; i < s->successor_num; i++) {
       State *succ = state_succ_state(s, i);
 
       if (TRANS_BETWEEN_DIFF_SCCs(w, s, succ, ss->automata()))
@@ -420,7 +425,7 @@ static inline void owcty_reachability(LmnWorker *w, Queue *primary, Queue *secon
 
       if (!owcty_traversed_owner_is_me(succ, set_flag, is_up)) {
         if (state_is_accept(ss->automata(), succ) && !smap_is_deleted(succ)) {
-          secondary->enqueue((LmnWord)succ);
+          secondary->enqueue(succ);
           cnt++;
         }
       } else {
@@ -447,18 +452,15 @@ static inline BOOL owcty_traversed_owner_is_me(State *succ, BOOL set_flag, BOOL 
   if (is_up) {
     if (flags_fetch & set_flag) {
       return TRUE;
-    } else {
-      flags_update = flags_fetch | set_flag;
-      return !CAS(succ->flags, flags_fetch, flags_update);
     }
-  } else {
-    if (flags_fetch & set_flag) {
-      flags_update = flags_fetch & ~(set_flag);
-      return !CAS(succ->flags, flags_fetch, flags_update);
-    } else {
-      return TRUE;
-    }
+    flags_update = flags_fetch | set_flag;
+    return !CAS(succ->flags, flags_fetch, flags_update);
   }
+  if (flags_fetch & set_flag) {
+    flags_update = flags_fetch & ~(set_flag);
+    return !CAS(succ->flags, flags_fetch, flags_update);
+  }
+  return TRUE;
 }
 
 /* 受理サイクルを発見した場合に呼び出す.
@@ -473,8 +475,8 @@ static void owcty_found_accepting_cycle(LmnWorker *w, AutomataRef a) {
 
       search.reserve(64);
       path.reserve(32);
-      while (!OWCTY_WORKER_AQ1(w)->is_empty()) {
-        auto *seed = (State *)OWCTY_WORKER_AQ1(w)->dequeue();
+      while (!OWCTY_WORKER_AQ1(w)->empty()) {
+        State *seed = OWCTY_WORKER_AQ1(w)->dequeue();
 
         if (state_is_end(a, seed)) {
           mc_found_invalid_state(wp, seed);
@@ -506,9 +508,9 @@ static void owcty_found_accepting_cycle(LmnWorker *w, AutomataRef a) {
 #include <cstdarg>
 
 struct McSearchMAP {
-  Queue      *propagate;
-  Queue      *waitingSeed;
-  StateSetRef traversed;
+  CQueue<LmnWord> *propagate;
+  CQueue<LmnWord> *waitingSeed;
+  StateSetRef      traversed;
 };
 
 #define MAP_WORKER_OBJ(W) ((McSearchMAP *)worker_explorer_obj(W))
@@ -519,7 +521,7 @@ struct McSearchMAP {
 
 State               *map_ordering_states(AutomataRef a, unsigned int num, ...);
 static inline State *map_ordering(State *s1, State *s2, AutomataRef a);
-static inline BOOL   map_entry_state(State *t, State *propag, AutomataRef a);
+static inline bool   map_entry_state(State *t, State *propag, AutomataRef a);
 static void          map_found_accepting_cycle(LmnWorker *w, State *s);
 static void          map_propagate(LmnWorker *w, State *s, State *t, State *propag, AutomataRef a);
 static State        *map_ordering_propagate_state(LmnWorker *w, State *u, AutomataRef a);
@@ -529,11 +531,11 @@ void map_worker_init(LmnWorker *w) {
 
   if (worker_id(w) == LMN_PRIMARY_ID) {
     if (worker_group(w)->workers_get_entried_num() > 1) {
-      mc->propagate   = new Queue(LMN_Q_MRMW);
-      mc->waitingSeed = new Queue(LMN_Q_MRMW);
+      mc->propagate   = new MPMCQueue<LmnWord>();
+      mc->waitingSeed = new MPMCQueue<LmnWord>();
     } else {
-      mc->propagate   = new Queue();
-      mc->waitingSeed = new Queue();
+      mc->propagate   = new SPSCQueue<LmnWord>();
+      mc->waitingSeed = new SPSCQueue<LmnWord>();
     }
   } else {
     LmnWorker *prim = worker_group(w)->get_worker(LMN_PRIMARY_ID);
@@ -605,8 +607,8 @@ void map_start(LmnWorker *w, State *u) {
 void map_iteration_start(LmnWorker *w) {
   lmn_workers_synchronization(w, nullptr);
 
-  while (!MAP_WORKER_DEL_G(w)->is_empty()) {
-    State *seed = (State *)MAP_WORKER_DEL_G(w)->dequeue();
+  while (!MAP_WORKER_DEL_G(w)->empty()) {
+    auto *seed = (State *)MAP_WORKER_DEL_G(w)->dequeue();
     if (seed && !smap_is_not_delete(seed)) {
       smap_set_deleted(seed);
       map_start(w, seed);
@@ -654,22 +656,24 @@ static void map_propagate(LmnWorker *w, State *s, State *t, State *propag, Autom
 
 /* 状態tのMAP値に, propagが優先するMAP値なら伝搬する.
  * 伝搬に成功した場合, 真を返す. */
-static inline BOOL map_entry_state(State *t, State *propag, AutomataRef a) {
-  BOOL ret = FALSE;
+static inline bool map_entry_state(State *t, State *propag, AutomataRef a) {
+  bool ret{false};
 
   do {
     State *fetch = t->map;
 
     if (fetch == propag) {
       break;
-    } else if (CAS(t->map, fetch, propag)) {
-      ret = TRUE;
-      break;
-    } else if (propag != map_ordering(t->map, propag, a)) {
-      ret = FALSE;
+    }
+    if (CAS(t->map, fetch, propag)) {
+      ret = true;
       break;
     }
-  } while (1);
+    if (propag != map_ordering(t->map, propag, a)) {
+      ret = false;
+      break;
+    }
+  } while (true);
 
   return ret;
 }
@@ -683,11 +687,11 @@ static inline State *map_ordering(State *s1, State *s2, AutomataRef a) {
 
   if (s1_valid && s2_valid) {
     return state_id(s1) < state_id(s2) ? s1 : s2;
-  } else if (!s1_valid) {
-    return s2_valid ? s2 : nullptr;
-  } else {
-    return s1_valid ? s1 : nullptr;
   }
+  if (!s1_valid) {
+    return s2_valid ? s2 : nullptr;
+  }
+  return s1_valid ? s1 : nullptr;
 }
 
 /* N個の状態を入力として受け, MAP順序が最も高い状態を返す.
@@ -721,7 +725,8 @@ void backward_elimination(LmnWorker *w, State *s) {
 
     if (!s || smap_is_deleted(s) || !s->is_expanded()) {
       return;
-    } else if (s->successor_num == 1) {
+    }
+    if (s->successor_num == 1) {
       continue;
     }
 
@@ -934,9 +939,9 @@ static void mapndfs_found_accepting_cycle(LmnWorker *w, State *seed, Vector *cyc
  */
 struct McSearchMAPNDFS {
 #ifdef MAPNDFS_USE_MAP
-  Queue      *propagate;
-  Queue      *waitingSeed;
-  StateSetRef traversed;
+  CQueue<LmnWord> *propagate;
+  CQueue<LmnWord> *waitingSeed;
+  StateSetRef      traversed;
 #endif
   Vector *open;
   Vector *path;
@@ -953,18 +958,18 @@ struct McSearchMAPNDFS {
   } while (0)
 
 void mapndfs_worker_init(LmnWorker *w) {
-  McSearchMAPNDFS *mc = LMN_MALLOC<McSearchMAPNDFS>();
-  mc->open            = new Vector(1024);
-  mc->path            = new Vector(512);
+  auto *mc = LMN_MALLOC<McSearchMAPNDFS>();
+  mc->open = new Vector(1024);
+  mc->path = new Vector(512);
 
 #ifdef MAPNDFS_USE_MAP
   if (worker_id(w) == LMN_PRIMARY_ID) {
     if (worker_group(w)->workers_get_entried_num() > 1) {
-      mc->propagate   = new Queue(LMN_Q_MRMW);
-      mc->waitingSeed = new Queue(LMN_Q_MRMW);
+      mc->propagate   = new MPMCQueue<LmnWord>();
+      mc->waitingSeed = new MPMCQueue<LmnWord>();
     } else {
-      mc->propagate   = new Queue();
-      mc->waitingSeed = new Queue();
+      mc->propagate   = new SPSCQueue<LmnWord>();
+      mc->waitingSeed = new SPSCQueue<LmnWord>();
     }
   } else {
     LmnWorker *prim = worker_group(w)->get_worker(LMN_PRIMARY_ID);
@@ -1077,7 +1082,7 @@ static BOOL mapndfs_loop(State *seed, Vector *search, Vector *path) {
 
     if (s->is_snd()) { /* 訪問済み */
       /** DFS2 BackTracking */
-      State *s_pop = (State *)search->pop();
+      auto *s_pop = (State *)search->pop();
       if (path->get_num() > 0 && (State *)path->peek() == s_pop) {
         path->pop();
       }
@@ -1090,14 +1095,15 @@ static BOOL mapndfs_loop(State *seed, Vector *search, Vector *path) {
 
         if (succ->is_on_cycle()) {
           return FALSE;
-        } else if (!succ->is_expanded()) {
+        }
+        if (!succ->is_expanded()) {
           continue;
-        } else if (succ == seed /* || succ->is_on_stack() */) {
+        }
+        if (succ == seed /* || succ->is_on_stack() */) {
           return TRUE; /* 同一のseedから探索する閉路が1つ見つかったならば探索を打ち切る
                         */
-        } else {
-          search->push((vec_data_t)succ);
         }
+        search->push((vec_data_t)succ);
       }
     }
   }
@@ -1114,18 +1120,18 @@ static BOOL mcndfs_loop(LmnWorker *w, State *seed, Vector *search, Vector *posto
 static void mcndfs_found_accepting_cycle(LmnWorker *w, State *seed, Vector *cycle_path) LMN_UNUSED;
 
 void mcndfs_worker_init(LmnWorker *w) {
-  McSearchMAPNDFS *mc = LMN_MALLOC<McSearchMAPNDFS>();
+  auto *mc = LMN_MALLOC<McSearchMAPNDFS>();
   mc->open            = new Vector(1024);
   mc->path            = new Vector(512);
 
 #ifdef MAPNDFS_USE_MAP
   if (worker_id(w) == LMN_PRIMARY_ID) {
     if (worker_group(w)->workers_get_entried_num() > 1) {
-      mc->propagate   = new Queue(LMN_Q_MRMW);
-      mc->waitingSeed = new Queue(LMN_Q_MRMW);
+      mc->propagate   = new MPMCQueue<LmnWord>();
+      mc->waitingSeed = new MPMCQueue<LmnWord>();
     } else {
-      mc->propagate   = new Queue();
-      mc->waitingSeed = new Queue();
+      mc->propagate   = new SPSCQueue<LmnWord>();
+      mc->waitingSeed = new SPSCQueue<LmnWord>();
     }
   } else {
     LmnWorker *prim = worker_group(w)->get_worker(LMN_PRIMARY_ID);
