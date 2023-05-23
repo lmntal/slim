@@ -104,9 +104,9 @@ class McPorData {
   void push_ample_to_expanded(StateSpaceRef ss, State *s, LmnReactCxtRef rc, Vector *new_ss, BOOL f);
   BOOL push_succstates_to_expanded(StateSpaceRef ss, State *s, LmnReactCxtRef rc, Vector *new_ss, BOOL f);
   /* for debug only */
-  static int dump__strans_independency(st_data_t key, st_data_t vec, st_data_t _a);
+  static int dump__strans_independency(unsigned long key, std::vector<unsigned long> *vec);
   void       dump__ample_candidate();
-  static int dump__tmp_graph(st_data_t _k, st_data_t _v, st_data_t _a);
+  static int dump__tmp_graph(State *state, bool is_formated);
 
   McPorData();
 

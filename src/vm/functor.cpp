@@ -40,6 +40,8 @@
 
 #include <cstdint>
 
+#include "fmt/core.h"
+
 #include "atom.h"
 #include "element/element.h"
 #include "lmntal.h"
@@ -96,18 +98,17 @@ unsigned int LmnFunctorTable::get_next_id() const { return next_id; }
 #ifdef DEBUG
 
 void LmnFunctorTable::print() {
-  int i, n;
   fprintf(stdout, "next_id==%u\n", next_id);
-  n = this->size;
-  for (i = 0; i < n; i++) {
-    fprintf(stdout, "entry[%2d]== %s_%d\n", i, lmn_id_to_name(LMN_FUNCTOR_NAME_ID(lmn_functor_table, i)),
-            LMN_FUNCTOR_ARITY(lmn_functor_table, i));
+  auto n = this->size;
+  for (auto i = 0; i < n; i++) {
+    fmt::print(stdout, "entry[{:2}]== {}_{}\n", i, lmn_id_to_name(LMN_FUNCTOR_NAME_ID(lmn_functor_table, i)),
+               LMN_FUNCTOR_ARITY(lmn_functor_table, i));
   }
 }
 
 void LmnFunctorTable::functor_printer(LmnFunctor f) {
-  fprintf(stdout, "fid=%d[ %s_%d ]\n", f, lmn_id_to_name(LMN_FUNCTOR_NAME_ID(lmn_functor_table, f)),
-          LMN_FUNCTOR_ARITY(lmn_functor_table, f));
+  fmt::print(stdout, "fid={}[ {}_{} ]\n", f, lmn_id_to_name(LMN_FUNCTOR_NAME_ID(lmn_functor_table, f)),
+             LMN_FUNCTOR_ARITY(lmn_functor_table, f));
 }
 #endif
 
@@ -141,7 +142,7 @@ LmnFunctorTable::~LmnFunctorTable() {
 LmnFunctorEntry *LmnFunctorTable::lmn_id_to_functor(int functor_id) const {
   LmnFunctorEntry *entry;
 
-  if (auto it = functor_id_tbl.find((LmnFunctorEntry*)(uintptr_t)functor_id); it != functor_id_tbl.end()) {
+  if (auto it = functor_id_tbl.find((LmnFunctorEntry *)(uintptr_t)functor_id); it != functor_id_tbl.end()) {
     return it->first;
   }
   return nullptr;

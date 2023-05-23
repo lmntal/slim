@@ -273,8 +273,9 @@ BOOL McPorData::ample(StateSpaceRef ss, State *s, MCReactContext *rc, Vector *ne
 
   POR_DEBUG({
     printf("*** C1--3 ok! ample set calculated\n");
-    st_foreach(strans_independency, (st_iter_func)dump__strans_independency, (st_data_t)0);
-    dump__ample_candidate();
+    for (auto &trans : *strans_independency) {
+      dump__strans_independency(trans.first, trans.second);
+    }
   });
 
   return TRUE;
@@ -313,7 +314,7 @@ inline State *McPorData::por_state_insert(State *succ, struct MemDeltaRoot *d) {
     tmp_m = succ->state_mem();
   }
 
-  if (auto it = this->states->find(succ);it != this->states->end()) {
+  if (auto it = this->states->find(succ); it != this->states->end()) {
     ret = *it;
   } else {
     LmnBinStrRef bs;
@@ -488,7 +489,6 @@ void McPorData::por_store_successors(State *s, MCReactContext *rc, BOOL is_store
  *   正常に独立性情報テーブルの拡張できたならばTRUEを返す．
  */
 BOOL McPorData::independency_check(State *s, AutomataRef a, Vector *psyms) {
-
   unsigned int i, j;
 
   /* >>>>>>>>>>>>>>>>>>>> Step 1. <<<<<<<<<<<<<<<<<<<< */
@@ -529,7 +529,9 @@ BOOL McPorData::independency_check(State *s, AutomataRef a, Vector *psyms) {
 
   POR_DEBUG({
     printf("\nbefore\n");
-    st_foreach(states, (st_iter_func)dump__tmp_graph, (st_data_t)FALSE);
+    for (auto &state : *states) {
+      dump__tmp_graph(state, false);
+    }
     printf("\n");
   });
 
@@ -589,7 +591,9 @@ BOOL McPorData::independency_check(State *s, AutomataRef a, Vector *psyms) {
 
   POR_DEBUG({
     printf("after\n");
-    st_foreach(states, (st_iter_func)dump__tmp_graph, (st_data_t)FALSE);
+    for (auto &state : *states) {
+      dump__tmp_graph(state, false);
+    }
     printf("\n");
   });
 
@@ -653,9 +657,13 @@ BOOL McPorData::check_C1(State *s, AutomataRef a, Vector *psyms) {
       /* Fに反する経路Pが検出されたので偽を返して終了する */
       POR_DEBUG({
         printf("   λ.. C1 violate_id::%lu\n", transition_id(succ_t));
-        st_foreach(strans_independency, (st_iter_func)dump__strans_independency, (st_data_t)0);
+        for (auto &trans : *strans_independency) {
+          dump__strans_independency(trans.first, trans.second);
+        }
         dump__ample_candidate();
-        st_foreach(states, (st_iter_func)dump__tmp_graph, (st_data_t)FALSE);
+        for (auto state : *states) {
+          dump__tmp_graph(state, false);
+        }
         printf("\n");
       });
       return FALSE;
@@ -817,8 +825,8 @@ BOOL McPorData::push_independent_strans_to_table(unsigned long i1, unsigned long
     if (v2 = strans_independency->find(i2); v2 != strans_independency->end()) {
       POR_DEBUG({
         unsigned int _k;
-        for (_k = 0; _k < ((Vector *)v2)->get_num(); _k++) {
-          if ((unsigned long)((Vector *)v2)->get(_k) == i1) {
+        for (_k = 0; _k < v2->second->size(); _k++) {
+          if (v2->second->at(_k) == i1) {
             /* is_new_idが真であることと矛盾する */
             LMN_ASSERT(FALSE);
           }
@@ -998,17 +1006,10 @@ BOOL McPorData::push_succstates_to_expanded(StateSpaceRef ss, State *s, LmnReact
 }
 
 /* FOR DEBUG ONLY */
-int McPorData::dump__strans_independency(st_data_t key, st_data_t vec, st_data_t _a) {
-  Vector       *v;
-  unsigned long id;
-  unsigned int  i;
-
-  v  = (Vector *)vec;
-  id = (unsigned long)key;
-
-  fprintf(stdout, "[%lu]-->", id);
-  for (i = 0; i < v->get_num(); i++) {
-    fprintf(stdout, " %lu", (unsigned long)v->get(i));
+int McPorData::dump__strans_independency(unsigned long key, std::vector<unsigned long> *vec) {
+  fprintf(stdout, "[%lu]-->", key);
+  for (unsigned long i : *vec) {
+    fprintf(stdout, " %lu", (unsigned long)i);
   }
   fprintf(stdout, "\n");
 
@@ -1025,33 +1026,23 @@ void McPorData::dump__ample_candidate() {
   fprintf(stdout, "\n");
 }
 
-int McPorData::dump__tmp_graph(st_data_t _k, st_data_t _v, st_data_t _a) {
-  FILE        *f;
-  State       *s;
-  unsigned int i;
-  BOOL         is_formated;
+int McPorData::dump__tmp_graph(State *state, bool is_formated) {
+  auto *f = stdout;
 
-  s           = (State *)_v;
-  f           = stdout;
-  is_formated = (BOOL)_a;
-
-  fprintf(f, "%lu::", state_format_id(s, is_formated));
-  if (s->successors) {
-    for (i = 0; i < s->successor_num; i++) {
+  fprintf(f, "%lu::", state_format_id(state, is_formated));
+  if (state->successors) {
+    for (auto i = 0; i < state->successor_num; i++) {
 
       if (i > 0)
         fprintf(f, ",");
 
-      fprintf(f, "%lu", state_format_id(state_succ_state(s, i), is_formated));
+      fprintf(f, "%lu", state_format_id(state_succ_state(state, i), is_formated));
 
-      if (s->has_trans_obj()) {
-        TransitionRef t;
-        unsigned int  j;
-
-        t = transition(s, i);
+      if (state->has_trans_obj()) {
+        auto *t = transition(state, i);
         fprintf(f, "(%lu:", transition_id(t));
 
-        for (j = 0; j < transition_rule_num(t); j++) {
+        for (auto j = 0; j < transition_rule_num(t); j++) {
           if (j > 0)
             fprintf(f, " ");
           fmt::print(f, "{}", lmn_id_to_name(transition_rule(t, j)));

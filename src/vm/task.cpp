@@ -364,13 +364,15 @@ static inline bool react_ruleset(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleS
   if (lmn_env.shuffle_rule)
     rs->shuffle();
 
-  return std::ranges::any_of(*rs, [&](auto *r) {
+  for (auto *r : *rs) {
 #ifdef PROFILE
     if (!lmn_env.nd && lmn_env.profile_level >= 2)
       profile_rule_obj_set(rs, r);
 #endif
-    return Task::react_rule(rc, mem, r);
-  });
+    if (Task::react_rule(rc, mem, r))
+      return true;
+  }
+  return false;
 }
 
 /** 膜memに対してルールruleの適用を試みる.
@@ -443,7 +445,7 @@ BOOL Task::react_rule(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule) {
     }
   }
 
-  if (rc->get_hl_sameproccxt_init()) {
+  if (rc->get_hl_sameproccxt()) {
     rc->clear_hl_spc(); /* とりあえずここに配置 */
     // normal parallel destroy
     if (lmn_env.enable_parallel && !lmn_env.nd) {
@@ -1361,9 +1363,9 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule, bool 
 
     if (rc_hlink_opt(atomi, rc)) {
       /* hyperlink の接続関係を利用したルールマッチング最適化 */
-      if (!rc->get_hl_sameproccxt_init())
+      if (!rc->get_hl_sameproccxt())
         rc->prepare_hl_spc();
-      auto *spc = rc->get_hl_sameproccxt()[atomi];
+      auto *spc = rc->get_hl_sameproccxt()->at(atomi);
       findatom_through_hyperlink(rc, rule, instr, spc, mem, f, atomi);
     } else {
       if (lmn_env.history_management)
@@ -1463,12 +1465,12 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule, bool 
       if (rc_hlink_opt(atomi, rc)) {
         SameProcCxt *spc;
 
-        if (!rc->get_hl_sameproccxt_init()) {
+        if (!rc->get_hl_sameproccxt()) {
           rc->prepare_hl_spc();
         }
 
         /* 型付きプロセス文脈atomiがoriginal/cloneのどちらであるか判別 */
-        spc = rc->get_hl_sameproccxt()[atomi];
+        spc = rc->get_hl_sameproccxt()->at(atomi);
         if (spc->is_clone(atom_arity)) {
           lmn_fatal("Can't use hyperlink searching in parallel-runtime mode.\n");
         }
@@ -1484,13 +1486,14 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule, bool 
 
       normal_parallel_flag = TRUE;
 
-      while (!temp->is_empty()) {
-        ip   = (int)(temp->pop_head());
+      while (!temp->empty()) {
+        ip = temp->front();
+        temp->pop_front();
         atom = (LmnSymbolAtomRef)thread_info[ip]->rc->wt(atomi);
         if (check_exist(atom, f)) {
           rc->reg(atomi) = {(LmnWord)atom, LMN_ATTR_MAKE_LINK(0), TT_ATOM};
           if (rc_hlink_opt(atomi, rc)) {
-            auto *spc = rc->get_hl_sameproccxt()[atomi];
+            auto *spc = rc->get_hl_sameproccxt()->at(atomi);
 
             if (spc->is_consistent_with((LmnSymbolAtomRef)rc->wt(atomi))) {
               spc->match((LmnSymbolAtomRef)rc->wt(atomi));
@@ -1543,7 +1546,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule, bool 
           continue;
         }
         if (thread_info[ip2]->judge) {
-          temp->push_head(ip2);
+          temp->push_front(ip2);
         }
       }
 
@@ -2486,7 +2489,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule, bool 
           return FALSE;
         }
         if (rc_hlink_opt(atomi, rc)) {
-          auto *spc = rc->get_hl_sameproccxt()[atomi];
+          auto *spc = rc->get_hl_sameproccxt()->at(atomi);
 
           auto *atom = (LmnSymbolAtomRef)rc->wt(atomi);
           for (int i = 0; i < spc->proccxts.size(); i++) {
@@ -2854,22 +2857,22 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule, bool 
     READ_VAL(LmnInstrVar, instr, length2);
     READ_VAL(LmnInstrVar, instr, arg2);
 
-    if (!rc->get_hl_sameproccxt_init()) {
+    if (!rc->get_hl_sameproccxt()) {
       rc->prepare_hl_spc();
     }
 
-    if (!rc->get_hl_sameproccxt().contains(atom1)) {
-      spc1                            = new SameProcCxt(length1);
-      rc->get_hl_sameproccxt()[atom1] = spc1;
+    if (!rc->get_hl_sameproccxt()->contains(atom1)) {
+      spc1 = new SameProcCxt(length1);
+      rc->get_hl_sameproccxt()->emplace(atom1, spc1);
     } else {
-      spc1 = rc->get_hl_sameproccxt()[atom1];
+      spc1 = rc->get_hl_sameproccxt()->at(atom1);
     }
 
-    if (!rc->get_hl_sameproccxt().contains(atom2)) {
-      spc2                            = new SameProcCxt(length2);
-      rc->get_hl_sameproccxt()[atom2] = spc2;
+    if (!rc->get_hl_sameproccxt()->contains(atom2)) {
+      spc2 = new SameProcCxt(length2);
+      rc->get_hl_sameproccxt()->emplace(atom2, spc2);
     } else {
-      spc2 = rc->get_hl_sameproccxt()[atom2];
+      spc2 = rc->get_hl_sameproccxt()->at(atom2);
     }
 
     spc1->add_proccxt_if_absent(atom1, arg1);
@@ -2878,22 +2881,22 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule, bool 
     ////normal parallel init
     if (lmn_env.enable_parallel && !lmn_env.nd) {
       for (i = 0; i < lmn_env.core_num; i++) {
-        if (!thread_info[i]->rc->get_hl_sameproccxt_init()) {
+        if (!thread_info[i]->rc->get_hl_sameproccxt()) {
           thread_info[i]->rc->prepare_hl_spc();
         }
 
-        if (!thread_info[i]->rc->get_hl_sameproccxt().contains(atom1)) {
-          spc1                                            = new SameProcCxt(length1);
-          thread_info[i]->rc->get_hl_sameproccxt()[atom1] = spc1;
+        if (!thread_info[i]->rc->get_hl_sameproccxt()->contains(atom1)) {
+          spc1 = new SameProcCxt(length1);
+          thread_info[i]->rc->get_hl_sameproccxt()->emplace(atom1, spc1);
         } else {
-          spc1 = thread_info[i]->rc->get_hl_sameproccxt()[atom1];
+          spc1 = thread_info[i]->rc->get_hl_sameproccxt()->at(atom1);
         }
 
-        if (!thread_info[i]->rc->get_hl_sameproccxt().contains(atom2)) {
-          spc2                                            = new SameProcCxt(length2);
-          thread_info[i]->rc->get_hl_sameproccxt()[atom2] = spc2;
+        if (!thread_info[i]->rc->get_hl_sameproccxt()->contains(atom2)) {
+          spc2 = new SameProcCxt(length2);
+          thread_info[i]->rc->get_hl_sameproccxt()->emplace(atom2, spc2);
         } else {
-          spc2 = thread_info[i]->rc->get_hl_sameproccxt()[atom2];
+          spc2 = thread_info[i]->rc->get_hl_sameproccxt()->at(atom2);
         }
 
         spc1->add_proccxt_if_absent(atom1, arg1);
@@ -4106,7 +4109,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule, bool 
     LmnSubInstrSize subinstr_size;
     READ_VAL(LmnSubInstrSize, instr, subinstr_size);
 
-    if (rc->get_hl_sameproccxt_init()) {
+    if (rc->get_hl_sameproccxt()) {
       /*branchとhyperlinkを同時起動するための急場しのぎ */
       rc->clear_hl_spc();
     }

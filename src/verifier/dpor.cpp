@@ -848,13 +848,13 @@ static void dpor_ample_set_to_succ_tbl(StateSpaceRef ss, Vector *ample_set,
     if (!reduced_stack) {
       reduced_stack = new Vector(512);
     }
-    for (i = 0; i < contextC1_set->get_num(); i++) {
+    for (auto &i : contextC1_set) {
       State        *src_succ;
       MemDeltaRoot *succ_d;
       ContextC1Ref  succ_c;
       TransitionRef src_t;
 
-      succ_c = (ContextC1Ref)contextC1_set->get(i);
+      succ_c = (ContextC1Ref)i;
 
       if (succ_c->is_ample_cand)
         continue; /* さっき登録した */

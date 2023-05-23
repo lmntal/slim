@@ -79,22 +79,21 @@
 //};
 
 void slim::vm::RuleContext::clear_hl_spc() {
-  HashIterator it;
-
-  if (!hl_sameproccxt_init)
+  if (!hl_sameproccxt)
     return;
 
-  for (auto &hl : hl_sameproccxt) {
+  for (auto &hl : *hl_sameproccxt) {
     delete hl.second;
   }
 
-  hl_sameproccxt_init = false;
+  delete hl_sameproccxt;
+  hl_sameproccxt = nullptr;
 }
 
 BOOL rc_hlink_opt(LmnInstrVar atomi, LmnReactCxtRef rc) {
   /*  return hl_sameproccxtが初期化済み && atomiは同名プロセス文脈を持つアトム
    */
-  return rc->get_hl_sameproccxt_init() && rc->get_hl_sameproccxt().contains(atomi);
+  return rc->get_hl_sameproccxt() && rc->get_hl_sameproccxt()->contains(atomi);
 }
 
 void react_context_copy(LmnReactCxtRef to, LmnReactCxtRef from) { *to = *from; }

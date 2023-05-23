@@ -43,6 +43,7 @@
 #include "element/element.h"
 #include "lmntal.h"
 #include "vm/vm.h"
+#include <deque>
 
 struct normal_prof {
   unsigned long wakeup;
@@ -67,15 +68,15 @@ struct arginfo {
 
   normal_prof *profile;
 };
-extern pthread_t    *findthread;
-extern arginfo     **thread_info;
-extern int           active_thread;
-extern Deque        *temp;
-extern double        walltime; // rule walltime
-extern double        walltime_temp;
-extern BOOL          normal_parallel_flag;
-extern unsigned long success_temp_check;
-extern unsigned long fail_temp_check;
+extern pthread_t       *findthread;
+extern arginfo        **thread_info;
+extern int              active_thread;
+extern std::deque<int> *temp;
+extern double           walltime; // rule walltime
+extern double           walltime_temp;
+extern BOOL             normal_parallel_flag;
+extern unsigned long    success_temp_check;
+extern unsigned long    fail_temp_check;
 
 static LmnRuleInstr instr_parallel;
 

@@ -45,9 +45,7 @@
 
 std::vector<SpecialAtomCallback *> sp_atom_callback_tbl{};
 
-void sp_atom_init() {
-  sp_atom_callback_tbl.reserve(64);
-}
+void sp_atom_init() { sp_atom_callback_tbl.reserve(64); }
 
 void sp_atom_finalize() {
   for (auto &c : sp_atom_callback_tbl) {
@@ -86,6 +84,6 @@ int lmn_sp_atom_register(char const *name, f_copy f_copy, f_free f_free, f_eq f_
 }
 
 struct SpecialAtomCallback *sp_atom_get_callback(int id) {
-  LMN_ASSERT(sp_atom_callback_tbl->size() > id);
+  LMN_ASSERT(sp_atom_callback_tbl.size() > id);
   return sp_atom_callback_tbl.at(id);
 }

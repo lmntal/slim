@@ -171,7 +171,7 @@ private:
 /* 同名型付きプロセス文脈を持つアトムごとに生成される */
 struct SameProcCxt {
 
-  SameProcCxt(int length) : start_attr(0), proccxts(length) {}
+  SameProcCxt(int length) : proccxts(length) {}
 
   ~SameProcCxt() {
     for (auto *pc : proccxts)
@@ -277,7 +277,7 @@ struct SameProcCxt {
 
   /* findatom 内で使用される一時領域 */
   std::vector<HyperLink *> tree; /* HyperLink tree */
-  LmnLinkAttr              start_attr;
+  LmnLinkAttr              start_attr{};
 };
 
 /* ハイパーリンクhlのハッシュ値を返す. */

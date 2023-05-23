@@ -39,19 +39,20 @@
 
 #include "normal_thread.h"
 #include "interpret/interpreter.hpp"
+#include <deque>
 #include <pthread.h>
 
 #include "verifier/runtime_status.h"
 
-pthread_t    *findthread;
-arginfo     **thread_info;
-int           active_thread;
-Deque        *temp;
-double        walltime; // rule walltime
-double        walltime_temp;
-BOOL          normal_parallel_flag;
-unsigned long success_temp_check;
-unsigned long fail_temp_check;
+pthread_t       *findthread;
+arginfo        **thread_info;
+int              active_thread;
+std::deque<int> *temp;
+double           walltime; // rule walltime
+double           walltime_temp;
+BOOL             normal_parallel_flag;
+unsigned long    success_temp_check;
+unsigned long    fail_temp_check;
 
 void *normal_thread(void *arg) {
   arginfo     *thread_data;
@@ -77,7 +78,7 @@ void *normal_thread(void *arg) {
                            slim::vm::interpreter it(thread_data->rc, thread_data->rule, thread_instr);
                            thread_data->rc->reg(thread_data->atomi) = {(LmnWord)atom, LMN_ATTR_MAKE_LINK(0), TT_ATOM};
                            if (rc_hlink_opt(thread_data->atomi, thread_data->rc)) {
-                             spc = thread_data->rc->get_hl_sameproccxt()[thread_data->atomi];
+                             spc = thread_data->rc->get_hl_sameproccxt()->at(thread_data->atomi);
                              if (spc->is_consistent_with((LmnSymbolAtomRef)thread_data->rc->wt(thread_data->atomi))) {
                                spc->match((LmnSymbolAtomRef)thread_data->rc->wt(thread_data->atomi));
                                if (it.interpret(thread_data->rc, thread_data->rule, thread_instr)) {
@@ -134,7 +135,7 @@ void normal_parallel_init() {
   for (i = 0; i < lmn_env.core_num; i++) {
     lmn_thread_create(&findthread[i], normal_thread, &(thread_info[i]->id));
   }
-  temp               = new Deque(1);
+  temp               = new std::deque<int>();
   walltime           = 0;
   success_temp_check = 0;
   fail_temp_check    = 0;

@@ -198,8 +198,8 @@ LmnArray::LmnArray(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0, LmnLink
  */
 void LmnArray::cb_array_new(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0, LmnLinkAttr t0, LmnAtomRef a1,
                             LmnLinkAttr t1, LmnAtomRef a2, LmnLinkAttr t2) {
-  LmnWord     size = (LmnWord)a0; /**< a0 is assumed to be an integer data atom */
-  LmnArrayRef atom = new LmnArray(mem, size, a1, t1);
+  auto        size = (LmnWord)a0; /**< a0 is assumed to be an integer data atom */
+  auto       *atom = new LmnArray(mem, size, a1, t1);
   LmnLinkAttr attr = LMN_SP_ATOM_ATTR;
   lmn_mem_push_atom(mem, atom, attr);
   if (t1 == LMN_HL_ATTR) {

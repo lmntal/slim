@@ -94,9 +94,10 @@ namespace slim::vm {
  *  ルール適用中に使用する情報を保持する.
  */
 struct RuleContext {
-  LmnRegisterArray work_array; // ルール適用レジスタ
-  LmnHlCtx hl_sameproccxt; // findatom 時のアトム番号と、同名型付きプロセス文脈を持つアトム引数との対応関係を保持
-  bool hl_sameproccxt_init{false}; // hl_sameproccxtの初期化フラグ
+  // ルール適用レジスタ
+  LmnRegisterArray work_array;
+  // findatom 時のアトム番号と、同名型付きプロセス文脈を持つアトム引数との対応関係を保持
+  LmnHlCtx *hl_sameproccxt{nullptr};
 
   RuleContext() : work_array(1024) {
 #ifdef USE_FIRSTCLASS_RULE
@@ -136,8 +137,8 @@ struct RuleContext {
   LmnByte &tt(unsigned int i) { return reg(i).tt; }
 
   void prepare_hl_spc() {
-    hl_sameproccxt.reserve(4);
-    hl_sameproccxt_init = true;
+    hl_sameproccxt = new LmnHlCtx();
+    hl_sameproccxt->reserve(2);
   }
   void clear_hl_spc();
 };
@@ -182,8 +183,7 @@ public:
   bool has_mode(BYTE mode) const { return (this->mode & mode) != 0; }
 
   LmnMembrane *get_global_root() const { return global_root; }
-  LmnHlCtx    &get_hl_sameproccxt() { return hl_sameproccxt; }
-  bool         get_hl_sameproccxt_init() const { return hl_sameproccxt_init; }
+  LmnHlCtx    *get_hl_sameproccxt() { return hl_sameproccxt; }
 };
 
 /*----------------------------------------------------------------------
@@ -285,8 +285,7 @@ unsigned int const ModelCheckerOptimazeModeSize = 4;
       unsigned int _fr_;                                                                                               \
       for (_fr_ = 0; _fr_ < RC_ND_ORG_SUCC_NUM(RC) && _fr_ < (RC)->get_mem_delta_roots().size(); _fr_++) {             \
         MemDeltaRoot *_d_ = (RC)->get_mem_delta_roots().at(_fr_);                                                      \
-        if (_d_)                                                                                                       \
-          delete (_d_);                                                                                                \
+        delete (_d_);                                                                                                  \
       }                                                                                                                \
       (RC)->clear_mem_delta_roots();                                                                                   \
     }                                                                                                                  \

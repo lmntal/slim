@@ -108,7 +108,7 @@ void Automata::add_state(AutomataStateRef s) {
 }
 
 AutomataStateRef Automata::get_state(atmstate_id_t state_id) const {
-  LMN_ASSERT(this->states.get(state_id) != 0);
+  LMN_ASSERT(this->states.at(state_id) != nullptr);
   return (AutomataStateRef)this->states.at(state_id);
 }
 
@@ -207,7 +207,7 @@ void Automata::analysis() {
   AutomataStateRef init_s;
   BYTE            *on_stack_list;
 
-  LMN_ASSERT(this->states.get_num() > 0);
+  LMN_ASSERT(!this->states.empty());
   init_s                                        = this->get_state((unsigned int)this->get_init_state());
   on_stack_list                                 = LMN_CALLOC<BYTE>(this->states.size());
   on_stack_list[(unsigned int)init_s->get_id()] = 0xffU;
