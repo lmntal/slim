@@ -102,23 +102,17 @@ void run_mc(std::vector<LmnRuleSetRef> const &start_rulesets, AutomataRef a, Vec
 }
 
 static inline void do_mc(LmnMembraneRef world_mem_org, AutomataRef a, Vector *psyms, int thread_num) {
-  LmnWorkerGroup *wp;
-  StateSpaceRef   states;
-  LmnMembraneRef  mem;
-  State          *init_s;
-  BYTE            p_label;
-
   /** INITIALIZE
    */
   mhash_set_depth(lmn_env.hash_depth);
   if (lmn_env.tree_compress) {
     lmn_bscomp_tree_init();
   }
-  wp      = new LmnWorkerGroup(a, psyms, thread_num);
-  states  = worker_states(wp->get_worker(LMN_PRIMARY_ID));
-  p_label = a ? a->get_init_state() : DEFAULT_STATE_ID;
-  mem     = world_mem_org->copy();
-  init_s  = new State(mem, p_label, states->use_memenc());
+  auto *wp      = new LmnWorkerGroup(a, psyms, thread_num);
+  auto *states  = worker_states(wp->get_worker(LMN_PRIMARY_ID));
+  BYTE  p_label = a ? a->get_init_state() : DEFAULT_STATE_ID;
+  auto *mem     = world_mem_org->copy();
+  auto *init_s  = new State(mem, p_label, states->use_memenc());
   state_id_issue(init_s); /* 状態に整数IDを発行 */
 #ifdef KWBT_OPT
   if (lmn_env.opt_mode != OPT_NONE)
@@ -553,7 +547,7 @@ void mc_gen_successors_with_property(State *s, LmnMembraneRef mem, AutomataState
       if (mc_has_trans(f)) {
         data = transition_make(new_s, transition_rule(src_succ_t, 0));
 #ifdef KWBT_OPT
-        transition_set_cost((Transition*)data, transition_cost(src_succ_t));
+        transition_set_cost((Transition *)data, transition_cost(src_succ_t));
 #endif
         s->set_trans_obj();
       } else {

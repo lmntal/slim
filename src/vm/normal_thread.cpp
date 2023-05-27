@@ -38,21 +38,23 @@
  */
 
 #include "normal_thread.h"
-#include "interpret/interpreter.hpp"
-#include <deque>
-#include <pthread.h>
 
+#include <deque>
+#include <mutex>
+#include <vector>
+
+#include "interpret/interpreter.hpp"
 #include "verifier/runtime_status.h"
 
-pthread_t       *findthread;
-arginfo        **thread_info;
-int              active_thread;
-std::deque<int> *temp;
-double           walltime; // rule walltime
-double           walltime_temp;
-BOOL             normal_parallel_flag;
-unsigned long    success_temp_check;
-unsigned long    fail_temp_check;
+std::vector<std::thread> findthread;
+arginfo                **thread_info;
+int                      active_thread;
+std::deque<int>         *temp;
+double                   walltime; // rule walltime
+double                   walltime_temp;
+BOOL                     normal_parallel_flag;
+unsigned long            success_temp_check;
+unsigned long            fail_temp_check;
 
 void *normal_thread(void *arg) {
   arginfo     *thread_data;
@@ -103,7 +105,7 @@ void *normal_thread(void *arg) {
       stop_time                                      = get_cpu_time();
       lmn_prof.thread_cpu_time_main[thread_data->id] += stop_time - start_time;
     }
-    pthread_mutex_unlock(thread_data->exec);
+    thread_data->exec->unlock();
   }
   return nullptr;
 }
@@ -116,7 +118,7 @@ void normal_profile_init(normal_prof *profile) {
 
 void normal_parallel_init() {
   int i;
-  findthread  = LMN_NALLOC<pthread_t>(lmn_env.core_num);
+  findthread  = std::vector<std::thread>(lmn_env.core_num);
   thread_info = LMN_NALLOC<arginfo *>(lmn_env.core_num);
   for (i = 0; i < lmn_env.core_num; i++) {
     thread_info[i]     = LMN_MALLOC<arginfo>();
@@ -126,14 +128,13 @@ void normal_parallel_init() {
     thread_info[i]->id            = i;
     thread_info[i]->next_atom     = nullptr;
     thread_info[i]->exec_flag     = 1;
-    thread_info[i]->exec          = LMN_MALLOC<pthread_mutex_t>();
-    pthread_mutex_init(thread_info[i]->exec, nullptr);
-    pthread_mutex_lock(thread_info[i]->exec);
+    thread_info[i]->exec          = new std::mutex();
+    thread_info[i]->exec->lock();
     thread_info[i]->profile = LMN_MALLOC<normal_prof>();
     normal_profile_init(thread_info[i]->profile);
   }
   for (i = 0; i < lmn_env.core_num; i++) {
-    lmn_thread_create(&findthread[i], normal_thread, &(thread_info[i]->id));
+    findthread[i] = std::thread(normal_thread, &(thread_info[i]->id));
   }
   temp               = new std::deque<int>();
   walltime           = 0;
@@ -145,9 +146,9 @@ void normal_parallel_free() {
   int i;
   lmn_env.enable_parallel = FALSE;
   for (i = 0; i < lmn_env.core_num; i++) {
-    pthread_mutex_unlock(thread_info[i]->exec);
-    lmn_thread_join(findthread[i]);
-    pthread_mutex_destroy(thread_info[i]->exec);
+    thread_info[i]->exec->unlock();
+    findthread[i].join();
+    delete (thread_info[i]->exec);
     lmn_free(thread_info[i]->exec);
     delete (thread_info[i]->rc);
     lmn_free(thread_info[i]->profile);
@@ -155,7 +156,6 @@ void normal_parallel_free() {
   }
   lmn_env.enable_parallel = TRUE;
   lmn_free(thread_info);
-  lmn_free(findthread);
   delete temp;
 }
 
@@ -178,7 +178,7 @@ void threadinfo_init(int id, LmnInstrVar atomi, LmnRuleRef rule, LmnReactCxtRef 
 void op_lock(int id, int flag) {
   while (thread_info[id]->exec_flag != flag)
     ;
-  pthread_mutex_lock(thread_info[id]->exec);
+  thread_info[id]->exec->lock();
   thread_info[id]->exec_flag = 1 - thread_info[id]->exec_flag;
 }
 

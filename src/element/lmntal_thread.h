@@ -51,6 +51,8 @@
  */
 
 /* check for atomic operation */
+#include <mutex>
+#include <vector>
 #ifdef ENABLE_PARALLEL
 #
 #ifdef HAVE_ATOMIC_CAS /* AとBが等しければAの実態をCに置き換え,                                        \
@@ -117,14 +119,14 @@ constexpr auto DEFAULT_WLOCK_NUM = 16384U;
 #define READABLE (TRUE)
 #define DISREADABLE (FALSE)
 
-#include "../lmntal.h"
+#include "lmntal.h"
 
 struct EWLock {
-  BOOL         *elock_used;
-  unsigned int  elock_num;
-  lmn_mutex_t  *elock;
-  unsigned long wlock_num;
-  lmn_mutex_t  *wlock;
+  BOOL                   *elock_used;
+  unsigned int            elock_num;
+  std::vector<std::mutex> elock{};
+  unsigned long           wlock_num;
+  std::vector<std::mutex> wlock{};
   EWLock(unsigned int e_num, unsigned int w_num);
   ~EWLock();
   void acquire_write(mtx_data_t id);

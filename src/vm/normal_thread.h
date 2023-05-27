@@ -44,6 +44,7 @@
 #include "lmntal.h"
 #include "vm/vm.h"
 #include <deque>
+#include <thread>
 
 struct normal_prof {
   unsigned long wakeup;
@@ -61,22 +62,22 @@ struct arginfo {
   AtomListEntryRef atomlist_ent;
   unsigned int     register_size;
   int              atom_arity;
-  pthread_mutex_t *exec;
+  std::mutex      *exec{};
   int volatile exec_flag;
   unsigned long backtrack;
   LmnSAtom      next_atom;
 
   normal_prof *profile;
 };
-extern pthread_t       *findthread;
-extern arginfo        **thread_info;
-extern int              active_thread;
-extern std::deque<int> *temp;
-extern double           walltime; // rule walltime
-extern double           walltime_temp;
-extern BOOL             normal_parallel_flag;
-extern unsigned long    success_temp_check;
-extern unsigned long    fail_temp_check;
+extern std::vector<std::thread> findthread;
+extern arginfo                **thread_info;
+extern int                      active_thread;
+extern std::deque<int>         *temp;
+extern double                   walltime; // rule walltime
+extern double                   walltime_temp;
+extern BOOL                     normal_parallel_flag;
+extern unsigned long            success_temp_check;
+extern unsigned long            fail_temp_check;
 
 static LmnRuleInstr instr_parallel;
 

@@ -40,6 +40,7 @@
 #ifndef LMN_STATE_HPP
 #define LMN_STATE_HPP
 
+#include <mutex>
 #include <vector>
 
 #include "lmntal.h"
@@ -113,19 +114,19 @@ struct State {                 /* Total:72(36)byte */
   BYTE *local_flags; /*  8(4)byte:
                         並列実行時、スレッド事に保持しておきたいフラグ(mcndfsのcyanフラグ等)
                       */
-  pthread_mutex_t expand_lock;
-  unsigned long   expander_id;
-  void            state_set_expander_id(unsigned long id) { expander_id = id; }
-  unsigned long   state_expander_id() { return expander_id; }
-  void            state_expand_lock_init() { lmn_mutex_init(&(expand_lock)); }
-  void            state_expand_lock_destroy() { lmn_mutex_destroy(&(expand_lock)); }
-  void            state_expand_lock() { lmn_mutex_lock(&(expand_lock)); }
-  void            state_expand_unlock() { lmn_mutex_unlock(&(expand_lock)); }
+  std::mutex    expand_lock;
+  unsigned long expander_id;
+  void          state_set_expander_id(unsigned long id) { expander_id = id; }
+  unsigned long state_expander_id() const { return expander_id; }
+  void          state_expand_lock_init() {}
+  void          state_expand_lock_destroy() {}
+  void          state_expand_lock() { expand_lock.lock(); }
+  void          state_expand_unlock() { expand_lock.unlock(); }
 
   /* manipulation for local flags */
-  void s_set_cyan(int i) { local_flags[i] |= STATE_CYAN_MASK; }
-  void s_unset_cyan(int i) { local_flags[i] &= (~STATE_CYAN_MASK); }
-  BOOL s_is_cyan(int i) { return (local_flags && (local_flags[i] & STATE_CYAN_MASK)); }
+  void s_set_cyan(int i) const { local_flags[i] |= STATE_CYAN_MASK; }
+  void s_unset_cyan(int i) const { local_flags[i] &= (~STATE_CYAN_MASK); }
+  BOOL s_is_cyan(int i) const { return (local_flags && (local_flags[i] & STATE_CYAN_MASK)); }
 #else
   void          state_set_expander_id(unsigned long id) {}
   unsigned long state_expander_id() { return 0; }

@@ -38,6 +38,8 @@
  */
 
 #pragma once
+#include <functional>
+#include <thread>
 #ifndef LMN_MC_WORKER_H
 #define LMN_MC_WORKER_H
 
@@ -47,13 +49,15 @@
  * @{
  */
 
-#include "lmntal.h"
+#include <barrier>
+#include <memory>
+#include <vector>
+
 #include "automata.h"
 #include "element/element.h"
+#include "lmntal.h"
 
 struct StateSpace;
-
-#include <memory>
 
 #if defined(HAVE_ATOMIC_SUB) && defined(HAVE_BUILTIN_MBARRIER)
 #//define OPT_WORKERS_SYNC /* とってもbuggyなのでcomment out */
@@ -68,23 +72,23 @@ struct LmnWorker;
 class LmnWorkerGroup {
   unsigned int worker_num; /* 参加Worker数 */
   /* 4bytes alignment (64-bit processor) */
-  LmnWorker **workers; /* 参加Worker */
+  std::vector<LmnWorker *> workers{};
 
-  BOOL          terminated;    /* 終了した場合に真 */
-  volatile BOOL stop;          /* 待ち合わせ中に真 */
-  BOOL          do_search;     /* 反例の探索を行う場合に真 */
-  BOOL          do_exhaustive; /* 反例を1つ見つけた場合に探索を!!打ち切らない場合!!に真 */
-  BOOL          do_para_algo;  /* 並列アルゴリズムを使用する場合に真 */
-  volatile BOOL mc_exit;       /* 反例の発見により探索を打ち切る場合に真 */
-  BOOL          error_exist;   /* 反例が存在する場合に真 */
+  bool          terminated{false};    // 終了した場合に真
+  volatile bool stop{false};          // 待ち合わせ中に真
+  bool          do_search{false};     // 反例の探索を行う場合に真
+  bool          do_exhaustive{false}; // 反例を1つ見つけた場合に探索を!!打ち切らない場合!!に真
+  bool          do_para_algo{false};  // 並列アルゴリズムを使用する場合に真
+  volatile bool mc_exit{false};       // 反例の発見により探索を打ち切る場合に真
+  bool          error_exist{false};   // 反例が存在する場合に真
 
-  State  *opt_end_state; /* the state has optimized cost */
-  EWLock *ewlock;        /* elock: 最適状態用ロック
-                          * wlock: 各状態のコストアップデート用 */
+  State  *opt_end_state{nullptr}; // the state has optimized cost */
+  EWLock *ewlock{nullptr};        // elock: 最適状態用ロック
+                                  // wlock: 各状態のコストアップデート用
 
   FILE *out; /* 出力先 */
 
-  LmnWorkerGroup(LmnWorkerGroup const &lwg);
+  LmnWorkerGroup(LmnWorkerGroup const &lwg) = delete;
   LmnWorker *workers_get_entry(unsigned int i);
   void       workers_set_entry(unsigned int i, LmnWorker *w);
   void       workers_free(unsigned int w_num);
@@ -98,21 +102,20 @@ public:
   unsigned int volatile workers_synchronizer();
   void workers_set_synchronizer(unsigned int i);
 #else
-  lmn_barrier_t  synchronizer;           /* 待ち合わせ用オブジェクト */
-  lmn_barrier_t *workers_synchronizer(); // koredato private ni dekinai by sumiya
-  void           workers_set_synchronizer(lmn_barrier_t);
+  using lmn_barrier = std::barrier<std::function<void()>>;
+  lmn_barrier  synchronizer;           // 待ち合わせ用オブジェクト
+  lmn_barrier &workers_synchronizer(); // koredato private ni dekinai by sumiya
 #endif
 
-  LmnWorkerGroup();
   LmnWorkerGroup(AutomataRef a, Vector *psyms, int thread_num);
   ~LmnWorkerGroup();
-  BOOL workers_are_exit();
+  bool workers_are_exit() const;
   void workers_set_exit();
   void workers_unset_exit();
-  BOOL workers_have_error();
+  bool workers_have_error() const;
   void workers_found_error();
   void workers_unfound_error();
-  BOOL workers_get_do_palgorithm();
+  bool workers_get_do_palgorithm() const;
   void workers_set_do_palgorithm();
   void workers_unset_do_palgorithm();
   FILE workers_out();
@@ -126,24 +129,23 @@ public:
   void    workers_state_lock(mtx_data_t id);
   void    workers_state_unlock(mtx_data_t id);
 
-  BOOL workers_are_terminated();
+  bool workers_are_terminated() const;
   void workers_set_terminated();
   void workers_unset_terminated();
 
-  BOOL workers_are_stop();
+  bool workers_are_stop() const;
   void workers_set_stop();
   void workers_unset_stop();
 
-  BOOL workers_are_do_search();
+  bool workers_are_do_search() const;
   void workers_set_do_search();
   void workers_unset_do_search();
 
-  BOOL workers_are_do_exhaustive();
+  bool workers_are_do_exhaustive() const;
   void workers_set_do_exhaustive();
   void workers_unset_do_exhaustive();
 
-  unsigned int workers_get_entried_num();
-  void         workers_set_entried_num(unsigned int i);
+  unsigned int workers_get_entried_num() const;
 
   LmnWorker *get_worker(unsigned long id);
   LmnWorker *workers_get_my_worker();
@@ -185,34 +187,34 @@ struct LmnMCObj {
  */
 
 struct LmnWorker {
-  lmn_thread_t pth;         /* スレッド識別子(pthread_t) */
-  unsigned int volatile id; /* Natural integer id (lmn_thread_id) */
+  std::thread pth;             // スレッド
+  unsigned int volatile id{0}; // Natural integer id (lmn_thread_id)
 
-  BOOL f_end;  /* Workerの終了検知判定用フラグ. 任意のWorkerが操作可能 */
-  BOOL f_end2; /* Workerの終了検知判定用フラグ. 任意のWorkerが操作可能 */
-  BYTE f_safe; /* Workerに割り当てられたスレッドのみWritableなフラグ */
-  BYTE f_exec; /* 実行時オプションをローカルに記録 */
+  bool f_end{false};  // Workerの終了検知判定用フラグ. 任意のWorkerが操作可能
+  bool f_end2{false}; // Workerの終了検知判定用フラグ. 任意のWorkerが操作可能
+  BYTE f_safe{0};     // Workerに割り当てられたスレッドのみWritableなフラグ
+  BYTE f_exec{0};     // 実行時オプションをローカルに記録
 
-  BOOL wait;
+  bool wait{false};
   /* 隙間が3BYTE */
 
   LmnMCObj generator;
   LmnMCObj explorer;
-  BOOL     is_explorer;
+  bool     is_explorer;
 
-  void (*start)(struct LmnWorker *); /* 実行関数 */
-  BOOL (*check)(struct LmnWorker *); /* 終了検知関数 */
+  std::function<void(LmnWorker *)> start{}; // 実行関数
+  std::function<bool(LmnWorker *)> check{}; // 終了検知関数
 
-  StateSpaceRef                   states; /* Pointer to StateSpace */
-  std::unique_ptr<MCReactContext> cxt;    /* ReactContext Object */
-  LmnWorker                      *next;   /* Pointer to Neighbor Worker */
+  StateSpaceRef                   states{}; // Pointer to StateSpace
+  std::unique_ptr<MCReactContext> cxt;      // ReactContext Object
+  LmnWorker                      *next{};   // Pointer to Neighbor Worker
   LmnWorkerGroup                 *group;
 
-  std::vector<struct State *>                *invalid_seeds;
-  std::vector<std::vector<struct State *> *> *cycles;
+  std::vector<struct State *>                *invalid_seeds{};
+  std::vector<std::vector<struct State *> *> *cycles{};
 
-  int expand; // for debug
-  int red;
+  int expand{0}; // for debug
+  int red{0};
 };
 
 /**
@@ -246,29 +248,27 @@ struct LmnWorker {
 #define worker_is_generator(W) (!worker_is_explorer(W))
 #define worker_generator_set(W) ((W)->is_explorer = FALSE)
 
-#define worker_init(W)                                                                                                 \
-  do {                                                                                                                 \
-    mc_init_f(&worker_generator(W));                                                                                   \
-    mc_init_f(&worker_explorer(W));                                                                                    \
-  } while (0)
+static inline void worker_init(LmnWorker *w) {
+  mc_init_f(&worker_generator(w));
+  mc_init_f(&worker_explorer(w));
+}
 
-#define worker_finalize(W)                                                                                             \
-  do {                                                                                                                 \
-    mc_finalize_f(&worker_generator(W));                                                                               \
-    mc_finalize_f(&worker_explorer(W));                                                                                \
-  } while (0)
+static inline void worker_finalize(LmnWorker *w) {
+  mc_finalize_f(&worker_generator(w));
+  mc_finalize_f(&worker_explorer(w));
+}
 
-#define worker_start(W)                                                                                                \
-  if ((W)->start) {                                                                                                    \
-    (*(W)->start)(W);                                                                                                  \
+static inline void worker_start(LmnWorker *w) {
+  if (w->start) {
+    w->start(w);
   }
+}
 
-static inline BOOL worker_check(LmnWorker *w) {
+static inline bool worker_check(LmnWorker *w) {
   if (w->check) {
-    return (*(w)->check)(w);
-  } else {
-    return TRUE;
+    return w->check(w);
   }
+  return true;
 }
 
 #define worker_generator_init_f_set(W, F) mc_init_f_set(&worker_generator(W), F)
@@ -384,7 +384,7 @@ static inline BOOL worker_check(LmnWorker *w) {
 #define WORKER_F2_MC_MAPNDFS_WEAK_MASK (0x01U << 6)
 #define WORKER_F2_MC_MCNDFS_MASK (0x01U << 7)
 
-#define mc_ltl_none(F) (F == 0x00U)
+#define mc_ltl_none(F) ((F) == 0x00U)
 #define mc_use_ndfs(F) ((F)&WORKER_F2_MC_NDFS_MASK)
 #define mc_set_ndfs(F) ((F) |= WORKER_F2_MC_NDFS_MASK)
 #define mc_use_owcty(F) ((F)&WORKER_F2_MC_OWCTY_MASK)

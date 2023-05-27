@@ -790,7 +790,7 @@ static void map_found_accepting_cycle(LmnWorker *w, State *s) {
  */
 
 struct McSearchBLE {
-  Queue                *layer;
+  CQueue<State *>      *layer;
   std::vector<State *> *path;
   std::vector<State *> *search;
   StateSetRef           traversed;
@@ -819,9 +819,9 @@ void bledge_worker_init(LmnWorker *w) {
   auto *mc = LMN_MALLOC<McSearchBLE>();
   if (worker_id(w) == LMN_PRIMARY_ID) {
     if (worker_group(w)->workers_get_entried_num() > 1) {
-      mc->layer = new Queue(LMN_Q_MRMW);
+      mc->layer = new MPMCQueue<State*>();
     } else {
-      mc->layer = new Queue();
+      mc->layer = new SPSCQueue<State*>();
     }
   } else {
     mc->layer = BLE_WORKER_LAYER_Q(worker_group(w)->get_worker(LMN_PRIMARY_ID));
@@ -861,11 +861,11 @@ void bledge_start(LmnWorker *w) {
 
   START_CYCLE_SEARCH();
 
-  while (!BLE_WORKER_LAYER_Q(w)->is_empty()) {
+  while (!BLE_WORKER_LAYER_Q(w)->empty()) {
     State       *u;
     unsigned int i;
 
-    if (!(u = (State *)BLE_WORKER_LAYER_Q(w)->dequeue()))
+    if (!(u = BLE_WORKER_LAYER_Q(w)->dequeue()))
       continue;
     for (i = 0; i < u->successor_num; i++) {
       State *v = state_succ_state(u, i);
@@ -888,7 +888,7 @@ void bledge_start(LmnWorker *w) {
 
 void bledge_store_layer(LmnWorker *w, State *s) {
   if (s->successor_num > 0) {
-    BLE_WORKER_LAYER_Q(w)->enqueue((LmnWord)s);
+    BLE_WORKER_LAYER_Q(w)->enqueue(s);
   }
 }
 
@@ -1121,8 +1121,8 @@ static void mcndfs_found_accepting_cycle(LmnWorker *w, State *seed, Vector *cycl
 
 void mcndfs_worker_init(LmnWorker *w) {
   auto *mc = LMN_MALLOC<McSearchMAPNDFS>();
-  mc->open            = new Vector(1024);
-  mc->path            = new Vector(512);
+  mc->open = new Vector(1024);
+  mc->path = new Vector(512);
 
 #ifdef MAPNDFS_USE_MAP
   if (worker_id(w) == LMN_PRIMARY_ID) {

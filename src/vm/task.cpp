@@ -380,13 +380,9 @@ static inline bool react_ruleset(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleS
  *   通常実行では, 書換えに成功した場合にTRUE,
  * マッチングしなかった場合にFALSEを返す. 非決定実行では,
  * マッチングに失敗するまでバックトラックを繰り返すため常にFALSEが返る. */
-BOOL Task::react_rule(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule) {
-  LmnTranslated translated;
-  BYTE         *inst_seq;
-  BOOL          result;
-
-  translated = rule->translated;
-  inst_seq   = rule->inst_seq;
+bool Task::react_rule(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule) {
+  LmnTranslated translated{rule->translated};
+  BYTE         *inst_seq{rule->inst_seq};
 
   rc->resize(1);
   rc->wt(0) = (LmnWord)mem;
@@ -405,7 +401,7 @@ BOOL Task::react_rule(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule) {
     InteractiveDebugger::get_instance().break_on_rule(&in);
   }
 
-  result = (translated && translated(rc, mem, rule)) || (inst_seq && in.run());
+  auto result = (translated && translated(rc, mem, rule)) || (inst_seq && in.run());
 
   if (lmn_env.enable_parallel && !lmn_env.nd && normal_parallel_flag)
     rule_wall_time_finish();
@@ -462,11 +458,10 @@ BOOL Task::react_rule(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule) {
 /* 膜memでrulesetsのルールの適用を行う.
  * 適用結果は無視する */
 void Task::react_start_rulesets(LmnMembraneRef mem, std::vector<LmnRuleSetRef> const &rulesets) {
-  LmnReactCxt rc(mem, REACT_STAND_ALONE);
-  int         i;
+  LmnReactCxt rc{mem, REACT_STAND_ALONE};
 
-  for (i = 0; i < rulesets.size(); i++) {
-    react_ruleset(&rc, mem, (LmnRuleSetRef)rulesets.at(i));
+  for (auto *ruleset : rulesets) {
+    react_ruleset(&rc, mem, (LmnRuleSetRef)ruleset);
   }
   react_initial_rulesets(&rc, mem);
   react_zerostep_recursive(&rc, mem);
@@ -1514,7 +1509,6 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule, bool 
 
       lmn_env.findatom_parallel_mode = TRUE;
       for (ip = 0, atom = atomlist_head(atomlist_ent); ip < active_thread; atom = atom->get_next(), ip++) {
-        // pthread create
         if (lmn_env.find_atom_parallel)
           break;
         if (!check_exist((LmnSymbolAtomRef)thread_info[ip]->next_atom, f) || atom == thread_info[ip]->next_atom ||
@@ -1522,7 +1516,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule, bool 
           thread_info[ip]->next_atom = nullptr;
         threadinfo_init(ip, atomi, rule, rc, instr, atomlist_ent, atom_arity);
         //
-        pthread_mutex_unlock(thread_info[ip]->exec);
+        thread_info[ip]->exec->unlock();
       }
       for (auto ip2 = 0; ip2 < ip; ip2++) {
         // lmn_thread_join(findthread[ip2]);

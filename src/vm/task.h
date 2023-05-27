@@ -86,7 +86,7 @@ class Task final {
 
 public:
   static void          lmn_run(std::vector<LmnRuleSetRef> const &rulesets);
-  static BOOL          react_rule(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule);
+  static bool          react_rule(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule);
   static void          react_start_rulesets(LmnMembraneRef mem, std::vector<LmnRuleSetRef> const &rulesets);
   static BOOL          react_all_rulesets(LmnReactCxtRef rc, LmnMembraneRef cur_mem);
   static std::vector<LmnRuleSetRef> user_system_rulesets;

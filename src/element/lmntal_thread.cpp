@@ -57,7 +57,6 @@
 
 /* 呼び出したスレッドとn番のCPUを貼り付ける */
 void lmn_thread_set_CPU_affinity(unsigned long n) {
-  /* TODO: マニュアルによればpthread_npライブラリを使った方がよい  */
 #ifdef ENABLE_CPU_AFFINITY
   if (lmn_env.core_num <= HAVE_PROCESSOR_ELEMENTS) {
     pid_t     my_pid;
@@ -78,91 +77,52 @@ void thread_yield_CPU() { sched_yield(); }
  */
 
 /* TODO: stripeの粒度を呼出側で指定できた方が汎用的だと思う */
-EWLock::EWLock(unsigned int e_num, unsigned int w_num) {
+EWLock::EWLock(unsigned int e_num, unsigned int w_num):elock(e_num),wlock(w_num) {
   unsigned int i;
   w_num            = std::bit_ceil(w_num);
   this->elock_used = nullptr;
   this->elock_num  = e_num;
-  this->elock      = nullptr;
   this->wlock_num  = w_num;
-  this->wlock      = nullptr;
-
-  this->elock = LMN_NALLOC<lmn_mutex_t>(e_num);
-  for (i = 0; i < e_num; i++) {
-    lmn_mutex_init(&(this->elock[i]));
-  }
-
-  this->wlock = LMN_NALLOC<pthread_mutex_t>(w_num);
-  for (i = 0; i < w_num; i++) {
-    lmn_mutex_init_onthefly(this->wlock[i]);
-  }
 }
 
 EWLock::~EWLock() {
-  unsigned long i, e_num, w_num;
-
-  e_num = this->elock_num;
-  w_num = this->wlock_num;
-
-  for (i = 0; i < e_num; i++) {
-    lmn_mutex_destroy(&(this->elock[i]));
-  }
-  LMN_FREE(this->elock);
-
-  for (i = 0; i < w_num; i++) {
-    lmn_mutex_destroy(&(this->wlock[i]));
-  }
-  LMN_FREE(this->wlock);
   LMN_FREE(this);
 }
+
 void ewlock_free(EWLock *lock) {
-  unsigned long i, e_num, w_num;
-
-  e_num = lock->elock_num;
-  w_num = lock->wlock_num;
-
-  for (i = 0; i < e_num; i++) {
-    lmn_mutex_destroy(&(lock->elock[i]));
-  }
-  LMN_FREE(lock->elock);
-
-  for (i = 0; i < w_num; i++) {
-    lmn_mutex_destroy(&(lock->wlock[i]));
-  }
-  LMN_FREE(lock->wlock);
   LMN_FREE(lock);
 }
 void EWLock::acquire_write(mtx_data_t id) {
   unsigned long idx = id & (this->wlock_num - 1);
-  lmn_mutex_lock(&(this->wlock[idx]));
+  this->wlock[idx].lock();
 }
 void ewlock_acquire_write(EWLock *lock, mtx_data_t id) {
   unsigned long idx = id & (lock->wlock_num - 1);
-  lmn_mutex_lock(&(lock->wlock[idx]));
+  lock->wlock[idx].lock();
 }
 void EWLock::release_write(mtx_data_t id) {
   unsigned long idx = id & (this->wlock_num - 1);
-  lmn_mutex_unlock(&(this->wlock[idx]));
+  this->wlock[idx].unlock();
 }
 void ewlock_release_write(EWLock *lock, mtx_data_t id) {
   unsigned long idx = id & (lock->wlock_num - 1);
-  lmn_mutex_unlock(&(lock->wlock[idx]));
+  lock->wlock[idx].unlock();
 }
 void EWLock::acquire_enter(mtx_data_t id) {
   id = id >= this->elock_num ? id % this->elock_num : id;
-  lmn_mutex_lock(&(this->elock[id]));
+  this->elock[id].lock();
 }
 void ewlock_acquire_enter(EWLock *lock, mtx_data_t id) {
   id = id >= lock->elock_num ? id % lock->elock_num : id;
-  lmn_mutex_lock(&(lock->elock[id]));
+  lock->elock[id].lock();
 }
 void EWLock::release_enter(mtx_data_t id) {
   id = id >= this->elock_num ? id % this->elock_num : id;
-  lmn_mutex_unlock(&(this->elock[id]));
+  this->elock[id].unlock();
 }
 void ewlock_release_enter(EWLock *lock, mtx_data_t id) {
   id = id >= lock->elock_num ? id % lock->elock_num : id;
-  lmn_mutex_unlock(&(lock->elock[id]));
+  lock->elock[id].unlock();
 }
 
 /* lockが持つelockを昇順に確保していく.
@@ -171,28 +131,25 @@ void ewlock_release_enter(EWLock *lock, mtx_data_t id) {
 void EWLock::reject_enter(mtx_data_t my_id) {
   unsigned long i, n = this->elock_num;
   for (i = 0; i < n; i++) {
-    lmn_mutex_lock(&(this->elock[i]));
+    this->elock[i].lock();
   }
 }
 void ewlock_reject_enter(EWLock *lock, mtx_data_t my_id) {
   unsigned long i, n = lock->elock_num;
   for (i = 0; i < n; i++) {
-    lmn_mutex_lock(&(lock->elock[i]));
+    lock->elock[i].lock();
   }
 }
 void EWLock::permit_enter(mtx_data_t my_id) {
   unsigned long i, n = this->elock_num;
   for (i = 0; i < n; i++) {
-    lmn_mutex_unlock(&(this->elock[i]));
+    this->elock[i].unlock();
   }
 }
 void ewlock_permit_enter(EWLock *lock, mtx_data_t my_id) {
   unsigned long i, n = lock->elock_num;
   for (i = 0; i < n; i++) {
-    lmn_mutex_unlock(&(lock->elock[i]));
+    // lmn_mutex_unlock(&(lock->elock[i]));
+    lock->elock[i].unlock();
   }
 }
-
-constexpr slim::element::ewmutex::ewmutex_tag slim::element::ewmutex::write;
-constexpr slim::element::ewmutex::ewmutex_tag slim::element::ewmutex::enter;
-constexpr slim::element::ewmutex::ewmutex_tag slim::element::ewmutex::exclusive_enter;

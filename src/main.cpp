@@ -194,13 +194,9 @@ static inline void slim_exec(std::vector<LmnRuleSetRef> const &start_rulesets) {
     Task::lmn_run(start_rulesets);
   } else {
     /* プログラム検証 */
-    AutomataRef automata;
-    PVector     prop_defs;
-    int         ret;
-
-    automata  = nullptr;
-    prop_defs = nullptr;
-    ret       = 1;
+    AutomataRef automata{};
+    PVector     prop_defs{};
+    int         ret{1};
 
     if (((lmn_env.automata_file != nullptr) || (lmn_env.ltl_exp != nullptr)) &&
         (lmn_env.propositional_symbol != nullptr)) {
@@ -260,11 +256,11 @@ int main(int argc, char *argv[]) {
   auto files = result["filenames"].as<std::vector<std::string>>();
 
   if (load_input_files(start_rulesets, files)) {
-    if (lmn_env.translate == TRUE) { // lmntalコードからCへの変換実行の場合
+    if (lmn_env.translate == TRUE) [[unlikely]] { // lmntalコードからCへの変換実行の場合
       // TODO: 現在、複数ファイル入力への対応は簡単に実装できるはず？
       // files[0] is first input file name
       translate(files[0] == "-" ? files[0] : "");
-    } else {
+    } else [[likely]] {
       if (lmn_env.profile_level >= 1) {
         profile_start_slim();
       }
