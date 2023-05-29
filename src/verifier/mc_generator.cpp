@@ -415,8 +415,8 @@ void dfs_start(LmnWorker *w) {
       } else {
         worker_set_active(w);
 #ifdef DEBUG
-        if (!DFS_WORKER_QUEUE(w)->is_empty() && !((Queue *)DFS_WORKER_QUEUE(w))->head->next) {
-          fmt::print("{}: queue is not empty? {}\n", worker_id(w), DFS_WORKER_QUEUE(w)->entry_num());
+        if (!DFS_WORKER_QUEUE(w)->empty()) {
+          fmt::print("{}: queue is not empty? {}\n", worker_id(w), DFS_WORKER_QUEUE(w)->size());
         }
 #endif
         if (s || (s = (State *)DFS_WORKER_QUEUE(w)->dequeue())) {

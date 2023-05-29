@@ -358,118 +358,29 @@ static inline auto lmn_OMP_get_my_id() { return omp_get_thread_num(); }
 #define lmn_OMP_get_my_id() (0U)
 #endif
 
-#if defined(HAVE_LIBPTHREAD) || defined(HAVE_WINAPI)
-#define HAVE_MT_LIBRARY (1)
-#
-#ifdef HAVE_LIBPTHREAD
-#include <pthread.h>
-#else /* HAVE_LIBPTHREAD */
-#include <windows.h>
-#endif /* HAVE_LIBPTHREAD */
-#
-#else /* HAVE_LIBPTHREAD or HAVE_WINAPI */
-#undef HAVE_MT_LIBRARY
-#endif /* HAVE_LIBPTHREAD or HAVE_WINAPI */
-
-/* setting thread library for slim */
-#ifndef HAVE_LIBPTHREAD
-#error "sorry, need pthread.h or implementation for other thread library "
-#
-#else /* defined (HAVE_LIBPTHREAD) */
-#
-using lmn_thread_t  = pthread_t;
-using lmn_mutex_t   = pthread_mutex_t;
-using lmn_key_t     = pthread_key_t;
-#
-#ifdef HAVE_PTHREAD_BARRIER
-using lmn_barrier_t = pthread_barrier_t;
-#else /* !defined (HAVE_PTHREAD_BARRIER) */
-#
-using lmn_barrier_t = struct LmnBarrier;
-struct LmnBarrier {
-  unsigned int    thread_num;
-  unsigned int    reach_num;
-  pthread_mutex_t mutex;
-  pthread_cond_t  cond;
-};
-#
-#endif /* HAVE_PTHREAD_BARRIER */
-#define lmn_thread_create(Pth, Pfunc, Parg) pthread_create(Pth, NULL, (void *(*)(void *))(Pfunc), (void *)(Parg))
-#define lmn_thread_join(Th) pthread_join(Th, NULL)
-#define lmn_mutex_init(Pm) pthread_mutex_init(Pm, NULL)
-#define lmn_mutex_init_onthefly(Pm) (Pm) = (pthread_mutex_t)PTHREAD_MUTEX_INITIALIZER
-#define lmn_mutex_destroy(Pm) pthread_mutex_destroy(Pm)
-#define lmn_mutex_lock(Pm) pthread_mutex_lock(Pm)
-#define lmn_mutex_unlock(Pm) pthread_mutex_unlock(Pm)
-#define lmn_TLS_key_init(Pk) pthread_key_create(Pk, NULL)
-#define lmn_TLS_key_destroy(K) pthread_key_delete(K)
-#define lmn_TLS_set_value(K, Pval) pthread_setspecific(K, Pval)
-#define lmn_TLS_get_value(K) pthread_getspecific(K)
-#
-#ifdef HAVE_PTHREAD_BARRIER
-#define lmn_barrier_init(Pm, Num) pthread_barrier_init(Pm, NULL, Num)
-#define lmn_barrier_destroy(Pm) pthread_barrier_destroy(Pm)
-#define lmn_barrier_wait(Pm) pthread_barrier_wait(Pm)
-#else
-static inline void lmn_barrier_init(lmn_barrier_t *b, unsigned int num) {
-  b->thread_num = num;
-  b->reach_num  = 0;
-  b->mutex      = (pthread_mutex_t)PTHREAD_MUTEX_INITIALIZER;
-  b->cond       = (pthread_cond_t)PTHREAD_COND_INITIALIZER;
-}
-#
-static inline void lmn_barrier_destroy(lmn_barrier_t *b) {
-  pthread_mutex_destroy(&b->mutex);
-  pthread_cond_destroy(&b->cond);
-}
-#
-static inline void lmn_barrier_wait(lmn_barrier_t *b) {
-  pthread_mutex_lock(&b->mutex);
-  b->reach_num++;
-  if (b->reach_num != b->thread_num) {
-    pthread_cond_wait(&b->cond, &b->mutex);
-  } else { /* ok! */
-    b->reach_num = 0;
-    pthread_cond_broadcast(&b->cond);
-  }
-  pthread_mutex_unlock(&b->mutex);
-}
-#
-#
-#endif /* HAVE_PTHREAD_BARRIER */
-#endif /* HAVE_LIBPTHREAD */
-
-/* mac osXのxcode gccではthread local
- * storageを容易に実現する__threadは実装予定がない.
- * (osXの都合で実装が難しいらしい?)
- * 代わりにpthread keyによるthread local
- * storageの実装が優れているらしいの使ってみた */
-
-#if defined(HAVE_MT_LIBRARY) && defined(HAVE___THREAD)
-#define USE_TLS_KEYWORD
-#define LMN_TLS_TYPE(T) thread_local T
-#define ENABLE_PARALLEL
-#
-#elif defined(HAVE_LIBPTHREAD) && defined(__APPLE__)
-#define USE_TLS_PTHREAD_KEY
-#define LMN_TLS_TYPE(T) lmn_key_t
-#define ENABLE_PARALLEL
-#
-#else /* disable prallel */
-#define LMN_TLS_TYPE(T) T
-#endif
-
-using LmnTLS = struct LmnTLS;
 struct LmnTLS {
   unsigned int  thread_num;
   unsigned int  thread_id;
   unsigned long state_id;
   ProcessID     proc_next_id;
+
+  inline auto gen_state_id() {
+    state_id += thread_num;
+    return state_id;
+  }
+
+  inline auto my_thread_id() const { return thread_id; }
+  inline auto set_my_thread_id(unsigned int N) { thread_id = N; }
+  inline auto threads_num() const { return thread_num; }
+  inline auto set_threads_num(unsigned int N) { thread_num = N; }
+  inline auto reset_proc_ids() { proc_next_id = 1U; }
+  inline auto set_next_id(ProcessID N) { proc_next_id = N; }
+  inline auto next_id() const { return proc_next_id; }
 };
 
 extern std::vector<LmnWord> *lmn_id_pool;
 extern struct LmnEnv         lmn_env;
-extern LMN_TLS_TYPE(LmnTLS) lmn_tls;
+extern thread_local LmnTLS   lmn_tls;
 
 void env_my_TLS_init(unsigned int th_id);
 void env_my_TLS_finalize();
@@ -484,7 +395,6 @@ static inline auto env_return_id(LmnWord n) {
   if (lmn_id_pool)
     lmn_id_pool->emplace_back(n);
 }
-#if /**/ !defined(ENABLE_PARALLEL) || defined(USE_TLS_KEYWORD)
 static inline auto env_gen_state_id() {
   lmn_tls.state_id += lmn_tls.thread_num;
   return lmn_tls.state_id;
@@ -504,54 +414,6 @@ static inline auto env_gen_next_id() {
   return lmn_tls.proc_next_id++;
 }
 static inline auto env_next_id() { return lmn_tls.proc_next_id; }
-#
-#elif /**/ defined(USE_TLS_PTHREAD_KEY)
-static inline unsigned long env_gen_state_id() {
-  LmnTLS *p   = (LmnTLS *)lmn_TLS_get_value(lmn_tls);
-  p->state_id += p->thread_num;
-  return p->state_id;
-}
-#
-static inline unsigned int env_my_thread_id() {
-  LmnTLS *p = (LmnTLS *)lmn_TLS_get_value(lmn_tls);
-  return p->thread_id;
-}
-#
-static inline void env_set_my_thread_id(unsigned int n) {
-  LmnTLS *p    = (LmnTLS *)lmn_TLS_get_value(lmn_tls);
-  p->thread_id = n;
-}
-#
-static inline unsigned int env_threads_num() {
-  LmnTLS *p = (LmnTLS *)lmn_TLS_get_value(lmn_tls);
-  return p->thread_num;
-}
-#
-static inline void env_set_threads_num(unsigned int n) {
-  LmnTLS *p     = (LmnTLS *)lmn_TLS_get_value(lmn_tls);
-  p->thread_num = n;
-}
-#
-static inline void env_reset_proc_ids() {
-  LmnTLS *p       = (LmnTLS *)lmn_TLS_get_value(lmn_tls);
-  p->proc_next_id = 1UL;
-}
-#
-static inline void env_set_next_id(unsigned long n) {
-  LmnTLS *p       = (LmnTLS *)lmn_TLS_get_value(lmn_tls);
-  p->proc_next_id = n;
-}
-#
-#define env_gen_next_id()                                                                                              \
-  ((lmn_id_pool && lmn_id_pool->get_num() > 0) ? lmn_id_pool->pop()                                                    \
-                                               : ((LmnTLS *)lmn_TLS_get_value(lmn_tls))->proc_next_id++)
-
-static inline unsigned long env_next_id() {
-  LmnTLS *p = (LmnTLS *)lmn_TLS_get_value(lmn_tls);
-  return p->proc_next_id;
-}
-
-#endif
 
 namespace slim::config {
 #ifdef PROFILE

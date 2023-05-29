@@ -91,13 +91,12 @@ void init_options() {
        "(MC) Use Multicore NDFS algorithm (LTL model checking).") //
 #endif
       ("disable-map-h", "(MC) No use MAP heuristics(LTL model checking)");
-#ifdef ENABLE_PARALLEL
+
   slim_options.add_options("parallel")("use-Ncore", "(MC) Use <N>threads", cxxopts::value<int>()) //
       ("cutoff-depth", "")                                                                        //
       ("independent", "")                                                                         //
       ("disable-loadbalancer", "")                                                                //
       ("opt-lock", "");
-#endif
 
   slim_options.add_options()   //
       ("disable-opt-hash", "") //

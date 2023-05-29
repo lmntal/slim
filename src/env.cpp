@@ -45,7 +45,7 @@
 std::vector<LmnWord> *lmn_id_pool;
 struct LmnEnv         lmn_env;
 struct LmnProfiler    lmn_prof;
-LMN_TLS_TYPE(LmnTLS) lmn_tls;
+thread_local LmnTLS   lmn_tls;
 
 // static void env_init(void);
 
@@ -83,56 +83,22 @@ static inline void lmn_TLS_free(LmnTLS *p) {
 }
 
 void env_my_TLS_init(unsigned int th_id) {
-#if !defined(ENABLE_PARALLEL) || defined(USE_TLS_KEYWORD)
   if (th_id == LMN_PRIMARY_ID) {
     env_set_my_thread_id(th_id);
   } else {
     lmn_TLS_init(&lmn_tls, th_id);
   }
-#elif defined(USE_TLS_PTHREAD_KEY)
-  if (th_id != LMN_PRIMARY_ID) {
-    lmn_TLS_set_value(lmn_tls, lmn_TLS_make(th_id));
-  }
-#endif
   env_reset_proc_ids();
 }
 
-void env_my_TLS_finalize() {
-#if !defined(ENABLE_PARALLEL) || defined(USE_TLS_KEYWORD)
-  env_set_my_thread_id(LMN_PRIMARY_ID); /* resetする */
-#elif defined(USE_TLS_PTHREAD_KEY)
-  if (env_my_thread_id() != LMN_PRIMARY_ID) {
-    lmn_TLS_free(lmn_TLS_get_value(lmn_tls));
-  }
-#endif
-}
+void env_my_TLS_finalize() { env_set_my_thread_id(LMN_PRIMARY_ID); /* resetする */ }
 
 void lmn_stream_init() {
-  //  lmn_env.init();
-
   lmn_id_pool = nullptr;
-#if !defined(ENABLE_PARALLEL) || defined(USE_TLS_KEYWORD)
-  /* 並列処理無効の場合か, 並列処理有効かつthread local
-   * storageキーワードが利用可能な場合 */
   lmn_TLS_init(&lmn_tls, LMN_PRIMARY_ID);
-#elif defined(USE_TLS_PTHREAD_KEY)
-  lmn_TLS_key_init(&lmn_tls);
-  lmn_TLS_set_value(lmn_tls, lmn_TLS_make(LMN_PRIMARY_ID));
-  /* pthread_join後も, primaryだけはprofile出力などに使用するため,
-   * 子供たちとはTLS objectのmalloc/freeタイミングをずらす */
-#else
-#error "oops.. "
-#endif
 }
 
-void lmn_stream_destroy() {
-#if !defined(ENABLE_PARALLEL) || defined(USE_TLS_KEYWORD)
-  lmn_TLS_destroy(&lmn_tls);
-#elif defined(USE_TLS_PTHREAD_KEY)
-  lmn_TLS_free(lmn_TLS_get_value(lmn_tls));
-  lmn_TLS_key_destroy(lmn_tls);
-#endif
-}
+void lmn_stream_destroy() { lmn_TLS_destroy(&lmn_tls); }
 
 /* lmn_env構造体の初期化 */
 LmnEnv::LmnEnv() {

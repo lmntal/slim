@@ -40,89 +40,82 @@
 /** @author Masato Gocho
  *  common thread library
  */
-#ifndef _GNU_SOURCE
-#define _GNU_SOURCE
-#endif
 
 #include "lmntal_thread.h"
 #include "error.h"
 #include "util.h"
-#if defined(HAVE_SCHED_H) && defined(HAVE_SYSCALL_H)
+#include <thread>
+#ifdef __linux__
 #include <sched.h>
 #include <sys/types.h>
 #include <syscall.h>
 #include <unistd.h>
-#define ENABLE_CPU_AFFINITY
+#elif defined __APPLE__ && defined __MACH__
+#include <mach/mach.h>
+#include <mach/thread_policy.h>
+#include <pthread.h>
+#elif defined _WIN32
+#include <windows.h>
 #endif
 
 /* 呼び出したスレッドとn番のCPUを貼り付ける */
-void lmn_thread_set_CPU_affinity(unsigned long n) {
-#ifdef ENABLE_CPU_AFFINITY
-  if (lmn_env.core_num <= HAVE_PROCESSOR_ELEMENTS) {
-    pid_t     my_pid;
-    cpu_set_t my_mask;
-    my_pid = syscall(SYS_gettid);
-    CPU_ZERO(&my_mask);
-    sched_setaffinity(my_pid, sizeof(my_mask), &my_mask);
+void lmn_thread_set_CPU_affinity(unsigned long id) {
+#ifdef __linux__
+  if (lmn_env.core_num <= std::thread::hardware_concurrency()) {
+    cpu_set_t mask;
+    CPU_ZERO(&mask);
+    CPU_SET(id, &mask);
+    sched_setaffinity(syscall(SYS_gettid), sizeof(cpu_set_t), &mask);
+  }
+#elif defined __APPLE__ && defined __MACH__
+  if (lmn_env.core_num <= std::thread::hardware_concurrency()) {
+    thread_affinity_policy_data_t policy;
+    policy.affinity_tag = id;
+    thread_policy_set(pthread_mach_thread_np(pthread_self()), THREAD_AFFINITY_POLICY, (thread_policy_t)&policy,
+                      THREAD_AFFINITY_POLICY_COUNT);
+  }
+#elif defined                      _WIN32
+  if (lmn_env.core_num <= std::thread::hardware_concurrency()) {
+    HANDLE hThread              = GetCurrentThread();
+    DWORD  dwThreadAffinityMask = 1 << id;
+    SetThreadAffinityMask(hThread, dwThreadAffinityMask);
   }
 #endif
 }
 
-#ifdef HAVE_SCHED_H
-void thread_yield_CPU() { sched_yield(); }
+void lmn_thread_yield_CPU() {
+#ifdef __linux__
+  sched_yield();
+#elif defined __APPLE__ && defined __MACH__
+  sched_yield();
+#elif defined                      _WIN32
+  SwitchToThread();
 #endif
+}
 
 /** ----------------------------------
  *  Double Lock
  */
 
 /* TODO: stripeの粒度を呼出側で指定できた方が汎用的だと思う */
-EWLock::EWLock(unsigned int e_num, unsigned int w_num):elock(e_num),wlock(w_num) {
-  unsigned int i;
-  w_num            = std::bit_ceil(w_num);
-  this->elock_used = nullptr;
-  this->elock_num  = e_num;
-  this->wlock_num  = w_num;
-}
+EWLock::EWLock(unsigned int e_num, unsigned int w_num)
+    : elock(e_num), wlock(w_num), elock_num(e_num), wlock_num(std::bit_ceil(w_num)) {}
 
-EWLock::~EWLock() {
-  LMN_FREE(this);
-}
-
-void ewlock_free(EWLock *lock) {
-  LMN_FREE(lock);
-}
 void EWLock::acquire_write(mtx_data_t id) {
   unsigned long idx = id & (this->wlock_num - 1);
   this->wlock[idx].lock();
-}
-void ewlock_acquire_write(EWLock *lock, mtx_data_t id) {
-  unsigned long idx = id & (lock->wlock_num - 1);
-  lock->wlock[idx].lock();
 }
 void EWLock::release_write(mtx_data_t id) {
   unsigned long idx = id & (this->wlock_num - 1);
   this->wlock[idx].unlock();
 }
-void ewlock_release_write(EWLock *lock, mtx_data_t id) {
-  unsigned long idx = id & (lock->wlock_num - 1);
-  lock->wlock[idx].unlock();
-}
 void EWLock::acquire_enter(mtx_data_t id) {
   id = id >= this->elock_num ? id % this->elock_num : id;
   this->elock[id].lock();
 }
-void ewlock_acquire_enter(EWLock *lock, mtx_data_t id) {
-  id = id >= lock->elock_num ? id % lock->elock_num : id;
-  lock->elock[id].lock();
-}
 void EWLock::release_enter(mtx_data_t id) {
   id = id >= this->elock_num ? id % this->elock_num : id;
   this->elock[id].unlock();
-}
-void ewlock_release_enter(EWLock *lock, mtx_data_t id) {
-  id = id >= lock->elock_num ? id % lock->elock_num : id;
-  lock->elock[id].unlock();
 }
 
 /* lockが持つelockを昇順に確保していく.
@@ -134,22 +127,13 @@ void EWLock::reject_enter(mtx_data_t my_id) {
     this->elock[i].lock();
   }
 }
-void ewlock_reject_enter(EWLock *lock, mtx_data_t my_id) {
-  unsigned long i, n = lock->elock_num;
-  for (i = 0; i < n; i++) {
-    lock->elock[i].lock();
-  }
-}
 void EWLock::permit_enter(mtx_data_t my_id) {
   unsigned long i, n = this->elock_num;
   for (i = 0; i < n; i++) {
     this->elock[i].unlock();
   }
 }
-void ewlock_permit_enter(EWLock *lock, mtx_data_t my_id) {
-  unsigned long i, n = lock->elock_num;
-  for (i = 0; i < n; i++) {
-    // lmn_mutex_unlock(&(lock->elock[i]));
-    lock->elock[i].unlock();
-  }
+
+unsigned long EWLock::space() const {
+  return ((sizeof(EWLock) + (elock_num * elock.capacity()) + (wlock_num * wlock.capacity())));
 }

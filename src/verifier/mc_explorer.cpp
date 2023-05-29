@@ -38,6 +38,7 @@
  */
 #include "mc_explorer.h"
 
+#include <atomic>
 #include <vector>
 
 #include "ankerl/unordered_dense.hpp"
@@ -321,7 +322,7 @@ static void owcty_env_init(LmnWorker *w) {
   statetable_to_state_queue(worker_states(w)->accept_tbl(), OWCTY_WORKER_AQ1(w));
   statetable_to_state_queue(worker_states(w)->accept_memid_tbl(), OWCTY_WORKER_AQ2(w));
 
-  MC_DEBUG(printf("acceptance queue init, num=%lu\n", OWCTY_WORKER_AQ1(w)->entry_num()));
+  MC_DEBUG(printf("acceptance queue init, num=%lu\n", OWCTY_WORKER_AQ1(w)->size()));
 }
 
 // struct DegreeCnt {
@@ -382,7 +383,7 @@ static inline void owcty_termination_detection(LmnWorker *w) {
 
   mc = OWCTY_WORKER_OBJ(w);
   mc->iteration++;
-  MC_DEBUG(fprintf(stderr, "iter%3lu[S=%10lu, old=%10lu]  %s", mc->iteration, mc->accepts1->entry_num(), mc->old,
+  MC_DEBUG(fprintf(stderr, "iter%3lu[S=%10lu, old=%10lu]  %s", mc->iteration, mc->accepts1->size(), mc->old,
                    (mc->iteration % 3 == 0) ? "\n" : ""));
 
   q_num = mc->accepts1->size();
@@ -454,11 +455,13 @@ static inline BOOL owcty_traversed_owner_is_me(State *succ, BOOL set_flag, BOOL 
       return TRUE;
     }
     flags_update = flags_fetch | set_flag;
-    return !CAS(succ->flags, flags_fetch, flags_update);
+    auto flag    = std::atomic_ref(succ->flags);
+    return !flag.compare_exchange_strong(flags_fetch, flags_update);
   }
   if (flags_fetch & set_flag) {
     flags_update = flags_fetch & ~(set_flag);
-    return !CAS(succ->flags, flags_fetch, flags_update);
+    auto flag    = std::atomic_ref(succ->flags);
+    return !flag.compare_exchange_strong(flags_fetch, flags_update);
   }
   return TRUE;
 }
@@ -665,7 +668,7 @@ static inline bool map_entry_state(State *t, State *propag, AutomataRef a) {
     if (fetch == propag) {
       break;
     }
-    if (CAS(t->map, fetch, propag)) {
+    if (auto map = std::atomic_ref(t->map); map.compare_exchange_strong(fetch, propag)) {
       ret = true;
       break;
     }
@@ -819,9 +822,9 @@ void bledge_worker_init(LmnWorker *w) {
   auto *mc = LMN_MALLOC<McSearchBLE>();
   if (worker_id(w) == LMN_PRIMARY_ID) {
     if (worker_group(w)->workers_get_entried_num() > 1) {
-      mc->layer = new MPMCQueue<State*>();
+      mc->layer = new MPMCQueue<State *>();
     } else {
-      mc->layer = new SPSCQueue<State*>();
+      mc->layer = new SPSCQueue<State *>();
     }
   } else {
     mc->layer = BLE_WORKER_LAYER_Q(worker_group(w)->get_worker(LMN_PRIMARY_ID));

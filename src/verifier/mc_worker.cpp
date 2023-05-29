@@ -44,6 +44,7 @@
 #include <barrier>
 #include <climits>
 
+#include "element/lmntal_thread.h"
 #include "mc.h"
 #include "mc_explorer.h"
 #include "mc_generator.h"
@@ -158,7 +159,7 @@ LmnWorkerGroup::LmnWorkerGroup(AutomataRef a, Vector *psyms, int thread_num)
     : worker_num(thread_num), synchronizer(thread_num, [] {}) {
 #ifdef KWBT_OPT
   if (thread_num >= 2 && lmn_env.opt_mode != OPT_NONE) {
-    workers_set_ewlock(ewlock_make(1U, DEFAULT_WLOCK_NUM));
+    workers_set_ewlock(new EWLock{1U, DEFAULT_WLOCK_NUM});
   }
 #endif
   auto flags = flags_init(a);
@@ -175,9 +176,7 @@ LmnWorkerGroup::~LmnWorkerGroup() {
 #endif
   workers_free(workers_get_entried_num());
 
-  if (workers_get_ewlock()) {
-    ewlock_free(workers_get_ewlock());
-  }
+  delete ewlock;
 }
 
 bool LmnWorkerGroup::workers_are_exit() const { return mc_exit; }
@@ -206,13 +205,13 @@ EWLock *LmnWorkerGroup::workers_get_ewlock() { return ewlock; }
 
 void LmnWorkerGroup::workers_set_ewlock(EWLock *e) { ewlock = e; }
 
-void LmnWorkerGroup::workers_opt_end_lock() { ewlock_acquire_enter(ewlock, 0U); }
+void LmnWorkerGroup::workers_opt_end_lock() { ewlock->acquire_enter(0); }
 
-void LmnWorkerGroup::workers_opt_end_unlock() { ewlock_release_enter(ewlock, 0U); }
+void LmnWorkerGroup::workers_opt_end_unlock() { ewlock->release_enter(0); }
 
-void LmnWorkerGroup::workers_state_lock(mtx_data_t id) { ewlock_acquire_write(ewlock, id); }
+void LmnWorkerGroup::workers_state_lock(mtx_data_t id) { ewlock->acquire_write(id); }
 
-void LmnWorkerGroup::workers_state_unlock(mtx_data_t id) { ewlock_release_write(ewlock, id); }
+void LmnWorkerGroup::workers_state_unlock(mtx_data_t id) { ewlock->release_write(id); }
 
 bool LmnWorkerGroup::workers_are_terminated() const { return terminated; }
 

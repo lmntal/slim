@@ -46,8 +46,11 @@
  * @{
  */
 
+#include <atomic>
+
 #include "mc_worker.h"
 #include "stack_macro.h"
+#include "verifier/state.hpp"
 
 /* Nested-DFSが起動するための条件 */
 #define NDFS_COND(W, SYST_S, PROP_S)                                                                                   \
@@ -70,16 +73,39 @@
 #define MC_MAP2_MASK (0x01U << 1)
 #define MC_BLE_MASK (0x01U << 2)
 
-#define smap_set_deleted(S) (OR_AND_FETCH((S)->flags2, MC_MAP_MASK))
-#define smap_unset_deleted(S) (AND_AND_FETCH((S)->flags2, MC_MAP_MASK))
-#define smap_is_deleted(S) ((S)->flags2 & MC_MAP_MASK)
-#define smap_set_not_delete(S) (OR_AND_FETCH((S)->flags2, MC_MAP2_MASK))
-#define smap_unset_not_delete(S) (AND_AND_FETCH((S)->flags2, MC_MAP2_MASK))
-#define smap_is_not_delete(S) ((S)->flags2 & MC_MAP2_MASK)
-
-#define sble_set_on_stack(S) (OR_AND_FETCH((S)->flags2, MC_BLE_MASK))
-#define sble_unset_on_stack(S) (AND_AND_FETCH((S)->flags2, MC_BLE_MASK))
-#define sble_is_on_stack(S) ((S)->flags2 & MC_BLE_MASK)
+inline void smap_set_deleted(State *s) {
+  auto flags2 = std::atomic_ref(s->flags2);
+  flags2.fetch_or(MC_MAP_MASK);
+}
+inline void smap_unset_deleted(State *s) {
+  auto flags2 = std::atomic_ref(s->flags2);
+  flags2.fetch_and(MC_MAP_MASK);
+}
+inline bool smap_is_deleted(State *s) {
+  return (s->flags2 & MC_MAP_MASK);
+}
+inline void smap_set_not_delete(State *s) {
+  auto flags2 = std::atomic_ref(s->flags2);
+  flags2.fetch_or(MC_MAP2_MASK);
+}
+inline void smap_unset_not_delete(State *s) {
+  auto flags2 = std::atomic_ref(s->flags2);
+  flags2.fetch_and(MC_MAP2_MASK);
+}
+inline bool smap_is_not_delete(State *s) {
+  return (s->flags2 & MC_MAP2_MASK);
+}
+inline void sble_set_on_stack(State *s) {
+  auto flags2 = std::atomic_ref(s->flags2);
+  flags2.fetch_or(MC_BLE_MASK);
+}
+inline void sble_unset_on_stack(State *s) {
+  auto flags2 = std::atomic_ref(s->flags2);
+  flags2.fetch_and(MC_BLE_MASK);
+}
+inline bool sble_is_on_stack(State *s) {
+  return (s->flags2 & MC_BLE_MASK);
+}
 
 /** prototypes
  */

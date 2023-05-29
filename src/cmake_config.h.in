@@ -21,134 +21,11 @@
 #cmakedefine HAVE_GPERFTOOLS
 #cmakedefine01 HAVE_GPERFTOOLS_TCMALLOC_H
 
-/* Define to 1 if the system has the function `add_and_fetch'. */
-#cmakedefine01 HAVE_ATOMIC_ADD
-
-/* Define to 1 if the system has the function `compare_and_swap'. */
-#cmakedefine01 HAVE_ATOMIC_CAS
-
-/* Define to 1 if the system has the function `and_and_fetch'. */
-#cmakedefine01 HAVE_ATOMIC_LOGICAL_AND
-
-/* Define to 1 if the system has the function `or_and_fetch'. */
-#cmakedefine01 HAVE_ATOMIC_LOGICAL_OR
-
-/* Define to 1 if the system has the function `sub_and_fetch'. */
-#cmakedefine01 HAVE_ATOMIC_SUB
-
-/* Define to 1 if the system has the function `__sync_synchronize'. */
-#cmakedefine01 HAVE_BUILTIN_MBARRIER
-
-/* Define to 1 if compiler supports __builtin_stack_pointer */
-/* #undef HAVE_BUILTIN_STACK_POINTER */
-
-/* Define to 1 if you have the <conflict-signal.h> header file. */
-/* #undef HAVE_CONFLICT_SIGNAL_H */
-
-/* Define to 1 if you have the <cygwin/signal.h> header file. */
-/* #undef HAVE_CYGWIN_SIGNAL_H */
-
-/* Define to 1 if you have the declaration of `cfree', and to 0 if you don't.
- */
-#define HAVE_DECL_CFREE 0
-
-/* Define to 1 if you have the declaration of `memalign', and to 0 if you
-   don't. */
-#define HAVE_DECL_MEMALIGN 1
-
-/* Define to 1 if you have the declaration of `posix_memalign', and to 0 if
-   you don't. */
-#define HAVE_DECL_POSIX_MEMALIGN 1
-
-/* Define to 1 if you have the declaration of `pvalloc', and to 0 if you
-   don't. */
-#define HAVE_DECL_PVALLOC 1
-
-/* Define to 1 if you have the declaration of `uname', and to 0 if you don't.
- */
-#define HAVE_DECL_UNAME 1
-
-/* Define to 1 if you have the declaration of `valloc', and to 0 if you don't.
- */
-#define HAVE_DECL_VALLOC 1
-
-/* Define to 1 if you have the <dlfcn.h> header file. */
-#define HAVE_DLFCN_H 1
-
-/* Define to 1 if the system has the type `Elf32_Versym'. */
-#define HAVE_ELF32_VERSYM 1
-
-/* Define to 1 if you have the <execinfo.h> header file. */
-#cmakedefine01 HAVE_EXECINFO_H
-
-/* Define to 1 if you have the <fcntl.h> header file. */
-#define HAVE_FCNTL_H 1
-
-/* Define to 1 if you have the <features.h> header file. */
-#define HAVE_FEATURES_H 1
-
-/* Define to 1 if you have the `geteuid' function. */
-#define HAVE_GETEUID 1
-
-/* Define to 1 if you have the `getpagesize' function. */
-#define HAVE_GETPAGESIZE 1
-
-/* Define to 1 if you have the <glob.h> header file. */
-#define HAVE_GLOB_H 1
-
-/* Define to 1 if you have the <grp.h> header file. */
-#define HAVE_GRP_H 1
-
-/* Define to 1 if the system has the type `intptr_t'. */
-#define HAVE_INTPTR_T 1
-
-/* Define to 1 if you have the <inttypes.h> header file. */
-#cmakedefine01 HAVE_INTTYPES_H
-
-/* Define to 1 if you have the `gomp' library (-lgomp). */
-#define HAVE_LIBGOMP 1
-
-/* Define to 1 if you have the `m' library (-lm). */
-#define HAVE_LIBM 1
-
-/* Define to 1 if you have the `pthread' library (-lpthread). */
-#cmakedefine01 HAVE_LIBPTHREAD
-
-/* Define to 1 if you have the `rt' library (-lrt). */
-#define HAVE_LIBRT 1
-
-/* Define to 1 if you have the <libunwind.h> header file. */
-/* #undef HAVE_LIBUNWIND_H */
-
 /* Define to 1 if you have the `z' library (-lz). */
 #cmakedefine01 HAVE_LIBZ
 
-/* Define to 1 if you have the <linux/ptrace.h> header file. */
-#define HAVE_LINUX_PTRACE_H 1
-
-/* Define to 1 if the system has the type `long double'. */
-#define HAVE_LONG_DOUBLE 1
-
-/* Define to 1 if you have the <malloc.h> header file. */
-#define HAVE_MALLOC_H 1
-
-/* Define to 1 if you have a working `mmap' system call. */
-#define HAVE_MMAP 1
-
-/* define if the compiler implements namespaces */
-#define HAVE_NAMESPACES 1
-
 /* Define to 1 if you have the <omp.h> header file. */
 #cmakedefine01 HAVE_OMP_H
-
-/* Define to 1 if you have the <poll.h> header file. */
-#define HAVE_POLL_H 1
-
-/* Define to Enable Processor Elements on your environment. */
-#define HAVE_PROCESSOR_ELEMENTS @PROCESSOR_COUNT@
-
-/* define if libc has program_invocation_name */
-#define HAVE_PROGRAM_INVOCATION_NAME 1
 
 /* Define if you have POSIX threads libraries and header files. */
 #cmakedefine01 HAVE_PTHREAD
@@ -156,68 +33,11 @@
 /* Define to 1 if the system has `pthread_barrier'. */
 #cmakedefine01 HAVE_PTHREAD_BARRIER
 
-/* Define to 1 if you have the <pwd.h> header file. */
-#define HAVE_PWD_H 1
-
-/* Define to 1 if you have the `sbrk' function. */
-#define HAVE_SBRK 1
-
 /* Define to 1 if you have the <sched.h> header file. */
 #cmakedefine01 HAVE_SCHED_H
 
-/* Define to 1 if you have the <stdint.h> header file. */
-#define HAVE_STDINT_H 1
-
-/* Define to 1 if you have the <stdio.h> header file. */
-#define HAVE_STDIO_H 1
-
-/* Define to 1 if you have the <stdlib.h> header file. */
-#define HAVE_STDLIB_H 1
-
-/* Define to 1 if you have the <strings.h> header file. */
-#define HAVE_STRINGS_H 1
-
-/* Define to 1 if you have the <string.h> header file. */
-#define HAVE_STRING_H 1
-
-/* Define to 1 if the system has the type `struct mallinfo'. */
-#define HAVE_STRUCT_MALLINFO 1
-
 /* Define to 1 if you have the <syscall.h> header file. */
 #cmakedefine01 HAVE_SYSCALL_H
-
-/* Define to 1 if you have the <sys/cdefs.h> header file. */
-#define HAVE_SYS_CDEFS_H 1
-
-/* Define to 1 if you have the <sys/param.h> header file. */
-#define HAVE_SYS_PARAM_H 1
-
-/* Define to 1 if you have the <sys/prctl.h> header file. */
-#define HAVE_SYS_PRCTL_H 1
-
-/* Define to 1 if you have the <sys/resource.h> header file. */
-#define HAVE_SYS_RESOURCE_H 1
-
-/* Define to 1 if you have the <sys/socket.h> header file. */
-#define HAVE_SYS_SOCKET_H 1
-
-/* Define to 1 if you have the <sys/stat.h> header file. */
-#define HAVE_SYS_STAT_H 1
-
-/* Define to 1 if you have the <sys/syscall.h> header file. */
-#define HAVE_SYS_SYSCALL_H 1
-
-/* Define to 1 if you have the <sys/time.h> header file. */
-#define HAVE_SYS_TIME_H 1
-
-/* Define to 1 if you have the <sys/types.h> header file. */
-#define HAVE_SYS_TYPES_H 1
-
-/* <sys/ucontext.h> is broken on redhat 7 */
-/* #undef HAVE_SYS_UCONTEXT_H */
-
-/* Define to 1 if you have the <sys/wait.h> header file. */
-#define HAVE_SYS_WAIT_H 1
 
 /* enable tcmalloc */
 #cmakedefine HAVE_TCMALLOC
@@ -225,29 +45,8 @@
 /* Define to 1 if compiler supports __thread */
 #cmakedefine01 HAVE_TLS
 
-/* Define to 1 if you have the <ucontext.h> header file. */
-/* #undef HAVE_UCONTEXT_H */
-
-/* Define to 1 if the system has the type `uintptr_t'. */
-#define HAVE_UINTPTR_T 1
-
 /* Define to 1 if you have the <unistd.h> header file. */
 #cmakedefine01 HAVE_UNISTD_H
-
-/* Define to 1 if you have the <unwind.h> header file. */
-#define HAVE_UNWIND_H 1
-
-/* Define to 1 if you have the <valgrind.h> header file. */
-/* #undef HAVE_VALGRIND_H */
-
-/* define if your compiler has __attribute__ */
-#define HAVE___ATTRIBUTE__ 1
-
-/* Define to 1 if compiler supports __environ */
-#define HAVE___ENVIRON 1
-
-/* Define to 1 if the system has the type `__int64'. */
-/* #undef HAVE___INT64 */
 
 /* Define to 1 if the system has the TLS keyword `__thread'. */
 #cmakedefine01 HAVE___THREAD

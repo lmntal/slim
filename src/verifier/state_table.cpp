@@ -37,14 +37,13 @@
 
 #include "state_table.hpp"
 
-#include "state.h"
-#include "state.hpp"
-
 #include <algorithm>
 #include <mutex>
 
-#define STATE_EQUAL(Tbl, Check, Stored)                                                                                \
-  (state_hash(Check) == state_hash(Stored) && ((Tbl)->type->compare)(Check, Stored))
+#include "element/lmntal_thread.h"
+#include "lmntal.h"
+#include "state.h"
+#include "state.hpp"
 
 /* 既に計算済のバイナリストリングbsを状態sに登録する.
  * statetable_{insert/add_direct}内の排他制御ブロック内で呼び出す. */
@@ -114,18 +113,18 @@ void StateTable::resize(unsigned long old_cap) {
   }
 
   if (this->cap() == old_cap) {
-    slim::element::ewmutex mutex(slim::element::ewmutex::exclusive_enter, this->lock, env_my_thread_id());
-    std::lock_guard<slim::element::ewmutex> lk(mutex);
+    ExEnterMutex                  mutex(this->lock, env_my_thread_id());
+    std::lock_guard<ExEnterMutex> lk(mutex);
     if (this->cap() == old_cap) {
       auto new_cap = table_new_size(old_cap);
       auto new_tbl = std::vector<State *>(new_cap, nullptr);
 
       for (int i = 0; i < old_cap; i++) {
-        auto ptr = this->tbl[i];
+        auto *ptr = this->tbl[i];
         while (ptr) {
-          auto next   = ptr->next;
-          auto bucket = state_hash(ptr) % new_cap;
-          ptr->next   = new_tbl[bucket];
+          auto *next   = ptr->next;
+          auto  bucket = state_hash(ptr) % new_cap;
+          ptr->next    = new_tbl[bucket];
           if (ptr->is_dummy() && ptr->is_expanded() && !ptr->is_encoded()) {
             /* オリジナルテーブルでdummy_stateが存在する状態にはバイト列は不要
              * (resize中に,
@@ -153,7 +152,7 @@ void StateTable::resize(unsigned long old_cap) {
 
 unsigned long StateTable::space() const {
   return sizeof(struct StateTable) + num.capacity() * sizeof(unsigned long) +
-         num_dummy_.capacity() * sizeof(unsigned long) + (cap_ * sizeof(State *)) + lmn_ewlock_space(lock);
+         num_dummy_.capacity() * sizeof(unsigned long) + (cap_ * sizeof(State *)) + (lock ? lock->space() : 0);
 }
 
 /* CAUTION: MT-Unsafe */
@@ -165,7 +164,7 @@ void StateTable::format_states() {
 
 void StateTable::memid_rehash(unsigned long hash) {
   for (int i = 0; i < this->cap(); i++) {
-    auto ptr = this->tbl[i];
+    auto *ptr = this->tbl[i];
 
     while (ptr) {
       State *next = ptr->next;
@@ -203,9 +202,7 @@ StateTable::~StateTable() {
   for (auto &ptr : *this)
     delete ptr;
 
-  if (this->lock) {
-    ewlock_free(this->lock);
-  }
+  delete this->lock;
 }
 
 /* statetable_insert: 状態sが状態空間stに既出ならばその状態を,
@@ -290,23 +287,23 @@ StateTable::~StateTable() {
  * 冗長なバイト列を破棄する.
  */
 State *StateTable::insert(State *ins, unsigned long *col) {
-  auto   compress = ins->state_binstr();
+  auto  *compress = ins->state_binstr();
   State *ret      = nullptr;
 
-  slim::element::ewmutex                  outer_mutex(slim::element::ewmutex::enter, this->lock, env_my_thread_id());
-  std::lock_guard<slim::element::ewmutex> lk(outer_mutex);
+  EnterMutex                  outer_mutex(this->lock, env_my_thread_id());
+  std::lock_guard<EnterMutex> lk(outer_mutex);
 
-  auto hash   = state_hash(ins);
-  auto bucket = hash % this->cap();
-  auto str    = this->tbl[bucket];
+  auto  hash   = state_hash(ins);
+  auto  bucket = hash % this->cap();
+  auto *str    = this->tbl[bucket];
 
   /* case: empty bucket */
   if (!str) {
     /* strがNULL --> 即ち未使用バケットの場合 */
     compress = this->compress_state(ins, compress);
     if (!this->tbl[bucket]) {
-      slim::element::ewmutex                  mutex(slim::element::ewmutex::write, this->lock, bucket);
-      std::lock_guard<slim::element::ewmutex> lk(mutex);
+      WriteMutex                  mutex(this->lock, bucket);
+      std::lock_guard<WriteMutex> lk(mutex);
       if (!this->tbl[bucket]) {
         state_set_compress_for_table(ins, compress);
         this->num_increment();
@@ -367,7 +364,8 @@ State *StateTable::insert(State *ins, unsigned long *col) {
         else
           ret = this->rehash_tbl_->insert(ins);
         break;
-      } else if (!STATE_EQUAL(this, ins, str)) {
+      }
+      if (!state_equal(ins, str)) {
         /** B. memidテーブルへのlookupの場合,
          *     もしくはオリジナルテーブルへのlookupで非dummy状態と等価な場合
          */
@@ -380,7 +378,8 @@ State *StateTable::insert(State *ins, unsigned long *col) {
         }
         LMN_ASSERT(ret);
         break;
-      } else if (str->is_encoded()) {
+      }
+      if (str->is_encoded()) {
         /** C. memidテーブルへのlookupでハッシュ値が衝突した場合.
          * (同形成判定結果が偽) */
         if (slim::config::profile && lmn_env.profile_level >= 3) {
@@ -451,9 +450,9 @@ State *StateTable::insert(State *ins, unsigned long *col) {
      */
     if (!str->next) { /* リスト末尾の場合 */
       compress = this->compress_state(ins, compress);
-      slim::element::ewmutex mutex(slim::element::ewmutex::write, this->lock, bucket);
+      WriteMutex mutex(this->lock, bucket);
       if (!str->next) {
-        std::lock_guard<slim::element::ewmutex> lk(mutex);
+        std::lock_guard<WriteMutex> lk(mutex);
         if (!str->next) {
           this->num_increment();
           state_set_compress_for_table(ins, compress);
@@ -490,17 +489,17 @@ State *StateTable::insert(State *ins, unsigned long *col) {
 
 /* 重複検査なしに状態sを状態表stに登録する */
 void StateTable::add_direct(State *s) {
-  slim::element::ewmutex                  outer_mutex(slim::element::ewmutex::enter, this->lock, env_my_thread_id());
-  std::lock_guard<slim::element::ewmutex> lk(outer_mutex);
+  EnterMutex                  outer_mutex(this->lock, env_my_thread_id());
+  std::lock_guard<EnterMutex> lk(outer_mutex);
 
-  auto compress = s->state_binstr();
-  auto bucket   = state_hash(s) % this->cap();
+  auto *compress = s->state_binstr();
+  auto  bucket   = state_hash(s) % this->cap();
 
-  auto ptr = this->tbl[bucket];
+  auto *ptr = this->tbl[bucket];
   if (!ptr) {
     compress = this->compress_state(s, compress);
-    slim::element::ewmutex                  mutex(slim::element::ewmutex::write, this->lock, bucket);
-    std::lock_guard<slim::element::ewmutex> lk(mutex);
+    WriteMutex                  mutex(this->lock, bucket);
+    std::lock_guard<WriteMutex> lk(mutex);
     if (!this->tbl[bucket]) {
       /* add to the tail of an empty bucket */
       state_set_compress_for_table(s, compress);
@@ -521,8 +520,8 @@ void StateTable::add_direct(State *s) {
   while (true) {
     if (!ptr->next) { /* リスト末尾の場合 */
       compress = this->compress_state(s, compress);
-      slim::element::ewmutex                  mutex(slim::element::ewmutex::write, this->lock, bucket);
-      std::lock_guard<slim::element::ewmutex> lk(mutex);
+      WriteMutex                  mutex(this->lock, bucket);
+      std::lock_guard<WriteMutex> lk(mutex);
 
       if (!ptr->next) {
         this->num_increment();
@@ -541,8 +540,8 @@ void StateTable::add_direct(State *s) {
  * ここで新たに生成する状態は,
  * sに対応する階層グラフ構造対して一意なバイナリストリングを持つ. */
 void StateTable::memid_rehash(State *s) {
-  auto new_s        = new State();
-  auto m            = lmn_binstr_decode(s->state_binstr());
+  auto *new_s       = new State();
+  auto *m           = lmn_binstr_decode(s->state_binstr());
   new_s->state_name = s->state_name;
   new_s->state_set_binstr(lmn_mem_encode(m));
   new_s->hash = binstr_hash(new_s->state_binstr());

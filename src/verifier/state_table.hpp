@@ -45,6 +45,7 @@
 #include <cstring> /* memset */
 
 #include <iterator>
+#include <memory>
 #include <numeric>
 
 struct State;
@@ -90,6 +91,10 @@ struct StateTable {
     if (this->need_resize()) {
       this->resize(this->cap());
     }
+  }
+
+  inline bool state_equal(State *Check, State *Stored) const {
+    return (state_hash(Check) == state_hash(Stored) && type->compare(Check, Stored));
   }
 
 private:
@@ -153,7 +158,7 @@ private:
   std::vector<unsigned long> num_dummy_;
   unsigned long              cap_density_;
   std::vector<State *>       tbl;
-  EWLock                    *lock;
+  EWLock                    *lock{nullptr};
   StateTable                *rehash_tbl_; /* rehashした際に登録するテーブル */
 };
 

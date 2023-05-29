@@ -125,23 +125,6 @@ endif()
 # Checks including
 include(CheckTypeSize)
 include(ProcessorCount)
-include(CheckIncludeFile)
-include(CheckCSourceCompiles)
-include(CheckCXXSourceCompiles)
-
-# Check header files
-check_include_file("omp.h" HAVE_OMP_H)
-check_include_file("inttypes.h" HAVE_INTTYPES_H)
-check_include_file("sched.h" HAVE_SCHED_H)
-check_include_file("syscall.h" HAVE_SYSCALL_H)
-check_include_file("unistd.h" HAVE_UNISTD_H)
-check_include_file("execinfo.h" HAVE_EXECINFO_H)
-
-# Check library files
-if(CMAKE_USE_PTHREADS_INIT)
-    set(HAVE_LIBPTHREAD 1)
-    set(HAVE_PTHREAD 1)
-endif()
 
 # Check processor count
 ProcessorCount(N)
@@ -155,89 +138,6 @@ check_type_size("void*" SIZEOF_VOID_P)
 check_type_size("long" SIZEOF_LONG)
 check_type_size("double" SIZEOF_DOUBLE)
 check_type_size("uintptr_t" SIZEOF_UINTPTR_T)
-
-# Check atomic add
-check_c_source_compiles("
-int main(void)
-{
-    int x = 0, y = 0;
-    __sync_add_and_fetch(&x, y);
-    return 0;
-}
-" HAVE_ATOMIC_ADD)
-
-# Check atomic sub
-check_c_source_compiles("
-int main(void)
-{
-    int x = 0, y = 0;
-    __sync_sub_and_fetch(&x, y);
-    return 0;
-}
-" HAVE_ATOMIC_SUB)
-
-# Check atomic compare and swap
-check_c_source_compiles("
-int main(void)
-{
-    int x = 0, y = 0, z = 0;
-    __sync_bool_compare_and_swap(&x, y, z);
-    return 0;
-}
-" HAVE_ATOMIC_CAS)
-
-# Check atomic and fetch
-check_c_source_compiles("
-int main(void)
-{
-    int x = 0, y = 0;
-    __sync_and_and_fetch(&x, y);
-    return 0;
-}
-" HAVE_ATOMIC_LOGICAL_AND)
-
-# Check atomic or fetch
-check_c_source_compiles("
-int main(void)
-{
-    int x = 0, y = 0;
-    __sync_or_and_fetch(&x, y);
-    return 0;
-}
-" HAVE_ATOMIC_LOGICAL_OR)
-
-# Check builtin barrier
-check_c_source_compiles("
-int main(void)
-{
-    __sync_synchronize();
-    return 0;
-}
-" HAVE_BUILTIN_MBARRIER)
-
-# Check pthread barrier
-check_c_source_compiles("
-#include <pthread.h>
-int main(void)
-{
-    pthread_barrier_t barrier;
-    pthread_barrier_init(&barrier, NULL, 1);
-    pthread_barrier_wait(&barrier);
-    pthread_barrier_destroy(&barrier);
-    return 0;
-}
-" HAVE_PTHREAD_BARRIER)
-
-# Check thread_local keyword
-check_cxx_source_compiles("
-int main(void)
-{
-    thread_local int x = 0;
-    return 0;
-}
-" HAVE_TLS)
-
-set(HAVE___THREAD ${HAVE_TLS})
 
 if(ZLIB_FOUND)
     set(HAVE_LIBZ 1)
