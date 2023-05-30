@@ -52,30 +52,29 @@
 
 #include "mem_encode.h"
 
-#define TREE_DB_DEFAULT_SIZE (1024 * 1024 * 128)
+constexpr auto TREE_DB_DEFAULT_SIZE = 1024 * 1024 * 128;
 
-typedef uint64_t TreeNodeElement;
-typedef TreeNodeElement TreeNodeID;
-typedef TreeNodeElement TreeNodeUnit;
+using TreeNodeElement = uint64_t;
+using TreeNodeID      = TreeNodeElement;
+using TreeNodeUnit    = TreeNodeElement;
 
-typedef struct TreeDatabase *TreeDatabaseRef;
-typedef struct TreeNode *TreeNodeRef;
+using TreeDatabaseRef = struct TreeDatabase *;
+using TreeNodeRef     = struct TreeNode *;
 struct TreeNodeStr;
 
 struct TreeDatabase {
   TreeDatabase(size_t size);
   ~TreeDatabase();
-  TreeNodeRef *nodes;
-  uint64_t node_count;
-  size_t mask;
-  void clear();
-  TreeNodeElement tree_find_or_put_rec(TreeNodeStr* str, int start, int end, BOOL *found);
-  TreeNodeID tree_find_or_put(LmnBinStrRef bs, BOOL *found);
-  BOOL table_find_or_put(TreeNodeElement left,
-                       TreeNodeElement right, TreeNodeID *ref);
-  LmnBinStrRef get(TreeNodeID ref, int len);
-  void get_rec(TreeNodeElement elem, int start, int end, TreeNodeStr* dst);
-  uint64_t space(void);
+  TreeNodeRef    *nodes;
+  uint64_t        node_count;
+  size_t          mask;
+  void            clear();
+  TreeNodeElement tree_find_or_put_rec(TreeNodeStr *str, int start, int end, BOOL *found);
+  TreeNodeID      tree_find_or_put(LmnBinStrRef bs, BOOL *found);
+  BOOL            table_find_or_put(TreeNodeElement left, TreeNodeElement right, TreeNodeID *ref);
+  LmnBinStrRef    get(TreeNodeID ref, int len);
+  void            get_rec(TreeNodeElement elem, int start, int end, TreeNodeStr *dst);
+  uint64_t        space();
 };
 
 struct TreeNode {
@@ -83,8 +82,7 @@ struct TreeNode {
   TreeNodeElement right;
 };
 
-#define tree_db_node_count(db) (db->node_count)
-#define tree_db_string_count(db) (db->string_count)
+constexpr auto tree_db_node_count(TreeDatabase *db) { return db->node_count; }
 
 /* @} */
 

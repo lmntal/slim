@@ -38,8 +38,8 @@
  */
 
 %{
-#include <math.h>
-#include <stdio.h>
+#include <cmath>
+#include <cstdio>
 #include "element/element.h"
 #include "automata.h"
 #include "propsym_lexer.hpp"

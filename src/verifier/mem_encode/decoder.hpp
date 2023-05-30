@@ -42,26 +42,25 @@
 #include "vm/vm.h"
 
 enum log_type : uint8_t {
-  BS_LOG_TYPE_NONE = (0x0U),
-  BS_LOG_TYPE_ATOM = (0x1U),
-  BS_LOG_TYPE_MEM = (0x2U),
+  BS_LOG_TYPE_NONE  = (0x0U),
+  BS_LOG_TYPE_ATOM  = (0x1U),
+  BS_LOG_TYPE_MEM   = (0x2U),
   BS_LOG_TYPE_HLINK = (0x3U),
 };
 
 struct BsDecodeLog {
-  LmnWord v;
+  LmnWord  v;
   log_type type;
 };
 
 struct binstr_decoder {
-  halfbyte_scanner scanner;
+  halfbyte_scanner         scanner;
   std::vector<BsDecodeLog> log;
-  int nvisit; /* カウンタ(== 1): 順序付けを記録しながらデコードする.
-               * (0はグローバルルート膜なので1から) */
+  int                      nvisit; /* カウンタ(== 1): 順序付けを記録しながらデコードする.
+                                    * (0はグローバルルート膜なので1から) */
 
   binstr_decoder(BYTE *bs, size_t len, size_t idx = 0)
-      : scanner(bs, len, idx), log(len * TAG_IN_BYTE), nvisit(VISITLOG_INIT_N) {
-  }
+      : scanner(bs, len, idx), log(len * TAG_IN_BYTE), nvisit(VISITLOG_INIT_N) {}
 
   int decode_cell(LmnMembraneRef mem, LmnSymbolAtomRef from_atom, int from_arg);
 

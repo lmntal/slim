@@ -41,6 +41,7 @@
 
 #include <memory>
 #include <type_traits>
+#include <variant>
 #include <vector>
 
 #include "element/element.h"
@@ -71,15 +72,13 @@ struct string {
 };
 struct symbol {
   lmn_interned_str value;
-  symbol(lmn_interned_str name, int arity)
-      : value(lmn_functor_table->intern(ANONYMOUS, name, arity)) {}
+  symbol(lmn_interned_str name, int arity) : value(lmn_functor_table->intern(ANONYMOUS, name, arity)) {}
   symbol(lmn_interned_str module, lmn_interned_str name, int arity)
       : value(lmn_functor_table->intern(module, name, arity)) {}
 };
 } // namespace functor
 
-using Functor = c17::variant<functor::in_proxy, functor::out_proxy,
-                             functor::unify, functor::integer, functor::real,
+using Functor = c17::variant<functor::in_proxy, functor::out_proxy, functor::unify, functor::integer, functor::real,
                              functor::string, functor::symbol>;
 
 namespace instr_arg {
@@ -93,10 +92,8 @@ struct var_list;
 struct inst_list;
 } // namespace instr_arg
 
-using InstrArg =
-    c17::variant<c17::monostate, instr_arg::var, instr_arg::label,
-                 instr_arg::string, instr_arg::lineno, instr_arg::functor,
-                 instr_arg::ruleset, instr_arg::var_list, instr_arg::inst_list>;
+using InstrArg = c17::variant<std::monostate, instr_arg::var, instr_arg::label, instr_arg::string, instr_arg::lineno,
+                              instr_arg::functor, instr_arg::ruleset, instr_arg::var_list, instr_arg::inst_list>;
 
 namespace instr_arg {
 struct var {
@@ -117,7 +114,7 @@ struct lineno {
 };
 struct functor {
   il::Functor value;
-  functor(il::Functor &&value) : value(std::move(value)) {}
+  functor(il::Functor &&value) : value(value) {}
 };
 struct ruleset {
   int value;
@@ -135,83 +132,74 @@ struct inst_list {
 } // namespace il
 
 struct Instruction {
-  LmnInstruction id;
-  std::vector<il::InstrArg> args;
+  LmnInstruction            id;
+  std::vector<il::InstrArg> args{};
 
-  Instruction() : id(INSTR_DUMMY), args() {}
-  Instruction(LmnInstruction id, std::vector<il::InstrArg> &&args)
-      : id(id), args(std::move(args)) {}
+  Instruction() : id(INSTR_DUMMY) {}
+  Instruction(LmnInstruction id, std::vector<il::InstrArg> &&args) : id(id), args(std::move(args)) {}
 };
 
 struct InstBlock {
-  int label;
+  int                      label;
   std::vector<Instruction> instrs;
 
-  InstBlock(int label, std::vector<Instruction> &&instrs) noexcept
-      : label(label), instrs(std::move(instrs)) {}
-  InstBlock(std::vector<Instruction> &&instrs) noexcept
-      : label(0), instrs(std::move(instrs)) {}
+  InstBlock(int label, std::vector<Instruction> &&instrs) noexcept : label(label), instrs(std::move(instrs)) {}
+  InstBlock(std::vector<Instruction> &&instrs) noexcept : label(0), instrs(std::move(instrs)) {}
   InstBlock() noexcept : label(0) {}
 
   BOOL has_label() const { return label != 0; }
 };
 
 struct Rule {
-  BOOL hasuniq;
+  BOOL             hasuniq;
   lmn_interned_str name;
-  InstBlock amatch;
-  InstBlock mmatch;
-  InstBlock guard;
-  InstBlock body;
+  InstBlock        amatch;
+  InstBlock        mmatch;
+  InstBlock        guard;
+  InstBlock        body;
 
-  Rule() {}
-  Rule(BOOL hasuniq, InstBlock &&amatch, InstBlock &&mmatch, InstBlock &&guard,
-       InstBlock &&body)
-      : hasuniq(hasuniq), name(ANONYMOUS), amatch(std::move(amatch)),
-        mmatch(std::move(mmatch)), guard(std::move(guard)),
-        body(std::move(body)) {}
+  Rule() = default;
+  Rule(BOOL hasuniq, InstBlock &&amatch, InstBlock &&mmatch, InstBlock &&guard, InstBlock &&body)
+      : hasuniq(hasuniq), name(ANONYMOUS), amatch(std::move(amatch)), mmatch(std::move(mmatch)),
+        guard(std::move(guard)), body(std::move(body)) {}
 };
 
 struct Subrule {
   lmn_interned_str name;
-  InstBlock body;
+  InstBlock        body;
 
   Subrule();
-  Subrule(lmn_interned_str name, InstBlock &&body)
-    : name(name), body(std::move(body)) {}
+  Subrule(lmn_interned_str name, InstBlock &&body) : name(name), body(std::move(body)) {}
 };
 
 struct RuleSet {
   BOOL is_system_ruleset;
-  int id;
+  int  id;
+
   std::vector<il::c17::variant<Rule, Subrule>> rules;
 
-  RuleSet() {}
+  RuleSet() = default;
   RuleSet(int id, std::vector<il::c17::variant<Rule, Subrule>> &&rules, BOOL is_system_ruleset)
       : id(id), rules(std::move(rules)), is_system_ruleset(is_system_ruleset) {}
 };
 
 struct Module {
   lmn_interned_str name_id;
-  int ruleset_id;
+  int              ruleset_id;
 
-  Module(lmn_interned_str name_id, int ruleset_id)
-      : name_id(name_id), ruleset_id(ruleset_id) {}
+  Module(lmn_interned_str name_id, int ruleset_id) : name_id(name_id), ruleset_id(ruleset_id) {}
 };
 
 struct IL {
-  std::vector<RuleSet> rulesets;
-  std::vector<Module> modules;
+  std::vector<RuleSet>          rulesets;
+  std::vector<Module>           modules;
   std::vector<lmn_interned_str> inlines;
 
-  IL(std::vector<RuleSet> &&rulesets, std::vector<Module> &&module_list,
-     std::vector<lmn_interned_str> &&inline_list)
-      : rulesets(std::move(rulesets)), modules(std::move(module_list)),
-        inlines(std::move(inline_list)) {}
+  IL(std::vector<RuleSet> &&rulesets, std::vector<Module> &&module_list, std::vector<lmn_interned_str> &&inline_list)
+      : rulesets(std::move(rulesets)), modules(std::move(module_list)), inlines(std::move(inline_list)) {}
   IL(std::vector<RuleSet> &&rulesets, std::vector<Module> &&module_list)
       : rulesets(std::move(rulesets)), modules(std::move(module_list)) {}
-  IL(std::vector<RuleSet> &&rulesets,
-     std::vector<lmn_interned_str> &&inline_list)
+  IL(std::vector<RuleSet> &&rulesets, std::vector<lmn_interned_str> &&inline_list)
       : rulesets(std::move(rulesets)), inlines(std::move(inline_list)) {}
   IL(std::vector<RuleSet> &&rulesets) : rulesets(std::move(rulesets)) {}
 };

@@ -45,25 +45,19 @@
 #include <cstdint>
 
 /* bsの位置posから1バイト読み込み，返す */
-static BYTE binstr_get_byte(BYTE *bs, int pos) {
-  return (BS_GET(bs, pos + 1)) | (BS_GET(bs, pos) << 4);
-}
+static BYTE binstr_get_byte(BYTE *bs, int pos) { return (BS_GET(bs, pos + 1)) | (BS_GET(bs, pos) << 4); }
 
 static uint16_t binstr_get_uint16(BYTE *bs, int pos) {
-  return (uint16_t)((binstr_get_byte(bs, pos + 2)) |
-                    ((binstr_get_byte(bs, pos)) << 8));
+  return (uint16_t)((binstr_get_byte(bs, pos + 2)) | ((binstr_get_byte(bs, pos)) << 8));
 }
 
 static uint32_t binstr_get_uint32(BYTE *bs, int pos) {
-  return (uint32_t)(binstr_get_uint16(bs, pos + 4) |
-                    (binstr_get_uint16(bs, pos) << 16));
+  return (uint32_t)(binstr_get_uint16(bs, pos + 4) | (binstr_get_uint16(bs, pos) << 16));
 }
 
 static uint64_t binstr_get_uint64(BYTE *bs, int pos) {
-  return (uint64_t)(binstr_get_uint32(bs, pos + 8) |
-                    (uint64_t)binstr_get_uint32(bs, pos) << 32);
+  return (uint64_t)(binstr_get_uint32(bs, pos + 8) | (uint64_t)binstr_get_uint32(bs, pos) << 32);
 }
-
 
 /* LMNtal言語はinteger valueの範囲を1wordとしている(型がない)ため, long型で良い
  */
@@ -81,7 +75,7 @@ static double binstr_get_dbl(BYTE *bs, int pos) {
   int i;
   union {
     double d;
-    BYTE t[8];
+    BYTE   t[8];
   } v;
 
   for (i = 7; i >= 0; i--) {
@@ -118,18 +112,12 @@ static unsigned int binstr_get_arg_ref(BYTE *bs, int pos) {
   return binstr_get_byte(bs, pos);
 }
 
-static lmn_interned_str binstr_get_mem_name(BYTE *bs, int pos) {
-  return binstr_get_uint32(bs, pos);
-}
+static lmn_interned_str binstr_get_mem_name(BYTE *bs, int pos) { return binstr_get_uint32(bs, pos); }
 
-static long binstr_get_ruleset_num(BYTE *bs, int pos) {
-  return binstr_get_uint32(bs, pos);
-}
+static long binstr_get_ruleset_num(BYTE *bs, int pos) { return binstr_get_uint32(bs, pos); }
 
 /* ruleset id(2byte)の取得 */
-static long binstr_get_ruleset(BYTE *bs, int pos) {
-  return binstr_get_uint16(bs, pos);
-}
+static long binstr_get_ruleset(BYTE *bs, int pos) { return binstr_get_uint16(bs, pos); }
 
 static lmn_interned_str binstr_get_strid(BYTE *bs, int pos) {
   LMN_ASSERT(BS_HISTORY_SIZE == 8);
@@ -141,18 +129,15 @@ static long binstr_get_history_num(BYTE *bs, int pos) {
   return binstr_get_uint32(bs, pos);
 }
 
-static lmn_interned_str binstr_get_history(BYTE *bs, int pos) {
-  return binstr_get_strid(bs, pos);
-}
+static lmn_interned_str binstr_get_history(BYTE *bs, int pos) { return binstr_get_strid(bs, pos); }
 
 struct halfbyte_scanner {
   uint8_t *bs;
-  size_t size;
-  size_t index;
+  size_t   size;
+  size_t   index;
 
 public:
-  halfbyte_scanner(uint8_t *bs, size_t size, size_t index = 0)
-      : bs(bs), size(size), index(index) {}
+  halfbyte_scanner(uint8_t *bs, size_t size, size_t index = 0) : bs(bs), size(size), index(index) {}
 
   size_t location() const { return index; }
 
@@ -164,33 +149,33 @@ public:
 
   long scan_ruleset_num() {
     auto res = binstr_get_uint32(bs, index);
-    index += BS_RULESET_NUM_SIZE;
+    index    += BS_RULESET_NUM_SIZE;
     return res;
   }
 
   LmnRulesetId scan_ruleset() {
     auto result = binstr_get_uint16(bs, index);
-    index += BS_RULESET_SIZE;
+    index       += BS_RULESET_SIZE;
     return result;
   }
 
   long scan_history_num() {
     LMN_ASSERT(BS_HISTORY_NUM_SIZE == 8);
     auto res = binstr_get_uint32(bs, index);
-    index += BS_HISTORY_NUM_SIZE;
+    index    += BS_HISTORY_NUM_SIZE;
     return res;
   }
 
   lmn_interned_str scan_history() {
     LMN_ASSERT(BS_HISTORY_SIZE == 8);
     auto res = binstr_get_uint32(bs, index);
-    index += BS_HISTORY_SIZE;
+    index    += BS_HISTORY_SIZE;
     return res;
   }
 
   lmn_interned_str scan_mem_name() {
     auto res = binstr_get_uint32(bs, index);
-    index += BS_MEM_NAME_SIZE;
+    index    += BS_MEM_NAME_SIZE;
     return res;
   }
 
@@ -209,7 +194,7 @@ public:
   double scan_double() {
     int i;
     union {
-      double d;
+      double  d;
       uint8_t t[8];
     } v;
 
@@ -218,56 +203,56 @@ public:
     }
 
     auto res = v.d;
-    index += BS_DBL_SIZE;
+    index    += BS_DBL_SIZE;
     return res;
   }
 
   lmn_interned_str scan_strid() {
     LMN_ASSERT(BS_HISTORY_SIZE == 8);
     auto res = binstr_get_uint32(bs, index);
-    index += BS_STR_ID_SIZE;
+    index    += BS_STR_ID_SIZE;
     return res;
   }
 
   LmnFunctor scan_functor() {
     LMN_ASSERT(sizeof(LmnFunctor) == 2);
-    long f = binstr_get_uint16(bs, index);
+    long f      = binstr_get_uint16(bs, index);
     auto result = (LmnFunctor)(FUNCTOR_MAX - f);
-    index += BS_FUNCTOR_SIZE;
+    index       += BS_FUNCTOR_SIZE;
     return result;
   }
 
   unsigned int scan_hlink_num() {
     LMN_ASSERT(BS_PROC_REF_SIZE == (sizeof(uint32_t) * TAG_IN_BYTE));
     auto res = (unsigned int)binstr_get_uint32(bs, index);
-    index += BS_HLINK_NUM_SIZE;
+    index    += BS_HLINK_NUM_SIZE;
     return res;
   }
 
   unsigned int scan_ref_num() {
     LMN_ASSERT(BS_PROC_REF_SIZE == (sizeof(uint32_t) * TAG_IN_BYTE));
     auto res = (unsigned int)binstr_get_uint32(bs, index);
-    index += BS_PROC_REF_SIZE;
+    index    += BS_PROC_REF_SIZE;
     return res;
   }
 
   unsigned int scan_arg_ref() {
     LMN_ASSERT(BS_ATOM_REF_ARG_SIZE == 2);
     auto res = binstr_get_byte(bs, index);
-    index += BS_ATOM_REF_ARG_SIZE;
+    index    += BS_ATOM_REF_ARG_SIZE;
     return res;
   }
 
   LmnByte scan_sp_atom_type() {
     LMN_ASSERT(sizeof(LmnByte) == 1);
     auto res = binstr_get_byte(bs, index);
-    index += sizeof(LmnByte) * TAG_IN_BYTE;
+    index    += sizeof(LmnByte) * TAG_IN_BYTE;
     return res;
   }
 
   std::vector<uint8_t> scan_bytes() {
     uint64_t size = binstr_get_uint64(bs, index);
-    index += sizeof(uint64_t) * TAG_IN_BYTE;
+    index         += sizeof(uint64_t) * TAG_IN_BYTE;
     std::vector<uint8_t> bytes(size);
     for (int i = 0; i < size; i++, index += TAG_IN_BYTE)
       bytes[i] = binstr_get_byte(bs, index);

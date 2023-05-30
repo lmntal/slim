@@ -59,14 +59,14 @@
  * \e dumper_init must be called just once before use.
  * This function just register callback so far.
  */
-LMN_EXTERN void dumper_init(void);
+LMN_EXTERN void dumper_init();
 /**
  * @brief finalize dumper module.
  *
  * \e dumper_finalize muste be called just once after use.
  * This function does nothing.
  */
-LMN_EXTERN void dumper_finalize(void);
+LMN_EXTERN void dumper_finalize();
 /**
  * @brief print a membrane to stdout.
  */
@@ -100,17 +100,16 @@ LMN_EXTERN void lmn_dump_rule(LmnPortRef port, LmnRuleSetRef rs);
  * @brief print rules.
  * @deprecated
  */
-LMN_EXTERN void lmn_dump_ruleset(LmnPortRef port, const std::vector<LmnRuleSet *> &v);
+LMN_EXTERN void lmn_dump_ruleset(LmnPortRef port, std::vector<LmnRuleSet *> const &v);
 /**
  * @brief print an atom and its connected ones.
  */
-LMN_EXTERN void lmn_dump_atom(LmnPortRef port, LmnAtomRef atom,
-                              LmnLinkAttr attr);
+LMN_EXTERN void lmn_dump_atom(LmnPortRef port, LmnAtomRef atom, LmnLinkAttr attr);
 
 /**
  * @brief print an escaped string.
  */
-void dump_escaped(LmnPortRef port, const char *s);
+void dump_escaped(LmnPortRef port, std::string_view s);
 
 extern char char_to_escape_char[];
 
@@ -123,18 +122,15 @@ std::ostream &dot(std::ostream &os);
 std::ostream &json(std::ostream &os);
 } // namespace format
 
-std::string to_string(const LmnMembrane *mem);
-static inline std::string to_string_membrane(const LmnMembrane *mem) {
-  return (lmn_env.output_format == OutputFormat::DEFAULT)
-             ? ("{" + to_string(mem) + "}")
-             : to_string(mem);
+std::string               to_string(LmnMembrane const *mem);
+static inline std::string to_string_membrane(LmnMembrane const *mem) {
+  return (lmn_env.output_format == OutputFormat::DEFAULT) ? ("{" + to_string(mem) + "}") : to_string(mem);
 }
 
-void dump_mem(std::ostream &os, const LmnMembrane *mem);
+void dump_mem(std::ostream &os, LmnMembrane const *mem);
 } // namespace slim
 
-static inline std::ostream &operator<<(std::ostream &os,
-                                       const LmnMembrane &mem) {
+static inline std::ostream &operator<<(std::ostream &os, LmnMembrane const &mem) {
   slim::dump_mem(os, &mem);
   return os;
 }

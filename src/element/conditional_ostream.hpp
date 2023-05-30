@@ -40,8 +40,7 @@
 
 #include <ostream>
 
-namespace slim {
-namespace element {
+namespace slim::element {
 
 /**
  * @brief Outputs values to std::ostream conditionally.
@@ -62,25 +61,21 @@ namespace element {
  * optimization.
  */
 struct conditional_ostream {
-  bool is_valid;
+  bool          is_valid;
   std::ostream &os;
 
-  constexpr conditional_ostream(std::ostream &stream, bool is_valid = true)
-      : os(stream), is_valid(is_valid) {}
+  constexpr conditional_ostream(std::ostream &stream, bool is_valid = true) : os(stream), is_valid(is_valid) {}
 
-  slim::element::conditional_ostream &
-  operator<<(std::ostream &(*pf)(std::ostream &)) {
+  slim::element::conditional_ostream &operator<<(std::ostream &(*pf)(std::ostream &)) {
     if (is_valid)
       pf(os);
     return *this;
   }
 };
-} // namespace element
-} // namespace slim
+} // namespace slim::element
 
 template <typename T>
-slim::element::conditional_ostream &
-operator<<(slim::element::conditional_ostream &ds, const T &v) {
+slim::element::conditional_ostream &operator<<(slim::element::conditional_ostream &ds, T const &v) {
   if (ds.is_valid)
     ds.os << v;
   return ds;

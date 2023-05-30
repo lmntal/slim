@@ -46,7 +46,7 @@
  * @{
  */
 
-#include <stdio.h>
+#include <cstdio>
 
 /* 環境変数: ltl2baコマンドのパス */
 #define ENV_LTL2BA "LTL2BA"

@@ -46,8 +46,8 @@ class LmnMembrane;
 
 #include <cstdio>
 #include <memory>
-#include <string>
 #include <stdexcept>
+#include <string>
 /**
  * A dumper class for states and statespaces.
  *
@@ -65,23 +65,21 @@ public:
   virtual ~StateDumper() {}
 
   virtual void dump(StateSpace *ss) = 0;
-  void dump(State *s) { dump(s, nullptr); }
+  void         dump(State *s) { dump(s, nullptr); }
 
   //! @todo このメンバ関数をなんとかしたい
   void state_print_mem(State *s);
 
   //! Factory method used to create a dumper its format depends on command-line
   //! arguments passed to SLIM.
-  static std::unique_ptr<StateDumper> from_env(FILE *fp) {
-    return std::unique_ptr<StateDumper>(from_env_ptr(fp));
-  }
+  static std::unique_ptr<StateDumper> from_env(FILE *fp) { return std::unique_ptr<StateDumper>(from_env_ptr(fp)); }
 
 protected:
   //! use factory method instead.
   StateDumper(FILE *fp) : _fp(fp) {}
-  void dump(State *s, const StateSpace *_owner);
-  void state_print_label(State *s, const StateSpace *_owner);
-  void state_print_transition(State *s, const StateSpace *_owner);
+  void         dump(State *s, StateSpace const *_owner);
+  void         state_print_label(State *s, StateSpace const *_owner);
+  void         state_print_transition(State *s, StateSpace const *_owner);
   virtual void print_mem(LmnMembrane *mem);
 
   //! output stream
@@ -90,20 +88,17 @@ protected:
 private:
   static StateDumper *from_env_ptr(FILE *fp);
 
-  virtual MCdumpFormat dump_format() const = 0;
-  virtual bool need_id_foreach_trans() const = 0;
-  virtual std::string state_separator() const = 0;
-  virtual std::string trans_separator() const = 0;
-  virtual std::string label_begin() const = 0;
-  virtual std::string label_end() const = 0;
+  virtual MCdumpFormat dump_format() const           = 0;
+  virtual bool         need_id_foreach_trans() const = 0;
+  virtual std::string  state_separator() const       = 0;
+  virtual std::string  trans_separator() const       = 0;
+  virtual std::string  label_begin() const           = 0;
+  virtual std::string  label_end() const             = 0;
 
-  virtual void dump_state_data(State *s, unsigned long print_id,
-                               StateSpace *owner) {
+  virtual void dump_state_data(State *s, unsigned long print_id, StateSpace *owner) {
     throw std::runtime_error("unexpected");
   }
-  virtual void print_state_label(State *s, StateSpace *owner) {
-    throw std::runtime_error("unexpected");
-  }
+  virtual void print_state_label(State *s, StateSpace *owner) { throw std::runtime_error("unexpected"); }
 };
 
 #endif

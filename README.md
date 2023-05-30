@@ -1,4 +1,4 @@
-# SLIM - Slim LMNtal IMprementation
+# SLIM - Slim LMNtal IMplementation
 
 _Every dinosaur has a time when he or she is a small, tiny child..._
 

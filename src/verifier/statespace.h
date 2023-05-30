@@ -62,13 +62,10 @@ struct MemIdHash {
 
   void add_hash(unsigned long hash) { memid_hashes.insert(hash); }
   /* hashが膜のIDを計算しているハッシュならば真、そうでなければ偽を返す */
-  bool contains_hash(unsigned long hash) {
-    return memid_hashes.find(hash) != memid_hashes.end();
-  }
+  bool contains_hash(unsigned long hash) { return memid_hashes.find(hash) != memid_hashes.end(); }
 };
 
-struct StateSpace : public std::conditional<slim::config::profile, MemIdHash,
-                                            MemIdHashSkeleton>::type {
+struct StateSpace : public std::conditional<slim::config::profile, MemIdHash, MemIdHashSkeleton>::type {
   /* 膜の同型性判定にこの回数以上失敗すると膜のエンコードを行う */
   static constexpr unsigned int MEM_EQ_FAIL_THRESHOLD = 2U;
 
@@ -76,34 +73,34 @@ struct StateSpace : public std::conditional<slim::config::profile, MemIdHash,
   StateSpace(AutomataRef a, Vector *psyms) : StateSpace(1, a, psyms){};
   ~StateSpace();
 
-  void add_memid_hash(unsigned long hash);
-  State *insert(State *s);
-  State *insert_delta(State *s, struct MemDeltaRoot *d);
-  void add_direct(State *s);
-  void set_init_state(State *init_state);
-  void format_states();
+  void          add_memid_hash(unsigned long hash);
+  State        *insert(State *s);
+  State        *insert_delta(State *s, struct MemDeltaRoot *d);
+  void          add_direct(State *s);
+  void          set_init_state(State *init_state);
+  void          format_states();
   unsigned long space() const;
   unsigned long num() const;
   unsigned long num_raw() const;
   unsigned long dummy_num() const;
   unsigned long num_of_ends() const;
-  State *initial_state() { return init_state; }
-  void mark_as_end(State *);
+  State        *initial_state() { return init_state; }
+  void          mark_as_end(State *);
 
   StateTable &accept_tbl() { return *mhash_table.acc; }
   StateTable &accept_memid_tbl() { return *memid_table.acc; }
 
-  bool use_memenc() const { return using_memenc; }
-  bool is_formatted() const { return this->is_formated; }
-  bool has_property() const { return this->property_automata; }
+  bool        use_memenc() const { return using_memenc; }
+  bool        is_formatted() const { return this->is_formated; }
+  bool        has_property() const { return this->property_automata; }
   AutomataRef automata() { return this->property_automata; }
-  Vector *prop_symbols() { return this->propsyms; }
+  Vector     *prop_symbols() { return this->propsyms; }
 
   FILE *output() { return out; }
-  void dump();
-  void dump_ends() const;
+  void  dump();
+  void  dump_ends() const;
 
-  std::vector<State *> all_states() const;
+  std::vector<State *>                    all_states() const;
   std::map<State *, std::vector<State *>> predecessor() const {
     std::map<State *, std::vector<State *>> predecessor;
     for (auto &s : all_states()) {
@@ -121,11 +118,11 @@ private:
   /* 2bytes alignment */
   unsigned int thread_num; /* 本テーブルの操作スレッド数 */
 
-  FILE *out;         /* dump先 */
+  FILE  *out;        /* dump先 */
   State *init_state; /* 初期状態 */
 
   AutomataRef property_automata; /* Never Clainへのポインタ */
-  Vector *propsyms;              /* 命題記号定義へのポインタ */
+  Vector     *propsyms;          /* 命題記号定義へのポインタ */
 
   /* それぞれ全状態と受理状態を管理する表の組 */
   struct TablePair {

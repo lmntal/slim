@@ -38,15 +38,15 @@
 
 #include "error.h"
 #include "lmntal.h"
-#include <stdarg.h>
-#include <stdlib.h>
+#include <cstdarg>
+#include <cstdlib>
 
-void do_lmn_fatal(const char *file, int line, const char *msg) {
+void do_lmn_fatal(char const *file, int line, char const *msg) {
   fprintf(stderr, "%s(%d) %s\n", file, line, msg);
   fflush(stderr);
 }
 
-void lmn_report(const char *msg, ...) {
+void lmn_report(char const *msg, ...) {
   va_list args;
   va_start(args, msg);
   /* use raw port */

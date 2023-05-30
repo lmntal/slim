@@ -40,11 +40,11 @@
 #include "clock.h"
 
 #include "lmntal.h" // config.h
-#include <stdio.h>
+#include <cstdio>
 
 #if defined(TIME_WITH_SYS_TIME)
+#include <ctime>
 #include <sys/time.h>
-#include <time.h>
 #define ENABLE_TIME_PROFILE
 #endif
 

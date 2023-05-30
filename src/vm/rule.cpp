@@ -37,6 +37,8 @@
  */
 
 #include "rule.h"
+#include "ankerl/unordered_dense.hpp"
+#include "lmntal.h"
 #include "rule.hpp"
 #include "system_ruleset.h"
 
@@ -45,8 +47,8 @@
  */
 
 /* prototypes */
-void init_rules(void);
-void destroy_rules(void);
+void init_rules();
+void destroy_rules();
 
 /*----------------------------------------------------------------------
  * Rule Set
@@ -54,7 +56,7 @@ void destroy_rules(void);
 
 /* 2つの(Vector *)rulesetsが等価であるか判定, 等価の場合に真を返す.
  * Vectorはルールセットの整数IDで整列済みであることが前提 */
-bool lmn_rulesets_equals(const std::vector<LmnRuleSetRef> &rs_v1, const std::vector<LmnRuleSetRef> &rs_v2) {
+bool lmn_rulesets_equals(std::vector<LmnRuleSetRef> const &rs_v1, std::vector<LmnRuleSetRef> const &rs_v2) {
   unsigned int n = rs_v1.size();
   if (rs_v1.size() != rs_v2.size())
     return false;
@@ -86,28 +88,28 @@ bool lmn_rulesets_equals(const std::vector<LmnRuleSetRef> &rs_v1, const std::vec
   /* ---uniq制約がある場合の処理--- */
   LMN_ASSERT(rs_v1.size() > 0);
   BOOL *rs2v_matched;
-  bool is_ok;
+  bool  is_ok;
 
-  rs2v_matched = LMN_NALLOC(BOOL, rs_v1.size());
+  rs2v_matched = LMN_NALLOC<BOOL>(rs_v1.size());
   memset(rs2v_matched, 0U, sizeof(BOOL) * rs_v1.size());
 
   for (unsigned int i = 0; i < rs_v1.size(); i++) {
-    is_ok = false;
-    LmnRuleSetRef rs1 = (LmnRuleSetRef)rs_v1[i];
+    is_ok     = false;
+    auto *rs1 = (LmnRuleSetRef)rs_v1[i];
     for (unsigned int j = 0; j < rs_v1.size(); j++) {
-      LmnRuleSetRef rs2 = (LmnRuleSetRef)rs_v2[i];
+      auto *rs2 = (LmnRuleSetRef)rs_v2[i];
       if (rs1->id < rs2->id) /* 比較打ち切り */
         break;               /* INNER LOOP */
 
       if (rs1->id == rs2->id && !rs2v_matched[j] && *rs1 == *rs2) {
-        is_ok = true;
+        is_ok           = true;
         rs2v_matched[j] = true;
         break; /* INNER LOOP */
       }
     }
 
     if (!is_ok) /* rs1にマッチするルールセットが存在しなかった */
-      break; /* OUTER LOOP */
+      break;    /* OUTER LOOP */
   }
 
   LMN_FREE(rs2v_matched);
@@ -120,9 +122,7 @@ bool lmn_rulesets_equals(const std::vector<LmnRuleSetRef> &rs_v1, const std::vec
 
 LmnRuleSetRef system_ruleset;
 
-static void init_system_ruleset() {
-  system_ruleset = new LmnRuleSet(LmnRuleSetTable::gen_id(), 10);
-}
+static void init_system_ruleset() { system_ruleset = new LmnRuleSet(LmnRuleSetTable::gen_id(), 10); }
 
 static void destroy_system_ruleset() { delete (system_ruleset); }
 
@@ -138,7 +138,7 @@ LmnRuleSetRef initial_ruleset;
 LmnRuleSetRef initial_system_ruleset;
 
 static void init_initial_ruleset() {
-  initial_ruleset = new LmnRuleSet(LmnRuleSetTable::gen_id(), 10);
+  initial_ruleset        = new LmnRuleSet(LmnRuleSetTable::gen_id(), 10);
   initial_system_ruleset = new LmnRuleSet(LmnRuleSetTable::gen_id(), 10);
 }
 
@@ -151,44 +151,34 @@ static void destroy_initial_ruleset() {
    ruleの解放は呼び出され側が行う */
 void lmn_add_initial_rule(LmnRuleRef rule) { initial_ruleset->put(rule); }
 
-void lmn_add_initial_system_rule(LmnRuleRef rule) {
-  initial_system_ruleset->put(rule);
-}
+void lmn_add_initial_system_rule(LmnRuleRef rule) { initial_system_ruleset->put(rule); }
 
 /*----------------------------------------------------------------------
  * Module
  */
 
-st_table_t module_table;
-
-static void init_module_table() { module_table = st_init_numtable(); }
-
-static void destroy_module_table() { st_free_table(module_table); }
+ankerl::unordered_dense::map<lmn_interned_str, LmnRuleSetRef> mod_table{};
 
 /* Associates module_name with ruleset */
 void lmn_set_module(lmn_interned_str module_name, LmnRuleSetRef ruleset) {
-  st_insert(module_table, (st_data_t)module_name, (st_data_t)ruleset);
+  mod_table[module_name] = ruleset;
 }
 
 /* Returns RuleSet associated with module_name. If nothing is, returns NULL. */
 LmnRuleSetRef lmn_get_module_ruleset(lmn_interned_str module_name) {
-  LmnRuleSetRef ruleset;
-
-  if (st_lookup(module_table, (st_data_t)module_name, (st_data_t *)&ruleset))
-    return ruleset;
-  return NULL;
+  if (auto it = mod_table.find(module_name); it != mod_table.end())
+    return it->second;
+  return nullptr;
 }
 
 /*----------------------------------------------------------------------*/
 
 void init_rules() {
-  init_module_table();
   init_system_ruleset();
   init_initial_ruleset();
 }
 
 void destroy_rules() {
-  destroy_module_table();
   destroy_system_ruleset();
   destroy_initial_ruleset();
 }

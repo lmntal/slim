@@ -38,12 +38,10 @@
 #ifndef SLIM_ELEMENT_STACK_TRACE_H
 #define SLIM_ELEMENT_STACK_TRACE_H
 
-#include <vector>
 #include <string>
+#include <vector>
 
-namespace slim {
-namespace element {
-namespace stack_trace {
+namespace slim::element::stack_trace {
 
 #if defined(HAVE_EXECINFO_H) && HAVE_EXECINFO_H
 
@@ -52,27 +50,23 @@ namespace stack_trace {
 static constexpr size_t size = 32;
 
 inline std::vector<std::string> backtrace() {
-	void *addrs[size];
-	auto num_traces = backtrace(addrs, size);
-	auto symbols = backtrace_symbols(addrs, num_traces);
-	std::vector<std::string> res(num_traces);
-	for (int i = 0; i < num_traces; i++) {
-		res[i] = symbols[i];
-	}
-	free(symbols);
-	return res;
+  void                    *addrs[size];
+  auto                     num_traces = backtrace(addrs, size);
+  auto                     symbols    = backtrace_symbols(addrs, num_traces);
+  std::vector<std::string> res(num_traces);
+  for (int i = 0; i < num_traces; i++) {
+    res[i] = symbols[i];
+  }
+  free(symbols);
+  return res;
 }
 
 #else
 
-inline std::vector<std::string> backtrace() {
-	return std::vector<std::string>({"can't create backtrace."});
-}
+inline std::vector<std::string> backtrace() { return std::vector<std::string>({"can't create backtrace."}); }
 
 #endif
 
-}
-}
-}
+} // namespace slim::element::stack_trace
 
 #endif /* SLIM_ELEMENT_STACK_TRACE_H */

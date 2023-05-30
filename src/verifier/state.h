@@ -51,10 +51,10 @@
 #include "element/element.h"
 #include "lmntal.h"
 #include "mem_encode.h"
+#include "runtime_status.h"
 #include "state_defs.h"
 #include "tree_compress.h"
 #include "vm/vm.h"
-#include "runtime_status.h"
 
 #include <memory>
 
@@ -62,10 +62,10 @@
  *  State
  */
 
-void tcd_set_root_ref(TreeCompressData *tcd, uint64_t ref);
-void tcd_get_root_ref(TreeCompressData *tcd, uint64_t *ref);
+void           tcd_set_root_ref(TreeCompressData *tcd, uint64_t ref);
+void           tcd_get_root_ref(TreeCompressData *tcd, uint64_t *ref);
 unsigned short tcd_get_byte_length(TreeCompressData *data);
-void tcd_set_byte_length(TreeCompressData *data, unsigned short byte_length);
+void           tcd_set_byte_length(TreeCompressData *data, unsigned short byte_length);
 
 struct State;
 
@@ -96,41 +96,40 @@ struct State;
 #define DEFAULT_TRANSITION_ID 0
 #define DEFAULT_PROP_AUTOMATA NULL
 
-LmnBinStrRef state_calc_mem_dump(State *s);
-LmnBinStrRef state_calc_mem_dump_with_z(State *s);
-LmnBinStrRef state_calc_mem_dump_with_tree(State *s);
-LmnBinStrRef state_calc_mem_dummy(State *s);
-int state_cmp(State *s1, State *s2);
-int state_cmp_with_compress(State *s1, State *s2);
-int state_cmp_with_tree(State *s1, State *s2);
+LmnBinStrRef   state_calc_mem_dump(State *s);
+LmnBinStrRef   state_calc_mem_dump_with_z(State *s);
+LmnBinStrRef   state_calc_mem_dump_with_tree(State *s);
+LmnBinStrRef   state_calc_mem_dummy(State *s);
+int            state_cmp(State *s1, State *s2);
+int            state_cmp_with_compress(State *s1, State *s2);
+int            state_cmp_with_tree(State *s1, State *s2);
 LmnMembraneRef state_restore_mem(State *s);
-unsigned long state_id(State *s);
-void state_id_issue(State *s);
-void state_set_format_id(State *s, unsigned long v);
-unsigned long state_format_id(State *s, BOOL is_formated);
-BYTE state_property_state(State *s);
-void state_set_property_state(State *s, BYTE label);
-unsigned long state_hash(State *s);
-void state_unset_mem(State *s);
-void state_unset_binstr(State *s);
-State *state_get_parent(State *s);
-void state_set_parent(State *s, State *parent);
-State *state_succ_state(State *s, int idx);
-BOOL state_succ_contains(State *s, State *t);
-BOOL state_is_accept(AutomataRef a, State *s);
-BOOL state_is_end(AutomataRef a, State *s);
-BYTE state_scc_id(AutomataRef a, State *s);
-State *state_D_ref(State *s);
-void state_D_cache(State *s, LmnBinStrRef dec);
-LmnBinStrRef state_D_fetch(State *s);
-void state_D_flush(State *s);
-void state_update_cost(State *s, TransitionRef t, State *pre, Vector *new_ss,
-                       BOOL f, EWLock *ewlock);
-void state_set_cost(State *s, LmnCost cost, State *pre);
+unsigned long  state_id(State *s);
+void           state_id_issue(State *s);
+void           state_set_format_id(State *s, unsigned long v);
+unsigned long  state_format_id(State *s, BOOL is_formated);
+BYTE           state_property_state(State *s);
+void           state_set_property_state(State *s, BYTE label);
+unsigned long  state_hash(State *s);
+void           state_unset_mem(State *s);
+void           state_unset_binstr(State *s);
+State         *state_get_parent(State *s);
+void           state_set_parent(State *s, State *parent);
+State         *state_succ_state(State *s, int idx);
+BOOL           state_succ_contains(State *s, State *t);
+BOOL           state_is_accept(AutomataRef a, State *s);
+BOOL           state_is_end(AutomataRef a, State *s);
+BYTE           state_scc_id(AutomataRef a, State *s);
+State         *state_D_ref(State *s);
+void           state_D_cache(State *s, LmnBinStrRef dec);
+LmnBinStrRef   state_D_fetch(State *s);
+void           state_D_flush(State *s);
+void           state_update_cost(State *s, TransitionRef t, State *pre, Vector *new_ss, BOOL f, EWLock *ewlock);
+void           state_set_cost(State *s, LmnCost cost, State *pre);
 
 LmnCost state_cost(State *S);
-void state_cost_lock(EWLock *EWLOCK, mtx_data_t ID);
-void state_cost_unlock(EWLock *EWLOCK, mtx_data_t ID);
+void    state_cost_lock(EWLock *EWLOCK, mtx_data_t ID);
+void    state_cost_unlock(EWLock *EWLOCK, mtx_data_t ID);
 
 /** ------------
  *  Transition
@@ -138,17 +137,16 @@ void state_cost_unlock(EWLock *EWLOCK, mtx_data_t ID);
 unsigned long transition_space(TransitionRef t);
 
 struct Transition {
-  State *s; /*  8byte: 遷移先状態 */
-  unsigned long
-      id; /*  8byte: State graph(=\=
-             Automata)上の各遷移に付与されるグローバルなID．
-                     ある2本の遷移が同一のものと判断される場合はこのIDの値も等しくなる．
-           */
+  State        *s;   /*  8byte: 遷移先状態 */
+  unsigned long id;  /*  8byte: State graph(=\=
+                        Automata)上の各遷移に付与されるグローバルなID．
+                                ある2本の遷移が同一のものと判断される場合はこのIDの値も等しくなる．
+                      */
   Vector rule_names; /* 24byte: ルール名 複数あるのは多重辺(porなしの場合)*/
 #ifdef KWBT_OPT
   LmnCost cost; /*  8(4)byte: cost */
 #endif
-  
+
   ~Transition() {
 #ifdef PROFILE
     if (lmn_env.profile_level >= 3) {
@@ -162,18 +160,17 @@ struct Transition {
 TransitionRef transition_make(State *s, lmn_interned_str rule_name);
 
 void transition_free(TransitionRef t);
-void transition_add_rule(TransitionRef t, lmn_interned_str rule_name,
-                         LmnCost cost);
+void transition_add_rule(TransitionRef t, lmn_interned_str rule_name, LmnCost cost);
 
-unsigned long transition_id(TransitionRef t);
-void transition_set_id(TransitionRef t, unsigned long x);
-int transition_rule_num(TransitionRef t);
+unsigned long    transition_id(TransitionRef t);
+void             transition_set_id(TransitionRef t, unsigned long x);
+int              transition_rule_num(TransitionRef t);
 lmn_interned_str transition_rule(TransitionRef t, int idx);
-State *transition_next_state(TransitionRef t);
-void transition_set_state(TransitionRef t, State *s);
-TransitionRef transition(State *s, unsigned int i);
-LmnCost transition_cost(TransitionRef t);
-void transition_set_cost(TransitionRef t, LmnCost cost);
+State           *transition_next_state(TransitionRef t);
+void             transition_set_state(TransitionRef t, State *s);
+TransitionRef    transition(State *s, unsigned int i);
+LmnCost          transition_cost(TransitionRef t);
+void             transition_set_cost(TransitionRef t, LmnCost cost);
 
 /** -------
  *  inline functions
@@ -288,8 +285,7 @@ void state_set_cost(State *s, LmnCost cost, State *pre);
 /* 状態sのcostが最適ならば更新し、状態sを遷移先更新状態にする
  * f==true: minimize
  * f==false: maximize */
-void state_update_cost(State *s, TransitionRef t, State *pre, Vector *new_ss,
-                       BOOL f, EWLock *ewlock);
+void state_update_cost(State *s, TransitionRef t, State *pre, Vector *new_ss, BOOL f, EWLock *ewlock);
 
 /* 遷移tに割り当てたidを返す. */
 unsigned long transition_id(TransitionRef t);
@@ -297,7 +293,7 @@ unsigned long transition_id(TransitionRef t);
 /* 遷移tに整数ID idを割り当てる. */
 void transition_set_id(TransitionRef t, unsigned long id);
 
-int transition_rule_num(TransitionRef t);
+int              transition_rule_num(TransitionRef t);
 lmn_interned_str transition_rule(TransitionRef t, int idx);
 
 State *transition_next_state(TransitionRef t);

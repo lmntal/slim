@@ -48,20 +48,20 @@
 #include "syntax.hpp"
 #include "vm/vm.h"
 
+#include <cstdio>
 #include <memory>
 #include <string>
-#include <cstdio>
 
-LmnRuleSetRef load(std::unique_ptr<FILE, decltype(&fclose)> in);
-std::unique_ptr<LmnRule> load_rule(const Rule &rule);
-LmnRuleSetRef load_file(const std::string &file_name);
-void load_il_files(const char *path);
-std::unique_ptr<Rule> il_parse_rule(std::unique_ptr<FILE, decltype(&fclose)> in);
-void init_so_handles();
-void finalize_so_handles();
+LmnRuleSetRef            load(std::unique_ptr<FILE, decltype(&fclose)> in);
+std::unique_ptr<LmnRule> load_rule(Rule const &rule);
+LmnRuleSetRef            load_file(std::string const &file_name);
+void                     load_il_files(char const *path);
+std::unique_ptr<Rule>    il_parse_rule(std::unique_ptr<FILE, decltype(&fclose)> in);
+void                     init_so_handles();
+void                     finalize_so_handles();
 /* pathにsoがある場合の,関数名の元となれるファイル名を返す */
 /* 英数字以外は(_も)O(大文字オー,空丸ににているため)に変換する */
-std::string create_formatted_basename(const std::string &path);
+std::string create_formatted_basename(std::string const &path);
 
 /* 最適化レベルの最大値 */
 #define OPTIMIZE_LEVEL_MAX 3

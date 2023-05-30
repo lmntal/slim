@@ -1,29 +1,34 @@
 #include "debug_printer.hpp"
-#include "task.h"
 #include "atomlist.hpp"
+#include "lmntal.h"
+#include "task.h"
+#include "vm/atom.h"
 
+#include <fmt/color.h>
+#include <fmt/core.h>
+#include <fmt/format.h>
 #include <iostream>
+#include <iterator>
 
-namespace slim {
-namespace debug_printer {
+namespace slim::debug_printer {
 
-using link_name_table = std::map<int,std::string>;
+using link_name_table = std::map<int, std::string>;
 
 struct PrintRecord {
-  bool done;
+  bool            done;
   link_name_table table;
 };
 
-using dump_history_table = std::map<LmnSymbolAtomRef,PrintRecord>;
+using dump_history_table = std::map<LmnSymbolAtomRef, PrintRecord>;
 
 constexpr size_t MAX_CALL_DEPTH = 1000;
-constexpr char LINK_PREFIX[] = "L";
+constexpr auto   LINK_PREFIX    = "L";
 
 /**
  * テーブルからアトムに対応するPrintRecordの参照を返す
  * 対応する要素がなければ，テーブルに空のエントリを作成してその参照を返す
  */
-static PrintRecord& get_history_entry(dump_history_table &table, const LmnSymbolAtomRef atom);
+static PrintRecord &get_history_entry(dump_history_table &table, LmnSymbolAtomRef atom);
 /**
  * テーブル内に保存されたリンク情報の合計数を返す
  */
@@ -51,7 +56,8 @@ static std::string __to_string_datom(const LmnAtomRef data, LmnLinkAttr attr);
  * リストならリストとして表現する
  * それ以外ならアトムとして表現する
  */
-static std::string __to_string_satom(const LmnSymbolAtomRef atom, int link_position, dump_history_table &ht, size_t call_depth);
+static std::string __to_string_satom(const LmnSymbolAtomRef atom, int link_position, dump_history_table &ht,
+                                     size_t call_depth);
 /**
  * '.'で表される特殊なシンボルアトムを含む構造を，各括弧を使った簡潔な表現にして返す
  */
@@ -82,7 +88,8 @@ static std::string __to_string_satom_args_short(const LmnSymbolAtomRef atom, dum
  * 名前がなく，リンク先のアトムの最終リンク以外と接続されている場合，リンクとして表現される
  * 名前がなく，リンク先のアトムの最終リンクで自アトムと接続されている場合，アトムとして表現される
  */
-static std::string __to_string_satom_arg(const LmnSymbolAtomRef atom, int arg_index, dump_history_table &ht, size_t call_depth);
+static std::string __to_string_satom_arg(const LmnSymbolAtomRef atom, int arg_index, dump_history_table &ht,
+                                         size_t call_depth);
 /**
  * アトムのある引数のリンクとしての文字列表現を返す
  */
@@ -90,8 +97,8 @@ static std::string __to_string_link(const LmnSymbolAtomRef atom, int link_positi
 /**
  * アトムリストの文字列表現を返す
  * リスト内の各アトムのリンク関係は適切に表現される
-*/
-static std::string __to_string_atomlist(const AtomListEntry* atomlist, dump_history_table &ht);
+ */
+static std::string __to_string_atomlist(AtomListEntry const *atomlist, dump_history_table &ht);
 /**
  * レジスタの文字列表現を返す
  * ttの値によって，表現の形式は変更される
@@ -115,14 +122,13 @@ static std::string __to_string_dev_atom(const LmnAtomRef atom, LmnLinkAttr attr)
 
 // ===============================================================
 
-static PrintRecord& get_history_entry(dump_history_table &table, const LmnSymbolAtomRef atom) {
+static PrintRecord &get_history_entry(dump_history_table &table, LmnSymbolAtomRef atom) {
   auto ent = table.find(atom);
   if (ent == table.end()) { // not found
-    auto iter = table.emplace(atom, PrintRecord({false,{}}));
+    auto iter = table.emplace(atom, PrintRecord({false, {}}));
     return (*(iter.first)).second;
-  } else { // found
-    return (*ent).second;
-  }
+  } // found
+  return (*ent).second;
 }
 
 static int get_overall_links(dump_history_table &table) {
@@ -138,35 +144,33 @@ std::string to_string_atom(const LmnAtomRef atom, LmnLinkAttr attr) {
   return __to_string_atom(atom, attr, ht, 0);
 }
 
-static std::string __to_string_atom(const LmnAtomRef atom, LmnLinkAttr attr, dump_history_table &ht, size_t call_depth) {
+static std::string __to_string_atom(const LmnAtomRef atom, LmnLinkAttr attr, dump_history_table &ht,
+                                    size_t call_depth) {
   if (LMN_ATTR_IS_DATA(attr)) {
     return __to_string_datom(atom, attr);
-  } else {
-    LmnSymbolAtomRef satom = (LmnSymbolAtomRef)atom;
-    LmnFunctor f = satom->get_functor();
-    return __to_string_satom(satom, LMN_ATTR_GET_VALUE(attr), ht, call_depth);
   }
+  auto      *satom = (LmnSymbolAtomRef)atom;
+  LmnFunctor f     = satom->get_functor();
+  return __to_string_satom(satom, LMN_ATTR_GET_VALUE(attr), ht, call_depth);
 }
 
 static std::string __to_string_atom_short(const LmnAtomRef atom, LmnLinkAttr attr, dump_history_table &ht) {
   if (LMN_ATTR_IS_DATA(attr)) {
     return __to_string_datom(atom, attr);
-  } else {
-    LmnSymbolAtomRef satom = (LmnSymbolAtomRef)atom;
-    LmnFunctor f = satom->get_functor();
-    return __to_string_satom_short(satom, LMN_ATTR_GET_VALUE(attr), ht);
   }
+  auto      *satom = (LmnSymbolAtomRef)atom;
+  LmnFunctor f     = satom->get_functor();
+  return __to_string_satom_short(satom, LMN_ATTR_GET_VALUE(attr), ht);
 }
 
 std::string to_string_atom_short(const LmnAtomRef atom, LmnLinkAttr attr) {
   if (LMN_ATTR_IS_DATA(attr)) {
     return __to_string_datom(atom, attr);
-  } else {
-    dump_history_table ht;
-    LmnSymbolAtomRef satom = (LmnSymbolAtomRef)atom;
-    LmnFunctor f = satom->get_functor();
-    return __to_string_satom_short(satom, LMN_ATTR_GET_VALUE(attr), ht);
   }
+  dump_history_table ht;
+  auto              *satom = (LmnSymbolAtomRef)atom;
+  LmnFunctor         f     = satom->get_functor();
+  return __to_string_satom_short(satom, LMN_ATTR_GET_VALUE(attr), ht);
 }
 
 static std::string __to_string_link(const LmnSymbolAtomRef atom, int link_position, dump_history_table &ht) {
@@ -178,30 +182,29 @@ static std::string __to_string_link(const LmnSymbolAtomRef atom, int link_positi
     LmnLinkAttr dst_attr = atom->get_attr(link_position);
     if (LMN_ATTR_IS_DATA(dst_attr)) {
       return __to_string_datom(atom->get_link(link_position), dst_attr);
-    } else {
-      LmnSymbolAtomRef dst_atom = (LmnSymbolAtomRef)atom->get_link(link_position);
-      int l = LMN_ATTR_GET_VALUE(dst_attr);
-      std::string name = LINK_PREFIX + std::to_string(get_overall_links(ht) / 2);
-      record.table.emplace(link_position, name);
-      get_history_entry(ht, dst_atom).table.emplace(l, name);
-      return name;
     }
-  } else { // found
-    return (*res).second;
-  }
+    auto       *dst_atom = (LmnSymbolAtomRef)atom->get_link(link_position);
+    int         l        = LMN_ATTR_GET_VALUE(dst_attr);
+    std::string name     = LINK_PREFIX + std::to_string(get_overall_links(ht) / 2);
+    record.table.emplace(link_position, name);
+    get_history_entry(ht, dst_atom).table.emplace(l, name);
+    return name;
+
+  } // found
+  return (*res).second;
 }
 
-static std::string __to_string_satom_arg(const LmnSymbolAtomRef atom, int arg_index, dump_history_table &ht, size_t call_depth) {
+static std::string __to_string_satom_arg(const LmnSymbolAtomRef atom, int arg_index, dump_history_table &ht,
+                                         size_t call_depth) {
   PrintRecord &src_record = get_history_entry(ht, atom);
 
-  LmnAtomRef linked_atom = atom->get_link(arg_index);
-  LmnLinkAttr link_attr = atom->get_attr(arg_index);
+  LmnAtomRef  linked_atom = atom->get_link(arg_index);
+  LmnLinkAttr link_attr   = atom->get_attr(arg_index);
 
   if (src_record.table.find(arg_index) != src_record.table.end()) { // found
     return __to_string_link(atom, arg_index, ht);
-  } else { // not found
-    return __to_string_atom(linked_atom, link_attr, ht, call_depth);
-  }
+  } // not found
+  return __to_string_atom(linked_atom, link_attr, ht, call_depth);
 }
 
 static std::string __to_string_satom_args(const LmnSymbolAtomRef atom, dump_history_table &ht, size_t call_depth) {
@@ -213,20 +216,18 @@ static std::string __to_string_satom_args(const LmnSymbolAtomRef atom, dump_hist
 
   if (link_num == 0) { // if atom has no links, do not show parenthes
     return "";
-  } else {
-    std::string retVal = "";
-    retVal += "(";
-
-    for (int i = 0; i < link_num; i++) {
-      if (i > 0) {
-        retVal += ",";
-      }
-      retVal += __to_string_satom_arg(atom, i, ht, call_depth + 1);
-    }
-
-    retVal += ")";
-    return retVal;
   }
+  std::string retVal{"("};
+
+  for (int i = 0; i < link_num; i++) {
+    if (i > 0) {
+      retVal += ",";
+    }
+    retVal += __to_string_satom_arg(atom, i, ht, call_depth + 1);
+  }
+
+  retVal += ")";
+  return retVal;
 }
 
 static std::string __to_string_list(const LmnSymbolAtomRef atom, dump_history_table &ht, size_t call_depth) {
@@ -236,15 +237,15 @@ static std::string __to_string_list(const LmnSymbolAtomRef atom, dump_history_ta
 
   LmnSymbolAtomRef a = atom;
   LmnSymbolAtomRef prev_a;
-  LmnLinkAttr attr = LMN_ATTR_MAKE_LINK(2);
-  bool first = true;
-  std::string retVal = "[";
+  LmnLinkAttr      attr   = LMN_ATTR_MAKE_LINK(2);
+  bool             first  = true;
+  std::string      retVal = "[";
 
   while (true) {
     if (LMN_HAS_FUNCTOR(a, attr, LMN_LIST_FUNCTOR) && LMN_ATTR_GET_VALUE(attr) == 2) {
       PrintRecord &record = get_history_entry(ht, a);
       if (record.done) {
-        retVal += "|";
+        retVal           += "|";
         std::string name = LINK_PREFIX + std::to_string(get_overall_links(ht));
         record.table.emplace(LMN_ATTR_GET_VALUE(attr), name);
         retVal += name;
@@ -253,12 +254,12 @@ static std::string __to_string_list(const LmnSymbolAtomRef atom, dump_history_ta
       if (!first) {
         retVal += ",";
       }
-      first = false;
+      first       = false;
       record.done = true;
-      retVal += __to_string_satom_arg(a, 0, ht, call_depth + 1);
-      attr = a->get_attr(1);
-      prev_a = a;
-      a = (LmnSymbolAtomRef)a->get_link(1);
+      retVal      += __to_string_satom_arg(a, 0, ht, call_depth + 1);
+      attr        = a->get_attr(1);
+      prev_a      = a;
+      a           = (LmnSymbolAtomRef)a->get_link(1);
     } else if (LMN_HAS_FUNCTOR(a, attr, LMN_NIL_FUNCTOR)) { // list end ([])
       PrintRecord record;
       record.done = true;
@@ -275,16 +276,17 @@ static std::string __to_string_list(const LmnSymbolAtomRef atom, dump_history_ta
   return retVal;
 }
 
-static std::string __to_string_satom(const LmnSymbolAtomRef atom, int link_position, dump_history_table &ht, size_t call_depth) {
+static std::string __to_string_satom(const LmnSymbolAtomRef atom, int link_position, dump_history_table &ht,
+                                     size_t call_depth) {
   LmnFunctor functor = atom->get_functor();
-  LmnArity arity = atom->get_arity();
+  LmnArity   arity   = atom->get_arity();
 
-  PrintRecord& record = get_history_entry(ht, atom);
+  PrintRecord &record = get_history_entry(ht, atom);
 
-  if (
-    (call_depth > 0 && link_position != arity - 1) || // ダンプの主な対象ではなく，このアトムに最終リンク以外で繋がっている
-    (call_depth > 0 && record.done) || // ダンプの主な対象ではなく，すでにダンプされた
-    (call_depth > MAX_CALL_DEPTH) // 再帰呼び出しの最大の深さを超えた
+  if ((call_depth > 0 &&
+       link_position != arity - 1) || // ダンプの主な対象ではなく，このアトムに最終リンク以外で繋がっている
+      (call_depth > 0 && record.done) || // ダンプの主な対象ではなく，すでにダンプされた
+      (call_depth > MAX_CALL_DEPTH)      // 再帰呼び出しの最大の深さを超えた
   ) {
     return __to_string_link(atom, link_position, ht);
   }
@@ -294,8 +296,8 @@ static std::string __to_string_satom(const LmnSymbolAtomRef atom, int link_posit
   }
 
   // リストならリスト用の表示
-  if (/* call_depth == 0 &&  */functor == LMN_LIST_FUNCTOR) {
-    return __to_string_list(atom, ht, call_depth)/*  + "=" + __to_string_satom_arg(atom, 2, ht, call_depth + 1) */;
+  if (/* call_depth == 0 &&  */ functor == LMN_LIST_FUNCTOR) {
+    return __to_string_list(atom, ht, call_depth) /*  + "=" + __to_string_satom_arg(atom, 2, ht, call_depth + 1) */;
   }
 
   record.done = true;
@@ -313,27 +315,25 @@ static std::string __to_string_satom_args_short(const LmnSymbolAtomRef atom, dum
 
   if (link_num == 0) { // if atom has no links, do not show parenthes
     return "";
-  } else {
-    std::string retVal = "";
-    retVal += "(";
-
-    for (int i = 0; i < link_num; i++) {
-      if (i > 0) {
-        retVal += ",";
-      }
-      retVal += __to_string_link(atom, i, ht);
-    }
-
-    retVal += ")";
-    return retVal;
   }
+  std::string retVal{"("};
+
+  for (int i = 0; i < link_num; i++) {
+    if (i > 0) {
+      retVal += ",";
+    }
+    retVal += __to_string_link(atom, i, ht);
+  }
+
+  retVal += ")";
+  return retVal;
 }
 
 static bool __is_direct_printable(LmnFunctor f) {
-  if (LMN_IS_PROXY_FUNCTOR(f)/*  || f == LMN_NIL_FUNCTOR */) {
+  if (LMN_IS_PROXY_FUNCTOR(f) /*  || f == LMN_NIL_FUNCTOR */) {
     return true;
   }
-  std::string s = LMN_FUNCTOR_STR(f);
+  std::string s {LMN_FUNCTOR_STR(f)};
 
   // /[a-z][a-zA-Z_]*/
   // 1文字目
@@ -341,19 +341,17 @@ static bool __is_direct_printable(LmnFunctor f) {
     return false;
   }
   // 2文字目以降
-  return std::all_of(s.cbegin() + 1, s.cend(),
-    [](char c) -> bool { return isalpha(c) || isdigit(c) || c == '_'; }
-  );
+  return std::all_of(s.cbegin() + 1, s.cend(), [](char c) -> bool { return isalpha(c) || isdigit(c) || c == '_'; });
 }
 
 static std::string __to_string_atom_name(LmnFunctor functor) {
-  std::string retVal = "";
+  std::string retVal;
   if (LMN_FUNCTOR_MODULE_ID(lmn_functor_table, functor) != ANONYMOUS) {
     retVal += lmn_id_to_name(LMN_FUNCTOR_MODULE_ID(lmn_functor_table, functor));
     retVal += ".";
   }
 
-  std::string str = LMN_FUNCTOR_STR(functor);
+  std::string str { LMN_FUNCTOR_STR(functor)};
   if (__is_direct_printable(functor)) {
     retVal += LMN_FUNCTOR_STR(functor);
   } else {
@@ -389,18 +387,18 @@ std::string to_string_reg(const LmnRegisterRef reg) {
   }
 
   switch (reg->tt) {
-    case TT_ATOM:
-      return to_string_atom((LmnAtomRef)reg->wt, reg->at);
-    case TT_MEM:
-      return to_hex_string(reg->wt) + "(" + std::to_string(reg->at) + ",mem)";
-    case TT_OTHER:
-      return to_hex_string(reg->wt) + "(" + std::to_string(reg->at) + ",other)";
-    default:
-      return "unknown tt type";
+  case TT_ATOM:
+    return to_string_atom((LmnAtomRef)reg->wt, reg->at);
+  case TT_MEM:
+    return to_hex_string(reg->wt) + "(" + std::to_string(reg->at) + ",mem)";
+  case TT_OTHER:
+    return to_hex_string(reg->wt) + "(" + std::to_string(reg->at) + ",other)";
+  default:
+    return "unknown tt type";
   }
 }
 
-std::string to_string_regarray(const LmnRegisterArray* reg_array) {
+std::string to_string_regarray(LmnRegisterArray const *reg_array) {
   if (reg_array == nullptr) {
     return "null";
   }
@@ -410,7 +408,7 @@ std::string to_string_regarray(const LmnRegisterArray* reg_array) {
     if (i > 0) {
       retVal += " | ";
     }
-    retVal += to_string_reg((LmnRegisterRef) &(reg_array->at(i)));
+    retVal += to_string_reg((LmnRegisterRef) & (reg_array->at(i)));
   }
   retVal += " ]";
 
@@ -418,7 +416,7 @@ std::string to_string_regarray(const LmnRegisterArray* reg_array) {
 }
 
 std::string to_string_instrop(LmnInstrOp op) {
-  for (auto &p : instr_spec) {
+  for (const auto &p : instr_spec) {
     if (op == p.first) {
       return p.second.op_str;
     }
@@ -432,7 +430,7 @@ std::string to_string_instr(const LmnRuleInstr instr) {
   }
 
   LmnRuleInstr instr_copy = instr;
-  LmnInstrOp op;
+  LmnInstrOp   op;
   READ_VAL(LmnInstrOp, instr_copy, op);
 
   std::vector<ArgType> argtype_vec;
@@ -460,61 +458,61 @@ std::string to_string_instr(const LmnRuleInstr instr) {
     if (op == INSTR_NEWATOM && argType == ArgFunctor) {
       LmnLinkAttr at;
       READ_VAL(LmnLinkAttr, instr_copy, at);
-      retVal << (unsigned int) at;
+      retVal << (unsigned int)at;
       continue;
     }
     switch (argType) {
-      case InstrVar:
-        LmnInstrVar arg_instrvar;
-        READ_VAL(LmnInstrVar, instr_copy, arg_instrvar);
-        retVal << arg_instrvar;
-        break;
-      case Label:
-        LmnJumpOffset arg_label;
-        READ_VAL(LmnJumpOffset, instr_copy, arg_label);
-        retVal << arg_label;
-        break;
-      case InstrVarList:
-        retVal << "{ ";
-        int16_t num;
-        READ_VAL(int16_t, instr_copy, num);
-        while (num--) {
-          LmnInstrVar n;
-          READ_VAL(LmnInstrVar, instr_copy, n);
-          retVal << n;
-          if (num) {
-            retVal << ", ";
-          }
+    case InstrVar:
+      LmnInstrVar arg_instrvar;
+      READ_VAL(LmnInstrVar, instr_copy, arg_instrvar);
+      retVal << arg_instrvar;
+      break;
+    case Label:
+      LmnJumpOffset arg_label;
+      READ_VAL(LmnJumpOffset, instr_copy, arg_label);
+      retVal << arg_label;
+      break;
+    case InstrVarList:
+      retVal << "{ ";
+      int16_t num;
+      READ_VAL(int16_t, instr_copy, num);
+      while (num--) {
+        LmnInstrVar n;
+        READ_VAL(LmnInstrVar, instr_copy, n);
+        retVal << n;
+        if (num) {
+          retVal << ", ";
         }
-        retVal << " }";
-        break;
-      case String:
-        LmnInstrVar arg_string;
-        READ_VAL(lmn_interned_str, instr_copy, arg_string);
-        retVal << "\"" << lmn_id_to_name(arg_string) << "\"";
-        break;
-      case LineNum:
-        LmnLineNum arg_linenum;
-        READ_VAL(LmnLineNum, instr_copy, arg_linenum);
-        retVal << arg_linenum;
-        break;
-      case ArgFunctor:
-        LmnLinkAttr arg_functor;
-        READ_VAL(LmnLinkAttr, instr_copy, arg_functor);
-        retVal << (unsigned int) arg_functor;
-        break;
-      case ArgRuleset:
-        LmnRulesetId arg_ruleset;
-        READ_VAL(LmnRulesetId, instr_copy, arg_ruleset);
-        retVal << arg_ruleset;
-        break;
-      case InstrList:
-        LmnSubInstrSize arg_instrlist;
-        READ_VAL(LmnSubInstrSize, instr_copy, arg_instrlist);
-        retVal << arg_instrlist;
-        break;
-      default:
-        break;
+      }
+      retVal << " }";
+      break;
+    case String:
+      LmnInstrVar arg_string;
+      READ_VAL(lmn_interned_str, instr_copy, arg_string);
+      retVal << "\"" << lmn_id_to_name(arg_string) << "\"";
+      break;
+    case LineNum:
+      LmnLineNum arg_linenum;
+      READ_VAL(LmnLineNum, instr_copy, arg_linenum);
+      retVal << arg_linenum;
+      break;
+    case ArgFunctor:
+      LmnLinkAttr arg_functor;
+      READ_VAL(LmnLinkAttr, instr_copy, arg_functor);
+      retVal << (unsigned int)arg_functor;
+      break;
+    case ArgRuleset:
+      LmnRulesetId arg_ruleset;
+      READ_VAL(LmnRulesetId, instr_copy, arg_ruleset);
+      retVal << arg_ruleset;
+      break;
+    case InstrList:
+      LmnSubInstrSize arg_instrlist;
+      READ_VAL(LmnSubInstrSize, instr_copy, arg_instrlist);
+      retVal << arg_instrlist;
+      break;
+    default:
+      break;
     }
   }
 
@@ -528,17 +526,17 @@ std::string to_string_instr(const LmnRuleInstr instr) {
   return retVal.str();
 }
 
-std::string to_string_atomlist(const AtomListEntry* atomlist) {
-  if(atomlist == nullptr) {
+std::string to_string_atomlist(AtomListEntry const *atomlist) {
+  if (atomlist == nullptr) {
     return "null";
   }
   dump_history_table ht;
   return __to_string_atomlist(atomlist, ht);
 }
 
-static std::string __to_string_atomlist(const AtomListEntry* atomlist, dump_history_table &ht) {
-  size_t len = 0;
-  std::string list = "";
+static std::string __to_string_atomlist(AtomListEntry const *atomlist, dump_history_table &ht) {
+  size_t      len = 0;
+  std::string list;
   for (auto begin = std::begin(*atomlist), end = std::end(*atomlist); begin != end; ++begin) {
     std::string s = __to_string_atom_short(*begin, LMN_ATTR_MAKE_LINK(0), ht);
     if (!s.empty()) {
@@ -547,15 +545,15 @@ static std::string __to_string_atomlist(const AtomListEntry* atomlist, dump_hist
     }
     len++;
   }
-  LmnFunctor functor = (*(atomlist->begin()))->get_functor();
-  std::string header = to_string_functor(functor) + " (" + std::to_string(len) + ")  : ";
+  LmnFunctor  functor = (*(atomlist->begin()))->get_functor();
+  std::string header  = to_string_functor(functor) + " (" + std::to_string(len) + ")  : ";
 
   return header + list;
 }
 
-std::string to_string_atomlists(std::map<LmnFunctor,AtomListEntry*> atomlists) {
+std::string to_string_atomlists(std::map<LmnFunctor, AtomListEntry *> atomlists) {
   dump_history_table ht;
-  std::string retVal = "";
+  std::string        retVal;
   for (auto &p : atomlists) {
     retVal += __to_string_atomlist(p.second, ht);
     retVal += "\n";
@@ -567,7 +565,7 @@ std::string to_string_functor(LmnFunctor func) {
   if (lmn_functor_table == nullptr) {
     return "Functor table is null.\n";
   }
-  auto entry = lmn_functor_table->get_entry(func);
+  auto *entry = lmn_functor_table->get_entry(func);
   return __to_string_atom_name(func) + "_" + std::to_string(entry->arity);
 }
 
@@ -577,7 +575,7 @@ static std::string __to_string_cell_internal(const LmnMembraneRef mem, dump_hist
 
   // アトムリストごとに処理
   for (auto &pair : mem->atom_lists()) {
-    LmnFunctor functor = pair.first;
+    LmnFunctor       functor  = pair.first;
     AtomListEntryRef atomlist = pair.second;
 
     for (auto &atom : *atomlist) {
@@ -587,21 +585,16 @@ static std::string __to_string_cell_internal(const LmnMembraneRef mem, dump_hist
       }
       if (functor == LMN_IN_PROXY_FUNCTOR || functor == LMN_OUT_PROXY_FUNCTOR) {
         pred_atoms[PROXY].push_back(atom);
-      }
-      else if (arity == 0 && !atom->record_flag) {
+      } else if (arity == 0 && !atom->record_flag) {
         pred_atoms[P0].push_back(atom);
-      }
-      else if (arity == 1 && functor != LMN_NIL_FUNCTOR &&
-              (LMN_ATTR_IS_DATA(atom->get_attr(0)) ||
-               (int)LMN_ATTR_GET_VALUE(atom->get_attr(0)) == ((LmnSymbolAtomRef)atom->get_link(0))->get_arity() - 1))
-      {
+      } else if (arity == 1 && functor != LMN_NIL_FUNCTOR &&
+                 (LMN_ATTR_IS_DATA(atom->get_attr(0)) || (int)LMN_ATTR_GET_VALUE(atom->get_attr(0)) ==
+                                                             ((LmnSymbolAtomRef)atom->get_link(0))->get_arity() - 1)) {
         pred_atoms[P1].push_back(atom);
-      }
-      else {
-        if (arity > 1 && (
-          (LMN_ATTR_IS_DATA(atom->get_attr(arity - 1)) ||
-           (int)LMN_ATTR_GET_VALUE(atom->get_attr(arity - 1) == ((LmnSymbolAtomRef)atom->get_link(arity - 1))->get_arity() - 1))
-        )) {
+      } else {
+        if (arity > 1 && ((LMN_ATTR_IS_DATA(atom->get_attr(arity - 1)) ||
+                           (int)LMN_ATTR_GET_VALUE(atom->get_attr(arity - 1) ==
+                                                   ((LmnSymbolAtomRef)atom->get_link(arity - 1))->get_arity() - 1)))) {
           pred_atoms[P2].push_back(atom);
         } else {
           pred_atoms[P3].push_back(atom);
@@ -610,11 +603,11 @@ static std::string __to_string_cell_internal(const LmnMembraneRef mem, dump_hist
     }
   }
 
-  std::string retVal = "";
+  std::string retVal;
   for (auto &v : pred_atoms) {
     for (auto &atom : v) {
       std::string s = __to_string_satom(atom, 0, ht, 0);
-      retVal += s;
+      retVal        += s;
       if (!s.empty()) {
         retVal += ". ";
       }
@@ -624,7 +617,7 @@ static std::string __to_string_cell_internal(const LmnMembraneRef mem, dump_hist
   bool dumped = false;
   for (LmnMembraneRef m = mem->mem_child_head(); m != nullptr; m = m->mem_next()) {
     std::string s = __to_string_mem_internal(m, ht);
-    retVal += s;
+    retVal        += s;
     if (!s.empty()) {
       dumped = true;
     }
@@ -643,8 +636,8 @@ static std::string __to_string_mem_internal(const LmnMembraneRef mem, dump_histo
   if (ht.find((LmnSymbolAtomRef)mem) != ht.end()) {
     return "";
   }
-  ht.emplace((LmnSymbolAtomRef)mem, PrintRecord({false,{}}));
-  std::string retVal = "";
+  ht.emplace((LmnSymbolAtomRef)mem, PrintRecord({false, {}}));
+  std::string retVal;
   if (mem->NAME_ID() != ANONYMOUS) {
     retVal += lmn_id_to_name(mem->NAME_ID());
   }
@@ -663,22 +656,32 @@ std::string to_string_mem(const LmnMembraneRef mem) {
 }
 
 std::string __to_string_dev_atom(const LmnAtomRef atom, LmnLinkAttr attr) {
-  std::string retVal = "";
-  retVal += __ESC_START__ + std::to_string(CODE__FORECOLOR_LIGHTBLUE) + __ESC_END__;
-  if (LMN_ATTR_IS_DATA(attr)) {
-    retVal += "Data[" + to_hex_string(atom) + "], ";
-    retVal += "Attr[" + to_hex_string(attr) + "]";
+  fmt::memory_buffer buf;
+
+  auto       out   = std::back_inserter(buf);
+  auto const style = fmt::fg(fmt::color::light_blue);
+
+  if (LMN_ATTR_IS_DATA(attr) == TRUE) {
+    fmt::format_to(out, style, "Data[{}], ", to_hex_string(atom));
+    fmt::format_to(out, style, "Attr[{}]", to_hex_string(attr));
+    // retVal += "Data[" + to_hex_string(atom) + "], ";
+    // retVal += "Attr[" + to_hex_string(attr) + "]";
   } else {
-    LmnSymbolAtomRef satom = (LmnSymbolAtomRef)atom;
-    retVal += "Addr[" + to_hex_string(satom) + "], ";
-    retVal += "ID[" + std::to_string(satom->get_id()) + "], ";
-    retVal += "Func[" + std::to_string(satom->get_functor()) + "(" + to_string_functor(satom->get_functor()) + ")], ";
-    retVal += "Arity[" + std::to_string(satom->get_arity()) + "], ";
-    retVal += "Link[" + std::to_string(LMN_ATTR_GET_VALUE(attr)) + "]";
+    auto *satom = (LmnSymbolAtomRef)atom;
+    fmt::format_to(out, style, "Addr[{}], ", to_hex_string(satom));
+    fmt::format_to(out, style, "ID[{}], ", satom->get_id());
+    fmt::format_to(out, style, "Func[{}({})], ", satom->get_functor(), to_string_functor(satom->get_functor()));
+    fmt::format_to(out, style, "Arity[{}], ", satom->get_arity());
+    fmt::format_to(out, style, "Link[{}]", LMN_ATTR_GET_VALUE(attr));
+    // retVal                 += "Addr[" + to_hex_string(satom) + "], ";
+    // retVal                 += "ID[" + std::to_string(satom->get_id()) + "], ";
+    // retVal += "Func[" + std::to_string(satom->get_functor()) + "(" + to_string_functor(satom->get_functor()) + ")],
+    // "; retVal += "Arity[" + std::to_string(satom->get_arity()) + "], "; retVal += "Link[" +
+    // std::to_string(LMN_ATTR_GET_VALUE(attr)) + "]";
   }
-  retVal += __ESC_START__;
-  retVal += __ESC_END__;
-  return retVal;
+  // retVal += __ESC_START__;
+  // retVal += __ESC_END__;
+  return fmt::to_string(buf);
 }
 
 std::string to_string_dev_atom(const LmnAtomRef atom, LmnLinkAttr attr) {
@@ -686,10 +689,10 @@ std::string to_string_dev_atom(const LmnAtomRef atom, LmnLinkAttr attr) {
     return "null";
   }
   dump_history_table ht;
-  std::string retVal = to_string_atom(atom, attr) + "\n ";
-  retVal += __to_string_dev_atom(atom, attr) + "\n";
+  std::string        retVal = to_string_atom(atom, attr) + "\n ";
+  retVal                    += __to_string_dev_atom(atom, attr) + "\n";
   if (!LMN_ATTR_IS_DATA(attr)) {
-    LmnSymbolAtomRef satom = (LmnSymbolAtomRef)atom;
+    auto *satom = (LmnSymbolAtomRef)atom;
     for (int i = 0, max = satom->get_arity(); i < max; i++) {
       retVal += "   " + std::to_string(i) + ": " + to_string_atom(satom->get_link(i), satom->get_attr(i)) + "\n";
       retVal += "        " + __to_string_dev_atom(satom->get_link(i), satom->get_attr(i)) + "\n";
@@ -708,15 +711,15 @@ std::string to_string_dev_reg(const LmnRegisterRef reg) {
   LmnByte tt = reg->tt;
 
   switch (tt) {
-    case TT_ATOM:
-        return to_string_dev_atom((LmnAtomRef)wt, at);
-    case TT_MEM:
-      return print_object_ids(((LmnMembraneRef)wt)->NAME_ID(), (LmnMembraneRef)wt, ((LmnMembraneRef)wt)->mem_id())
-              + "\n" + to_string_dev_mem((LmnMembraneRef)wt);
-    case TT_OTHER:
-      return "wt[" + to_hex_string(wt) + "], at[" + to_hex_string(at) + "], tt[other]";
-    default:
-      return "unknown tt type";
+  case TT_ATOM:
+    return to_string_dev_atom((LmnAtomRef)wt, at);
+  case TT_MEM:
+    return print_object_ids(((LmnMembraneRef)wt)->NAME_ID(), (LmnMembraneRef)wt, ((LmnMembraneRef)wt)->mem_id()) +
+           "\n" + to_string_dev_mem((LmnMembraneRef)wt);
+  case TT_OTHER:
+    return "wt[" + to_hex_string(wt) + "], at[" + to_hex_string(at) + "], tt[other]";
+  default:
+    return "unknown tt type";
   }
 }
 
@@ -728,5 +731,4 @@ std::string to_string_dev_mem(const LmnMembraneRef mem) {
   return "Dev!" + to_string_mem(mem);
 }
 
-} // namespace debug_printer
-} // namespace slim
+} // namespace slim::debug_printer

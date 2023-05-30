@@ -43,12 +43,12 @@
  #include "vm/vm.h"
  #include "element/element.h"
  #include "verifier/verifier.h"
- #include <stdio.h>
+ #include <cstdio>
 
 #__echo_t
 # トランスレータ用の関数宣言
 const BYTE *translate_instruction_generated(const BYTE *instr,
-                                            Vector *jump_points,
+                                            std::vector<BYTE*> &jump_points,
                                             const char *header,
                                             const char *successcode,
                                             const char *failcode,

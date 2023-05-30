@@ -43,13 +43,13 @@
 
 char *int_to_str(long n) {
   char *s;
-  int keta = 0;
+  int   keta = 0;
 
   if (n == 0)
     keta = 1;
   else {
     int m = n;
-    keta = 0;
+    keta  = 0;
     if (m < 0) {
       m = -m, keta = 1;
     }
@@ -59,22 +59,8 @@ char *int_to_str(long n) {
     }
   }
 
-  s = LMN_NALLOC(char, keta + 1);
+  s = LMN_NALLOC<char>(keta + 1);
   sprintf(s, "%ld", n);
 
   return s;
-}
-
-/* ソート用。intの昇順比較を行う。*/
-int comp_int_f(const void *a_, const void *b_) {
-  int a = *(int *)a_;
-  int b = *(int *)b_;
-  return a > b ? 1 : (a == b ? 0 : -1);
-}
-
-/* ソート用。intの昇順比較を行う。*/
-int comp_int_greater_f(const void *a_, const void *b_) {
-  int a = *(int *)a_;
-  int b = *(int *)b_;
-  return a > b ? -1 : (a == b ? 0 : 1);
 }

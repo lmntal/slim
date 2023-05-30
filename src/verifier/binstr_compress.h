@@ -50,18 +50,18 @@
 #include "mem_encode.h"
 #include "tree_compress.h"
 
-LmnBinStrRef lmn_bscomp_z_encode(LmnBinStrRef org);
-LmnBinStrRef lmn_bscomp_z_decode(LmnBinStrRef org);
+LmnBinStrRef lmn_bscomp_z_encode(LmnBinStr const *org);
+LmnBinStrRef lmn_bscomp_z_decode(LmnBinStr const *org);
 
 LmnBinStrRef lmn_bscomp_d_encode(LmnBinStrRef org, LmnBinStrRef ref);
 LmnBinStrRef lmn_bscomp_d_decode(LmnBinStrRef ref, LmnBinStrRef dif);
 
-BOOL lmn_bscomp_tree_init();
-BOOL lmn_bscomp_tree_clean();
-void lmn_bscomp_tree_profile(FILE *f);
+BOOL          lmn_bscomp_tree_init();
+BOOL          lmn_bscomp_tree_clean();
+void          lmn_bscomp_tree_profile(FILE *f);
 unsigned long lmn_bscomp_tree_space();
-TreeNodeID lmn_bscomp_tree_encode(LmnBinStrRef str);
-LmnBinStrRef lmn_bscomp_tree_decode(TreeNodeID ref, int len);
+TreeNodeID    lmn_bscomp_tree_encode(LmnBinStrRef str);
+LmnBinStrRef  lmn_bscomp_tree_decode(TreeNodeID ref, int len);
 
 /* @} */
 

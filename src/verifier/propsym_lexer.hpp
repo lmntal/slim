@@ -45,31 +45,29 @@ namespace propsym {
 class lexer;
 }
 
-#include "lmntal.h"
 #include "automata.h"
+#include "lmntal.h"
 #include "propsym_parser.hpp"
 
 namespace propsym {
 class lexer {
   static const size_t SIZE = 256;
-  FILE *input;
-  char *buf;
-  char *YYCURSOR;
-  char *token;
-  char *YYLIMIT;
-  bool eof;
-  int lineno_ = 0;
-  int c;
+  FILE               *input;
+  char               *buf;
+  char               *YYCURSOR;
+  char               *token;
+  char               *YYLIMIT;
+  bool                eof;
+  int                 lineno_ = 0;
+  int                 c;
 
-  std::string get_token() const {
-    return std::string(token, YYCURSOR - token);
-  };
+  std::string get_token() const { return std::string(token, YYCURSOR - token); };
 
 public:
   lexer(FILE *in);
 
-  int lineno() const { return lineno_; }
-  int lex(YYSTYPE *yylval, YYLTYPE *yyloc);
+  int  lineno() const { return lineno_; }
+  int  lex(YYSTYPE *yylval, YYLTYPE *yyloc);
   bool fill(size_t need);
 };
 } // namespace propsym

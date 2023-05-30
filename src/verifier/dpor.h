@@ -45,22 +45,24 @@
  * @{
  */
 
-#include "../lmntal.h"
+#include "ankerl/unordered_dense.hpp"
 #include "delta_membrane.h"
 #include "element/element.h"
+#include "lmntal.h"
 #include "statespace.h"
 #ifdef DEBUG
 #include "vm/dumper.h"
-#define POR_DEBUG(V)                                                           \
-  if (lmn_env.debug_por) {                                                     \
-    (V);                                                                       \
+#define POR_DEBUG(V)                                                                                                   \
+  if (lmn_env.debug_por) {                                                                                             \
+    (V);                                                                                                               \
   }
 #else
 #define POR_DEBUG(V)
 #endif
 
-typedef struct ContextC2 *ContextC2Ref;
-typedef struct ContextC1 *ContextC1Ref;
+using ContextC2Ref = struct ContextC2 *;
+using ContextC1Ref = struct ContextC1 *;
+using DeltaTable   = ankerl::unordered_dense::map<MemDeltaRoot *, ContextC1Ref>;
 
 struct McDporData {
   unsigned int cur_depth;
@@ -68,41 +70,43 @@ struct McDporData {
   ContextC1Ref tmp; /* ちょっと退避する場所 */
   ContextC2Ref c2;
 
-  Vector
-      *wt_gatoms; /* マッチング中, ground命令によるProcessTblを集める作業場 */
-  ProcessTableRef
-      wt_flags; /* マッチング中, プロセスIDに対するフラグを設定していく作業場 */
+  Vector         *wt_gatoms; /* マッチング中, ground命令によるProcessTblを集める作業場 */
+  ProcessTableRef wt_flags;  /* マッチング中, プロセスIDに対するフラグを設定していく作業場 */
 
-  Vector *ample_cand; /* ample setに含める予定のContextC1へのポインタを積む */
-  st_table_t delta_tbl;   /* MemDeltaRootをkey, ContextC1をvalue */
-  Vector *free_deltas;    /* ゴミ置き場 */
-  unsigned int nxt_tr_id; /* 遷移に割り当てる遷移番号 */
+  Vector      *ample_cand;  /* ample setに含める予定のContextC1へのポインタを積む */
+  DeltaTable  *delta_tbl;   /* MemDeltaRootをkey, ContextC1をvalue */
+  Vector      *free_deltas; /* ゴミ置き場 */
+  unsigned int nxt_tr_id;   /* 遷移に割り当てる遷移番号 */
 };
 
 extern McDporData **dpor_data;
 
 #define DPOR_DATA() (dpor_data[env_my_thread_id()])
 
-#define LHS_DEFAULT (0x00U)
-#define LHS_MEM_GROOT (0x01U)
-#define LHS_MEM_NATOMS (0x01U << 1)
-#define LHS_MEM_NMEMS (0x01U << 2)
-#define LHS_MEM_NFLINKS (0x01U << 3)
-#define LHS_MEM_NORULES (0x01U << 4)
-#define LHS_MEM_STABLE (0x01U << 5)
+enum {
+  LHS_DEFAULT     = (0x00U),
+  LHS_MEM_GROOT   = (0x01U),
+  LHS_MEM_NATOMS  = (0x01U << 1),
+  LHS_MEM_NMEMS   = (0x01U << 2),
+  LHS_MEM_NFLINKS = (0x01U << 3),
+  LHS_MEM_NORULES = (0x01U << 4),
+  LHS_MEM_STABLE  = (0x01U << 5)
+};
 
 #define LHS_FL_SET(F, N) ((F) |= (N))
 #define LHS_FL_UNSET(F, N) ((F) &= ~(N))
 #define LHS_FL(F, S) ((F) & (S))
 
-#define OP_NONE (0x00U)
-#define OP_DEP_EXISTS (0x01U)
-#define OP_DEP_EXISTS_EX_GROOT (0x01U << 1)
-#define OP_DEP_NATOMS (0x01U << 2)
-#define OP_DEP_NMEMS (0x01U << 3)
-#define OP_DEP_NFLINKS (0x01U << 4)
-#define OP_DEP_NORULES (0x01U << 5)
-#define OP_DEP_STABLE (0x01U << 6)
+enum {
+  OP_NONE                = (0x00U),
+  OP_DEP_EXISTS          = (0x01U),
+  OP_DEP_EXISTS_EX_GROOT = (0x01U << 1),
+  OP_DEP_NATOMS          = (0x01U << 2),
+  OP_DEP_NMEMS           = (0x01U << 3),
+  OP_DEP_NFLINKS         = (0x01U << 4),
+  OP_DEP_NORULES         = (0x01U << 5),
+  OP_DEP_STABLE          = (0x01U << 6)
+};
 
 #define RHS_OP_SET(F, S) ((F) |= (S))
 #define RHS_OP_UNSET(F, S) ((F) &= ~(S))
@@ -110,16 +114,13 @@ extern McDporData **dpor_data;
 
 void dpor_explore_redundunt_graph(StateSpaceRef ss);
 
-void dpor_start(StateSpaceRef ss, State *s, MCReactContext *rc, Vector *new_s,
-                BOOL flag);
+void dpor_start(StateSpaceRef ss, State *s, MCReactContext *rc, Vector *new_s, BOOL flag);
 
-void dpor_env_init(void);
-void dpor_env_destroy(void);
+void dpor_env_init();
+void dpor_env_destroy();
 
-void dpor_transition_gen_LHS(McDporData *mc, MemDeltaRoot *d,
-                             LmnReactCxtRef rc);
-BOOL dpor_transition_gen_RHS(McDporData *mc, MemDeltaRoot *d,
-                             MCReactContext *rc);
+void dpor_transition_gen_LHS(McDporData *mc, MemDeltaRoot *d, LmnReactCxtRef rc);
+BOOL dpor_transition_gen_RHS(McDporData *mc, MemDeltaRoot *d, MCReactContext *rc);
 
 void dpor_LHS_flag_add(McDporData *d, LmnWord proc_id, BYTE set_f);
 
@@ -133,7 +134,7 @@ void dpor_LHS_remove_ground_atoms(McDporData *d, ProcessTableRef atoms);
 void dpor_contextC1_dump_eachL(ContextC1Ref c);
 void dpor_contextC1_dump_eachR(ContextC1Ref c);
 void dpor_contextC1_dump(McDporData *d);
-int dpor_dependency_tbl_dump(McDporData *d);
+int  dpor_dependency_tbl_dump(McDporData *d);
 
 /* @} */
 

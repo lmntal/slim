@@ -15,7 +15,7 @@ slim_LDFLAGS = -L./verifier                            \
                -L./vm                                  \
                -L./element                             \
                -L../third_party/zdelta-2.1
-slim_CXXFLAGS = -std=c++11                             \
+slim_CXXFLAGS = -std=c++20                             \
                -I../third_party/zdelta-2.1             \
                -DCOMMIT_ID=\"`git show -s --format=%h`\"
 slim_CFLAGS = -std=gnu99                               \
@@ -65,6 +65,7 @@ CLEANFILES = arch.h $(PARSER_SOURCE) $(PARSER_HEADER)
 slim_SOURCES =                                                     \
 	main.cpp                          lmntal.h                         \
 	env.cpp                           arch.h                           \
+	options.cpp                       options.h                    \
 	\
 	lmntal_ext.h                                                     \
 	ext/init_exts.cpp                                                  \
