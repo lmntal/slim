@@ -1,0 +1,12 @@
+---
+BasedOnStyle: LLVM
+Standard: c++20
+IncludeBlocks: Preserve
+ColumnLimit: 120
+AlignConsecutiveDeclarations: Consecutive
+AlignConsecutiveAssignments:
+  Enabled: true
+  AcrossEmptyLines: false
+  AcrossComments: false
+  AlignCompound: true
+  PadOperators: true

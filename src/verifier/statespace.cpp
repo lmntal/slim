@@ -49,30 +49,29 @@
 #include "runtime_status.h"
 #include "state.h"
 #include "state.hpp"
+#include "state_dumper.h"
 #include "state_table.hpp"
 #include "vm/vm.h"
-#include "state_dumper.h"
 
 namespace c14 = slim::element;
 
 void StateSpace::make_table_pair(TablePair &t) {
-  t.tbl = c14::make_unique<StateTable>(this->thread_num);
+  t.tbl = std::make_unique<StateTable>(this->thread_num);
   if (this->has_property())
-    t.acc = c14::make_unique<StateTable>(this->thread_num);
+    t.acc = std::make_unique<StateTable>(this->thread_num);
 }
 
 void StateSpace::make_table_pair(TablePair &t, TablePair &rehasher) {
-  t.tbl = c14::make_unique<StateTable>(this->thread_num, rehasher.tbl.get());
+  t.tbl = std::make_unique<StateTable>(this->thread_num, rehasher.tbl.get());
   if (this->has_property())
-    t.acc = c14::make_unique<StateTable>(this->thread_num, rehasher.acc.get());
+    t.acc = std::make_unique<StateTable>(this->thread_num, rehasher.acc.get());
 }
 
 /** StateSpace
  */
 StateSpace::StateSpace(int thread_num, AutomataRef a, Vector *psyms)
-    : using_memenc(false), is_formated(false), thread_num(thread_num),
-      out(stdout), init_state(nullptr), property_automata(a), propsyms(psyms),
-      end_states(thread_num) {
+    : using_memenc(false), is_formated(false), thread_num(thread_num), out(stdout), init_state(nullptr),
+      property_automata(a), propsyms(psyms), end_states(thread_num) {
   if (lmn_env.mem_enc) {
     using_memenc = true;
     make_table_pair(memid_table);
@@ -95,33 +94,25 @@ void StateSpace::add_memid_hash(unsigned long hash) {
   this->mhash_table.tbl->memid_rehash(hash);
 }
 
-std::unique_ptr<StateTable> &
-StateSpace::insert_destination(State *s, unsigned long hashv) {
+std::unique_ptr<StateTable> &StateSpace::insert_destination(State *s, unsigned long hashv) {
   if (s->is_encoded()) /* already calculated canonical binary strings */
-    return state_is_accept(automata(), s) ? this->memid_table.acc
-                                          : this->memid_table.tbl;
+    return state_is_accept(automata(), s) ? this->memid_table.acc : this->memid_table.tbl;
 
-  if (slim::config::profile && lmn_env.optimize_hash_old &&
-      !lmn_env.tree_compress && contains_hash(hashv))
-    return state_is_accept(automata(), s) ? this->memid_table.acc
-                                          : this->memid_table.tbl;
+  if (slim::config::profile && lmn_env.optimize_hash_old && !lmn_env.tree_compress && contains_hash(hashv))
+    return state_is_accept(automata(), s) ? this->memid_table.acc : this->memid_table.tbl;
 
   /* default */
-  return state_is_accept(automata(), s) ? this->mhash_table.acc
-                                        : this->mhash_table.tbl;
+  return state_is_accept(automata(), s) ? this->mhash_table.acc : this->mhash_table.tbl;
 }
 
-std::unique_ptr<StateTable> &
-StateSpace::resize_destination(std::unique_ptr<StateTable> &def, State *ret,
-                               State *s) {
+std::unique_ptr<StateTable> &StateSpace::resize_destination(std::unique_ptr<StateTable> &def, State *ret, State *s) {
   /* rehasherが機能した場合, 通常のテーブルを入り口に,
    * memidテーブルにエントリが追加されている
    * なにも考慮せずにテーブル拡張の判定を行ってしまうと,
    * memidテーブルが定数サイズになってしまう. 判定を適切に行うため,
    * テーブルへのポインタを切り替える */
   if (ret->is_encoded())
-    return (state_is_accept(this->automata(), s)) ? this->memid_table.acc
-                                                  : this->memid_table.tbl;
+    return (state_is_accept(this->automata(), s)) ? this->memid_table.acc : this->memid_table.tbl;
 
   return def;
 }
@@ -134,13 +125,13 @@ StateSpace::resize_destination(std::unique_ptr<StateTable> &def, State *ret,
  * なお, 既にsのバイナリストリングを計算済みの場合,
  * バイナリストリングへのエンコード処理はskipするため, s_memはNULLで構わない. */
 State *StateSpace::insert(State *s) {
-  State *ret;
-  unsigned long col = 0;
+  State        *ret;
+  unsigned long col   = 0;
   unsigned long hashv = state_hash(s);
 
   auto &insert_dst = insert_destination(s, hashv);
-  if (slim::config::profile && lmn_env.optimize_hash_old &&
-      !lmn_env.tree_compress && !s->is_expanded() && contains_hash(hashv)) {
+  if (slim::config::profile && lmn_env.optimize_hash_old && !lmn_env.tree_compress && !s->is_expanded() &&
+      contains_hash(hashv)) {
     s->calc_mem_encode();
   }
 
@@ -150,8 +141,7 @@ State *StateSpace::insert(State *s) {
     ret = insert_dst->insert(s);
   }
 
-  if (slim::config::profile && lmn_env.optimize_hash_old &&
-      !lmn_env.tree_compress && col >= MEM_EQ_FAIL_THRESHOLD) {
+  if (slim::config::profile && lmn_env.optimize_hash_old && !lmn_env.tree_compress && col >= MEM_EQ_FAIL_THRESHOLD) {
     this->add_memid_hash(hashv);
   }
 
@@ -180,7 +170,7 @@ State *StateSpace::insert_delta(State *s, struct MemDeltaRoot *d) {
   /* d->mem (parentに対応する階層グラフ構造)を,
    * sに対応する階層グラフ構造Xへ書換え */
   dmem_root_commit(d);
-  s->state_set_mem(DMEM_ROOT_MEM(d));
+  s->state_set_mem(dmem_root_mem(d));
 
   /* Xを基に, ハッシュ値/mem_idなどの状態データを計算する */
   s->state_calc_hash(s->state_mem(), this->use_memenc());
@@ -199,7 +189,7 @@ State *StateSpace::insert_delta(State *s, struct MemDeltaRoot *d) {
   /* LmnMembraneとLmnBinStrのデータ領域を統合(@rev.458)したため, NULL設定に注意
    */
   if (!s->state_binstr()) {
-    s->state_set_mem(NULL);
+    s->state_set_mem(nullptr);
   }
 
   return ret;
@@ -207,8 +197,7 @@ State *StateSpace::insert_delta(State *s, struct MemDeltaRoot *d) {
 
 /* 重複検査や排他制御なしに状態sを状態表ssに登録する */
 void StateSpace::add_direct(State *s) {
-  auto &add_dst =
-      (s->is_encoded()) ? this->memid_table.tbl : this->mhash_table.tbl;
+  auto &add_dst = (s->is_encoded()) ? this->memid_table.tbl : this->mhash_table.tbl;
   add_dst->add_direct(s);
   add_dst->resize_if_needed();
 }
@@ -254,9 +243,7 @@ void StateSpace::set_init_state(State *init_state) {
 
 /* 状態数を返す */
 
-unsigned long StateSpace::num() const {
-  return (this->num_raw() - this->dummy_num());
-}
+unsigned long StateSpace::num() const { return (this->num_raw() - this->dummy_num()); }
 
 /* dummyの状態数を含む, 管理している状態数を返す */
 unsigned long StateSpace::num_raw() const {
@@ -268,9 +255,9 @@ unsigned long StateSpace::num_raw() const {
 
 /* memidテーブルに追加されているdummy状態数を返す */
 unsigned long StateSpace::dummy_num() const {
-  StateTable *tbl;
+  StateTable   *tbl;
   unsigned long ret;
-  unsigned int i;
+  unsigned int  i;
 
   ret = 0UL;
   if (this->memid_table.tbl) {
@@ -285,7 +272,7 @@ unsigned long StateSpace::dummy_num() const {
 /* 最終状態数を返す */
 unsigned long StateSpace::num_of_ends() const {
   unsigned long sum = 0;
-  for (const auto &e : end_states)
+  for (auto const &e : end_states)
     sum += e.size();
   return sum;
 }
@@ -313,7 +300,7 @@ unsigned long StateSpace::space() const {
   if (this->memid_table.acc) {
     ret += this->memid_table.acc->space();
   }
-  for (const auto &e : end_states)
+  for (auto const &e : end_states)
     ret += e.capacity() * sizeof(e.front());
   return ret;
 }
@@ -323,8 +310,8 @@ unsigned long StateSpace::space() const {
 
 void StateSpace::dump_ends() const {
   auto dumper = StateDumper::from_env(this->out);
-  for (const auto &end_i : end_states) {
-    for (const auto &p : end_i) {
+  for (auto const &end_i : end_states) {
+    for (auto const &p : end_i) {
       dumper->state_print_mem(p);
       if (lmn_env.sp_dump_format == LMN_SYNTAX)
         printf(".\n");
@@ -332,9 +319,7 @@ void StateSpace::dump_ends() const {
   }
 }
 
-void StateSpace::dump() {
-  StateDumper::from_env(this->out)->dump(this);
-}
+void StateSpace::dump() { StateDumper::from_env(this->out)->dump(this); }
 
 /* 注: 出力用に, リンクリストの先頭の状態のIDで,
  * ハッシュ表であることを無視した配置へ整列する. ただし,
@@ -346,10 +331,14 @@ void StateSpace::format_states() {
 #ifndef __CYGWIN__
   /* cygwinテスト時に, ボトルネックになっていた */
   if (!this->is_formated && lmn_env.sp_dump_format != INCREMENTAL) {
-    if (this->mhash_table.tbl) this->mhash_table.tbl->format_states();
-    if (this->mhash_table.acc) this->mhash_table.acc->format_states();
-    if (this->memid_table.tbl) this->memid_table.tbl->format_states();
-    if (this->memid_table.acc) this->memid_table.acc->format_states();
+    if (this->mhash_table.tbl)
+      this->mhash_table.tbl->format_states();
+    if (this->mhash_table.acc)
+      this->mhash_table.acc->format_states();
+    if (this->memid_table.tbl)
+      this->memid_table.tbl->format_states();
+    if (this->memid_table.acc)
+      this->memid_table.acc->format_states();
     this->is_formated = TRUE;
   }
 #endif

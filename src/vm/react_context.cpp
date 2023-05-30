@@ -73,32 +73,27 @@
 //  SimpleHashtbl *hl_sameproccxt; /* findatom
 //                                    時のアトム番号と、同名型付きプロセス文脈を持つアトム引数との対応関係を保持
 //                                  */
-//#ifdef USE_FIRSTCLASS_RULE
+// #ifdef USE_FIRSTCLASS_RULE
 //  Vector *insertion_events;
-//#endif
+// #endif
 //};
 
 void slim::vm::RuleContext::clear_hl_spc() {
-  HashIterator it;
-
   if (!hl_sameproccxt)
     return;
 
-  for (it = hashtbl_iterator(hl_sameproccxt); !hashtbliter_isend(&it);
-       hashtbliter_next(&it)) {
-    SameProcCxt *spc = (SameProcCxt *)(hashtbliter_entry(&it)->data);
-    delete spc;
+  for (auto &hl : *hl_sameproccxt) {
+    delete hl.second;
   }
 
-  hashtbl_free(hl_sameproccxt);
+  delete hl_sameproccxt;
   hl_sameproccxt = nullptr;
 }
 
 BOOL rc_hlink_opt(LmnInstrVar atomi, LmnReactCxtRef rc) {
   /*  return hl_sameproccxtが初期化済み && atomiは同名プロセス文脈を持つアトム
    */
-  return rc->get_hl_sameproccxt() &&
-         hashtbl_contains(rc->get_hl_sameproccxt(), (HashKeyType)atomi);
+  return rc->get_hl_sameproccxt() && rc->get_hl_sameproccxt()->contains(atomi);
 }
 
 void react_context_copy(LmnReactCxtRef to, LmnReactCxtRef from) { *to = *from; }
@@ -108,85 +103,76 @@ void react_context_copy(LmnReactCxtRef to, LmnReactCxtRef from) { *to = *from; }
  */
 
 MCReactContext::MCReactContext(LmnMembrane *mem) : LmnReactCxt(mem, REACT_ND) {
-    if (lmn_env.enable_por_old) {
-      this->turnon_optmode(DynamicPartialOrderReduction_Naive);
-    } else if (lmn_env.enable_por) {
-      this->turnon_optmode(DynamicPartialOrderReduction);
-    }
-
-    if (lmn_env.d_compress) {
-      this->turnon_optmode(BinaryStringDeltaCompress);
-    }
-
-    mem_delta_tmp = NULL;
-    opt_mode = 0x00U;
-    org_succ_num = 0;
-    d_cur = 0;
-
-    if (lmn_env.delta_mem) {
-      this->turnon_optmode(DeltaMembrane);
-    }
-
-    if (lmn_env.enable_por && !lmn_env.enable_por_old) {
-      por = DPOR_DATA();
-    }
+  if (lmn_env.enable_por_old) {
+    this->turnon_optmode(DynamicPartialOrderReduction_Naive);
+  } else if (lmn_env.enable_por) {
+    this->turnon_optmode(DynamicPartialOrderReduction);
   }
 
-void mc_react_cxt_add_expanded(MCReactContext *cxt, LmnMembraneRef mem,
-                               LmnRuleRef rule) {
+  if (lmn_env.d_compress) {
+    this->turnon_optmode(BinaryStringDeltaCompress);
+  }
+
+  mem_delta_tmp = nullptr;
+  opt_mode      = 0x00U;
+  org_succ_num  = 0;
+  d_cur         = 0;
+
+  if (lmn_env.delta_mem) {
+    this->turnon_optmode(DeltaMembrane);
+  }
+
+  if (lmn_env.enable_por && !lmn_env.enable_por_old) {
+    por = DPOR_DATA();
+  }
+}
+
+void mc_react_cxt_add_expanded(MCReactContext *cxt, LmnMembraneRef mem, LmnRuleRef rule) {
   cxt->push_expanded_state(mem);
   cxt->push_expanded_rule(rule);
 }
 
-void mc_react_cxt_add_mem_delta(MCReactContext *cxt, struct MemDeltaRoot *d,
-                                LmnRuleRef rule) {
+void mc_react_cxt_add_mem_delta(MCReactContext *cxt, struct MemDeltaRoot *d, LmnRuleRef rule) {
   cxt->push_mem_delta_root(d);
   cxt->push_expanded_rule(rule);
 }
 
-unsigned int mc_react_cxt_succ_num_org(LmnReactCxtRef cxt) {
-  return RC_ND_ORG_SUCC_NUM(cxt);
-}
+unsigned int mc_react_cxt_succ_num_org(LmnReactCxtRef cxt) { return RC_ND_ORG_SUCC_NUM(cxt); }
 
 unsigned int mc_react_cxt_expanded_num(MCReactContext *cxt) {
-  return cxt->has_optmode(DeltaMembrane) ? cxt->get_mem_delta_roots().size()
-                             : cxt->expanded_states().size();
+  return cxt->has_optmode(DeltaMembrane) ? cxt->get_mem_delta_roots().size() : cxt->expanded_states().size();
 }
 
 ///// first-class rulesets
 
 struct LRCInsertEvent {
   LmnSymbolAtomRef satom;
-  LmnMembraneRef mem;
+  LmnMembraneRef   mem;
 };
-typedef struct LRCInsertEvent *LRCInsertEventRef;
+using LRCInsertEventRef = LRCInsertEvent *;
 
 #ifdef USE_FIRSTCLASS_RULE
-BOOL lmn_rc_has_insertion(LmnReactCxtRef rc) {
-  return !rc->insertion_events->is_empty();
-}
+BOOL lmn_rc_has_insertion(LmnReactCxtRef rc) { return !rc->insertion_events->is_empty(); }
 
-void lmn_rc_push_insertion(LmnReactCxtRef rc, LmnSymbolAtomRef satom,
-                           LmnMembraneRef mem) {
+void lmn_rc_push_insertion(LmnReactCxtRef rc, LmnSymbolAtomRef satom, LmnMembraneRef mem) {
   LMN_ASSERT(satom && mem);
-  LRCInsertEventRef e = LMN_MALLOC(struct LRCInsertEvent);
+  auto *e  = LMN_MALLOC<struct LRCInsertEvent>();
   e->satom = satom;
-  e->mem = mem;
+  e->mem   = mem;
   rc->insertion_events->push((LmnWord)e);
 }
-void lmn_rc_pop_insertion(LmnReactCxtRef rc, LmnSymbolAtomRef *satom,
-                          LmnMembraneRef *mem) {
+void lmn_rc_pop_insertion(LmnReactCxtRef rc, LmnSymbolAtomRef *satom, LmnMembraneRef *mem) {
   LMN_ASSERT(lmn_rc_has_insertion(rc));
-  LRCInsertEventRef e = (LRCInsertEventRef)rc->insertion_events->pop();
-  *satom = e->satom;
-  *mem = e->mem;
+  auto *e = (LRCInsertEventRef)rc->insertion_events->pop();
+  *satom  = e->satom;
+  *mem    = e->mem;
   LMN_FREE(e);
 }
 
 void lmn_rc_execute_insertion_events(LmnReactCxtRef rc) {
   while (lmn_rc_has_insertion(rc)) {
     LmnSymbolAtomRef satom;
-    LmnMembraneRef mem;
+    LmnMembraneRef   mem;
 
     lmn_rc_pop_insertion(rc, &satom, &mem);
 

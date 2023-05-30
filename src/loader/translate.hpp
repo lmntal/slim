@@ -48,116 +48,112 @@
 #include "element/element.h"
 #include "lmntal.h"
 #include "vm/vm.h"
-#include <stdarg.h>
+#include <cstdarg>
+#include <cstddef>
+#include <optional>
+#include <string_view>
+#include <vector>
 
 /* この辺の読み込みマクロはインタプリタ出力時も使えるはず */
 /* translate.c内でも使えるはず */
 
-#define READ_VAL_FUNC(I, X)                                                    \
-  do {                                                                         \
-    READ_VAL(LmnLinkAttr, I, X##_attr);                                        \
-    switch (X##_attr) {                                                        \
-    case LMN_INT_ATTR:                                                         \
-      READ_VAL(long, I, X.long_data);                                          \
-      break;                                                                   \
-    case LMN_DBL_ATTR:                                                         \
-      READ_VAL(double, I, X.double_data);                                      \
-      break;                                                                   \
-    case LMN_STRING_ATTR:                                                      \
-      READ_VAL(lmn_interned_str, I, X.string_data);                            \
-      break;                                                                   \
-    default:                                                                   \
-      READ_VAL(LmnFunctor, I, X.functor_data);                                 \
-      break;                                                                   \
-    }                                                                          \
+#define READ_VAL_FUNC(I, X)                                                                                            \
+  do {                                                                                                                 \
+    READ_VAL(LmnLinkAttr, I, X##_attr);                                                                                \
+    switch (X##_attr) {                                                                                                \
+    case LMN_INT_ATTR:                                                                                                 \
+      READ_VAL(long, I, X.long_data);                                                                                  \
+      break;                                                                                                           \
+    case LMN_DBL_ATTR:                                                                                                 \
+      READ_VAL(double, I, X.double_data);                                                                              \
+      break;                                                                                                           \
+    case LMN_STRING_ATTR:                                                                                              \
+      READ_VAL(lmn_interned_str, I, X.string_data);                                                                    \
+      break;                                                                                                           \
+    default:                                                                                                           \
+      READ_VAL(LmnFunctor, I, X.functor_data);                                                                         \
+      break;                                                                                                           \
+    }                                                                                                                  \
   } while (0)
 
-#define READ_VAL_LIST(I, X)                                                    \
-  do {                                                                         \
-    READ_VAL(LmnInstrVar, I, X##_num);                                         \
-    X = (LmnWord *)malloc(sizeof(LmnWord) * X##_num);                          \
-    {                                                                          \
-      int i;                                                                   \
-      for (i = 0; i < X##_num; ++i) {                                          \
-        READ_VAL(LmnInstrVar, I, X[i]);                                        \
-      }                                                                        \
-    }                                                                          \
+#define READ_VAL_LIST(I, X)                                                                                            \
+  do {                                                                                                                 \
+    READ_VAL(LmnInstrVar, I, X##_num);                                                                                 \
+    X = (LmnWord *)malloc(sizeof(LmnWord) * X##_num);                                                                  \
+    {                                                                                                                  \
+      int i;                                                                                                           \
+      for (i = 0; i < X##_num; ++i) {                                                                                  \
+        READ_VAL(LmnInstrVar, I, X[i]);                                                                                \
+      }                                                                                                                \
+    }                                                                                                                  \
   } while (0)
 
 struct trans_rule {
   lmn_interned_str name;
-  LmnTranslated function;
+  LmnTranslated    function;
 };
 
 struct trans_ruleset {
-  int size;
-  struct trans_rule *rules;
-  slim::element::raw_pointer_iterator<trans_rule> begin() const {
-    return rules;
-  }
-  slim::element::raw_pointer_iterator<trans_rule> end() const {
-    return rules + size;
-  }
+  int                                             size;
+  struct trans_rule                              *rules;
+  slim::element::raw_pointer_iterator<trans_rule> begin() const { return rules; }
+  slim::element::raw_pointer_iterator<trans_rule> end() const { return rules + size; }
 };
 
 struct trans_module {
   lmn_interned_str name;
-  int ruleset; /* ruleset id */
+  int              ruleset; /* ruleset id */
 };
 
 struct trans_maindata {
-  int count_of_symbol;
-  const char **symbol_table;
-  int count_of_functor;
-  LmnFunctorEntry *functor_table;
-  int count_of_ruleset;
+  int                   count_of_symbol;
+  char const          **symbol_table;
+  int                   count_of_functor;
+  LmnFunctorEntry      *functor_table;
+  int                   count_of_ruleset;
   struct trans_ruleset *ruleset_table;
-  int count_of_module;
-  struct trans_module *module_table;
-  int *symbol_exchange;
-  int *functor_exchange;
-  int *ruleset_exchange;
+  int                   count_of_module;
+  struct trans_module  *module_table;
+  int                  *symbol_exchange;
+  int                  *functor_exchange;
+  int                  *ruleset_exchange;
 };
 
 /* 自動生成される 1つ命令を変換して出力し,次変換する位置を返す */
-const BYTE *translate_instruction_generated(
-    const BYTE *instr,       /* 変換する場所 */
-    Vector *jump_points,     /* 変換対象の場所 */
-    const char *header,      /* その場所が属する */
-    const char *successcode, /* 成功時実行するコード */
-    const char *failcode,    /* */
-    int indent,              /* */
-    int *finishflag); /* 変換の結果(正なら成功+継続,0なら成功+終了,負なら失敗 */
+const BYTE *translate_instruction_generated(const BYTE          *instr,       /* 変換する場所 */
+                                            std::vector<BYTE *> &jump_points, /* 変換対象の場所 */
+                                            char const          *header,      /* その場所が属する */
+                                            char const          *successcode, /* 成功時実行するコード */
+                                            char const          *failcode,    /* */
+                                            int                  indent,      /* */
+                                            int *finishflag); /* 変換の結果(正なら成功+継続,0なら成功+終了,負なら失敗 */
 
 /* 手動生成 1つ命令を変換して出力し,次変換する位置を返す */
-const BYTE *translate_instruction(const BYTE *instr, Vector *jump_points,
-                                  const char *header, const char *successcode,
-                                  const char *failcode, int indent,
-                                  int *finishflag);
+const BYTE *translate_instruction(const BYTE *instr, std::vector<BYTE *> &jump_points, std::string_view header,
+                                  std::string_view successcode, std::string_view failcode, int indent, int *finishflag);
 
 /* 1ブロック相当を変換して出力し,読み込み終わった次の位置を返す */
 /* findatomのような再帰的な変換が必要な場合に呼び出す */
-const BYTE *translate_instructions(const BYTE *p, Vector *jump_points,
-                                   const char *header, const char *successcode,
-                                   const char *failcode, int indent);
+const BYTE *translate_instructions(const BYTE *p, std::vector<BYTE *> &jump_points, std::string_view header,
+                                   std::string_view successcode, std::string_view failcode, int indent);
 
 /* 出力ファイル内で一時的に使うconst vectorをconst LmnWord[]から作る
  * vectorの中を触るので注意 */
 /* この戻り値の要素を書き換えるのも配列を拡張するのもdelete Vectorするのもダメ */
-Vector vec_const_temporary_from_array(int size, const LmnWord *w);
+Vector vec_const_temporary_from_array(int size, LmnWord const *w);
 
 /* vにwが含まれる場合そのindexを返す.
  * 含まれない場合wをvの最後に追加してそのindexを返す */
-int vec_inserted_index(Vector *v, LmnWord w);
+size_t vec_inserted_index(std::vector<BYTE *> &v, LmnWord w);
 
 /* トランスレート時に使う targX (X=argi)の名前でlistとlist_numを出力 */
-void tr_print_list(int indent, int argi, int list_num, const LmnWord *list);
+void tr_print_list(int indent, int argi, int list_num, LmnWord const *list);
 
 /* 単にn*2個空白を出力 */
 void print_indent(int n);
 
 /* 必要なサイズ分のバッファを勝手にmallocしてsprintf free必須 */
-char *automalloc_sprintf(const char *format, ...);
+char *automalloc_sprintf(char const *format, ...);
 
 /* 変換途中で見つけたcommitからルール名を拾う */
 void set_translating_rule_name(lmn_interned_str rule_name);
@@ -169,14 +165,14 @@ void set_translating_rule_name(lmn_interned_str rule_name);
 /* ファンクタを中間バイト列から読み込む時に使用する構造体 */
 /* READ_DATA_ATOM等を吸収するために使いたい */
 union LmnFunctorLiteral {
-  long long_data;
-  double double_data;
+  long             long_data;
+  double           double_data;
   lmn_interned_str string_data;
-  LmnFunctor functor_data;
+  LmnFunctor       functor_data;
 };
 
 /* 現在ロードしている情報をfilepath.so の名前で使えるように出力する */
-void translate(char *filepath);
+void translate(std::string_view filepath);
 
 /* @} */
 

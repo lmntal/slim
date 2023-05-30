@@ -45,10 +45,10 @@
  * @{
  */
 
-#include <stdio.h>
+#include <cstdio>
 #include <unistd.h>
 
-FILE *run_program(const char *program_name, char **args);
+FILE *run_program(char const *program_name, char **args);
 
 /* @} */
 

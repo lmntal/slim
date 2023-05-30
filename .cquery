@@ -1,6 +1,6 @@
 clang
-%c -std=c11
-%cpp -std=c++11
+%c -std=c17
+%cpp -std=c++20
 -pthread
 
 # Includes

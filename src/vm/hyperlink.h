@@ -71,38 +71,35 @@ struct HyperLink;
  *   '!'アトムのポインタをIDとして利用しているが、出力（とuniqの履歴生成）の際には
  *   idの値を見かけ上のIDとして利用している
  */
-typedef struct HyperLink {
-  LmnSymbolAtomRef
-      atom; /* 対応する'!'アトムのポインタ、atomが開放されているときはNULL */
-  LmnHlinkRank rank;
-  LmnMembraneRef mem; /* atom の所属膜（findatomで使用）*/
-  unsigned long
-      id; /* 集合を一意に識別するID (主に出力とuniqの履歴生成の際に使用) */
-          //  long usrid;        /*
+struct HyperLink {
+  LmnSymbolAtomRef atom; /* 対応する'!'アトムのポインタ、atomが開放されているときはNULL */
+  LmnHlinkRank     rank;
+  LmnMembraneRef   mem; /* atom の所属膜（findatomで使用）*/
+  unsigned long    id;  /* 集合を一意に識別するID (主に出力とuniqの履歴生成の際に使用) */
+                        //  long usrid;        /*
   //  ユーザがhyperlinkのidを決められるようにするための変数（未実装）*/
-  LmnAtomRef
-      attrAtom; /* ハイパーリンクの属性として扱うアトム rootにのみ持たせる */
-  LmnLinkAttr attr; /* 属性アトムの属性(0なら属性はなし) rootにのみ持たせる */
+  LmnAtomRef  attrAtom; /* ハイパーリンクの属性として扱うアトム rootにのみ持たせる */
+  LmnLinkAttr attr;     /* 属性アトムの属性(0なら属性はなし) rootにのみ持たせる */
   /* 木構造による併合関係の表現 */
-  struct HyperLink *parent; /* root の場合は自身のポインタ */
-  struct HashSet *children; /* 子表 */
+  struct HyperLink *parent;   /* root の場合は自身のポインタ */
+  struct HashSet   *children; /* 子表 */
   HyperLink(LmnSymbolAtomRef at);
-  void put_attr(LmnAtomRef attrAtom, LmnLinkAttr attr);
-  void rank_calc(int d);
-  void swap_atom(HyperLink *hl2);
-  HyperLink *head_child();
-  void path_compression(Vector *children);
-  HyperLink *get_root();
-  HyperLink *unify(HyperLink *child, LmnAtomRef attrAtom, LmnLinkAttr attr);
-  HyperLink *lmn_unify(HyperLink *hl2, LmnAtomRef attrAtom, LmnLinkAttr attr);
+  void             put_attr(LmnAtomRef attrAtom, LmnLinkAttr attr);
+  void             rank_calc(int d);
+  void             swap_atom(HyperLink *hl2);
+  HyperLink       *head_child();
+  void             path_compression(Vector *children);
+  HyperLink       *get_root();
+  HyperLink       *unify(HyperLink *child, LmnAtomRef attrAtom, LmnLinkAttr attr);
+  HyperLink       *lmn_unify(HyperLink *hl2, LmnAtomRef attrAtom, LmnLinkAttr attr);
   LmnSymbolAtomRef hl_to_at();
-  int lmn_rank();
-  int element_num();
-  BOOL eq_hl(HyperLink *hl2);
-  void get_children_without(Vector *tree, HyperLink *without);
-  void get_elements(Vector *tree);
-  unsigned long hash();
-} HyperLink;
+  int              lmn_rank();
+  int              element_num();
+  BOOL             eq_hl(HyperLink *hl2);
+  void             get_children_without(std::vector<HyperLink *> &tree, HyperLink *without) const;
+  void             get_elements(std::vector<HyperLink *> &tree);
+  unsigned long    hash();
+};
 
 #define LMN_HL_EMPTY_ATTR (0)
 
@@ -113,31 +110,24 @@ typedef struct HyperLink {
 #define LMN_HL_ID(HL) ((HL)->id)
 #define LMN_HL_ATTRATOM(HL) (((HL)->get_root())->attrAtom)
 #define LMN_HL_ATTRATOM_ATTR(HL) (((HL)->get_root())->attr)
-#define LMN_HL_HAS_ATTR(HL)                                                    \
-  (LMN_HL_ATTRATOM_ATTR(HL->get_root()) ||                         \
-   LMN_HL_ATTRATOM(HL->get_root()))
+#define LMN_HL_HAS_ATTR(HL) (LMN_HL_ATTRATOM_ATTR(HL->get_root()) || LMN_HL_ATTRATOM(HL->get_root()))
 
-#define LMN_HL_ATOM_ROOT_HL(ATOM)                                              \
-  (lmn_hyperlink_at_to_hl(ATOM))->get_root()
-#define LMN_HL_ATOM_ROOT_ATOM(ATOM)                                            \
-  ((lmn_hyperlink_at_to_hl(ATOM))->get_root())->hl_to_at()
+#define LMN_HL_ATOM_ROOT_HL(ATOM) (lmn_hyperlink_at_to_hl(ATOM))->get_root()
+#define LMN_HL_ATOM_ROOT_ATOM(ATOM) ((lmn_hyperlink_at_to_hl(ATOM))->get_root())->hl_to_at()
 
 #define LMN_IS_HL(ATOM) (LMN_FUNC_IS_HL((ATOM)->get_functor()))
 #define LMN_FUNC_IS_HL(FUNC) ((FUNC) == LMN_HL_FUNC)
 #define LMN_ATTR_IS_HL(ATTR) ((ATTR) == LMN_HL_ATTR)
 
-void lmn_hyperlink_make_with_attr(LmnSymbolAtomRef at, LmnAtomRef attrAtom,
-                                  LmnLinkAttr attr);
+void             lmn_hyperlink_make_with_attr(LmnSymbolAtomRef at, LmnAtomRef attrAtom, LmnLinkAttr attr);
 LmnSymbolAtomRef lmn_hyperlink_new();
-LmnSymbolAtomRef lmn_hyperlink_new_with_attr(LmnAtomRef attrAtom,
-                                             LmnLinkAttr attr);
-void lmn_hyperlink_delete(LmnSymbolAtomRef at);
-void lmn_hyperlink_copy(LmnSymbolAtomRef newatom, LmnSymbolAtomRef oriatom);
-HyperLink *lmn_hyperlink_at_to_hl(LmnSymbolAtomRef at);
-BOOL lmn_hyperlink_eq(LmnSymbolAtomRef atom1, LmnLinkAttr attr1,
-                      LmnSymbolAtomRef atom2, LmnLinkAttr attr2);
-void lmn_hyperlink_print(LmnMembraneRef gr);
-void lmn_hyperlink_print(FILE *fp, LmnMembraneRef gr);
+LmnSymbolAtomRef lmn_hyperlink_new_with_attr(LmnAtomRef attrAtom, LmnLinkAttr attr);
+void             lmn_hyperlink_delete(LmnSymbolAtomRef at);
+void             lmn_hyperlink_copy(LmnSymbolAtomRef newatom, LmnSymbolAtomRef oriatom);
+HyperLink       *lmn_hyperlink_at_to_hl(LmnSymbolAtomRef at);
+BOOL             lmn_hyperlink_eq(LmnSymbolAtomRef atom1, LmnLinkAttr attr1, LmnSymbolAtomRef atom2, LmnLinkAttr attr2);
+void             lmn_hyperlink_print(LmnMembraneRef gr);
+void             lmn_hyperlink_print(FILE *fp, LmnMembraneRef gr);
 
 /* ----------------------------------------------------------------------- *
  *  same proccess context (同名型付きプロセス文脈)                         *
@@ -146,10 +136,8 @@ void lmn_hyperlink_print(FILE *fp, LmnMembraneRef gr);
 
 /* 同名型付きプロセス文脈を持つ引数ごとに生成される */
 struct ProcCxt {
-  ProcCxt(int atomi, int arg, ProcCxt *original)
-      : atomi(atomi), arg(arg), start(nullptr), original_(original) {}
-  ProcCxt(int atomi, int arg)
-      : atomi(atomi), arg(arg), start(nullptr), original_(nullptr) {}
+  ProcCxt(int atomi, int arg, ProcCxt *original) : atomi(atomi), arg(arg), start(nullptr), original_(original) {}
+  ProcCxt(int atomi, int arg) : atomi(atomi), arg(arg), start(nullptr), original_(nullptr) {}
 
   bool is_clone() const { return original_ && original_->atomi != atomi; }
 
@@ -158,20 +146,16 @@ struct ProcCxt {
     if (!LMN_ATTR_IS_HL(linked_attr))
       return false;
 
-    auto linked_atom = (LmnSymbolAtomRef)atom->get_link(i);
-    auto linked_hl = lmn_hyperlink_at_to_hl(linked_atom);
+    auto *linked_atom = (LmnSymbolAtomRef)atom->get_link(i);
+    auto *linked_hl   = lmn_hyperlink_at_to_hl(linked_atom);
 
-    if (original_ && original_->start && !linked_hl->eq_hl(original_->start)) {
-      return false;
-    }
-
-    return true;
+    return !original_ || !original_->start || linked_hl->eq_hl(original_->start);
   }
 
   void match(LmnSymbolAtomRef atom, int i) {
-    auto linked_atom = (LmnSymbolAtomRef)atom->get_link(i);
-    auto linked_hl = lmn_hyperlink_at_to_hl(linked_atom);
-    start = linked_hl;
+    auto *linked_atom = (LmnSymbolAtomRef)atom->get_link(i);
+    auto *linked_hl   = lmn_hyperlink_at_to_hl(linked_atom);
+    start             = linked_hl;
   }
 
   ProcCxt *original() { return original_; }
@@ -179,18 +163,18 @@ struct ProcCxt {
   HyperLink *start;
 
 private:
-  int atomi;
-  int arg;
+  int      atomi;
+  int      arg;
   ProcCxt *original_;
 };
 
 /* 同名型付きプロセス文脈を持つアトムごとに生成される */
 struct SameProcCxt {
 
-  SameProcCxt(int length) : start_attr(0), proccxts(length) {}
+  SameProcCxt(int length) : proccxts(length) {}
 
   ~SameProcCxt() {
-    for (auto pc : proccxts)
+    for (auto *pc : proccxts)
       delete pc;
   }
 
@@ -200,8 +184,7 @@ struct SameProcCxt {
     }
   }
 
-  void add_proccxt_if_absent(int atomi, int arg, const SameProcCxt &spc,
-                             int arg2) {
+  void add_proccxt_if_absent(int atomi, int arg, SameProcCxt const &spc, int arg2) {
     if (!proccxts[arg]) {
       proccxts[arg] = new ProcCxt(atomi, arg, spc.proccxts[arg2]);
     }
@@ -210,7 +193,7 @@ struct SameProcCxt {
   // いい名前が見つかったら変える
   bool is_clone(int n) {
     for (int i = 0; i < n; i++) {
-      auto pc = proccxts[i];
+      auto *pc = proccxts[i];
       if (pc && pc->is_clone()) { /* clone proccxtを持つ */
         return true;              /* hyperlinkからfindatomを行なう */
       }
@@ -223,9 +206,9 @@ struct SameProcCxt {
    * 候補が複数ある場合は、もっとも選択肢の少ない(element_numが小さい)hyperlinkがマッチする引数を探索の始点とする
    */
   HyperLink *start() {
-    HyperLink *start_hl = NULL;
-    int element_num = std::numeric_limits<int>::max();
-    int start_arity = 0;
+    HyperLink *start_hl    = nullptr;
+    int        element_num = std::numeric_limits<int>::max();
+    int        start_arity = 0;
 
     /* バックトラックしてきた場合はspc->treeの中身は初期化されていないため、ここで初期化
      */
@@ -237,7 +220,7 @@ struct SameProcCxt {
       if (!proccxts[i]->original())
         continue;
 
-      auto hl = proccxts[i]->original()->start;
+      auto *hl           = proccxts[i]->original()->start;
       proccxts[i]->start = hl;
       //      /* オリジナル側で探索始点のハイパーリンクが指定されていない
       //       *
@@ -249,7 +232,7 @@ struct SameProcCxt {
       int tmp_num = hl->element_num();
       if (element_num > tmp_num) {
         element_num = tmp_num;
-        start_hl = hl;
+        start_hl    = hl;
         start_arity = i;
       }
     }
@@ -294,7 +277,7 @@ struct SameProcCxt {
 
   /* findatom 内で使用される一時領域 */
   std::vector<HyperLink *> tree; /* HyperLink tree */
-  LmnLinkAttr start_attr;
+  LmnLinkAttr              start_attr{};
 };
 
 /* ハイパーリンクhlのハッシュ値を返す. */

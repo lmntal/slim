@@ -37,6 +37,7 @@
  * $Id$
  */
 
+#pragma once
 #ifndef LMN_VM_H
 #define LMN_VM_H
 
@@ -47,7 +48,6 @@
 /**
  * @defgroup VM
  */
-
 
 #include "ccallback.h"
 #include "dumper.h"
@@ -60,9 +60,9 @@
 #include "task.h"
 #include "trace_log.h"
 
-#include "rule.hpp"
 #include "atomlist.hpp"
 #include "react_context.hpp"
+#include "rule.hpp"
 #include "symbol_atom_range.hpp"
 
 #endif /* LMN_VM_H */

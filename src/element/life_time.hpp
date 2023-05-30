@@ -39,15 +39,14 @@
 
 #include "stack_trace.hpp"
 
-#include "config.h"  // for DEBUG macro
+#include "config.h" // for DEBUG macro
 
 #include <map>
 #ifdef DEBUG
 #include <iostream>
 #endif
 
-namespace slim {
-namespace element {
+namespace slim::element {
 
 /**
  * A system for profiling object's lifetime.
@@ -66,7 +65,7 @@ class LifetimeProfiler {
   std::map<void *, backtrace_log> construction;
   std::map<void *, backtrace_log> destruction;
 
-  LifetimeProfiler() = default;
+  LifetimeProfiler()  = default;
   ~LifetimeProfiler() = default;
 
   static LifetimeProfiler *getInstance() {
@@ -140,8 +139,7 @@ public:
 
 private:
   bool reusing(void *object) const {
-    return construction.find(object) != construction.end() &&
-      destruction.find(object) != destruction.end();
+    return construction.find(object) != construction.end() && destruction.find(object) != destruction.end();
   }
 
 #ifdef DEBUG
@@ -151,15 +149,10 @@ private:
 
 class profile_lifetime {
 public:
-  profile_lifetime() {
-    LifetimeProfiler::construct(this);
-  }
-  ~profile_lifetime() {
-    LifetimeProfiler::destruct(this);
-  }
+  profile_lifetime() { LifetimeProfiler::construct(this); }
+  ~profile_lifetime() { LifetimeProfiler::destruct(this); }
 };
 
-}
-}
+} // namespace slim::element
 
 #endif

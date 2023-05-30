@@ -46,14 +46,14 @@
  * @{
  */
 
-#define ENV_LMNTAL_HOME  "LMNTAL_HOME"
-#define ENV_CFLAGS       "SLIM_CFLAGS"
+#define ENV_LMNTAL_HOME "LMNTAL_HOME"
+#define ENV_CFLAGS "SLIM_CFLAGS"
 
-#include <memory>
 #include <cstdio>
+#include <memory>
 
-std::unique_ptr<FILE, decltype(&fclose)> lmntal_compile_file(const char *filename);
-std::unique_ptr<FILE, decltype(&fclose)> lmntal_compile_rule_str(const char *rule_str);
+std::unique_ptr<FILE, decltype(&fclose)> lmntal_compile_file(char const *filename);
+std::unique_ptr<FILE, decltype(&fclose)> lmntal_compile_rule_str(char const *rule_str);
 
 /* @} */
 

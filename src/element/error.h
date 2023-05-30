@@ -48,20 +48,20 @@
 
 /* Error */
 #ifdef DEBUG
-#define lmn_fatal(Msg)                                                         \
-  do {                                                                         \
-    do_lmn_fatal(__FILE__, __LINE__, Msg);                                     \
-    assert(FALSE);                                                             \
+#define lmn_fatal(Msg)                                                                                                 \
+  do {                                                                                                                 \
+    do_lmn_fatal(__FILE__, __LINE__, Msg);                                                                             \
+    assert(FALSE);                                                                                                     \
   } while (0);
 #else
-#define lmn_fatal(Msg)                                                         \
-  do {                                                                         \
-    do_lmn_fatal(__FILE__, __LINE__, Msg);                                     \
-    exit(EXIT_FAILURE);                                                        \
+#define lmn_fatal(Msg)                                                                                                 \
+  do {                                                                                                                 \
+    do_lmn_fatal(__FILE__, __LINE__, Msg);                                                                             \
+    exit(EXIT_FAILURE);                                                                                                \
   } while (0);
 #endif
 
-void do_lmn_fatal(const char *file, int line, const char *msg);
-LMN_EXTERN void lmn_report(const char *msg, ...);
+void            do_lmn_fatal(char const *file, int line, char const *msg);
+LMN_EXTERN void lmn_report(char const *msg, ...);
 
 /* @} */

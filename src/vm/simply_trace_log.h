@@ -34,10 +34,9 @@
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-
+#pragma once
 #ifndef SIMPLY_TRACE_LOG_H
 #define SIMPLY_TRACE_LOG_H
-
 
 #include "vm/vm.h"
 
@@ -45,7 +44,7 @@
  *  SimpleTraceLog
  */
 
-typedef struct SimpleTraceLog *SimplyLog;
+using SimplyLog = struct SimpleTraceLog *;
 
 /**
  * Function ProtoTypes
@@ -53,7 +52,7 @@ typedef struct SimpleTraceLog *SimplyLog;
 
 SimplyLog simplylog_make();
 SimplyLog simplylog_make_with_size(unsigned long size);
-void simplylog_free(SimplyLog trc);
+void      simplylog_free(SimplyLog trc);
 
 void simplylog_put(SimplyLog l, LmnWord key);
 void simplylog_put_atom(SimplyLog l, LmnSymbolAtomRef atom);
@@ -63,6 +62,5 @@ BOOL simplylog_contains_mem(SimplyLog l, LmnMembraneRef mem);
 void simplylog_backtrack(SimplyLog l);
 void simplylog_set_btpoint(SimplyLog l);
 void simplylog_continue_trace(SimplyLog l);
-
 
 #endif /* SIMPLY_TRACE_LOG_H */

@@ -49,36 +49,35 @@
 #include "automata.h"
 #include "element/element.h"
 #include "vm/vm.h"
-#include <stdio.h>
+#include <cstdio>
 
-typedef struct SymbolDefinition *SymbolDefinitionRef;
-typedef struct Proposition *PropositionRef;
-typedef Vector *PropSyms;
+using SymbolDefinitionRef = struct SymbolDefinition *;
+using PropositionRef      = struct Proposition *;
+using PropSyms            = Vector *;
 
 /* propositional symbol definition */
 
 SymbolDefinitionRef propsym_make(unsigned int sym_id, PropositionRef p);
-void propsym_free(SymbolDefinitionRef s);
-unsigned int propsym_symbol_id(SymbolDefinitionRef s);
-int propsym_load_file(FILE *in, AutomataRef a, PropSyms *propsyms);
-void propsym_dump(SymbolDefinitionRef s);
-PropositionRef propsym_get_proposition(SymbolDefinitionRef s);
+void                propsym_free(SymbolDefinitionRef s);
+unsigned int        propsym_symbol_id(SymbolDefinitionRef s);
+int                 propsym_load_file(FILE *in, AutomataRef a, PropSyms *propsyms);
+void                propsym_dump(SymbolDefinitionRef s);
+PropositionRef      propsym_get_proposition(SymbolDefinitionRef s);
 
 /* proposition */
 
-PropositionRef proposition_make(const char *head, const char *guard,
-                                const char *body);
-void proposition_free(PropositionRef p);
-LmnRuleRef proposition_get_rule(PropositionRef p);
-BOOL proposition_eval(PropositionRef prop, LmnMembraneRef mem);
+PropositionRef proposition_make(char const *head, char const *guard, char const *body);
+void           proposition_free(PropositionRef p);
+LmnRuleRef     proposition_get_rule(PropositionRef p);
+BOOL           proposition_eval(PropositionRef prop, LmnMembraneRef mem);
 
 /* propositional symbol definitions */
 
-PropSyms propsyms_make(void);
-void propsyms_set(PropSyms props, unsigned int id, SymbolDefinitionRef symdef);
-unsigned int propsyms_num(PropSyms props);
+PropSyms            propsyms_make();
+void                propsyms_set(PropSyms props, unsigned int id, SymbolDefinitionRef symdef);
+unsigned int        propsyms_num(PropSyms props);
 SymbolDefinitionRef propsyms_get(PropSyms props, unsigned int i);
-void propsyms_free(PropSyms props);
+void                propsyms_free(PropSyms props);
 
 /* @} */
 

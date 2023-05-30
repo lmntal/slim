@@ -37,11 +37,14 @@
  * $Id$
  */
 #include "binstr_compress.h"
-#include "../third_party/zdelta-2.1/zdlib.h"
-#include "element/element.h"
+
+#include "fmt/color.h"
+#include "zdelta-2.1/zdlib.h"
 #ifdef HAVE_LIBZ
 #include <zlib.h>
 #endif
+
+#include "element/element.h"
 #ifdef PROFILE
 #include "runtime_status.h"
 #endif
@@ -94,13 +97,13 @@
  *    "A Massively Spiffy Yet Delicately Unobtrusive Compression Library"
  *    @see http://www.zlib.net/
  */
-LmnBinStrRef lmn_bscomp_z_encode(const LmnBinStrRef org) {
+LmnBinStrRef lmn_bscomp_z_encode(LmnBinStr const *org) {
 #ifndef HAVE_LIBZ
   return org;
 #else
-  LmnBinStrRef cmp;
+  LmnBinStrRef  cmp;
   unsigned long org_8len, cmp_8len;
-  int ret;
+  int           ret;
 
 #ifdef PROFILE
   unsigned long old_space, cmp_space;
@@ -111,11 +114,11 @@ LmnBinStrRef lmn_bscomp_z_encode(const LmnBinStrRef org) {
 
   LMN_ASSERT(!is_comp_z(org)); /* z圧縮の多重掛けは想定していない */
 
-  org_8len = (org->len + 1) / TAG_IN_BYTE;
-  cmp_8len = org_8len * 2;
-  cmp = lmn_binstr_make(cmp_8len);
+  org_8len  = (org->len + 1) / TAG_IN_BYTE;
+  cmp_8len  = org_8len * 2;
+  cmp       = lmn_binstr_make(cmp_8len);
   cmp->type = org->type;
-  ret = compress(cmp->v, &cmp_8len, org->v, org_8len);
+  ret       = compress(cmp->v, &cmp_8len, org->v, org_8len);
   if (ret != Z_OK) { /* zlib */
     fprintf(stderr, "%s\n", ret == Z_MEM_ERROR ? "Z_MEM_ERROR" : "Z_BUF_ERROR");
     lmn_fatal("fail to compress: zlib");
@@ -137,13 +140,13 @@ LmnBinStrRef lmn_bscomp_z_encode(const LmnBinStrRef org) {
 #endif
 }
 
-LmnBinStrRef lmn_bscomp_z_decode(const LmnBinStrRef cmp) {
+LmnBinStrRef lmn_bscomp_z_decode(LmnBinStr const *cmp) {
 #ifndef HAVE_LIBZ
   return cmp;
 #else
-  LmnBinStrRef org;
+  LmnBinStrRef  org;
   unsigned long cmp_8len, org_8len;
-  int ret;
+  int           ret;
 
 #ifdef PROFILE
   unsigned long org_space;
@@ -155,15 +158,15 @@ LmnBinStrRef lmn_bscomp_z_decode(const LmnBinStrRef cmp) {
 
   cmp_8len = cmp->len / TAG_IN_BYTE;
   org_8len = cmp_8len * 5;
-  org = lmn_binstr_make(org_8len);
-  ret = uncompress(org->v, &org_8len, cmp->v, cmp_8len);
+  org      = lmn_binstr_make(org_8len);
+  ret      = uncompress(org->v, &org_8len, cmp->v, cmp_8len);
   if (ret != Z_OK) { /* zlib */
     fprintf(stderr, "%s\n", ret == Z_MEM_ERROR ? "Z_MEM_ERROR" : "Z_BUF_ERROR");
     lmn_fatal("fail to uncompress: zlib");
   }
 
   org->type = cmp->type;
-  org->len = org_8len * TAG_IN_BYTE - ((cmp->len & 0x1U) ? 1 : 0);
+  org->len  = org_8len * TAG_IN_BYTE - ((cmp->len & 0x1U) ? 1 : 0);
   unset_comp_z(org);
 
 #ifdef PROFILE
@@ -184,7 +187,7 @@ LmnBinStrRef lmn_bscomp_z_decode(const LmnBinStrRef cmp) {
  *    @see http://cis.poly.edu/zdelta/
  */
 
-static inline const char *zd_ret_str(int n) {
+static inline char const *zd_ret_str(int n) {
   switch (n) {
   case ZD_BUF_ERROR:
     return "Buffer Error";
@@ -205,11 +208,10 @@ static int zd_buf_n = 3;
 
 /* バイト列refからバイト列orgへの差分を求めて返す.
  * org, ref共にRead Only */
-LmnBinStrRef lmn_bscomp_d_encode(const LmnBinStrRef org,
-                                 const LmnBinStrRef ref) {
-  LmnBinStrRef dif;
+LmnBinStrRef lmn_bscomp_d_encode(const LmnBinStrRef org, const LmnBinStrRef ref) {
+  LmnBinStrRef  dif;
   unsigned long org_8len, ref_8len, dif_8len;
-  int ret, mul;
+  int           ret, mul;
 
 #ifdef PROFILE
   unsigned long old_space, dif_space;
@@ -223,16 +225,16 @@ LmnBinStrRef lmn_bscomp_d_encode(const LmnBinStrRef org,
   org_8len = (org->len + 1) / TAG_IN_BYTE;
   ref_8len = (ref->len + 1) / TAG_IN_BYTE;
 
-  mul = zd_buf_n;
-  dif = NULL;
+  mul      = zd_buf_n;
+  dif      = nullptr;
   dif_8len = org_8len;
 
   while (1) {
     if (dif)
       lmn_binstr_free(dif);
     dif_8len *= mul;
-    dif = lmn_binstr_make(dif_8len);
-    ret = zd_compress(ref->v, ref_8len, org->v, org_8len, dif->v, &dif_8len);
+    dif      = lmn_binstr_make(dif_8len);
+    ret      = zd_compress(ref->v, ref_8len, org->v, org_8len, dif->v, &dif_8len);
 
     if (ret == ZD_BUF_ERROR) {
       zd_buf_n *= mul;
@@ -246,7 +248,7 @@ LmnBinStrRef lmn_bscomp_d_encode(const LmnBinStrRef org,
     lmn_fatal("fail to compress");
   }
 
-  dif->len = dif_8len * TAG_IN_BYTE + ((org->len & 0x1U) ? 1 : 0);
+  dif->len  = dif_8len * TAG_IN_BYTE + ((org->len & 0x1U) ? 1 : 0);
   dif->type = org->type;
   set_comp_d(dif);
 
@@ -264,11 +266,10 @@ LmnBinStrRef lmn_bscomp_d_encode(const LmnBinStrRef org,
 
 /* バイト列refに対して差分difを適用してorgを復元して返す.
  * メモリは読み出し専用 */
-LmnBinStrRef lmn_bscomp_d_decode(const LmnBinStrRef ref,
-                                 const LmnBinStrRef dif) {
-  LmnBinStrRef org;
+LmnBinStrRef lmn_bscomp_d_decode(const LmnBinStrRef ref, const LmnBinStrRef dif) {
+  LmnBinStrRef  org;
   unsigned long ref_8len, dif_8len, org_8len;
-  int ret, mul;
+  int           ret, mul;
 
 #ifdef PROFILE
   unsigned long org_space;
@@ -281,15 +282,15 @@ LmnBinStrRef lmn_bscomp_d_decode(const LmnBinStrRef ref,
   ref_8len = (ref->len + 1) / TAG_IN_BYTE;
   dif_8len = dif->len / TAG_IN_BYTE;
 
-  mul = zd_buf_n;
-  org = NULL;
+  mul      = zd_buf_n;
+  org      = nullptr;
   org_8len = ref_8len + dif_8len;
 
-  while (1) {
+  while (true) {
     if (org)
       lmn_binstr_free(org);
     org_8len *= mul;
-    org = lmn_binstr_make(org_8len);
+    org      = lmn_binstr_make(org_8len);
 
     ret = zd_uncompress(ref->v, ref_8len, org->v, &org_8len, dif->v, dif_8len);
 
@@ -305,7 +306,7 @@ LmnBinStrRef lmn_bscomp_d_decode(const LmnBinStrRef ref,
     lmn_fatal("fail to uncompress: zdlib");
   }
 
-  org->len = org_8len * TAG_IN_BYTE - ((dif->len & 0x1U) ? 1 : 0);
+  org->len  = org_8len * TAG_IN_BYTE - ((dif->len & 0x1U) ? 1 : 0);
   org->type = dif->type;
   unset_comp_d(org);
 
@@ -324,23 +325,23 @@ TreeDatabaseRef treedb;
 #ifdef PROFILE
 uint64_t node_count;
 uint64_t table_size;
-double load_factor;
+double   load_factor;
 uint64_t memory;
 #endif
 
 void lmn_bscomp_tree_profile(FILE *f) {
 #ifdef PROFILE
-  fprintf(f, "node count              : %10llu\n", node_count);
-  fprintf(f, "table size              : %10llu\n", table_size);
-  fprintf(f, "load factor             : %10.3lf\n", load_factor);
-  fprintf(f, "memory                  : %7llu MB\n", memory);
+  fmt::print(f, "{:24}: {:10}\n", "node count", node_count);
+  fmt::print(f, "{:24}: {:10}\n", "table size", table_size);
+  fmt::print(f, "{:24}: {:10.3}\n", "load factor", load_factor);
+  fmt::print(f, "{:24}: {:10} MB\n", "memory", memory);
 #else
   fprintf(f, "have to enable profile option\n");
 #endif
 }
 
 BOOL lmn_bscomp_tree_init() {
-  if (treedb == NULL) {
+  if (treedb == nullptr) {
     treedb = new TreeDatabase(2ULL << lmn_env.tree_compress_table_size);
     return TRUE;
   }
@@ -348,15 +349,15 @@ BOOL lmn_bscomp_tree_init() {
 }
 
 BOOL lmn_bscomp_tree_clean() {
-  if (treedb != NULL) {
+  if (treedb != nullptr) {
 #ifdef PROFILE
-    node_count = tree_db_node_count(treedb);
-    table_size = treedb->mask + 1;
+    node_count  = tree_db_node_count(treedb);
+    table_size  = treedb->mask + 1;
     load_factor = (double)node_count / (treedb->mask + 1);
-    memory = (uint64_t)treedb->space() / 1024 / 1024;
+    memory      = (uint64_t)treedb->space() / 1024 / 1024;
 #endif
     delete treedb;
-    treedb = NULL;
+    treedb = nullptr;
     return TRUE;
   }
   return FALSE;
@@ -365,10 +366,10 @@ BOOL lmn_bscomp_tree_clean() {
 unsigned long lmn_bscomp_tree_space() { return treedb->space(); }
 
 TreeNodeID lmn_bscomp_tree_encode(LmnBinStrRef str) {
-  BOOL found;
+  BOOL       found;
   TreeNodeID ref;
 #ifdef PROFILE
-  int pre_node_count = tree_db_node_count(treedb);
+  int pre_node_count  = tree_db_node_count(treedb);
   int post_node_count = 0;
   if (lmn_env.profile_level >= 3) {
     profile_start_timer(PROFILE_TIME__TREE_COMPRESS);
@@ -381,8 +382,8 @@ TreeNodeID lmn_bscomp_tree_encode(LmnBinStrRef str) {
   if (lmn_env.profile_level >= 3) {
     unsigned long old_space, dif_space;
     post_node_count = tree_db_node_count(treedb);
-    dif_space = (post_node_count - pre_node_count) * sizeof(struct TreeNode);
-    old_space = lmn_binstr_space(str);
+    dif_space       = (post_node_count - pre_node_count) * sizeof(struct TreeNode);
+    old_space       = lmn_binstr_space(str);
 
     profile_add_space(PROFILE_SPACE__STATE_BINSTR, dif_space);
     profile_add_space(PROFILE_SPACE__REDUCED_BINSTR, old_space - dif_space);

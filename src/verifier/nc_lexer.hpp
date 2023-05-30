@@ -43,32 +43,30 @@
 
 namespace nc {
 class lexer;
-}
+} // namespace nc
 
-#include "lmntal.h"
 #include "automata.h"
+#include "lmntal.h"
 #include "nc_parser.hpp"
 
 namespace nc {
 class lexer {
   static const size_t SIZE = 256;
-  FILE *input;
-  char *buf;
-  char *YYCURSOR;
-  char *token;
-  char *YYLIMIT;
-  bool eof;
-  int lineno_ = 0;
+  FILE               *input;
+  char               *buf;
+  char               *YYCURSOR;
+  char               *token;
+  char               *YYLIMIT;
+  bool                eof;
+  int                 lineno_ = 0;
 
-  std::string get_token() const {
-    return std::string(token, YYCURSOR - token);
-  };
+  std::string get_token() const { return std::string(token, YYCURSOR - token); };
 
 public:
   lexer(FILE *in);
 
-  int lineno() const { return lineno_; }
-  int lex(YYSTYPE *yylval, YYLTYPE *yyloc);
+  int  lineno() const { return lineno_; }
+  int  lex(YYSTYPE *yylval, YYLTYPE *yyloc);
   bool fill(size_t need);
 };
 } // namespace nc

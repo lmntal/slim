@@ -1,34 +1,37 @@
 #include "mc_visualizer.h"
+
+#include <cmath>
+#include <cstdlib>
+#include <ctime>
+
 #include "state.h"
-#include "statespace.h"
-#include <math.h>
-#include <stdlib.h>
-#include <time.h>
 #include "state.hpp"
+#include "statespace.h"
 
-#define R(c) ((c >> 16) & 0xff)
-#define G(c) ((c >> 8) & 0xff)
-#define B(c) ((c)&0xff)
+constexpr int R(int c) { return (c >> 16) & 0xff; }
+constexpr int G(int c) { return (c >> 8) & 0xff; }
+constexpr int B(int c) { return (c)&0xff; }
 
-#define make_rgb(r, g, b) ((r << 16) | (g << 8) | (b))
-#define for_each_successors(s, f)                                              \
-  do {                                                                         \
-    int i, n = s->successor_num;                                              \
-    for (i = 0; i < n; i++) {                                                  \
-      State *succ = state_succ_state(s, i);                                    \
-      f(s, succ);                                                              \
-    }                                                                          \
+constexpr int make_rgb(int r, int g, int b) { return (r << 16) | (g << 8) | (b); }
+
+#define for_each_successors(s, f)                                                                                      \
+  do {                                                                                                                 \
+    int i, n = s->successor_num;                                                                                       \
+    for (i = 0; i < n; i++) {                                                                                          \
+      State *succ = state_succ_state(s, i);                                                                            \
+      f(s, succ);                                                                                                      \
+    }                                                                                                                  \
   } while (0)
 
-int hsv2rgb(int h, int s, int v) {
+constexpr int hsv2rgb(int h, int s, int v) {
   double ht = (double)h / 60;
-  int hi = floor(ht);
-  double f = ht - hi;
+  int    hi = floor(ht);
+  double f  = ht - hi;
 
   double st = (double)s / 255;
-  double m = v * (1 - st);
-  double n = v * (1 - st * f);
-  double k = v * (1 - st * (1 - f));
+  double m  = v * (1 - st);
+  double n  = v * (1 - st * f);
+  double k  = v * (1 - st * (1 - f));
 
   switch (hi) {
   case 0:
@@ -47,8 +50,9 @@ int hsv2rgb(int h, int s, int v) {
   return 0;
 }
 
-void calc_colors(int worker_num, int **colors) {
-  int i, step = 360 / worker_num;
+constexpr void calc_colors(int worker_num, int **colors) {
+  int i;
+  int step = 360 / worker_num;
 
   for (i = 0; i < worker_num; i++) {
     (*colors)[i] = hsv2rgb(step * i, 150, 255);
@@ -76,14 +80,11 @@ void dump_dot_state_attr(State *s, AutomataRef *a, int *colors) {
     printf("peripheries = 2, ");
   if (s->is_on_cycle())
     printf("color = \"#ff0000\", ");
-  printf("style = filled, fillcolor = \"#%02x%02x%02x\"", R(color), G(color),
-         B(color));
+  printf("style = filled, fillcolor = \"#%02x%02x%02x\"", R(color), G(color), B(color));
   printf("];\n");
 }
 
-void dump_dot_header_comment(State *s) {
-  printf("/* id: %lu   hash: %lu */\n", state_id(s), state_hash(s));
-}
+void dump_dot_header_comment(State *s) { printf("/* id: %lu   hash: %lu */\n", state_id(s), state_hash(s)); }
 
 void dump_dot_loop(State *s, AutomataRef *a, int *colors, int depth) {
   int i, n;
@@ -103,9 +104,9 @@ void dump_dot_loop(State *s, AutomataRef *a, int *colors, int depth) {
 }
 
 void dump_dot(StateSpaceRef ss, int worker_num) {
-  int *colors;
-  State *root = ss->initial_state();
-  AutomataRef a = ss->automata();
+  int        *colors;
+  State      *root = ss->initial_state();
+  AutomataRef a    = ss->automata();
 
   colors = (int *)malloc(sizeof(int) * worker_num);
   calc_colors(worker_num, &colors);

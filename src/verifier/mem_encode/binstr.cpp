@@ -38,7 +38,7 @@
 #include "binstr.hpp"
 
 bool BinStrCursor::push(const BYTE *v, int size) {
-  const int half_len = size / 2;
+  int const half_len = size / 2;
   if (!is_valid())
     return false;
 

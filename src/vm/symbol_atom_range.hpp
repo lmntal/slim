@@ -49,50 +49,50 @@
  */
 class symbol_atom_range {
   class symbol_atom_iterator {
-    const LmnMembrane *mem;
-    int functor;
+    LmnMembrane const            *mem;
+    int                           functor{-1};
     AtomListEntry::const_iterator iter, iter_end;
-    
-    symbol_atom_iterator() : functor(-1) {}
-    
+
+    symbol_atom_iterator() = default;
+
   public:
-    using difference_type = intptr_t;
-    using value_type = LmnSymbolAtomRef;
-    using pointer = LmnSymbolAtomRef *;
-    using reference = LmnSymbolAtomRef &;
-    typedef typename std::input_iterator_tag iterator_category;
-    
+    using difference_type   = intptr_t;
+    using value_type        = LmnSymbolAtomRef;
+    using pointer           = LmnSymbolAtomRef *;
+    using reference         = LmnSymbolAtomRef &;
+    using iterator_category = std::input_iterator_tag;
+
     static symbol_atom_iterator begin(LmnMembrane *mem) {
       symbol_atom_iterator result;
       for (int i = (int)mem->mem_max_functor() - 1; i >= 0; i--) {
-        auto ent = mem->get_atomlist(i);
+        auto *ent = mem->get_atomlist(i);
         if (ent && !LMN_IS_PROXY_FUNCTOR(i) && ent->begin() != ent->end()) {
-          result.mem = mem;
-          result.functor = i;
-          result.iter = ent->begin();
+          result.mem      = mem;
+          result.functor  = i;
+          result.iter     = ent->begin();
           result.iter_end = ent->end();
           break;
         }
       }
       return result;
     }
-    
+
     static symbol_atom_iterator end(LmnMembrane *mem) {
       symbol_atom_iterator result;
-      result.mem = mem;
+      result.mem     = mem;
       result.functor = -1;
       return result;
     }
-    
+
     symbol_atom_iterator &operator++() {
       ++iter;
       while (iter == iter_end && functor >= 0) {
         functor--;
         for (; functor >= 0; functor--) {
-          
-          auto ent = mem->get_atomlist(functor);
+
+          const auto *ent = mem->get_atomlist(functor);
           if (ent && !LMN_IS_PROXY_FUNCTOR(functor)) {
-            iter = ent->begin();
+            iter     = ent->begin();
             iter_end = ent->end();
             break;
           }
@@ -105,24 +105,22 @@ class symbol_atom_range {
       ++ret;
       return ret;
     }
-    LmnSymbolAtomRef &operator*() { return *this->iter; };
-    const LmnSymbolAtomRef &operator*() const { return *this->iter; };
-    
-    bool operator!=(const symbol_atom_iterator &itr) const {
-      return !(*this == itr);
-    };
-    bool operator==(const symbol_atom_iterator &itr) const {
+    LmnSymbolAtomRef       &operator*() { return *this->iter; };
+    LmnSymbolAtomRef const &operator*() const { return *this->iter; };
+
+    bool operator!=(symbol_atom_iterator const &itr) const { return !(*this == itr); };
+    bool operator==(symbol_atom_iterator const &itr) const {
       if (functor < 0)
         return functor == itr.functor;
       return iter == itr.iter;
     };
   };
-  
+
   LmnMembrane *mem;
-  
+
 public:
   symbol_atom_range(LmnMembrane *mem) : mem(mem) {}
-  
+
   symbol_atom_iterator begin() const { return symbol_atom_iterator::begin(mem); }
   symbol_atom_iterator end() const { return symbol_atom_iterator::end(mem); }
 };

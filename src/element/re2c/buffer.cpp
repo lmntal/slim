@@ -38,28 +38,24 @@
 
 #include <algorithm>
 
-namespace slim {
-namespace element {
-namespace re2c {
+namespace slim::element::re2c {
 buffer::buffer(int fill_size, int size)
-    : fill_size(fill_size), size(size), buf(new char[fill_size + size]),
-      YYLIMIT(buf + size), YYCURSOR(YYLIMIT), parsed_pos(YYLIMIT) {}
+    : fill_size(fill_size), size(size), buf(new char[fill_size + size]), YYLIMIT(buf + size), YYCURSOR(YYLIMIT),
+      parsed_pos(YYLIMIT) {}
 
 buffer::~buffer() {
-  if(this->buf != NULL) {
     delete[] buf;
-  }
 }
 
 bool buffer::fill(size_t need) {
   if (is_finished())
     return false;
-  const auto free = parsed_pos - buf;
+  auto const free = parsed_pos - buf;
   if (free < need)
     return false;
   std::move(parsed_pos, YYLIMIT, buf);
-  YYLIMIT -= free;
-  YYCURSOR -= free;
+  YYLIMIT    -= free;
+  YYCURSOR   -= free;
   parsed_pos -= free;
   update_limit(free);
   if (YYLIMIT < buf + size) {
@@ -68,6 +64,4 @@ bool buffer::fill(size_t need) {
   }
   return true;
 }
-} // namespace re2c
-} // namespace element
-} // namespace slim
+} // namespace slim::element::re2c

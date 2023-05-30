@@ -39,12 +39,10 @@
 
 #include <stdexcept>
 
-namespace slim {
-namespace element {
+namespace slim::element {
 class exception : public std::runtime_error {
   using std::runtime_error::runtime_error;
 };
-} // namespace element
-} // namespace slim
+} // namespace slim::element
 
 #endif /* ELEMENT_EXCEPTION_HPP */

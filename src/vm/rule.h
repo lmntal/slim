@@ -44,10 +44,10 @@
  * @defgroup Rule
  * @{
  */
-
-typedef struct LmnRule *LmnRuleRef;
-
-typedef struct LmnRuleSet *LmnRuleSetRef;
+struct LmnRule;
+struct LmnRuleSet;
+using LmnRuleRef    = LmnRule *;
+using LmnRuleSetRef = LmnRuleSet *;
 
 #include "element/element.h"
 #include "lmntal.h"
@@ -59,14 +59,14 @@ typedef struct LmnRuleSet *LmnRuleSetRef;
  * Rule Set
  */
 
-bool lmn_rulesets_equals(const std::vector<LmnRuleSetRef> &rulesets1, const std::vector<LmnRuleSetRef> &rulesets2);
+bool lmn_rulesets_equals(std::vector<LmnRuleSetRef> const &rulesets1, std::vector<LmnRuleSetRef> const &rulesets2);
 
 /*----------------------------------------------------------------------
  * System Rule Set
  */
 
 extern LmnRuleSetRef system_ruleset;
-void lmn_add_system_rule(LmnRuleRef rule);
+void                 lmn_add_system_rule(LmnRuleRef rule);
 
 /*----------------------------------------------------------------------
  * Initial Rule Set
@@ -74,15 +74,14 @@ void lmn_add_system_rule(LmnRuleRef rule);
 
 extern LmnRuleSetRef initial_ruleset;
 extern LmnRuleSetRef initial_system_ruleset;
-void lmn_add_initial_rule(LmnRuleRef rule);
-void lmn_add_initial_system_rule(LmnRuleRef rule);
+void                 lmn_add_initial_rule(LmnRuleRef rule);
+void                 lmn_add_initial_system_rule(LmnRuleRef rule);
 
 /*----------------------------------------------------------------------
  * Module
  */
 
-LMN_EXTERN void lmn_set_module(lmn_interned_str module_name,
-                               LmnRuleSetRef ruleset);
+LMN_EXTERN void          lmn_set_module(lmn_interned_str module_name, LmnRuleSetRef ruleset);
 LMN_EXTERN LmnRuleSetRef lmn_get_module_ruleset(lmn_interned_str module_name);
 
 /* @} */

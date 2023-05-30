@@ -54,8 +54,8 @@
 /* スレッド単位で計測したCPU時間は,
  * プロセッサ間でスレッドがスイッチした場合に誤差がでるので結果は鵜呑みせずあくまで目安とする
  */
-double get_cpu_time(void);
-double get_wall_time(void);
+double get_cpu_time();
+double get_wall_time();
 
 /* @} */
 

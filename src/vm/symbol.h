@@ -46,14 +46,16 @@
  */
 
 #include "lmntal.h"
+#include <cstddef>
+#include <string_view>
 
 #define ANONYMOUS 0
 
 /* Symbol Information */
 
-lmn_interned_str lmn_intern(const char *name);
-const char *lmn_id_to_name(lmn_interned_str id);
-int count_symbols();
+lmn_interned_str lmn_intern(std::string_view name);
+std::string_view lmn_id_to_name(lmn_interned_str id);
+size_t           count_symbols();
 
 #define LMN_SYMBOL_STR(ID) (lmn_id_to_name(ID))
 
