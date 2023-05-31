@@ -153,3 +153,11 @@ endif()
 # Include directories
 add_subdirectory(src)
 add_subdirectory(third_party)
+
+# ================================
+
+# Install
+install(TARGETS slim
+        RUNTIME DESTINATION bin)
+install(DIRECTORY  "${CMAKE_SOURCE_DIR}/lib" DESTINATION ${SLIM_DATA_ROOT_DIR}
+    FILES_MATCHING PATTERN "*.lmn")
