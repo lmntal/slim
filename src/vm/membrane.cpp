@@ -41,6 +41,7 @@
 #include "atom.h"
 #include "dumper.h" /* for debug */
 #include "functor.h"
+#include "lmntal.h"
 #include "rule.h"
 #include "verifier/verifier.h"
 #include "vm/hyperlink.h"
@@ -2402,7 +2403,10 @@ void LmnMembrane::remove_ground(Vector *srcvec) {
   unsigned long   i, t;
 
   ground_atoms(srcvec, nullptr, &atoms, &t, nullptr, nullptr, nullptr, nullptr);
-  atoms->tbl_foreach(mem_remove_symbol_atom_with_buddy_data_f, (LmnWord)this);
+  atoms->tbl_foreach([this](LmnWord k, LmnWord v) {
+    mem_remove_symbol_atom_with_buddy_data((LmnMembraneRef)this, (LmnSymbolAtomRef)v);
+    return 1;
+  });
 
   /* atomsはシンボルアトムしか含まないので、
    * srcvecのリンクが直接データアトムに接続している場合の処理をする */
@@ -2424,7 +2428,10 @@ void lmn_mem_remove_hlground(LmnMembraneRef mem, Vector *srcvec, ProcessTableRef
   unsigned long   i, t;
 
   ground_atoms(srcvec, nullptr, &atoms, &t, &hlinks, attr_sym, attr_data, attr_data_at);
-  atoms->tbl_foreach(mem_remove_symbol_atom_with_buddy_data_f, (LmnWord)mem);
+  atoms->tbl_foreach([=](LmnWord k, LmnWord v) {
+    mem_remove_symbol_atom_with_buddy_data(mem, (LmnSymbolAtomRef)v);
+    return 1;
+  });
 
   /* atomsはシンボルアトムしか含まないので、
    * srcvecのリンクが直接データアトムに接続している場合の処理をする */
@@ -2449,7 +2456,10 @@ void lmn_mem_free_ground(Vector *srcvec) {
   unsigned long   i, t;
 
   if (ground_atoms(srcvec, nullptr, &atoms, &t, nullptr, nullptr, nullptr, nullptr)) {
-    atoms->tbl_foreach(free_symbol_atom_with_buddy_data_f, (LmnWord)0);
+    atoms->tbl_foreach([](LmnWord k, LmnWord v) {
+      free_symbol_atom_with_buddy_data((LmnSymbolAtomRef)v);
+      return 1;
+    });
     delete atoms;
   }
 
@@ -2469,7 +2479,10 @@ void lmn_mem_free_hlground(Vector *srcvec, ProcessTableRef *attr_sym, Vector *at
 
   hlinks = nullptr;
   if (ground_atoms(srcvec, nullptr, &atoms, &t, &hlinks, attr_sym, attr_data, attr_data_at)) {
-    atoms->tbl_foreach(free_symbol_atom_with_buddy_data_f, (LmnWord)0);
+    atoms->tbl_foreach([](LmnWord k, LmnWord v) {
+      free_symbol_atom_with_buddy_data((LmnSymbolAtomRef)v);
+      return 1;
+    });
     delete atoms;
   }
 
@@ -2489,8 +2502,14 @@ void LmnMembrane::delete_ground(Vector *srcvec) {
     fprintf(stderr, "remove ground false\n");
   }
 
-  atoms->tbl_foreach(mem_remove_symbol_atom_with_buddy_data_f, (LmnWord)this);
-  atoms->tbl_foreach(free_symbol_atom_with_buddy_data_f, (LmnWord)0);
+  atoms->tbl_foreach([this](LmnWord k, LmnWord v) {
+    mem_remove_symbol_atom_with_buddy_data((LmnMembraneRef)this, (LmnSymbolAtomRef)v);
+    return 1;
+  });
+  atoms->tbl_foreach([](LmnWord k, LmnWord v) {
+    free_symbol_atom_with_buddy_data((LmnSymbolAtomRef)v);
+    return 1;
+  });
 
   /* atomsはシンボルアトムしか含まないので、srcvecのリンクが直接データ
      アトムに接続している場合の処理をする */

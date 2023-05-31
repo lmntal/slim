@@ -764,39 +764,6 @@ BOOL mc_vec_states_valid(Vector *v) {
   return TRUE;
 }
 
-static int mc_dump_invalids_f(st_data_t _key, st_data_t _v, st_data_t _arg) {
-  StateSpaceRef ss;
-  State        *s;
-  Vector       *succs;
-  unsigned int  i;
-
-  ss    = (StateSpaceRef)_arg;
-  s     = (State *)_key;
-  succs = (Vector *)_v;
-
-  /* TODO: Rehashされていた場合には状態データが出力できない
-   *       オリジナルテーブル側のdummy状態に対応するmemid状態を探索して引っ張ってくる必要がある
-   */
-
-  auto out = ss->output();
-  fprintf(out, "%lu::", state_format_id(s, ss->is_formatted()));
-  for (i = 0; i < succs->get_num(); i++) {
-    State *succ = (State *)succs->get(i);
-    if (succ) {
-      fprintf(out, "%s%lu", (i > 0) ? ", " : "", state_format_id(succ, ss->is_formatted()));
-    }
-  }
-  fprintf(out, "\n");
-
-  return ST_CONTINUE;
-}
-
-int mc_free_succ_vec_f(st_data_t _key, st_data_t _v, st_data_t _arg) {
-  Vector *v = (Vector *)_v;
-  delete v;
-  return ST_CONTINUE;
-}
-
 void mc_print_vec_states(StateSpaceRef ss, Vector *v, State *seed) {
   unsigned int i;
 

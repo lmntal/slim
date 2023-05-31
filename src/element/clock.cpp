@@ -39,8 +39,9 @@
 
 #include "clock.h"
 
-#include "lmntal.h" // config.h
 #include <cstdio>
+
+#include "lmntal.h" // config.h
 
 #if defined(TIME_WITH_SYS_TIME)
 #include <ctime>

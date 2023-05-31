@@ -51,7 +51,7 @@ struct ProcessTbl : ProcessTable<LmnWord> {
   ProcessTbl() = default;
   ProcessTbl(unsigned long size) : ProcessTable<LmnWord>(size){};
   void tbl_clear();
-  int  tbl_foreach(std::function<int(LmnWord key, LmnWord val, LmnWord arg)> const &func, LmnWord arg);
+  int  tbl_foreach(std::function<int(key_type key, value_type val)> const &func);
   BOOL tbl_eq(ProcessTableRef b);
   void proc_tbl_put(LmnWord key, LmnWord value);
   void proc_tbl_put_atom(LmnSymbolAtomRef atom, LmnWord value);

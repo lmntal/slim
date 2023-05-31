@@ -48,7 +48,7 @@
 
 namespace slim {
 template <typename T> ProcessID process_id(T);
-}
+} // namespace slim
 
 /* LMNtalのプロセス（アトム、膜）をキーにもちいるテーブル */
 template <typename T> class ProcessTable {
@@ -155,7 +155,7 @@ public:
     }
   }
 
-  void foreach (std::function<int(LmnWord key, LmnWord val, LmnWord arg)> const&func, LmnWord arg) {
+  void foreach (std::function<int(key_type key, value_type val)> const &func) {
     unsigned long n = 0;
 
     for (int i = 0; i < this->num_buckets; i++) {
@@ -164,7 +164,7 @@ public:
       for (int j = 0; j < buckets_size && n < this->n; j++) {
         if (this->tbl[i][j] == unused)
           continue;
-        func(i * buckets_size + j, this->tbl[i][j], arg);
+        func(i * buckets_size + j, this->tbl[i][j]);
         n++;
       }
     }

@@ -143,6 +143,11 @@ if(ZLIB_FOUND)
     set(HAVE_LIBZ 1)
 endif()
 
+if(UNIX AND NOT APPLE)
+    set(HAVE_LIBRT 1)
+    set(TIME_WITH_SYS_TIME 1)
+endif()
+
 # ================================
 
 # Include directories
