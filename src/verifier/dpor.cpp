@@ -119,11 +119,6 @@ static inline void contextC1_free(ContextC1Ref c) {
   LMN_FREE(c);
 }
 
-static int contextC1_free_f(st_data_t _k, st_data_t _v, st_data_t _arg) {
-  contextC1_free((ContextC1Ref)_v);
-  return ST_CONTINUE;
-}
-
 static BOOL contextC1s_eq(ContextC1Ref a, ContextC1Ref b) {
   return (a->LHS_procs)->tbl_eq(b->LHS_procs) && (a->RHS_procs)->tbl_eq(b->RHS_procs);
 }
@@ -152,15 +147,11 @@ static ContextC1Ref contextC1_lookup(DeltaTable *dst_tbl, ContextC1Ref src) {
 
 /** プロセスIDが_kなアトム_vをLHSテーブルに追加する.
  *  ground_atomsで求めたアトムの集合に対して使用する */
-static int contextC1_expand_gatoms_LHS_f(LmnWord _k, LmnWord _v, LmnWord _arg) {
-  ContextC1Ref c;
-  //  LmnWord key;
+static int contextC1_expand_gatoms_LHS_f(LmnWord k, LmnWord v, ContextC1Ref c) {
+  //  auto key = ((LmnSAtom)_v)->get_id();
 
-  c = (ContextC1Ref)_arg;
-  //  key = ((LmnSAtom)_v)->get_id();
-
-  if (!proc_tbl_get(c->LHS_procs, _k, nullptr)) {
-    (c->LHS_procs)->proc_tbl_put(_k, LHS_DEFAULT);
+  if (!proc_tbl_get(c->LHS_procs, k, nullptr)) {
+    (c->LHS_procs)->proc_tbl_put(k, LHS_DEFAULT);
   }
 
   return 1;
@@ -199,7 +190,7 @@ static void contextC1_expand_LHS(McDporData *d, ContextC1Ref c, LmnReactCxtRef r
 
   for (i = 0; i < d->wt_gatoms->get_num(); i++) {
     auto *g_atoms = (ProcessTableRef)d->wt_gatoms->get(i);
-    g_atoms->tbl_foreach(contextC1_expand_gatoms_LHS_f, (LmnWord)c);
+    g_atoms->tbl_foreach([=](LmnWord k, LmnWord v) { return contextC1_expand_gatoms_LHS_f(k, v, c); });
   }
 }
 
@@ -1106,19 +1097,19 @@ void dpor_LHS_remove_ground_atoms(McDporData *d, ProcessTableRef atoms) {
  *  ======== for debug only ==========
  *  ==================================
  */
-static int         dpor_LHS_dump_f(LmnWord _k, LmnWord _v, LmnWord _arg);
-static int         dpor_RHS_dump_f(LmnWord _k, LmnWord _v, LmnWord _arg);
+static int         dpor_LHS_dump_f(unsigned long k, BYTE v);
+static int         dpor_RHS_dump_f(unsigned long k, BYTE v);
 static inline void dpor_LHS_flags_dump(BYTE f);
 static inline void dpor_RHS_flags_dump(BYTE f);
-static int         dpor_LHS_procs_dump_f(LmnWord _k, LmnWord _v, LmnWord _arg);
-static int         dpor_RHS_procs_dump_f(LmnWord _k, LmnWord _v, LmnWord _arg);
+static int         dpor_LHS_procs_dump_f(unsigned int k, ContextC1Ref v);
+static int         dpor_RHS_procs_dump_f(unsigned int k, ContextC1Ref v);
 
 void dpor_contextC1_dump(McDporData *d) {
   for (auto &[k, v] : *d->delta_tbl) {
     auto id = (unsigned long)k;
 
     fmt::print("LHS[id{}, delta{}]:: ", v->id, id);
-    (v->LHS_procs)->tbl_foreach(dpor_LHS_dump_f, 0);
+    (v->LHS_procs)->tbl_foreach(dpor_LHS_dump_f);
     fmt::print("\n");
   }
 
@@ -1127,55 +1118,41 @@ void dpor_contextC1_dump(McDporData *d) {
     auto  id = (unsigned long)k;
 
     fmt::print("RHS[id{}, delta{}]:: ", c->id, id);
-    (c->RHS_procs)->tbl_foreach(dpor_RHS_dump_f, 0);
+    (c->RHS_procs)->tbl_foreach(dpor_RHS_dump_f);
     fmt::print("\n");
   }
 }
 
-void dpor_contextC1_dump_eachL(ContextC1Ref c) { dpor_LHS_procs_dump_f((LmnWord)c->d, (LmnWord)c, 0); }
+void dpor_contextC1_dump_eachL(ContextC1Ref c) { dpor_LHS_procs_dump_f((LmnWord)c->d, c); }
 
-void dpor_contextC1_dump_eachR(ContextC1Ref c) { dpor_RHS_procs_dump_f((LmnWord)c->d, (LmnWord)c, 0); }
+void dpor_contextC1_dump_eachR(ContextC1Ref c) { dpor_RHS_procs_dump_f((LmnWord)c->d, c); }
 
-static int dpor_LHS_procs_dump_f(LmnWord _k, LmnWord _v, LmnWord _arg) {
-  ContextC1Ref c;
-  unsigned int id;
-
-  c  = (ContextC1Ref)_v;
-  id = (unsigned int)_k;
-
-  printf("LHS[id%u, delta%u]:: ", c->id, id);
-  (c->LHS_procs)->tbl_foreach(dpor_LHS_dump_f, 0);
+static int dpor_LHS_procs_dump_f(unsigned int k, ContextC1Ref v) {
+  printf("LHS[id%u, delta%u]:: ", v->id, k);
+  (v->LHS_procs)->tbl_foreach(dpor_LHS_dump_f);
   printf("\n");
 
-  return ST_CONTINUE;
+  return 0;
 }
 
-static int dpor_LHS_dump_f(LmnWord _k, LmnWord _v, LmnWord _arg) {
-  BYTE flag = (BYTE)_v;
-  printf("depID<%2lu: ", _k);
-  dpor_LHS_flags_dump(flag);
+static int dpor_LHS_dump_f(unsigned long k, BYTE v) {
+  printf("depID<%2lu: ", k);
+  dpor_LHS_flags_dump(v);
   printf("> ");
   return 1;
 }
 
-static int dpor_RHS_procs_dump_f(LmnWord _k, LmnWord _v, LmnWord _arg) {
-  ContextC1Ref c;
-  unsigned int id;
-
-  c  = (ContextC1Ref)_v;
-  id = (unsigned int)_k;
-
-  printf("RHS[id%u, delta%u]:: ", c->id, id);
-  (c->RHS_procs)->tbl_foreach(dpor_RHS_dump_f, 0);
+static int dpor_RHS_procs_dump_f(unsigned int k, ContextC1Ref v) {
+  printf("RHS[id%u, delta%u]:: ", v->id, k);
+  (v->RHS_procs)->tbl_foreach(dpor_RHS_dump_f);
   printf("\n");
 
-  return ST_CONTINUE;
+  return 0;
 }
 
-static int dpor_RHS_dump_f(LmnWord _k, LmnWord _v, LmnWord _arg) {
-  BYTE flag = (BYTE)_v;
-  printf("depID<%2lu:", _k);
-  dpor_RHS_flags_dump(flag);
+static int dpor_RHS_dump_f(unsigned long k, BYTE v) {
+  printf("depID<%2lu:", k);
+  dpor_RHS_flags_dump(v);
   printf("> ");
   return 1;
 }

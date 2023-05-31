@@ -9,7 +9,8 @@
 /* #undef BISON_USE_PARSER_H_EXTENSION */
 
 /* Defines bison version */
-#define BISON_VERSION ${BISON_VERSION}
+#define BISON_VERSION                                                                                                  \
+  $ { BISON_VERSION }
 
 #cmakedefine DEVEL
 #cmakedefine NDEBUG
@@ -29,6 +30,9 @@
 
 /* Define if you have POSIX threads libraries and header files. */
 #cmakedefine01 HAVE_PTHREAD
+
+/* Define if you have librt */
+#cmakedefine01 HAVE_LIBRT
 
 /* Define to 1 if the system has `pthread_barrier'. */
 #cmakedefine01 HAVE_PTHREAD_BARRIER
@@ -148,7 +152,7 @@ enum { STDC_HEADERS = 1 };
 
 /* Define to 1 if you can safely include both <sys/time.h> and <time.h>. This
    macro is obsolete. */
-#define TIME_WITH_SYS_TIME 1
+#cmakedefine01 TIME_WITH_SYS_TIME
 
 /* enable cunit */
 #cmakedefine USE_CUNIT

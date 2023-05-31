@@ -315,12 +315,10 @@ void MemDeltaRoot::move_cells(LmnMembraneRef destmem, LmnMembraneRef srcmem) {
       lmn_fatal("unexpected");
     }
     /* relink命令等のために移動先と移動元のアトムを対応付ける必要がある */
-    atoms->tbl_foreach(
-        [](LmnWord _k, LmnWord _v, LmnWord _arg) {
-          ((struct MemDeltaRoot *)_arg)->move_satom(_k, _v);
-          return 1;
-        },
-        (LmnWord)this);
+    atoms->tbl_foreach([this](LmnWord k, LmnWord v) {
+      this->move_satom(k, v);
+      return 1;
+    });
     delete atoms;
   }
 }
@@ -505,18 +503,12 @@ int dmem_root_remove_symbol_atom_with_buddy_data_new_f(LmnWord _k, LmnWord _v, L
   return 1;
 }
 
-int dmem_root_remove_symbol_atom_with_buddy_data_dmem_f(LmnWord _k, LmnWord _v, LmnWord _arg) {
-  struct MemDelta *d;
-  LmnSymbolAtomRef atom;
-  unsigned int     i;
-  unsigned int     end;
+int dmem_root_remove_symbol_atom_with_buddy_data_dmem_f(LmnWord k, LmnWord v, MemDelta *d) {
+  auto *atom = reinterpret_cast<LmnSymbolAtomRef>(v);
 
-  d    = (struct MemDelta *)_arg;
-  atom = (LmnSymbolAtomRef)_v;
-
-  end = LMN_FUNCTOR_GET_LINK_NUM(atom->get_functor());
+  auto end = LMN_FUNCTOR_GET_LINK_NUM(atom->get_functor());
   /* free linked data atoms */
-  for (i = 0; i < end; i++) {
+  for (auto i = 0; i < end; i++) {
     if (LMN_ATTR_IS_DATA(atom->get_attr(i))) {
       d->data_atom_diff--;
     }
@@ -535,12 +527,14 @@ void dmem_root_remove_ground(struct MemDeltaRoot *root_d, LmnMembraneRef mem, Ve
   ground_atoms(srcvec, nullptr, &atoms, &t, nullptr, nullptr, nullptr, nullptr);
 
   /* memは既存膜のはず */
-  atoms->tbl_foreach(dmem_root_remove_symbol_atom_with_buddy_data_dmem_f, (LmnWord)root_d->get_mem_delta(mem));
+  auto *m = root_d->get_mem_delta(mem);
+  atoms->tbl_foreach(
+      [=](LmnWord k, LmnWord v) { return dmem_root_remove_symbol_atom_with_buddy_data_dmem_f(k, v, m); });
 
   /* atomsはシンボルアトムしか含まないので、
    * srcvecのリンクが直接データアトムに接続している場合の処理をする */
   for (i = 0; i < srcvec->get_num(); i++) {
-    LinkObjRef l = (LinkObjRef)srcvec->get(i);
+    auto *l = (LinkObjRef)srcvec->get(i);
     if (LMN_ATTR_IS_DATA(LinkObjGetPos(l))) {
       if (root_d->is_new_mem(mem))
         lmn_mem_remove_data_atom(mem, (LmnDataAtomRef)LinkObjGetAtom(l), LinkObjGetPos(l));
@@ -552,8 +546,8 @@ void dmem_root_remove_ground(struct MemDeltaRoot *root_d, LmnMembraneRef mem, Ve
   delete atoms;
 }
 
-int dmem_root_free_satom_f(LmnWord _k, LmnWord _v, LmnWord _arg) {
-  dmem_root_free_satom((struct MemDeltaRoot *)_arg, (LmnSymbolAtomRef)_v);
+int dmem_root_free_satom_f(LmnWord _k, LmnWord _v, MemDeltaRoot *_arg) {
+  dmem_root_free_satom(_arg, (LmnSymbolAtomRef)_v);
   return 1;
 }
 
@@ -563,7 +557,7 @@ void dmem_root_free_ground(struct MemDeltaRoot *root_d, Vector *srcvec) {
 
   ground_atoms(srcvec, nullptr, &atoms, &t, nullptr, nullptr, nullptr, nullptr);
 
-  atoms->tbl_foreach(dmem_root_free_satom_f, (LmnWord)root_d);
+  atoms->tbl_foreach([=](LmnWord k, LmnWord v) { return dmem_root_free_satom_f(k, v, root_d); });
   delete atoms;
 }
 

@@ -53,7 +53,6 @@
 #include "lmnstring.h"
 #include "lmntal_thread.h"
 #include "memory_pool.h"
-#include "optional.hpp"
 #include "port.h"
 #include "process_util.h"
 #include "queue.h"

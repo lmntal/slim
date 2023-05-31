@@ -52,8 +52,8 @@ template <> ProcessID process_id<HyperLink *>(HyperLink *hl) { return LMN_HL_ID(
 } // namespace slim
 
 void ProcessTbl::tbl_clear() { this->clear(); }
-int  ProcessTbl::tbl_foreach(std::function<int(LmnWord key, LmnWord val, LmnWord arg)> const&func, LmnWord arg) {
-  this->foreach (func, arg);
+int  ProcessTbl::tbl_foreach(std::function<int(key_type key, value_type val)> const &func) {
+  this->foreach (func);
   return 0;
 }
 BOOL ProcessTbl::tbl_eq(ProcessTableRef b) { return this == b; }
@@ -148,22 +148,18 @@ BOOL proc_tbl_contains_mem(ProcessTableRef p, LmnMembraneRef mem) { return p->co
 /* process table のダンプ，デバッグ用 */
 void proc_tbl_dump(char const *name, ProcessTableRef map) {
   fprintf(stderr, "proc_tbl %s items:\n", name);
-  map->tbl_foreach(
-      [](LmnWord k, LmnWord v, LmnWord _arg) {
-        fprintf(stderr, "  key=%ld, value=%ld\n", k, v);
-        return 1;
-      },
-      (LmnWord)0);
+  map->tbl_foreach([](LmnWord k, LmnWord v) {
+    fprintf(stderr, "  key=%ld, value=%ld\n", k, v);
+    return 1;
+  });
 }
 
 /* シンボルアトムを入れた process table のダンプ，デバッグ用 */
 void proc_tbl_symbol_atom_dump(char const *name, ProcessTableRef map) {
   fprintf(stderr, "proc_tbl %s items:\n", name);
-  map->tbl_foreach(
-      [](LmnWord k, LmnWord v, LmnWord _arg) {
-        LmnFunctor f = ((LmnSymbolAtomRef)v)->get_functor();
-        fmt::print(stderr, "  key={}, value={}\n", k, LMN_FUNCTOR_STR(f));
-        return 1;
-      },
-      (LmnWord)0);
+  map->tbl_foreach([](LmnWord k, LmnWord v) {
+    LmnFunctor f = ((LmnSymbolAtomRef)v)->get_functor();
+    fmt::print(stderr, "  key={}, value={}\n", k, LMN_FUNCTOR_STR(f));
+    return 1;
+  });
 }

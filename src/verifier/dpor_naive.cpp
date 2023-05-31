@@ -187,9 +187,11 @@ int McPorData::destroy_tmp_state_graph(State *s, BOOL org_f) {
 void McPorData::finalize_ample(BOOL org_f) {
   next_strans_id = POR_ID_INITIALIZER;
   std::for_each(strans_independency->begin(), strans_independency->end(), [](auto &p) { delete p.second; });
+  strans_independency->clear();
   for (const auto &state : *states) {
     destroy_tmp_state_graph(state, org_f);
   }
+  states->clear();
   queue->clear();
   ample_candidate->clear();
   RC_CLEAR_DATA(rc.get());
@@ -655,7 +657,7 @@ BOOL McPorData::check_C1(State *s, AutomataRef a, Vector *psyms) {
   }
 
   while (!queue->empty()) {
-    TransitionRef succ_t =queue->dequeue();
+    TransitionRef succ_t = queue->dequeue();
     if (!is_independent_of_ample(succ_t)) {
       /* Fに反する経路Pが検出されたので偽を返して終了する */
       POR_DEBUG({
@@ -947,7 +949,7 @@ int McPorData::build_ample_satisfying_lemma(unsigned long key, std::vector<unsig
 
     break;
   }
-  return ST_CONTINUE;
+  return 0;
 }
 
 void McPorData::push_ample_to_expanded(StateSpaceRef ss, State *s, LmnReactCxtRef rc, Vector *new_ss, BOOL f) {
@@ -1020,7 +1022,7 @@ int McPorData::dump__strans_independency(unsigned long key, std::vector<unsigned
   }
   fprintf(stdout, "\n");
 
-  return ST_CONTINUE;
+  return 0;
 }
 
 /* FOR DEBUG ONLY */
@@ -1058,5 +1060,5 @@ int McPorData::dump__tmp_graph(State *state, bool is_formated) {
     }
   }
   fprintf(f, "\n");
-  return ST_CONTINUE;
+  return 0;
 }

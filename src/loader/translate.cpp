@@ -601,7 +601,7 @@ static int print_trans_module_f(lmn_interned_str const &key, LmnRuleSetRef value
   fmt::print(OUT, "{{ {}, {} }}\n", key, value->id);
 
   ++counter_p;
-  return ST_CONTINUE;
+  return 0;
 }
 
 static void print_trans_modules(std::string_view filename) {

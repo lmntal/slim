@@ -65,7 +65,7 @@ void lmn_thread_set_CPU_affinity(unsigned long id) {
     cpu_set_t mask;
     CPU_ZERO(&mask);
     CPU_SET(id, &mask);
-    sched_setaffinity(syscall(SYS_gettid), sizeof(cpu_set_t), &mask);
+    sched_setaffinity(getpid(), sizeof(cpu_set_t), &mask);
   }
 #elif defined __APPLE__ && defined __MACH__
   if (lmn_env.core_num <= std::thread::hardware_concurrency()) {
