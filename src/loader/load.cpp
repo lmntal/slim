@@ -42,6 +42,7 @@
 #include <dirent.h>
 #include <dlfcn.h>
 #include <iterator>
+#include <string_view>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -352,7 +353,7 @@ static size_t file_type(std::filesystem::path const &filename) {
 /* pathのディレクトリ内のファイルを中間コードとしてロードする.
  * 拡張子を除いてファイル名が同一な場合はextension_tableで指定した優先順で1種類のみ読み込む
  */
-void load_il_files(char const *path_string) {
+void load_il_files(std::string_view path_string) {
   try {
     std::filesystem::path               path{path_string};
     std::filesystem::directory_iterator dir{path};
@@ -361,7 +362,7 @@ void load_il_files(char const *path_string) {
 
     /* 読み込むファイルをリストアップする */
     for (const auto &dp : dir) {
-      if (dp.is_regular_file())
+      if (!dp.is_regular_file())
         continue;
 
       auto dname    = dp.path().filename();

@@ -1,9 +1,9 @@
 #ifndef LMN_ARCH_H
 #define LMN_ARCH_H
 
-#define SLIM_DATA_DIR "@SLIM_DATA_ROOT_DIR@"
-#define SLIM_LIB_DIR "@SLIM_LIB_DIR@"
-#define SLIM_EXT_DIR "@SLIM_EXT_DIR@"
+constexpr auto SLIM_DATA_DIR = "@SLIM_DATA_ROOT_DIR@";
+constexpr auto SLIM_LIB_DIR  = "@SLIM_LIB_DIR@";
+constexpr auto SLIM_EXT_DIR  = "@SLIM_EXT_DIR@";
 
 #if defined __CYGWIN32__ && !defined __CYGWIN__
 #define __CYGWIN__ __CYGWIN32__

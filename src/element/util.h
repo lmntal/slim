@@ -42,6 +42,7 @@
 
 #include "element/error.h"
 #include "lmntal.h"
+#include <cstring>
 #include <vector>
 
 /**
