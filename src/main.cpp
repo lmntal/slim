@@ -127,8 +127,8 @@ static inline InitResult slim_init(int argc, char **argv, cxxopts::ParseResult &
   init_internal();
 
   /** load directories(system & load path) */
-  for (auto i = lmn_env.load_path_num - 1; i >= 0; i--) {
-    load_il_files(lmn_env.load_path[i]);
+  for (auto i = lmn_env.load_path.rbegin(); i != lmn_env.load_path.rend(); i++) {
+    load_il_files(*i);
   }
 
   return InitResult::SUCCESS;

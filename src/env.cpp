@@ -119,7 +119,6 @@ LmnEnv::LmnEnv() {
   this->translate              = FALSE;
   this->optimization_level     = 3;
   this->profile_level          = 0;
-  this->load_path_num          = 0;
   this->automata_file          = nullptr;
   this->propositional_symbol   = nullptr;
   this->ltl_exp                = nullptr;

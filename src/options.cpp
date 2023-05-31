@@ -202,8 +202,8 @@ auto parse_command_line(cxxopts::ParseResult const &result) -> CommandLineParseR
   }
 
   if (result.count("include") > 0) {
-    auto include                               = result["include"].as<std::string>();
-    lmn_env.load_path[lmn_env.load_path_num++] = strdup(include.c_str());
+    auto include = result["include"].as<std::string>();
+    lmn_env.load_path.emplace_back(include);
   }
 
   if (result.count("dump") > 0) {
@@ -234,7 +234,7 @@ auto parse_command_line(cxxopts::ParseResult const &result) -> CommandLineParseR
   lmn_env.show_hyperlink     = check_have("show-hl");
 
   if (result.count("use-builtin-rule") > 0) {
-    lmn_env.load_path[lmn_env.load_path_num++] = SLIM_LIB_DIR;
+    lmn_env.load_path.emplace_back(SLIM_LIB_DIR);
   }
 
   if (result.count("dump-dot") > 0) {

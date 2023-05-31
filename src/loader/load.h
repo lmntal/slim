@@ -51,11 +51,12 @@
 #include <cstdio>
 #include <memory>
 #include <string>
+#include <string_view>
 
 LmnRuleSetRef            load(std::unique_ptr<FILE, decltype(&fclose)> in);
 std::unique_ptr<LmnRule> load_rule(Rule const &rule);
 LmnRuleSetRef            load_file(std::string const &file_name);
-void                     load_il_files(char const *path);
+void                     load_il_files(std::string_view path);
 std::unique_ptr<Rule>    il_parse_rule(std::unique_ptr<FILE, decltype(&fclose)> in);
 void                     init_so_handles();
 void                     finalize_so_handles();

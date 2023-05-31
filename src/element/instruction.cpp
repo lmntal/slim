@@ -38,6 +38,8 @@
 
 #include "instruction.hpp"
 
+#include <cstring>
+
 const std::map<LmnInstruction, InstrSpec> instr_spec = {
     {INSTR_DEREF, {"deref", {InstrVar, InstrVar, InstrVar, InstrVar}}},
     {INSTR_DEREFATOM, {"derefatom", {InstrVar, InstrVar, InstrVar}}},

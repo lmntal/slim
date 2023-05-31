@@ -42,7 +42,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
-#include <cstring>
+#include <string>
 #include <vector>
 
 #include "config.h"
@@ -331,11 +331,11 @@ struct LmnEnv {
   enum SPdumpFormat sp_dump_format;
   enum OptimizeMode opt_mode;
 
-  int         load_path_num;
-  char const *load_path[256];
-  char       *automata_file;        /* never claim file */
-  char       *propositional_symbol; /* file for propositional symbol definitions */
-  char       *ltl_exp;
+  std::vector<std::string> load_path{};
+
+  char *automata_file;        /* never claim file */
+  char *propositional_symbol; /* file for propositional symbol definitions */
+  char *ltl_exp;
 
   // member methods
   LmnEnv();
