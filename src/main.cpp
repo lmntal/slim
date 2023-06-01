@@ -39,8 +39,10 @@
 #include <cctype>
 #include <cstdio>
 #include <iostream>
-#include <unistd.h>
+#include <ranges>
 #include <vector>
+
+#include <unistd.h>
 
 #include "cxxopts/cxxopts.hpp"
 #include "fmt/color.h"
@@ -127,8 +129,8 @@ static inline InitResult slim_init(int argc, char **argv, cxxopts::ParseResult &
   init_internal();
 
   /** load directories(system & load path) */
-  for (auto i = lmn_env.load_path.rbegin(); i != lmn_env.load_path.rend(); i++) {
-    load_il_files(*i);
+  for (auto &i : lmn_env.load_path | std::views::reverse) {
+    load_il_files(i);
   }
 
   return InitResult::SUCCESS;

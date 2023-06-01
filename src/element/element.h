@@ -55,7 +55,7 @@
 #include "memory_pool.h"
 #include "port.h"
 #include "process_util.h"
-#include "queue.h"
+#include "deque.hpp"
 #include "range_remove_if.hpp"
 #include "re2c/buffer.hpp"
 #include "re2c/cfstream_buffer.hpp"
