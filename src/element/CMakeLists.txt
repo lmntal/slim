@@ -21,7 +21,6 @@ target_sources(lmn_elm PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/memory_pool.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/port.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/process_util.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/queue.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/st.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/util.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/vector.cpp
