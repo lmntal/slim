@@ -40,6 +40,7 @@
 #include "normal_thread.h"
 
 #include <deque>
+#include <functional>
 #include <mutex>
 #include <vector>
 
@@ -56,64 +57,83 @@ BOOL                     normal_parallel_flag;
 unsigned long            success_temp_check;
 unsigned long            fail_temp_check;
 
-void *normal_thread(void *arg) {
-  arginfo     *thread_data;
-  LmnRuleInstr thread_instr;
-  LmnSAtom     atom;
-  double       start_time, stop_time;
-  int         *idp;
-  SameProcCxt *spc;
-  idp = (int *)arg;
+namespace {
+auto each_atom_thread_opt(LmnSAtom value, AtomListEntryRef entry, int id, int num, LmnSAtom start,
+                          std::function<bool(LmnSAtom)> const &func) {
+  auto       flag{1};
+  auto const ID{id};
+  if (!entry)
+    return;
+  if (start == nullptr) {
+    value = atomlist_head(entry);
+    flag--;
+  } else {
+    value = start;
+  }
+  for (; value != lmn_atomlist_end(entry) || flag; value = ((LmnSymbolAtomRef)value)->get_next()) {
+    if (value == lmn_atomlist_end(entry)) {
+      value = atomlist_head(entry);
+      id    = ID;
+      flag--;
+    }
+    if (((LmnSymbolAtomRef)(value))->get_functor() != LMN_RESUME_FUNCTOR && id == 0) {
+      if (func(value))
+        break;
+      id = num;
+    }
+    id--;
+  }
+}
+} // namespace
 
-  thread_data = thread_info[*idp];
+void *normal_thread(void *arg) {
+  LmnSAtom atom{nullptr};
+  double   start_time, stop_time;
+  auto    *idp         = (int *)arg;
+  auto    *thread_data = thread_info[*idp];
 
   while (true) {
     op_lock(thread_data->id, 1);
     if (!lmn_env.enable_parallel)
       break;
-    thread_instr = thread_data->instr;
     thread_data->profile->wakeup++;
     if (lmn_env.profile_level >= 1)
       start_time = get_cpu_time();
 
-    EACH_ATOM_THREAD_OPT(atom, thread_data->atomlist_ent, thread_data->id, active_thread, thread_data->next_atom, ({
+    each_atom_thread_opt(atom, thread_data->atomlist_ent, thread_data->id, active_thread, thread_data->next_atom,
+                         [thread_data, thread_instr = thread_data->instr](LmnSAtom v) {
                            slim::vm::interpreter it(thread_data->rc, thread_data->rule, thread_instr);
-                           thread_data->rc->reg(thread_data->atomi) = {(LmnWord)atom, LMN_ATTR_MAKE_LINK(0), TT_ATOM};
+                           thread_data->rc->reg(thread_data->atomi) = {(LmnWord)v, LMN_ATTR_MAKE_LINK(0), TT_ATOM};
                            if (rc_hlink_opt(thread_data->atomi, thread_data->rc)) {
-                             spc = thread_data->rc->get_hl_sameproccxt()->at(thread_data->atomi);
+                             auto *spc = thread_data->rc->get_hl_sameproccxt()->at(thread_data->atomi);
                              if (spc->is_consistent_with((LmnSymbolAtomRef)thread_data->rc->wt(thread_data->atomi))) {
                                spc->match((LmnSymbolAtomRef)thread_data->rc->wt(thread_data->atomi));
                                if (it.interpret(thread_data->rc, thread_data->rule, thread_instr)) {
                                  thread_data->judge = TRUE;
                                  thread_data->profile->findatom_num++;
-                                 break;
+                                 return true;
                                }
                              }
                            } else {
                              if (it.interpret(thread_data->rc, thread_data->rule, thread_instr)) {
                                thread_data->judge = TRUE;
                                thread_data->profile->findatom_num++;
-                               break;
+                               return true;
                              }
                            }
                            if (lmn_env.find_atom_parallel)
-                             break;
+                             return true;
                            thread_data->backtrack++;
-                         }));
+                           return false;
+                         });
     thread_data->next_atom = atom;
     if (lmn_env.profile_level >= 1) {
-      stop_time                                      = get_cpu_time();
+      stop_time                                       = get_cpu_time();
       lmn_prof.thread_cpu_time_main[thread_data->id] += stop_time - start_time;
     }
-    thread_data->exec->unlock();
+    thread_data->exec.unlock();
   }
   return nullptr;
-}
-
-void normal_profile_init(normal_prof *profile) {
-  profile->wakeup        = 0;
-  profile->backtrack_num = 0;
-  profile->findatom_num  = 0;
 }
 
 void normal_parallel_init() {
@@ -121,17 +141,7 @@ void normal_parallel_init() {
   findthread  = std::vector<std::thread>(lmn_env.core_num);
   thread_info = LMN_NALLOC<arginfo *>(lmn_env.core_num);
   for (i = 0; i < lmn_env.core_num; i++) {
-    thread_info[i]     = LMN_MALLOC<arginfo>();
-    thread_info[i]->rc = new LmnReactCxt();
-    thread_info[i]->rc->warray_set(LmnRegisterArray(thread_info[i]->rc->capacity()));
-    thread_info[i]->register_size = LmnReactCxt::warray_DEF_SIZE;
-    thread_info[i]->id            = i;
-    thread_info[i]->next_atom     = nullptr;
-    thread_info[i]->exec_flag     = 1;
-    thread_info[i]->exec          = new std::mutex();
-    thread_info[i]->exec->lock();
-    thread_info[i]->profile = LMN_MALLOC<normal_prof>();
-    normal_profile_init(thread_info[i]->profile);
+    thread_info[i] = new arginfo(i);
   }
   for (i = 0; i < lmn_env.core_num; i++) {
     findthread[i] = std::thread(normal_thread, &(thread_info[i]->id));
@@ -146,10 +156,8 @@ void normal_parallel_free() {
   int i;
   lmn_env.enable_parallel = FALSE;
   for (i = 0; i < lmn_env.core_num; i++) {
-    thread_info[i]->exec->unlock();
+    thread_info[i]->exec.unlock();
     findthread[i].join();
-    delete (thread_info[i]->exec);
-    lmn_free(thread_info[i]->exec);
     delete (thread_info[i]->rc);
     lmn_free(thread_info[i]->profile);
     lmn_free(thread_info[i]);
@@ -178,18 +186,16 @@ void threadinfo_init(int id, LmnInstrVar atomi, LmnRuleRef rule, LmnReactCxtRef 
 void op_lock(int id, int flag) {
   while (thread_info[id]->exec_flag != flag)
     ;
-  thread_info[id]->exec->lock();
+  thread_info[id]->exec.lock();
   thread_info[id]->exec_flag = 1 - thread_info[id]->exec_flag;
 }
 
 void normal_parallel_prof_dump(FILE *f) {
   // parallel pattern matching profile
-  int           i;
-  unsigned long findatom_num;
-  findatom_num = 0;
+  unsigned long findatom_num{0};
   fprintf(f, "\n===Parallel Pattern Matching Profile========================\n");
   fprintf(f, "[id]: [wakeup] [backtrack] [findatom]\n");
-  for (i = 0; i < lmn_prof.thread_num; i++) {
+  for (auto i = 0; i < lmn_prof.thread_num; i++) {
     fprintf(f, "%3d : %8lu %11lu %10lu \n", i, thread_info[i]->profile->wakeup, thread_info[i]->profile->backtrack_num,
             thread_info[i]->profile->findatom_num);
     findatom_num += thread_info[i]->profile->findatom_num;
@@ -216,6 +222,6 @@ void rule_wall_time_start() {
 
 void rule_wall_time_finish() {
   double finish;
-  finish   = get_wall_time();
+  finish    = get_wall_time();
   walltime += finish - walltime_temp;
 }

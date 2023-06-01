@@ -42,14 +42,15 @@
 
 #include "element/element.h"
 #include "lmntal.h"
+#include "vm/react_context.hpp"
 #include "vm/vm.h"
 #include <deque>
 #include <thread>
 
 struct normal_prof {
-  unsigned long wakeup;
-  unsigned long backtrack_num;
-  unsigned long findatom_num;
+  unsigned long wakeup{0};
+  unsigned long backtrack_num{0};
+  unsigned long findatom_num{0};
 };
 
 struct arginfo {
@@ -60,14 +61,19 @@ struct arginfo {
   LmnRuleRef       rule;
   LmnRuleInstr     instr;
   AtomListEntryRef atomlist_ent;
-  unsigned int     register_size;
+  unsigned int     register_size{LmnReactCxt::warray_DEF_SIZE};
   int              atom_arity;
-  std::mutex      *exec{};
-  int volatile exec_flag;
+  std::mutex       exec{};
+  int volatile exec_flag{1};
   unsigned long backtrack;
-  LmnSAtom      next_atom;
+  LmnSAtom      next_atom{nullptr};
 
   normal_prof *profile;
+
+  arginfo(int id) : id(id), rc(new LmnReactCxt{}), profile(new normal_prof{}) {
+    rc->warray_set(LmnRegisterArray(rc->capacity()));
+    exec.lock();
+  }
 };
 extern std::vector<std::thread> findthread;
 extern arginfo                **thread_info;
