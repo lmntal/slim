@@ -1545,7 +1545,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule, bool 
           thread_info[ip]->next_atom = nullptr;
         threadinfo_init(ip, atomi, rule, rc, instr, atomlist_ent, atom_arity);
         //
-        thread_info[ip]->exec->unlock();
+        thread_info[ip]->exec.unlock();
       }
       for (auto ip2 = 0; ip2 < ip; ip2++) {
         // lmn_thread_join(findthread[ip2]);
