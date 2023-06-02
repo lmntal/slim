@@ -45,6 +45,7 @@
 #include <climits>
 
 #include "element/lmntal_thread.h"
+#include "lmntal.h"
 #include "mc.h"
 #include "mc_explorer.h"
 #include "mc_generator.h"
@@ -312,15 +313,15 @@ BOOL LmnWorkerGroup::flags_init(AutomataRef property_a) { // this should be in L
   /* === 1. 出力フォーマット === */
 
   /* --- 1-1. GraphViz形式の使用 --- */
-  if (lmn_env.output_format == DOT) {
-    lmn_env.output_format = DEFAULT;
+  if (lmn_env.output_format == OutputFormat::DOT) {
+    lmn_env.output_format = OutputFormat::DEFAULT;
   }
 
   /* --- 1-2. インクリメンタルな状態の標準出力 --- */
-  if (lmn_env.sp_dump_format == INCREMENTAL) {
+  if (lmn_env.sp_dump_format == SPdumpFormat::INCREMENTAL) {
     mc_set_dump(flags);
     lmn_env.dump = TRUE;
-    if (lmn_env.mc_dump_format != CUI && lmn_env.mc_dump_format != LaViT) {
+    if (lmn_env.mc_dump_format != MCdumpFormat::CUI && lmn_env.mc_dump_format != MCdumpFormat::LaViT) {
       lmn_fatal("unsupported incremental output format");
     }
     fprintf(stdout, "States\n");
@@ -328,7 +329,7 @@ BOOL LmnWorkerGroup::flags_init(AutomataRef property_a) { // this should be in L
 
   /* --- 1-3. 並列処理中のサポート外オプション --- */
   if (lmn_env.core_num >= 2) {
-    if (lmn_env.sp_dump_format == INCREMENTAL) {
+    if (lmn_env.sp_dump_format == SPdumpFormat::INCREMENTAL) {
 #ifndef DEBUG
       lmn_fatal("unsupported combination incremental state dumper & "
                 "parallelization.");
@@ -608,7 +609,7 @@ static void worker_set_env(LmnWorker *w) {
 LmnCost LmnWorkerGroup::opt_cost() {
   State *opt = workers_get_opt_end_state();
   if (!opt) {
-    return lmn_env.opt_mode == OPT_MINIMIZE ? ULONG_MAX : 0;
+    return lmn_env.opt_mode == OptimizeMode::OPT_MINIMIZE ? ULONG_MAX : 0;
   }
   return state_cost(opt);
 }

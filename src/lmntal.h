@@ -213,132 +213,135 @@ template <typename T> void LMN_FREE(T p) { lmn_free((void *)(p)); }
  */
 
 /* 階層グラフ構造の出力形式 */
-enum OutputFormat { DEFAULT = 1, DEV, DOT, JSON };
-enum MCdumpFormat { CUI, LaViT, Dir_DOT, LMN_FSM_GRAPH, LMN_FSM_GRAPH_MEM_NODE, LMN_FSM_GRAPH_HL_NODE };
-enum SPdumpFormat { SP_NONE, INCREMENTAL, LMN_SYNTAX };
+enum class OutputFormat : uint8_t { DEFAULT = 1, DEV, DOT, JSON };
+enum class MCdumpFormat : uint8_t { CUI, LaViT, Dir_DOT, LMN_FSM_GRAPH, LMN_FSM_GRAPH_MEM_NODE, LMN_FSM_GRAPH_HL_NODE };
+enum class SPdumpFormat : uint8_t { SP_NONE, INCREMENTAL, LMN_SYNTAX };
 
 /* 最適化実行 */
-enum OptimizeMode { OPT_NONE, OPT_MINIMIZE, OPT_MAXIMIZE };
+enum class OptimizeMode : uint8_t { OPT_NONE, OPT_MINIMIZE, OPT_MAXIMIZE };
 
 struct LmnEnv {
-  BOOL trace;
-  BOOL show_proxy;
-  BOOL show_ruleset;
-  BOOL show_chr;
+  // member methods
+  LmnEnv() = default;
 
-  BOOL nd;
-  BOOL ltl;
-  BOOL ltl_all;
-  BOOL show_transition;
+  // member variables
+  bool trace{false};
+  bool show_proxy{false};
+  bool show_ruleset{true};
+  bool show_chr{false};
 
-  BOOL enable_por; /* to enable partial order reduction for nondeterministic
-                      execution or LTL model checking */
-  BOOL enable_por_old;
-  BYTE optimization_level;
-  BYTE profile_level;
+  bool nd{false};
+  bool ltl{false};
+  bool ltl_all{false};
+  bool show_transition{false};
 
-  BOOL translate;
-  BOOL bfs;
-  BOOL mem_enc;
-  BOOL enable_compress_mem;
+  // To enable partial order reduction for
+  // nondeterministic execution or LTL model checking
+  bool enable_por{false};
+  bool enable_por_old{false};
+  BYTE optimization_level{3};
+  BYTE profile_level{0};
 
-  unsigned int depth_limits;
-  unsigned int core_num;
-  unsigned int cutoff_depth;
+  bool translate{false};
+  bool bfs{false};
+  bool mem_enc{false};
+  bool enable_compress_mem{true};
 
-  BOOL delta_mem;
-  BOOL z_compress;
-  BOOL d_compress;
-  BOOL r_compress;
+  unsigned int depth_limits{UINT32_MAX};
+  unsigned int core_num{1};
+  unsigned int cutoff_depth{7};
 
-  BOOL prop_scc_driven;
-  BOOL property_dump;
-  BOOL enable_parallel;
-  BOOL optimize_loadbalancing;
+  bool delta_mem{false};
+  bool z_compress{false};
+  bool d_compress{false};
+  bool r_compress{false};
 
-  BOOL optimize_lock;
-  BOOL optimize_hash;
-  BOOL dump;
-  BOOL end_dump;
+  bool prop_scc_driven{false};
+  bool property_dump{false};
+  bool enable_parallel{false};
+  bool optimize_loadbalancing{true};
 
-  BOOL enable_owcty;
-  BOOL enable_map;
-  BOOL enable_map_heuristic;
-  BOOL enable_bledge;
-  BOOL enable_mapndfs;
+  bool optimize_lock{false};
+  bool optimize_hash{true};
+  bool dump{true};
+  bool end_dump{false};
+
+  bool enable_owcty{false};
+  bool enable_map{false};
+  bool enable_map_heuristic{true};
+  bool enable_bledge{false};
+  bool enable_mapndfs{};
 #ifndef MINIMAL_STATE
-  BOOL enable_mcndfs;
+  bool enable_mcndfs{};
 #endif
 
-  BOOL enable_visualize;
+  bool enable_visualize;
 
-  BOOL show_reduced_graph;
-  BOOL bfs_layer_sync;
-  BOOL interactive;
-  BOOL normal_remain;
+  bool show_reduced_graph{false};
+  bool bfs_layer_sync{false};
+  bool interactive{false};
+  bool normal_remain{false};
 
-  BOOL normal_remaining;
-  BOOL normal_cleaning;
-  BOOL nd_remain;
-  BOOL nd_remaining;
+  bool normal_remaining{false};
+  bool normal_cleaning{false};
+  bool nd_remain{false};
+  bool nd_remaining{false};
 
-  BOOL nd_cleaning;
-  BOOL nd_search_end;
-  BOOL hyperlink;
-  BOOL show_hyperlink;
+  bool nd_cleaning{false};
+  bool nd_search_end{false};
+  bool hyperlink{};
+  bool show_hyperlink{};
 
-  BOOL benchmark;
+  bool benchmark{false};
 
-  BOOL hash_compaction;
-  int  hash_depth;
+  bool hash_compaction{false};
+  int  hash_depth{2};
 
-  BOOL         tree_compress;
-  unsigned int tree_compress_table_size;
+  bool         tree_compress{false};
+  unsigned int tree_compress_table_size{20};
 
   // #ifdef PROFILE
-  BOOL optimize_hash_old;
-  BOOL prof_no_memeq;
+  bool optimize_hash_old{false};
+  bool prof_no_memeq{false};
   // #endif
 
   // findatom最適化オプション（変数名は仮置き）
-  BOOL history_management;
+  // 履歴管理用アトム(nakata)
+  bool history_management{false};
 
 #ifdef DEBUG
-  BOOL debug_isomor;
-  BOOL debug_delta;
-  BOOL debug_id;
-  BOOL debug_hash;
-  BOOL debug_mc;
-  BOOL debug_por;
-  BOOL debug_por_dep;
+  bool debug_isomor{false};
+  bool debug_delta{false};
+  bool debug_id{false};
+  bool debug_hash{false};
+  bool debug_mc{false};
+  bool debug_por{false};
+  bool debug_por_dep{false};
 #endif
 
-  BOOL findatom_parallel_mode;
-  BOOL find_atom_parallel;
-  BOOL findatom_parallel_inde;
+  bool findatom_parallel_mode{false};
+  bool find_atom_parallel{false};
+  bool findatom_parallel_inde{false};
 
-  BOOL run_test;
+  bool run_test;
 
-  BOOL shuffle_rule;
-  BOOL shuffle_atom;
+  bool shuffle_rule{false};
+  bool shuffle_atom{false};
 
-  BOOL interactive_debug;
+  bool interactive_debug;
 
-  BOOL show_laststep_only;
+  bool show_laststep_only{false};
 
-  enum OutputFormat output_format;
-  enum MCdumpFormat mc_dump_format;
-  enum SPdumpFormat sp_dump_format;
-  enum OptimizeMode opt_mode;
+  enum OutputFormat output_format { OutputFormat::DEFAULT };
+  enum MCdumpFormat mc_dump_format { MCdumpFormat::CUI };
+  enum SPdumpFormat sp_dump_format { SPdumpFormat::SP_NONE };
+  enum OptimizeMode opt_mode { OptimizeMode::OPT_NONE };
 
   std::vector<std::string> load_path{};
 
-  char *automata_file;        /* never claim file */
-  char *propositional_symbol; /* file for propositional symbol definitions */
-  char *ltl_exp;
-
-  // member methods
-  LmnEnv();
+  char *automata_file{nullptr};        /* never claim file */
+  char *propositional_symbol{nullptr}; /* file for propositional symbol definitions */
+  char *ltl_exp{nullptr};
 };
 
 /*----------------------------------------------------------------------

@@ -759,7 +759,7 @@ void costed_dfs_loop(LmnWorker *w, Deque *deq, Vector *new_ss, AutomataRef a, Ve
     s   = (State *)(deq->peek_tail());
     p_s = MC_GET_PROPERTY(s, a);
 
-    if ((lmn_env.opt_mode == OPT_MINIMIZE && worker_group(w)->opt_cost() < state_cost(s)) ||
+    if ((lmn_env.opt_mode ==OptimizeMode:: OPT_MINIMIZE && worker_group(w)->opt_cost() < state_cost(s)) ||
         (s->is_expanded() && !s->s_is_update()) || (!worker_ltl_none(w) && p_s->get_is_end())) {
       pop_deq(deq, TRUE);
       continue;
@@ -774,7 +774,7 @@ void costed_dfs_loop(LmnWorker *w, Deque *deq, Vector *new_ss, AutomataRef a, Ve
     }
 
     if (state_is_accept(a, s)) {
-      worker_group(w)->update_opt_cost(s, (lmn_env.opt_mode == OPT_MINIMIZE));
+      worker_group(w)->update_opt_cost(s, (lmn_env.opt_mode == OptimizeMode::OPT_MINIMIZE));
     }
 
     if (!worker_on_parallel(w)) {

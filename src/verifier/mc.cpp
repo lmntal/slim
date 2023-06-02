@@ -165,17 +165,17 @@ static void mc_dump(LmnWorkerGroup *wp) {
     }
 
     /* 2. 反例パス or 最終状態集合の出力 */
-    auto out = ss->output();
+    auto *out = ss->output();
     if (wp->workers_are_do_search()) {
       mc_dump_all_errors(wp, out);
-    } else if (lmn_env.end_dump && lmn_env.mc_dump_format == CUI) {
+    } else if (lmn_env.end_dump && lmn_env.mc_dump_format == MCdumpFormat::CUI) {
       /* とりあえず最終状態集合の出力はCUI限定。(LaViTに受付フォーマットがない)
        */
       ss->dump_ends();
     }
 
     /* CUIモードの場合状態数などのデータも標準出力 */
-    if (lmn_env.mc_dump_format == CUI) {
+    if (lmn_env.mc_dump_format == MCdumpFormat::CUI) {
       fprintf(out, "\'# of States\'(stored)   = %lu.\n", ss->num());
       fprintf(out, "\'# of States\'(end)      = %lu.\n", ss->num_of_ends());
       if (wp->workers_are_do_search()) {
@@ -281,7 +281,7 @@ void mc_update_cost(State *s, Vector *new_ss, EWLock *ewlock) {
 
   s->s_unset_update();
   n = s->successor_num;
-  f = (lmn_env.opt_mode == OPT_MINIMIZE);
+  f = (lmn_env.opt_mode == OptimizeMode::OPT_MINIMIZE);
   for (i = 0; i < n; i++) {
     succ = state_succ_state(s, i);
     state_update_cost(succ, transition(s, i), s, new_ss, f, ewlock);
@@ -771,7 +771,7 @@ void mc_print_vec_states(StateSpaceRef ss, Vector *v, State *seed) {
     State *s;
     auto   out = ss->output();
 
-    if (lmn_env.sp_dump_format != LMN_SYNTAX) {
+    if (lmn_env.sp_dump_format != SPdumpFormat::LMN_SYNTAX) {
       char const *m;
       s = (State *)v->get(i);
       m = (s == seed) ? "*" : " ";
@@ -800,16 +800,18 @@ void mc_print_vec_states(StateSpaceRef ss, Vector *v, State *seed) {
  */
 void mc_dump_all_errors(LmnWorkerGroup *wp, FILE *f) {
   if (!wp->workers_have_error()) {
-    fprintf(f, "%s\n", lmn_env.mc_dump_format == CUI ? "No Accepting Cycle (or Invalid State) exists." : "");
+    fprintf(f, "%s\n",
+            lmn_env.mc_dump_format == MCdumpFormat::CUI ? "No Accepting Cycle (or Invalid State) exists." : "");
     return;
   }
 
   switch (lmn_env.mc_dump_format) {
+    using enum MCdumpFormat;
   case LaViT:
   case CUI: {
-    fprintf(f, "%s\n", lmn_env.sp_dump_format == LMN_SYNTAX ? "counter_exapmle." : "CounterExamplePaths");
+    fprintf(f, "%s\n", lmn_env.sp_dump_format == SPdumpFormat::LMN_SYNTAX ? "counter_exapmle." : "CounterExamplePaths");
 
-    auto      cui_dump       = (lmn_env.mc_dump_format == CUI);
+    auto      cui_dump       = (lmn_env.mc_dump_format == MCdumpFormat::CUI);
     GraphMap *invalids_graph = cui_dump ? nullptr : new GraphMap();
 
     /* state property */

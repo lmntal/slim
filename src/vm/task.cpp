@@ -215,7 +215,7 @@ void Task::lmn_run(std::vector<LmnRuleSetRef> const &start_rulesets) {
     if (lmn_env.show_laststep_only) {
       mrc->increment_reaction_count();
     } else {
-      if (lmn_env.output_format != JSON) {
+      if (lmn_env.output_format != OutputFormat::JSON) {
         mrc->increment_reaction_count();
         fprintf(stdout, "%d: ", mrc->get_reaction_count());
       }
@@ -239,7 +239,7 @@ void Task::lmn_run(std::vector<LmnRuleSetRef> const &start_rulesets) {
 
   if (lmn_env.dump) { /* lmntalではioモジュールがあるけど必ず実行結果を出力するプログラミング言語,
                          で良い?? */
-    if (lmn_env.sp_dump_format == LMN_SYNTAX) {
+    if (lmn_env.sp_dump_format == SPdumpFormat::LMN_SYNTAX) {
       fprintf(stdout, "finish.\n");
     } else {
       if (lmn_env.show_laststep_only)
@@ -420,13 +420,13 @@ bool Task::react_rule(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule) {
 
   if (rc->has_mode(REACT_MEM_ORIENTED) && !rc->is_zerostep) {
     if (lmn_env.trace && result) {
-      if (lmn_env.sp_dump_format == LMN_SYNTAX) {
+      if (lmn_env.sp_dump_format == SPdumpFormat::LMN_SYNTAX) {
         lmn_dump_mem_stdout(rc->get_global_root());
         fprintf(stdout, ".\n");
         lmn_dump_mem_stdout(rc->get_global_root());
         fprintf(stdout, ":- ");
         rc->increment_reaction_count();
-      } else if (lmn_env.output_format == JSON) {
+      } else if (lmn_env.output_format == OutputFormat::JSON) {
         lmn_dump_cell_stdout(rc->get_global_root());
       } else if (lmn_env.show_laststep_only) {
         rc->increment_reaction_count();

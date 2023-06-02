@@ -60,7 +60,7 @@ BOOL register_initial_rulesets(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef
       for (i = 0; i < m->ruleset_num(); i++) {
         LmnRuleSetRef rs = lmn_mem_get_ruleset(m, i);
 
-        for (auto r : *rs) {
+        for (auto *r : *rs) {
           if (m->NAME_ID() == lmn_intern(INITIAL_RULESET_MEM_NAME)) {
             lmn_add_initial_rule(new LmnRule(*r));
           } else if (m->NAME_ID() == lmn_intern(INITIAL_SYSTEM_RULESET_MEM_NAME)) {

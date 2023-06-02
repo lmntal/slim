@@ -39,6 +39,7 @@
 
 #include "fmt/core.h"
 
+#include "lmntal.h"
 #include "statespace.h"
 
 namespace state_dumper {
@@ -147,7 +148,7 @@ StateDumper *StateDumper::from_env_ptr(FILE *fp) {
 namespace state_dumper {
 void CUI::dump(StateSpace *ss) {
   auto states = ss->all_states();
-  if (lmn_env.sp_dump_format != INCREMENTAL) {
+  if (lmn_env.sp_dump_format !=SPdumpFormat::INCREMENTAL) {
     fprintf(_fp, "States\n");
     for (auto &s : states)
       this->StateDumper::dump(s, ss);
@@ -177,7 +178,7 @@ void Dir_DOT::dump(StateSpace *ss) {
 
 void LaViT::dump(StateSpace *ss) {
   auto states = ss->all_states();
-  if (lmn_env.sp_dump_format != INCREMENTAL) {
+  if (lmn_env.sp_dump_format !=SPdumpFormat:: INCREMENTAL) {
     fprintf(_fp, "States\n");
     for (auto &s : states)
       this->StateDumper::dump(s, ss);

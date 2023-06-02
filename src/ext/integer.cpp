@@ -43,6 +43,7 @@
 #include "element/element.h"
 #include "verifier/verifier.h"
 #include "vm/vm.h"
+#include <exception>
 
 void init_integer();
 void integer_set(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0, LmnLinkAttr t0, LmnAtomRef a1, LmnLinkAttr t1,
@@ -62,16 +63,12 @@ void integer_of_string(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0, Lmn
  */
 void integer_set(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0, LmnLinkAttr t0, LmnAtomRef a1, LmnLinkAttr t1,
                  LmnAtomRef a2, LmnLinkAttr t2) {
-  Vector   *srcvec;
-  LmnWord   i;
-  long long n, start, end;
-
-  start  = (long long)a0;
-  end    = (long long)a1;
-  srcvec = new Vector(16);
+  auto  start  = (long long)a0;
+  auto  end    = (long long)a1;
+  auto *srcvec = new Vector(16);
   srcvec->push((LmnWord)LinkObj_make(a2, t2));
 
-  for (i = 0, n = start; n <= end; i++, n++) {
+  for (auto i = 0LL, n = start; n <= end; i++, n++) {
     Vector         *dstlovec;
     ProcessTableRef atommap;
     ProcessTableRef hlinkmap = nullptr;
@@ -95,7 +92,7 @@ void integer_set(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0, LmnLinkAt
 
   mem->delete_ground(srcvec);
 
-  for (i = 0; i < srcvec->get_num(); i++)
+  for (auto i = 0; i < srcvec->get_num(); i++)
     LMN_FREE(srcvec->get(i));
   delete srcvec;
 }
@@ -116,7 +113,8 @@ void integer_srand(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0, LmnLink
  * H is bound to a random number between 0 and N-1.
  */
 void integer_rand(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0, LmnLinkAttr t0, LmnAtomRef a1, LmnLinkAttr t1) {
-  LmnWord n = rand() % (LmnWord)a0;
+  static std::random_device rd;
+  LmnWord                   n = rd() % (LmnWord)a0;
 
   lmn_mem_newlink(mem, (LmnSymbolAtomRef)a1, LMN_ATTR_MAKE_LINK(0), LMN_ATTR_GET_VALUE(t1), (LmnAtomRef)n, LMN_INT_ATTR,
                   0);
@@ -132,17 +130,14 @@ void integer_rand(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0, LmnLinkA
  */
 void integer_of_string(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0, LmnLinkAttr t0, LmnAtomRef a1,
                        LmnLinkAttr t1) {
-  long        n;
-  char       *t;
-  char const *s = reinterpret_cast<LmnString *>(a0)->c_str();
-  t             = nullptr;
-  n             = strtol(s, &t, 10);
-  if (t == nullptr || s == t) {
-    LmnSymbolAtomRef a = lmn_mem_newatom(mem, lmn_functor_table->intern(ANONYMOUS, lmn_intern("fail"), 1));
-    lmn_mem_newlink(mem, (LmnSymbolAtomRef)a1, t1, LMN_ATTR_GET_VALUE(t1), a, LMN_ATTR_MAKE_LINK(0), 0);
-  } else { /* 変換できた */
+  auto &s = reinterpret_cast<LmnString *>(a0)->str;
+  try {
+    auto n = stol(s);
     lmn_mem_newlink(mem, (LmnSymbolAtomRef)a1, t1, LMN_ATTR_GET_VALUE(t1), (LmnAtomRef)n, LMN_INT_ATTR, 0);
     lmn_mem_push_atom(mem, (LmnSymbolAtomRef)n, LMN_INT_ATTR);
+  } catch (std::exception &e) {
+    LmnSymbolAtomRef a = lmn_mem_newatom(mem, lmn_functor_table->intern(ANONYMOUS, lmn_intern("fail"), 1));
+    lmn_mem_newlink(mem, (LmnSymbolAtomRef)a1, t1, LMN_ATTR_GET_VALUE(t1), a, LMN_ATTR_MAKE_LINK(0), 0);
   }
 
   lmn_mem_delete_atom(mem, (LmnSymbolAtomRef)a0, t0);

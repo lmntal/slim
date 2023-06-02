@@ -56,9 +56,6 @@ thread_local LmnTLS   lmn_tls;
  * グローバル変数を全てなんとかする必要がある.
  */
 
-/* LMN_TLS部にpthread_key_tを埋め込む場合は, free関数をdestructorに渡しておく.
- */
-
 static inline void lmn_TLS_init(LmnTLS *p, unsigned int thread_id) {
   p->thread_num   = lmn_env.core_num;
   p->thread_id    = thread_id;
@@ -99,96 +96,3 @@ void lmn_stream_init() {
 }
 
 void lmn_stream_destroy() { lmn_TLS_destroy(&lmn_tls); }
-
-/* lmn_env構造体の初期化 */
-LmnEnv::LmnEnv() {
-  trace                        = FALSE;
-  this->show_proxy             = FALSE;
-  this->show_chr               = FALSE;
-  this->show_ruleset           = TRUE;
-  this->output_format          = DEFAULT;
-  this->mc_dump_format         = CUI;
-  this->sp_dump_format         = SP_NONE;
-  this->show_laststep_only     = FALSE;
-  this->nd                     = FALSE;
-  this->ltl                    = FALSE;
-  this->ltl_all                = FALSE;
-  this->enable_por_old         = FALSE;
-  this->enable_por             = FALSE;
-  this->show_transition        = FALSE;
-  this->translate              = FALSE;
-  this->optimization_level     = 3;
-  this->profile_level          = 0;
-  this->automata_file          = nullptr;
-  this->propositional_symbol   = nullptr;
-  this->ltl_exp                = nullptr;
-  this->bfs                    = FALSE;
-  this->prop_scc_driven        = FALSE;
-  this->depth_limits           = UINT_MAX;
-  this->nd_search_end          = FALSE;
-  this->mem_enc                = FALSE;
-  this->delta_mem              = FALSE;
-  this->dump                   = TRUE;
-  this->end_dump               = FALSE;
-  this->benchmark              = FALSE;
-  this->property_dump          = FALSE;
-  this->enable_compress_mem    = TRUE;
-  this->z_compress             = FALSE;
-  this->d_compress             = FALSE;
-  this->r_compress             = FALSE;
-  this->enable_parallel        = FALSE;
-  this->core_num               = 1;
-  this->cutoff_depth           = 7;
-  this->optimize_lock          = FALSE;
-  this->optimize_hash          = TRUE;
-  this->optimize_loadbalancing = TRUE;
-
-  this->opt_mode = OPT_NONE;
-
-  /* only jni-interactive mode */
-  this->interactive      = FALSE;
-  this->normal_remain    = FALSE;
-  this->normal_remaining = FALSE;
-  this->normal_cleaning  = FALSE;
-  this->nd_remain        = FALSE;
-  this->nd_remaining     = FALSE;
-  this->nd_cleaning      = FALSE;
-
-  this->enable_owcty   = FALSE;
-  this->enable_map     = FALSE;
-  this->enable_bledge  = FALSE;
-  this->bfs_layer_sync = FALSE;
-
-  this->enable_map_heuristic = TRUE;
-
-  this->show_reduced_graph = FALSE;
-
-  this->hash_compaction          = FALSE;
-  this->tree_compress            = FALSE;
-  this->hash_depth               = 2;
-  this->tree_compress_table_size = 20;
-#ifdef PROFILE
-  this->optimize_hash_old = FALSE;
-  this->prof_no_memeq     = FALSE;
-#endif
-
-  // 履歴管理用アトム(nakata)
-  this->history_management = FALSE;
-
-#ifdef DEBUG
-  this->debug_por_dep = FALSE;
-  this->debug_id      = FALSE;
-  this->debug_delta   = FALSE;
-  this->debug_hash    = FALSE;
-  this->debug_isomor  = FALSE;
-  this->debug_mc      = FALSE;
-  this->debug_por     = FALSE;
-#endif
-
-  this->shuffle_rule = FALSE;
-  this->shuffle_atom = FALSE;
-
-  this->findatom_parallel_mode = FALSE;
-  this->find_atom_parallel     = FALSE;
-  this->findatom_parallel_inde = FALSE;
-}
