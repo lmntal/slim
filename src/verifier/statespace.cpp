@@ -313,7 +313,7 @@ void StateSpace::dump_ends() const {
   for (auto const &end_i : end_states) {
     for (auto const &p : end_i) {
       dumper->state_print_mem(p);
-      if (lmn_env.sp_dump_format == LMN_SYNTAX)
+      if (lmn_env.sp_dump_format == SPdumpFormat::LMN_SYNTAX)
         printf(".\n");
     }
   }
@@ -330,7 +330,7 @@ void StateSpace::dump() { StateDumper::from_env(this->out)->dump(this); }
 void StateSpace::format_states() {
 #ifndef __CYGWIN__
   /* cygwinテスト時に, ボトルネックになっていた */
-  if (!this->is_formated && lmn_env.sp_dump_format != INCREMENTAL) {
+  if (!this->is_formated && lmn_env.sp_dump_format != SPdumpFormat::INCREMENTAL) {
     if (this->mhash_table.tbl)
       this->mhash_table.tbl->format_states();
     if (this->mhash_table.acc)

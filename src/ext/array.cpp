@@ -64,23 +64,21 @@ int LmnArray::array_atom_type;
  * @private
  */
 LmnArray::~LmnArray() {
-  unsigned long i;
-
   if (LMN_ARRAY_OWNER(this)) {
     switch (LMN_ARRAY_TYPE(this)) {
     case LMN_DBL_ATTR:
-      for (i = 0; i < this->impl->size(); i++) {
-        lmn_free_atom((*(this->impl))[i], LMN_DBL_ATTR);
+      for (auto &i : *this->impl) {
+        lmn_free_atom(i, LMN_DBL_ATTR);
       }
       break;
     case LMN_STRING_ATTR:
-      for (i = 0; i < this->impl->size(); i++) {
-        delete (reinterpret_cast<LmnString *>(LMN_ARRAY_DATA(this)[i]));
+      for (auto &i : *impl) {
+        delete (reinterpret_cast<LmnString *>(i));
       }
       break;
     case LMN_HL_ATTR:
-      for (i = 0; i < this->impl->size(); i++) {
-        lmn_free_atom(LMN_ARRAY_DATA(this)[i], LMN_HL_ATTR);
+      for (auto &i : *impl) {
+        lmn_free_atom(i, LMN_HL_ATTR);
       }
       break;
     }

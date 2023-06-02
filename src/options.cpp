@@ -207,7 +207,7 @@ auto parse_command_line(cxxopts::ParseResult const &result) -> CommandLineParseR
   }
 
   if (result.count("dump") > 0) {
-    lmn_env.output_format = DEV;
+    lmn_env.output_format = OutputFormat::DEV;
   }
 
   lmn_env.trace = check_have("trace");
@@ -238,36 +238,36 @@ auto parse_command_line(cxxopts::ParseResult const &result) -> CommandLineParseR
   }
 
   if (result.count("dump-dot") > 0) {
-    lmn_env.output_format  = DOT;
-    lmn_env.mc_dump_format = Dir_DOT;
+    lmn_env.output_format  = OutputFormat::DOT;
+    lmn_env.mc_dump_format = MCdumpFormat::Dir_DOT;
   }
 
   if (result.count("dump-fsm-lmn") > 0) {
-    lmn_env.mc_dump_format = LMN_FSM_GRAPH_MEM_NODE;
+    lmn_env.mc_dump_format = MCdumpFormat::LMN_FSM_GRAPH_MEM_NODE;
   }
 
   if (result.count("dump-lavit") > 0) {
-    lmn_env.mc_dump_format = LaViT;
+    lmn_env.mc_dump_format = MCdumpFormat::LaViT;
   }
 
   if (result.count("dump-inc") > 0) {
-    lmn_env.sp_dump_format = INCREMENTAL;
+    lmn_env.sp_dump_format = SPdumpFormat::INCREMENTAL;
   }
 
   if (result.count("dump-lmn") > 0) {
-    lmn_env.sp_dump_format = LMN_SYNTAX;
+    lmn_env.sp_dump_format = SPdumpFormat::LMN_SYNTAX;
   }
 
   if (result.count("dump-json") > 0) {
-    lmn_env.output_format = JSON;
+    lmn_env.output_format = OutputFormat::JSON;
   }
 
   if (result.count("dump-fsm-lmn-detail") > 0) {
-    lmn_env.mc_dump_format = LMN_FSM_GRAPH;
+    lmn_env.mc_dump_format = MCdumpFormat::LMN_FSM_GRAPH;
   }
 
   if (result.count("dump-fsm-hl") > 0) {
-    lmn_env.mc_dump_format = LMN_FSM_GRAPH_HL_NODE;
+    lmn_env.mc_dump_format = MCdumpFormat::LMN_FSM_GRAPH_HL_NODE;
   }
 
   lmn_env.trace              |= check_have("show-laststep-only");
@@ -285,9 +285,9 @@ auto parse_command_line(cxxopts::ParseResult const &result) -> CommandLineParseR
   lmn_env.nd              |= check_have("opt-min") | check_have("opt-max");
   lmn_env.show_transition |= check_have("opt-min") | check_have("opt-max");
   if (result.count("opt-min") > 0) {
-    lmn_env.opt_mode = OPT_MINIMIZE;
+    lmn_env.opt_mode = OptimizeMode::OPT_MINIMIZE;
   } else if (result.count("opt-max") > 0) {
-    lmn_env.opt_mode = OPT_MAXIMIZE;
+    lmn_env.opt_mode = OptimizeMode::OPT_MAXIMIZE;
   }
 
   if (result.count("nc") > 0) {

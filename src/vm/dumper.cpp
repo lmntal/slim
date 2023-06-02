@@ -523,9 +523,9 @@ static void dump_ruleset(LmnPortRef port, std::vector<LmnRuleSet *> const &v) {
   for (i = 0; i < v.size(); i++) {
     LmnRuleSetRef rs;
 
-    rs = v[i];
-    auto s  = std::to_string(rs->id);
-    if (lmn_env.sp_dump_format == LMN_SYNTAX) {
+    rs     = v[i];
+    auto s = std::to_string(rs->id);
+    if (lmn_env.sp_dump_format == SPdumpFormat::LMN_SYNTAX) {
       if (i > 0) {
         port_put_raw_s(port, ",");
       }
@@ -538,7 +538,7 @@ static void dump_ruleset(LmnPortRef port, std::vector<LmnRuleSet *> const &v) {
       dump_rule(port, rs);
     }
 
-    if (lmn_env.sp_dump_format == LMN_SYNTAX) {
+    if (lmn_env.sp_dump_format == SPdumpFormat::LMN_SYNTAX) {
       port_put_raw_s(port, "'");
     }
     port_put_raw_s(port, ". ");
@@ -707,6 +707,7 @@ void lmn_dump_cell_stdout(LmnMembraneRef mem) {
 
 void lmn_dump_cell(LmnMembraneRef mem, LmnPortRef port, OutputFormat format) {
   switch (format) {
+    using enum OutputFormat;
   case DEFAULT:
     lmn_dump_cell_nonewline(port, mem);
     break;
@@ -739,6 +740,7 @@ void lmn_dump_mem_stdout(LmnMembraneRef mem) {
 /* print membrane structure */
 void lmn_dump_mem(LmnMembraneRef mem, LmnPortRef port) {
   switch (lmn_env.output_format) {
+    using enum OutputFormat;
   case DEFAULT:
     port_put_raw_s(port, "{");
     lmn_dump_cell_nonewline(port, mem);
@@ -1112,29 +1114,29 @@ std::ostream &env(std::ostream &os) {
 }
 
 std::ostream &lmntal(std::ostream &os) {
-  os.iword(output_format_index) = OutputFormat::DEFAULT;
+  os.iword(output_format_index) = static_cast<long>(OutputFormat::DEFAULT);
   return os;
 }
 
 std::ostream &verbal(std::ostream &os) {
-  os.iword(output_format_index) = OutputFormat::DEV;
+  os.iword(output_format_index) = static_cast<long>(OutputFormat::DEV);
   return os;
 }
 
 std::ostream &dot(std::ostream &os) {
-  os.iword(output_format_index) = OutputFormat::DOT;
+  os.iword(output_format_index) = static_cast<long>(OutputFormat::DOT);
   return os;
 }
 
 std::ostream &json(std::ostream &os) {
-  os.iword(output_format_index) = OutputFormat::JSON;
+  os.iword(output_format_index) = static_cast<long>(OutputFormat::JSON);
   return os;
 }
 } // namespace format
 
 // TODO: portを使わないようにする
 std::string to_string(LmnMembrane const *mem, OutputFormat format) {
-  auto port = lmn_make_output_string_port();
+  auto *port = lmn_make_output_string_port();
   lmn_dump_cell(const_cast<LmnMembrane *>(mem), port, format);
   auto str = std::unique_ptr<LmnString>(lmn_port_output_string(port));
   lmn_port_free(port);

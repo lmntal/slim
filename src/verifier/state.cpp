@@ -387,11 +387,10 @@ void state_set_format_id(State *s, unsigned long v) {
  * 状態遷移グラフを構築しながら状態データを出力する場合は,
  * 状態生成時に割り当てた整数IDをそのまま返す. */
 unsigned long state_format_id(State *s, BOOL is_formated) {
-  if (is_formated && lmn_env.sp_dump_format != INCREMENTAL) {
+  if (is_formated && lmn_env.sp_dump_format != SPdumpFormat::INCREMENTAL) {
     return s->hash;
-  } else {
-    return state_id(s);
   }
+  return state_id(s);
 }
 
 /* 状態sに割り当てた性質オートマトン上の状態名を返す.

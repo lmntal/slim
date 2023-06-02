@@ -41,6 +41,8 @@
 #include "../lmntal.h"
 #include "element/element.h"
 #include "vm/vm.h"
+#include <exception>
+#include <string>
 
 /*
  * (S, N):
@@ -49,17 +51,15 @@
  */
 void float_of_string(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0, LmnLinkAttr t0, LmnAtomRef a1,
                      LmnLinkAttr t1) {
-  char       *t;
-  LmnAtomRef  d;
-  char const *s = reinterpret_cast<LmnString *>(a0)->c_str();
-  t             = nullptr;
-  d             = (LmnAtomRef)lmn_create_double_atom(strtod(s, &t));
-  if (t == nullptr || s == t) {
-    LmnSAtom a = lmn_mem_newatom(mem, lmn_functor_table->intern(ANONYMOUS, lmn_intern("fail"), 1));
-    lmn_mem_newlink(mem, a1, t1, LMN_ATTR_GET_VALUE(t1), a, LMN_ATTR_MAKE_LINK(0), 0);
-  } else { /* 変換できた */
+  auto &s = reinterpret_cast<LmnString *>(a0)->str;
+  try {
+    auto  val = std::stod(s);
+    auto *d   = (LmnAtomRef)lmn_create_double_atom(val);
     lmn_mem_newlink(mem, a1, t1, LMN_ATTR_GET_VALUE(t1), d, LMN_DBL_ATTR, 0);
     lmn_mem_push_atom(mem, d, LMN_DBL_ATTR);
+  } catch (std::exception &e) {
+    LmnSAtom a = lmn_mem_newatom(mem, lmn_functor_table->intern(ANONYMOUS, lmn_intern("fail"), 1));
+    lmn_mem_newlink(mem, a1, t1, LMN_ATTR_GET_VALUE(t1), a, LMN_ATTR_MAKE_LINK(0), 0);
   }
 
   lmn_mem_delete_atom(mem, a0, t0);

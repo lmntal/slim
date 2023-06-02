@@ -9,8 +9,7 @@
 /* #undef BISON_USE_PARSER_H_EXTENSION */
 
 /* Defines bison version */
-#define BISON_VERSION                                                                                                  \
-  $ { BISON_VERSION }
+#define BISON_VERSION   ${BISON_VERSION}
 
 #cmakedefine DEVEL
 #cmakedefine NDEBUG
@@ -26,34 +25,10 @@
 #cmakedefine01 HAVE_LIBZ
 
 /* Define to 1 if you have the <omp.h> header file. */
-#cmakedefine01 HAVE_OMP_H
-
-/* Define if you have POSIX threads libraries and header files. */
-#cmakedefine01 HAVE_PTHREAD
-
-/* Define if you have librt */
-#cmakedefine01 HAVE_LIBRT
-
-/* Define to 1 if the system has `pthread_barrier'. */
-#cmakedefine01 HAVE_PTHREAD_BARRIER
-
-/* Define to 1 if you have the <sched.h> header file. */
-#cmakedefine01 HAVE_SCHED_H
-
-/* Define to 1 if you have the <syscall.h> header file. */
-#cmakedefine01 HAVE_SYSCALL_H
+#define HAVE_OMP_H 1
 
 /* enable tcmalloc */
 #cmakedefine HAVE_TCMALLOC
-
-/* Define to 1 if compiler supports __thread */
-#cmakedefine01 HAVE_TLS
-
-/* Define to 1 if you have the <unistd.h> header file. */
-#cmakedefine01 HAVE_UNISTD_H
-
-/* Define to 1 if the system has the TLS keyword `__thread'. */
-#cmakedefine01 HAVE___THREAD
 
 /* prefix where we look for installed files */
 #define INSTALL_PREFIX "/usr/local"
@@ -120,10 +95,6 @@
 /* enable profile */
 #cmakedefine PROFILE
 
-/* Define to necessary symbol if this constant uses a non-standard name on
-   your system. */
-/* #undef PTHREAD_CREATE_JOINABLE */
-
 /* root directory */
 #define ROOT_DIR "${exec_prefix}/lib"
 
@@ -172,11 +143,6 @@ enum { STDC_HEADERS = 1 };
 /* Define to 1 if `lex' declares `yytext' as a `char *' by default, not a
    `char[]'. */
 #define YYTEXT_POINTER 1
-
-/* Define for Solaris 2.5.1 so the uint64_t typedef from <sys/synch.h>,
-   <pthread.h>, or <semaphore.h> is not used. If the typedef were allowed,
-   the #define below would cause a syntax error. */
-/* #undef _UINT64_T */
 
 /* Define to 1 if type `char' is unsigned and your compiler does not
    predefine this macro.  */

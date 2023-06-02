@@ -40,8 +40,8 @@
 #ifndef LMN_ARRAY_H
 #define LMN_ARRAY_H
 
-#include "../lmntal.h"
 #include "element/element.h"
+#include "lmntal.h"
 #include "vm/vm.h"
 
 /**
