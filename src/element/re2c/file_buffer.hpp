@@ -45,15 +45,13 @@
 #include "../exception.hpp"
 #include "buffer.hpp"
 
-namespace slim {
-namespace element {
-namespace re2c {
+namespace slim::element::re2c {
 class file_buffer : public buffer {
   std::unique_ptr<std::ifstream> ifs;
 
 public:
   file_buffer(const std::string &file_path, int fill_size, int size = 256)
-      : buffer(fill_size, size), ifs(std::unique_ptr<std::ifstream>(new std::ifstream(file_path))) {
+      : buffer(fill_size, size), ifs(std::make_unique<std::ifstream>(file_path)) {
     if (ifs->fail())
       throw exception("cannot open file '" + file_path + "'");
   }
@@ -61,15 +59,13 @@ public:
   file_buffer(std::unique_ptr<std::ifstream> ifs, int fill_size, int size = 256)
       : buffer(fill_size, size), ifs(std::move(ifs)) {}
 
-  bool is_finished() const { return ifs->eof(); }
+  bool is_finished() const override { return ifs->eof(); }
 
-  void update_limit(size_t free) {
+  void update_limit(size_t free) override {
     ifs->read(YYLIMIT, free);
     YYLIMIT += ifs->gcount();
   }
 };
-} // namespace re2c
-} // namespace element
-} // namespace slim
+} // namespace slim::element::re2c
 
 #endif /* ELEMENT_RE2C_FILE_BUFFER_HPP */
