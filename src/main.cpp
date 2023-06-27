@@ -162,13 +162,14 @@ static inline void slim_finalize() {
   slim::element::LifetimeProfiler::check_memory_leak();
 }
 
-static inline bool load_input_files(std::vector<LmnRuleSetRef> &start_rulesets, std::vector<std::string> const &files) {
+bool load_input_files(std::vector<LmnRuleSetRef> &start_rulesets, std::vector<std::string> const &files) {
   for (auto const &f : files) {
     LmnRuleSetRef t;
 
     try {
       if (f == "-") { /* 標準入力からの読込み */
         t = load(std::unique_ptr<FILE, decltype(&fclose)>(stdin, [](FILE *) -> int { return 0; }));
+        start_rulesets.push_back(t);
       } else {
         t = load_file(f);
         if (t != nullptr) {
