@@ -9,9 +9,8 @@ This is a runtime and a model checker for the
 
 ### Requirements
 
-1. automake 1.14.1
-2. autoconf 2.69
-3. g++
+1. CMake 3.22
+3. g++ 10
 4. flex 2.5.35
 5. re2c 1.0.3
 6. bison 3.0
@@ -26,10 +25,10 @@ Build the package as follows:
 ```bash
 export LMNTAL_HOME=/path/to/devel # set the path to the compiler
 cd slim
-./autogen.sh
-./configure --prefix=$(pwd) # Generate a binary at $(pwd)/bin/slim
-make -j # `-j` for a parallel build
-make -j install # set up libraries
+mkdir build && cd build
+cmake -DCMAKE_BUILD_TYPE=Release ..
+make -j
+make -j install
 ```
 
 or
@@ -37,7 +36,8 @@ or
 ```bash
 tar xvzf slim-x.y.z.tar.gz
 cd slim-x.y.z
-./configure
+mkdir build && cd build
+cmake -DCMAKE_BUILD_TYPE=Release ..
 make -j
 make -j install
 ```
