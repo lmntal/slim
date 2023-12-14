@@ -36,15 +36,19 @@ set(SLIM_EXT_DIR "${SLIM_DATA_ROOT_DIR}/ext" CACHE PATH "Directory of external f
 
 # ================================
 
-# Find necessary packages
+# Find necessary packages and executables
 find_package(OpenMP REQUIRED)
 find_package(BISON REQUIRED)
 find_package(FLEX REQUIRED)
-find_package(Doxygen REQUIRED)
 find_package(RE2C REQUIRED)
 find_package(Threads REQUIRED) # Both pthread and win32 threads
-find_package(Ruby REQUIRED)
 find_package(ZLIB REQUIRED)
+find_package(Doxygen)
+
+find_program(RUBY_EXECUTABLE ruby REQUIRED)
+if (RUBY_EXECUTABLE)
+    message(STATUS "Ruby found: ${RUBY_EXECUTABLE}")
+endif()
 
 # ================================
 
