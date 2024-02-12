@@ -322,7 +322,7 @@ void move_symbol_atom_to_atom_tail(LmnSymbolAtomRef a, LmnSymbolAtomRef a1,
   a->set_next(a1);
 }
 
-void mem_push_symbol_atom(LmnMembraneRef mem, LmnSymbolAtomRef atom) {
+void mem_push_symbol_atom(LmnMembraneRef mem, LmnSymbolAtomRef atom, bool no_check_hyperlink) {
   AtomListEntry *as;
   LmnFunctor f = atom->get_functor();
 
@@ -352,7 +352,7 @@ void mem_push_symbol_atom(LmnMembraneRef mem, LmnSymbolAtomRef atom) {
 
   if (LMN_IS_PROXY_FUNCTOR(f)) {
     LMN_PROXY_SET_MEM(atom, mem);
-  } else if (LMN_FUNC_IS_HL(f)) {
+  } else if (LMN_FUNC_IS_HL(f) && !no_check_hyperlink) {
     LMN_HL_MEM(lmn_hyperlink_at_to_hl(atom)) = mem;
     mem->symb_atom_inc();
   } else if (f != LMN_UNIFY_FUNCTOR) {
@@ -4105,11 +4105,11 @@ void lmn_mem_delete_atom(LmnMembraneRef mem, LmnAtomRef atom,
   lmn_free_atom(atom, attr);
 }
 
-void lmn_mem_push_atom(LmnMembraneRef mem, LmnAtomRef atom, LmnLinkAttr attr) {
+void lmn_mem_push_atom(LmnMembraneRef mem, LmnAtomRef atom, LmnLinkAttr attr, bool no_check_hyperlink) {
   if (LMN_ATTR_IS_DATA_WITHOUT_EX(attr)) {
     mem->data_atom_inc();
   } else { /* symbol atom */
-    mem_push_symbol_atom(mem, (LmnSymbolAtomRef)atom);
+    mem_push_symbol_atom(mem, (LmnSymbolAtomRef)atom, no_check_hyperlink);
   }
 }
 
