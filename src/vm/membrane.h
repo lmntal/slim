@@ -59,6 +59,54 @@ typedef struct LinkObj *LinkObjRef;
 
 #include <vector>
 
+/*
+ * extended ground
+ */
+
+// typedef struct ProcessTbl *ProcessTableRef;
+// typedef struct SimpleProcessTable *SimplyProcessTableRef;
+// typedef struct Hlground_Data Hlground_Data;
+// struct Hlground_Data {
+//   ProcessTableRef global_hlinks;  // global hlinks
+//   ProcessTableRef local_atoms;    // atoms within hlground
+// };
+//
+// Hlground_Data hlground_dat;a
+
+// void init_grounddata();
+// void free_grounddata();
+void dfs_scope_finder(ProcessTableRef *global_hlinks,
+                      ProcessTableRef *local_atoms,
+                      LinkObjRef root_link,
+                      // Vector *src, Vector *avovec,
+                      ProcessTableRef *attr_functors,
+                      Vector *attr_dataAtoms,
+                      Vector *attr_dataAtom_attrs);
+
+BOOL purecycle_exist(Vector *srcvec, Vector *avovec);
+// BOOL cycle_exist (Vector *srcvec, Vector *avovec,
+//                   ProcessTableRef  *attr_functors,
+//                   Vector   *attr_dataAtoms,
+// 		  Vector   *attr_dataAtom_attrs);
+
+void get_neighbours(Vector  *avovec,
+                    Vector *neighbours,
+                    LmnAtomRef atom,
+                    LmnLinkAttr pos,
+                    ProcessTableRef  *attr_functors,
+                    Vector   *attr_dataAtoms,
+                    Vector   *attr_dataAtom_attrs);
+
+BOOL extended_ground_atoms(ProcessTableRef *global_hlinks,
+                           ProcessTableRef *local_atoms,
+                           Vector *srcvec,
+                           Vector *avovec,
+                           // ProcessTableRef *atoms,
+                           // ProcessTableRef *hlinks,
+                           ProcessTableRef *attr_functors,
+                           Vector *attr_dataAtoms,
+                           Vector *attr_dataAtom_attrs);
+
 /** -----
  *  リンクオブジェクトの代替
  */
@@ -97,7 +145,10 @@ BOOL lmn_mem_is_hlground(Vector *srcvec, Vector *avovec, unsigned long *natoms,
                          ProcessTableRef *attr_functors, Vector *attr_dataAtoms,
                          Vector *attr_dataAtom_attrs);
 void lmn_mem_copy_ground(LmnMembraneRef mem, Vector *srcvec,
-                         Vector **ret_dstlovec, ProcessTableRef *ret_atommap);
+                         Vector **ret_dstlovec, ProcessTableRef *ret_atommap,
+                         ProcessTableRef *ret_hlinkmap,
+                         ProcessTableRef *attr_functors,
+                         Vector *attr_dataAtoms, Vector *attr_dataAtom_attrs);
 void lmn_mem_copy_hlground(LmnMembraneRef mem, Vector *srcvec,
                            Vector **ret_dstlovec, ProcessTableRef *ret_atommap,
                            ProcessTableRef *ret_hlinkmap,
@@ -135,27 +186,6 @@ void alter_functor(LmnMembraneRef mem, LmnSymbolAtomRef atom, LmnFunctor f);
 void lmn_mem_add_ruleset(LmnMembraneRef mem, LmnRuleSetRef ruleset);
 void newlink_symbol_and_something(LmnSymbolAtomRef atom0, int pos,
                                   LmnAtomRef atom1, LmnLinkAttr attr);
-
-#ifdef USE_FIRSTCLASS_RULE
-/**
- * @brief Get all of the first-class rulesets
- *
- * @note you shouldn't modify the returned vector.
- */
-/**
- * @brief Add a first-class ruleset to a membrane.
- *
- * @note @c fcr must not be @c NULL.
- */
-void lmn_mem_add_firstclass_ruleset(LmnMembraneRef mem, LmnRuleSetRef fcr);
-/**
- * @brief Remove a first-class ruleset from a membrane.
- *
- * @note @c mem must contain @c fcr.
- */
-void lmn_mem_remove_firstclass_ruleset(LmnMembraneRef mem, LmnRuleSetRef fcr);
-#endif
-
 void lmn_mem_newlink(LmnMembraneRef mem, LmnAtomRef atom0, LmnLinkAttr attr0,
                      int pos0, LmnAtomRef atom1, LmnLinkAttr attr1, int pos1);
 void lmn_newlink_in_symbols(LmnSymbolAtomRef atom0, int pos0,

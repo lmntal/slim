@@ -1,6 +1,7 @@
 #!/bin/sh
 ./check.pl \
-	/testsuite/basic/append1 \
-	/testsuite/basic/append2 \
-	/testsuite/basic/append3 \
-	/testsuite/basic/append4
+    /testsuite/basic/basic1 \
+    /testsuite/basic/basic2 \
+    /testsuite/basic/basic3 \
+    /testsuite/basic/basic4 \
+    /testsuite/basic/basic5

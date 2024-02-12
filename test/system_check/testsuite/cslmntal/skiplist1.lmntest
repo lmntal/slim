@@ -1,0 +1,3 @@
+typedef skiplist(R1, R2) { R2 = nil(R1). R2 = a(A, B, R1) :- skiplist(B, A). R2 = b(A) :- skiplist(R1, A). }. isSkiplist @@ skiplistp($x[T],T) :- skiplist($x) | yes. skiplistp(a(b(b(a(a(nil(L0),L0,L1),L1,L2))),L2,R1),R1). 
+yes
+ok

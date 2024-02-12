@@ -142,6 +142,7 @@ LmnEnv::LmnEnv() {
   this->output_format = DEFAULT;
   this->mc_dump_format = CUI;
   this->sp_dump_format = SP_NONE;
+  this->show_laststep_only = FALSE;
   this->nd = FALSE;
   this->ltl = FALSE;
   this->ltl_all = FALSE;
@@ -177,7 +178,7 @@ LmnEnv::LmnEnv() {
   this->optimize_loadbalancing = TRUE;
 
   this->opt_mode = OPT_NONE;
-
+  
   /* only jni-interactive mode */
   this->interactive = FALSE;
   this->normal_remain = FALSE;
@@ -205,6 +206,9 @@ LmnEnv::LmnEnv() {
   this->prof_no_memeq = FALSE;
 #endif
 
+  // 履歴管理用アトム(nakata)
+  this->history_management = FALSE;
+  
 #ifdef DEBUG
   this->debug_por_dep = FALSE;
   this->debug_id = FALSE;
@@ -215,6 +219,9 @@ LmnEnv::LmnEnv() {
   this->debug_por = FALSE;
 #endif
 
+  this->shuffle_rule = FALSE;
+  this->shuffle_atom = FALSE;
+  
   this->findatom_parallel_mode = FALSE;
   this->find_atom_parallel = FALSE;
   this->findatom_parallel_inde = FALSE;

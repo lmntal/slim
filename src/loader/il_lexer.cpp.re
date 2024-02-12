@@ -113,10 +113,14 @@ start:
     re2c:define:YYFILL:naked = 1;
 
     digit = [0-9];
+    integer = digit+;
+    exponent = [eE][-+]?integer;
     blank = [ \t\n\r];
 
     sstr = "'"  [^']* "'";
     dstr = "\"" ([^"]|"\\\"")* "\"";
+
+    linecomment = ("//"|"%"|"#") .* [\n];
 
     "\x00" { return parser::token::_EOF; }
     blank { goto start; }
@@ -126,7 +130,7 @@ start:
       yylval->as<int>() = s.empty() ? 0 : stol(s);
       return parser::token::INT;
     }
-    '-'?digit+"."digit+ {
+    '-'?integer("."integer)?exponent? {
       yylval->as<double>() = stod(get_token());
       return parser::token::FLOAT;
     }
@@ -143,6 +147,10 @@ start:
       yylval->as<int>() = (int)id_global;
       return parser::token::RULESET_ID;
     }
+    '@' [a-zA-Z_0-9]+ {
+      yylval->as<lmn_interned_str>() = lmn_intern(get_token().substr(1).c_str());
+      return parser::token::SUBRULE_ID;
+    }
 
     "null" { // name of anonymous membrane
        yylval->as<lmn_interned_str>() = ANONYMOUS;
@@ -152,6 +160,7 @@ start:
       yylval->as<int>() = stol(get_token().substr(1));
       return parser::token::LABEL;
     }
+    '/*'                   {goto comment;}
     ','                    { return parser::token::COMMA; }
     '\.'                   { return parser::token::PERIOD; }
     ':'                    { return parser::token::COLON; }
@@ -166,6 +175,7 @@ start:
     "Compiled Ruleset"   { return parser::token::KW_COMPILED_RULESET; }
     "Compiled Uniq Rule" { return parser::token::KW_COMPILED_UNIQ_RULE; }
     "Compiled Rule"      { return parser::token::KW_COMPILED_RULE; }
+    "Compiled Subrule"      { return parser::token::KW_COMPILED_SUBRULE; }
     "--atommatch"        { return parser::token::KW_ATOMMATCH; }
     "--memmatch"         { return parser::token::KW_MEMMATCH; }
     "--guard"            { return parser::token::KW_GUARD; }
@@ -206,6 +216,17 @@ start:
       yylval->as<lmn_interned_str>() = lmn_intern(t2.c_str());
       return parser::token::SQUOTED_STRING;
     }
+
+    linecomment{
+      goto start;
+    }
+    
+  */
+comment:
+  /*!re2c
+    '*/'  {goto start;}
+    '\n'  {goto comment;}
+    .     {goto comment;}
   */
   }
 }

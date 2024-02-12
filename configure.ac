@@ -3,7 +3,7 @@
 # $Id: configure.ac,v 1.13 2008/10/05 11:22:41 riki Exp $
 
 AC_PREREQ(2.61)
-AC_INIT([SLIM], [2.4.0], [lmntal@ueda.info.waseda.ac.jp], [slim])
+AC_INIT([SLIM], [2.6.0], [lmntal@ueda.info.waseda.ac.jp], [slim])
 # AC_REVISION($Revision: 1.13 $)
 # AC_COPYRIGHT (copyright-notice)
 AC_CANONICAL_TARGET
@@ -29,8 +29,11 @@ DX_INIT_DOXYGEN(SLIM, doc/doxygen.cfg, doc/doxygen)
 # Checks for programs.
 #
 
-CFLAGS="-O -std=c11 -D_XOPEN_SOURCE=700 -Wall $CFLAGS"
-CXXFLAGS="-O2 -std=c++11 -mmmx -msse $CXXFLAGS"
+# CFLAGS="-O -std=c11 -g -fsanitize=address -fno-omit-frame-pointer -D_XOPEN_SOURCE=700 -Wall $CFLAGS"
+CFLAGS="-O -std=c11 -g -fno-omit-frame-pointer -D_XOPEN_SOURCE=700 -Wall $CFLAGS"
+# CXXFLAGS="-O -std=c++11 -g -fsanitize=address -fno-omit-frame-pointer $CXXFLAGS"
+# CXXFLAGS="-O2 -std=c++11 -g -fno-omit-frame-pointer $CXXFLAGS"
+CXXFLAGS="-O -std=c++11 -g -fno-omit-frame-pointer $CXXFLAGS"
 
 case "$host" in
   *-*-darwin* | *-*-ios*)

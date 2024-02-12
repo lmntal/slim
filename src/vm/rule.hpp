@@ -46,6 +46,8 @@
 #include "membrane.h"
 #include "react_context.hpp"
 
+#include <random>
+
 typedef BOOL (*LmnTranslated)(LmnReactCxtRef, LmnMembraneRef, LmnRuleRef);
 
 /* 実行時のルールの表現。ルールの処理は中間語命令列を変換したバイナリ表
@@ -54,12 +56,14 @@ typedef BOOL (*LmnTranslated)(LmnReactCxtRef, LmnMembraneRef, LmnRuleRef);
 class LmnRule {
   std::set<lmn_interned_str> history_tbl;
   bool is_unique_;
+  bool is_subrule_;
   lmn_interned_str latest_history_;
 public:
   BYTE *inst_seq;
   int inst_seq_len;
   LmnTranslated translated;
   lmn_interned_str name;
+  int rule_number = -1; // 履歴管理用アトムのための変数
 
   /* コストを動的に変えたい場合, このcostに一時的に値を入れておく or
    * costの計算式を入れる */
@@ -67,9 +71,9 @@ public:
 
 private:
   LmnRule(LmnRuleInstr inst_seq, int inst_seq_len, LmnTranslated translated,
-          lmn_interned_str name, bool is_unique_)
+          lmn_interned_str name, bool is_unique_, bool is_subrule = false)
       : inst_seq(inst_seq), inst_seq_len(inst_seq_len), translated(translated),
-        name(name), latest_history_(ANONYMOUS), is_unique_(is_unique_) {}
+        name(name), latest_history_(ANONYMOUS), is_unique_(is_unique_), is_subrule_(is_subrule) {}
 
 public:
   /* 関数によるルールの処理の表現。トランスレータにより、ルールを変換して
@@ -78,8 +82,8 @@ public:
   LmnRule(LmnTranslated translated, lmn_interned_str name)
       : LmnRule(nullptr, 0, translated, name, false) {}
 
-  LmnRule(LmnRuleInstr inst_seq, int inst_seq_len, lmn_interned_str name, bool is_unique = false)
-      : LmnRule(inst_seq, inst_seq_len, nullptr, name, is_unique) {}
+  LmnRule(LmnRuleInstr inst_seq, int inst_seq_len, lmn_interned_str name, bool is_unique = false, bool is_subrule = false)
+      : LmnRule(inst_seq, inst_seq_len, nullptr, name, is_unique, is_subrule) {}
 
   LmnRule(const LmnRule &rule)
       : latest_history_(ANONYMOUS), is_unique_(false) {
@@ -98,12 +102,14 @@ public:
       latest_history_ = rule.latest_history_;
       is_unique_ = true;
     }
+    is_subrule_ = rule.is_subrule();
   }
 
   LmnRule() : name(lmn_intern("")) {}
 
   ~LmnRule() {
-    delete (this->inst_seq);
+    // delete (this->inst_seq);
+    lmn_free(this->inst_seq);
   }
 
   void init_uniq_table() { is_unique_ = true; }
@@ -154,6 +160,10 @@ public:
   bool is_unique() const {
     return is_unique_;
   }
+
+  bool is_subrule() const {
+    return is_subrule_;
+  }
 };
 
 /* structure of RuleSet */
@@ -162,6 +172,7 @@ class LmnRuleSet {
   bool has_uniqrule;
   bool is_0step;
   std::vector<LmnRule *> rules;
+  std::vector<LmnRule *> subrules;
 
   bool ruleset_cp_is_need_object() const {
     return has_unique();
@@ -181,10 +192,14 @@ public:
     /* ルール単位のオブジェクト複製 */
     for (auto r : rs.rules)
       put(new LmnRule(*r));
+    for (auto r : rs.subrules)
+      put(new LmnRule(*r));
   }
 
   ~LmnRuleSet() {
     for (auto r : rules)
+      delete r;
+    for (auto r : subrules)
       delete r;
   }
 
@@ -192,7 +207,11 @@ public:
 
   /* Adds rule into ruleset */
   void put(LmnRule *rule) {
-    rules.push_back(rule);
+    if (rule->is_subrule()) {
+      subrules.push_back(rule);
+    } else {
+      rules.push_back(rule);
+    }
 
     /* 非uniqrulesetにuniq ruleが追加されたら, フラグを立てる. */
     has_uniqrule |= rule->is_unique();
@@ -241,7 +260,7 @@ public:
 
     unsigned long ret = 0;
     ret += sizeof(struct LmnRuleSet);
-    ret += sizeof(struct LmnRule *) * rules.size();
+    ret += sizeof(struct LmnRule *) * (rules.size() + subrules.size());
     for (auto r : rules)
       ret += r->history_table_size();
     return ret;
@@ -256,8 +275,26 @@ public:
   /* Returns the ith rule in ruleset */
   LmnRule *get_rule(int i) const { return rules[i]; }
 
+  /* query subrule in the ruleset. */
+  // TODO: more efficient search.
+  LmnRule *get_subrule(lmn_interned_str name) {
+    for (auto r : subrules) {
+      if (r->name == name)
+        return r;
+    }
+    return nullptr;
+  }
+
   std::vector<LmnRule *>::const_iterator begin() const { return rules.begin(); }
   std::vector<LmnRule *>::const_iterator end() const { return rules.end(); }
+
+  //ruleの順序をシャッフルをする関数
+  void shuffle(){
+    std::random_device rd;
+    auto rng = std::default_random_engine{rd()};
+    std::shuffle(std::begin(rules),std::end(rules),rng);
+  }
+
 };
 
 /* table, mapping RuleSet ID to RuleSet */

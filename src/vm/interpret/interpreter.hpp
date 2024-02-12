@@ -56,9 +56,10 @@ struct interpreter {
 
   // stack frameのcallbackが返す値
   // Trial: callbackをstackからpopしないで続ける
+  // Continue: callbackをstackからpopして続ける
   // Failure, Success: 命令列の結果を失敗/成功で上書きしてcallbackをstackからpopする
   enum class command_result {
-    Trial, Failure, Success
+    Trial, Failure, Success, Continue,
   };
 
   struct stack_frame {
@@ -75,6 +76,7 @@ struct interpreter {
   bool exec_command(LmnReactCxt *rc, LmnRule *rule, bool &stop);
   void findatom(LmnReactCxt *rc, LmnRule *rule, LmnRuleInstr instr,
                 LmnMembrane *mem, LmnFunctor f, size_t reg);
+  void findatom_history_management(LmnRule *rule, LmnMembrane *mem, LmnFunctor f, size_t reg);
   void findatom_original_hyperlink(LmnReactCxt *rc, LmnRule *rule,
                                    LmnRuleInstr instr, SameProcCxt *spc,
                                    LmnMembrane *mem, LmnFunctor f, size_t reg);

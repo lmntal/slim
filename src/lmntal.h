@@ -306,6 +306,9 @@ struct LmnEnv {
   BOOL prof_no_memeq;
   // #endif
 
+  //findatom最適化オプション（変数名は仮置き）
+  BOOL history_management;
+
 #ifdef DEBUG
   BOOL debug_isomor;
   BOOL debug_delta;
@@ -321,6 +324,13 @@ struct LmnEnv {
   BOOL findatom_parallel_inde;
 
   BOOL run_test;
+
+  BOOL shuffle_rule;
+  BOOL shuffle_atom;
+  
+  BOOL interactive_debug;
+  
+  BOOL show_laststep_only;
 
   enum OutputFormat output_format;
   enum MCdumpFormat mc_dump_format;

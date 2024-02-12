@@ -3,8 +3,8 @@ LOG_DRIVER = env AM_TAP_AWK='$(AWK)' $(SHELL) \
                   $(top_srcdir)/test/tap-driver.sh
 
 TESTS = \
+	testsuite/append/check.sh \
 	testsuite/basic/check.sh \
-	testsuite/atom/check.sh \
 	testsuite/unification/check.sh \
 	testsuite/proxyatom/check.sh \
 	testsuite/proccxt/check.sh \
@@ -21,19 +21,20 @@ TESTS = \
 	testsuite/simpagation/check.sh \
 	testsuite/count/check.sh \
 	testsuite/mem_name/check.sh \
-	testsuite/uniq/check.sh
+	testsuite/uniq/check.sh \
+	testsuite/cslmntal/check.sh
 
 
 check_DATA = \
-	testsuite/basic/append1.il \
-	testsuite/basic/append2.il \
-	testsuite/basic/append3.il \
-	testsuite/basic/append4.il \
-	testsuite/atom/atom1.il \
-	testsuite/atom/atom2.il \
-	testsuite/atom/atom3.il \
-	testsuite/atom/atom4.il \
-	testsuite/atom/atom5.il \
+	testsuite/append/append1.il \
+	testsuite/append/append2.il \
+	testsuite/append/append3.il \
+	testsuite/append/append4.il \
+	testsuite/basic/basic1.il \
+	testsuite/basic/basic2.il \
+	testsuite/basic/basic3.il \
+	testsuite/basic/basic4.il \
+	testsuite/basic/basic5.il \
 	testsuite/unification/case1.il \
 	testsuite/unification/case2.il \
 	testsuite/unification/case3.il \
@@ -180,6 +181,10 @@ check_DATA = \
 	testsuite/guard_ground_multi/case15.il \
 	testsuite/guard_ground_multi/case16.il \
 	testsuite/hyperlink/case1.il \
+	testsuite/hyperlink/case2.il \
+	testsuite/hyperlink/case3.il \
+	testsuite/hyperlink/case4.il \
+	testsuite/hyperlink/case5.il \
 	testsuite/simpagation/case1.il \
 	testsuite/simpagation/case2.il \
 	testsuite/count/case1.il \
@@ -192,7 +197,10 @@ check_DATA = \
 	testsuite/uniq/case3.il \
 	testsuite/uniq/case4.il \
 	testsuite/uniq/case5.il \
-	testsuite/uniq/case6.il
+	testsuite/uniq/case6.il \
+	testsuite/cslmntal/skiplist1.il \
+	testsuite/cslmntal/skiplist2.il \
+	testsuite/cslmntal/skiplist3.il
 
 CLEANFILES = $(check_DATA)
 

@@ -206,6 +206,11 @@ const std::map<LmnInstruction, InstrSpec> instr_spec = {
     {INSTR_ISFLOAT, {"isfloat", {InstrVar}}},
     {INSTR_ISSTRING, {"isstring", {InstrVar}}},
 
+    {INSTR_FLOAT2INT, {"float2int", {InstrVar, InstrVar}}},
+    {INSTR_INT2FLOAT, {"int2float", {InstrVar, InstrVar}}},
+    {INSTR_FLOAT2INTFUNC, {"float2intfunc", {InstrVar, InstrVar}}},
+    {INSTR_INT2FLOATFUNC, {"int2floatfunc", {InstrVar, InstrVar}}},
+
     {INSTR_UNIQ, {"uniq", {InstrVarList}}},
 
     /* guard: hyperlink */
@@ -242,15 +247,18 @@ const std::map<LmnInstruction, InstrSpec> instr_spec = {
     {INSTR_IDIV, {"idiv", {InstrVar, InstrVar, InstrVar}}},
     {INSTR_INEG, {"ineg", {InstrVar, InstrVar}}},
     {INSTR_IMOD, {"imod", {InstrVar, InstrVar, InstrVar}}},
+    {INSTR_IABS, {"iabs", {InstrVar, InstrVar, InstrVar}}},
     {INSTR_ILT, {"ilt", {InstrVar, InstrVar}}},
     {INSTR_ILE, {"ile", {InstrVar, InstrVar}}},
     {INSTR_IGT, {"igt", {InstrVar, InstrVar}}},
     {INSTR_IGE, {"ige", {InstrVar, InstrVar}}},
     {INSTR_IEQ, {"ieq", {InstrVar, InstrVar}}},
     {INSTR_INE, {"ine", {InstrVar, InstrVar}}},
+    {INSTR_INOT, {"inot", {InstrVar, InstrVar, InstrVar}}},
     {INSTR_IAND, {"iand", {InstrVar, InstrVar, InstrVar}}},
     {INSTR_IOR, {"ior", {InstrVar, InstrVar, InstrVar}}},
     {INSTR_IXOR, {"ixor", {InstrVar, InstrVar, InstrVar}}},
+    {INSTR_ISAL, {"isal", {InstrVar, InstrVar, InstrVar}}},
 
     {INSTR_ILTFUNC, {"iltfunc", {InstrVar, InstrVar}}},
     {INSTR_ILEFUNC, {"ilefunc", {InstrVar, InstrVar}}},
@@ -262,9 +270,19 @@ const std::map<LmnInstruction, InstrSpec> instr_spec = {
     {INSTR_IMULFUNC, {"imulfunc", {InstrVar, InstrVar, InstrVar}}},
     {INSTR_IDIVFUNC, {"idivfunc", {InstrVar, InstrVar, InstrVar}}},
     {INSTR_IMODFUNC, {"imodfunc", {InstrVar, InstrVar, InstrVar}}},
+    {INSTR_IABSFUNC, {"iabsfunc", {InstrVar, InstrVar, InstrVar}}},
 
     {INSTR_GETCLASS, {"getclass", {InstrVar, InstrVar}}},
     {INSTR_SUBCLASS, {"subclass", {InstrVar, InstrVar}}},
+
+    {INSTR_SUBRULE, {"subrule", {InstrVar, InstrVar, String, InstrVarList}}},
+    {INSTR_SUCCRETURN, {"succreturn", {InstrVar}}},
+    {INSTR_FAILRETURN, {"failreturn", {}}},
+    {INSTR_ISPAIREDLINK, {"ispairedlink", {InstrVar, InstrVar}}},
+    {INSTR_ALLOCSET, {"allocset", {InstrVar}}},
+    {INSTR_ADDTOSET, {"addtoset", {InstrVar, InstrVar}}},
+    {INSTR_MERGESET, {"mergeset", {InstrVar, InstrVar}}},
+    {INSTR_FREESET, {"freeset", {InstrVar}}},
 
     /* etc */
     {INSTR_CELLDUMP, {"celldump", {}}}};

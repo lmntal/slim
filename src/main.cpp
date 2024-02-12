@@ -78,6 +78,7 @@ static void usage(void) {
       "  -p[<0-3>] (-p=-p1)   Profiler level.\n"
       "  --use-builtin-rule   Load the rules builtin this application for "
       "arithmetic, nlmem, etc\n"
+      "  --history-management Optimize backtracking of findatom function by using atoms for history management \n"
       "  --nd                 Change the execution mode from RunTime(RT) to "
       "ModelChecker(MC)\n"
       "  --translate          Change the execution mode to Output translated C "
@@ -85,6 +86,9 @@ static void usage(void) {
       "  -t                   (RT) Show execution path\n"
       "                       (MC) Show state space\n"
       "  --hide-ruleset       Hide ruleset from result\n"
+      "  --shuffle-rule       (RT) Apply rules randomly\n"
+      "  --shuffle-atom       (RT) Choose atoms to be applied randomly\n"
+      "  --shuffle            (RT) Apply both shuffle-rule option and shuffle-atom options\n"
       "  --hl                 (RT) Allow using hyperlink system\n"
       "  --show-proxy         Show proxy atoms\n"
       "  --show-chr           Show applied history in uniq rulesets "
@@ -177,6 +181,7 @@ static void parse_options(int *optid, int argc, char *argv[]) {
                                   {"dump-json", 0, 0, 1105},
                                   {"dump-fsm-lmn-detail", 0, 0, 1106},
                                   {"dump-fsm-hl", 0, 0, 1107},
+                                  {"show-laststep-only", 0, 0, 1108},
                                   {"interactive", 0, 0, 1200},
                                   {"translate", 0, 0, 1300},
                                   {"hl", 0, 0, 1350},
@@ -233,6 +238,11 @@ static void parse_options(int *optid, int argc, char *argv[]) {
                                   {"hash-depth", 1, 0, 6061},
                                   {"tree-compress", 1, 0, 6062},
                                   {"run-test", 0, 0, 6070},
+                                  {"history-management", 0, 0, 6071},
+                                  {"shuffle-rule",0,0,6080},
+                                  {"shuffle-atom",0,0,6081},
+                                  {"shuffle",0,0,6082},
+                                  {"interactive-debug", 0, 0, 6090},
                                   {0, 0, 0, 0}};
 
   while ((c = getopt_long(argc, argv, "+dvhtI:O::p::", long_options,
@@ -323,6 +333,10 @@ static void parse_options(int *optid, int argc, char *argv[]) {
       break;
     case 1107:
       lmn_env.mc_dump_format = LMN_FSM_GRAPH_HL_NODE;
+      break;
+    case 1108:
+      lmn_env.trace = TRUE;
+      lmn_env.show_laststep_only = TRUE;
       break;
     case 1200: /* jni interactive mode */
 #ifdef HAVE_JNI_H
@@ -580,6 +594,22 @@ static void parse_options(int *optid, int argc, char *argv[]) {
     case 6070:
       lmn_env.run_test = TRUE;
       break;
+    case 6071:
+      lmn_env.history_management = TRUE;
+      break;
+    case 6080:
+      lmn_env.shuffle_rule = TRUE;
+      break;
+    case 6081:
+      lmn_env.shuffle_atom = TRUE;
+      break;
+    case 6082:
+      lmn_env.shuffle_rule = TRUE;
+      lmn_env.shuffle_atom = TRUE;
+      break;
+    case 6090:
+      lmn_env.interactive_debug = TRUE;
+      break;
     case 'I':
       lmn_env.load_path[lmn_env.load_path_num++] = optarg;
       break;
@@ -708,7 +738,7 @@ static inline int load_input_files(std::vector<LmnRuleSetRef> &start_rulesets, i
 static inline void slim_exec(const std::vector<LmnRuleSetRef> &start_rulesets) {
   if (!lmn_env.nd) {
     /* プログラム実行 */
-    lmn_run(new Vector(start_rulesets));
+    Task::lmn_run(new Vector(start_rulesets));
   } else {
     /* プログラム検証 */
     AutomataRef automata;

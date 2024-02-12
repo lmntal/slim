@@ -51,6 +51,7 @@
 #include "state.h"
 #include "state.hpp"
 #include "state_dumper.h"
+#include "../vm/interactive_debug.hpp"
 
 /** =======================================
  *  ==== Entrance for model checking ======
@@ -75,7 +76,7 @@ void run_mc(Vector *start_rulesets, AutomataRef a, Vector *psyms) {
     mem = new LmnMembrane();
   }
 
-  react_start_rulesets(mem, start_rulesets);
+  Task::react_start_rulesets(mem, start_rulesets);
   mem->activate_ancestors();
 
   do_mc(mem, a, psyms, lmn_env.core_num);
@@ -87,6 +88,12 @@ void run_mc(Vector *start_rulesets, AutomataRef a, Vector *psyms) {
     mem->drop();
     delete mem;
   }
+
+  if (lmn_env.interactive_debug) {
+    InteractiveDebugger::get_instance().finish_debugging();
+  }
+
+  delete start_rulesets;
 }
 
 static inline void do_mc(LmnMembraneRef world_mem_org, AutomataRef a,
@@ -106,7 +113,7 @@ static inline void do_mc(LmnMembraneRef world_mem_org, AutomataRef a,
   wp = new LmnWorkerGroup(a, psyms, thread_num);
   states = worker_states(wp->get_worker(LMN_PRIMARY_ID));
   p_label = a ? a->get_init_state() : DEFAULT_STATE_ID;
-  mem = world_mem_org->copy();
+  mem = world_mem_org->copy_ex();
   init_s = new State(mem, p_label, states->use_memenc());
   state_id_issue(init_s); /* 状態に整数IDを発行 */
 #ifdef KWBT_OPT
@@ -116,6 +123,14 @@ static inline void do_mc(LmnMembraneRef world_mem_org, AutomataRef a,
   states->set_init_state(init_s);
   if (lmn_env.enable_compress_mem)
     init_s->free_mem();
+  
+  if (lmn_env.interactive_debug) {
+    InteractiveDebugger::get_instance().register_statespace(states);
+    esc_code_add(CODE__FORECOLOR_GREEN);
+    printf("Launched interactive debug shell on non-deterministic execution start.\n");
+    esc_code_clear();
+    InteractiveDebugger::get_instance().start_session_on_entry();
+  }
 
   /** START
    */
@@ -132,6 +147,9 @@ static inline void do_mc(LmnMembraneRef world_mem_org, AutomataRef a,
     mem->free_rec();
   /** FINALIZE
    */
+  if (lmn_env.interactive_debug) {
+    InteractiveDebugger::get_instance().finish_debugging();
+  }
   profile_statespace(wp);
   mc_dump(wp);
   delete wp;
@@ -209,6 +227,10 @@ void mc_expand(const StateSpaceRef ss, State *s, AutomataStateRef p_s,
 
   /** restore : 膜の復元 */
   mem = state_restore_mem(s);
+
+  if (lmn_env.interactive_debug) {
+    InteractiveDebugger::get_instance().register_expanding_state(s);
+  }
 
   /** expand  : 状態の展開 */
   if (p_s) {
@@ -411,7 +433,7 @@ BOOL mc_expand_inner(MCReactContext *rc, LmnMembraneRef cur_mem) {
       ret_flag = TRUE;
     }
     if (cur_mem->is_active()) {
-      react_all_rulesets(rc, cur_mem);
+      Task::react_all_rulesets(rc, cur_mem);
     }
     /* 子膜からルール適用を試みることで, 本膜の子膜がstableか否かを判定できる */
     if (org_num == mc_react_cxt_expanded_num(rc)) {
