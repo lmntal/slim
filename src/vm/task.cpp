@@ -1739,7 +1739,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       }
 #endif
     }
-    lmn_mem_push_atom((LmnMembraneRef)rc->wt(memi), (LmnAtomRef)ap, attr, true);
+    lmn_mem_push_atom((LmnMembraneRef)rc->wt(memi), (LmnAtomRef)ap, attr);
     rc->reg(atomi) = {(LmnWord)ap, attr, TT_ATOM};
     break;
   }
@@ -2796,7 +2796,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
         }
         case LMN_HL_ATTR: {
           char buf[16];
-          port_put_raw_s(port, EXCLAMATION_NAME);
+          port_put_raw_s(port, HYPERLINK_NAME);
           sprintf(buf, "%lx",
                   LMN_HL_ID(LMN_HL_ATOM_ROOT_HL(
                       (LmnSymbolAtomRef)rc->wt(srcvec->get(0)))));

@@ -126,7 +126,7 @@ LmnRuleSetRef lmn_mem_get_ruleset(LmnMembraneRef m, int i);
 
 void lmn_mem_rulesets_destroy(const std::vector<LmnRuleSet *> &rulesets);
 void lmn_mem_rulesets_destroy(Vector *rulesets);
-void mem_push_symbol_atom(LmnMembraneRef mem, LmnSymbolAtomRef atom, bool no_check_hyperlink = false);
+void mem_push_symbol_atom(LmnMembraneRef mem, LmnSymbolAtomRef atom);
 void lmn_mem_add_ruleset_sort(std::vector<LmnRuleSet *> *rulesets, LmnRuleSetRef ruleset);
 
 
@@ -181,7 +181,7 @@ void mem_remove_symbol_atom_with_buddy_data(LmnMembraneRef mem,
                                             LmnSymbolAtomRef atom);
 void lmn_mem_remove_atom(LmnMembraneRef mem, LmnAtomRef atom, LmnLinkAttr attr);
 void lmn_mem_delete_atom(LmnMembraneRef mem, LmnAtomRef atom, LmnLinkAttr attr);
-void lmn_mem_push_atom(LmnMembraneRef mem, LmnAtomRef atom, LmnLinkAttr attr, bool no_check_hyperlink = false);
+void lmn_mem_push_atom(LmnMembraneRef mem, LmnAtomRef atom, LmnLinkAttr attr);
 void alter_functor(LmnMembraneRef mem, LmnSymbolAtomRef atom, LmnFunctor f);
 void lmn_mem_add_ruleset(LmnMembraneRef mem, LmnRuleSetRef ruleset);
 void newlink_symbol_and_something(LmnSymbolAtomRef atom0, int pos,
