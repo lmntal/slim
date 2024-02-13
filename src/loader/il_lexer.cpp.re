@@ -117,7 +117,7 @@ start:
     exponent = [eE][-+]?integer;
     blank = [ \t\n\r];
 
-    sstr = "'"  [^']* "'";
+    sstr = "'"  ([^']|"\\'")* "'";
     dstr = "\"" ([^"]|"\\\"")* "\"";
 
     linecomment = ("//"|"%"|"#") .* [\n];
