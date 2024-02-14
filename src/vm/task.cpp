@@ -356,7 +356,7 @@ BOOL Task::react_all_rulesets(LmnReactCxtRef rc, LmnMembraneRef cur_mem) {
 }
 
 /* an extenstion rule applier, @see ext/atomic.c */
-BOOL react_ruleset_atomic(MCReactContext* rc, LmnMembraneRef mem,
+BOOL react_ruleset_atomic(LmnReactCxtRef rc, LmnMembraneRef mem,
                           LmnRuleSetRef rs);
 
 /** 膜memに対してルールセットrsの各ルールの適用を試みる.
@@ -381,7 +381,7 @@ static inline BOOL react_ruleset(LmnReactCxtRef rc, LmnMembraneRef mem,
   } else if (rs->atomic == ATOMIC_NONE) {
     result = react_ruleset_inner(rc, mem, rs);
   } else {
-    result = react_ruleset_atomic((MCReactContext*)rc, mem, rs);
+    result = react_ruleset_atomic(rc, mem, rs);
   }
 
   return result;
@@ -1106,6 +1106,8 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
   if (lmn_env.find_atom_parallel)
     return FALSE;
   
+  // std::cout << instr_spec.at((LmnInstruction)op).op_str << std::endl;
+
   switch (op) {
   case INSTR_SPEC: {
     LmnInstrVar s0;

@@ -49,7 +49,6 @@ namespace c14 = slim::element;
 
 void atomic_ruleset(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
                     LmnLinkAttr t0) {
-  printf("hello");
 
   if (LMN_INT_ATTR == t0) {
     int i, n = mem->ruleset_num();
@@ -81,7 +80,7 @@ void atomic_ruleset(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
   if (rc->has_mode(REACT_MEM_ORIENTED)) {
     ((MemReactContext*)rc)->memstack_remove(mem);
   }
-  mem->mem_parent()->delete_mem(mem);
+  mem->mem_parent()->remove_mem(mem);
 }
 
 void init_atomic(void) {
@@ -192,7 +191,7 @@ static BOOL react_ruleset_atomic_all(MCReactContext* rc, LmnMembraneRef mem,
  * ---------
  * result: ok, b, b, b, b, b.
  */
-static BOOL react_ruleset_atomic_sync(MCReactContext* rc, LmnMembraneRef mem,
+static BOOL react_ruleset_atomic_sync(LmnReactCxtRef rc, LmnMembraneRef mem,
                                       LmnRuleSetRef at_set) {
   BOOL ret;
 
@@ -208,13 +207,14 @@ static BOOL react_ruleset_atomic_sync(MCReactContext* rc, LmnMembraneRef mem,
   unsigned int r_i, succ_i_from;
   BYTE mode_org;
   LmnMembraneRef groot_m;
+  MCReactContext* mcrc = ((MCReactContext*)rc);
 
-  succ_i_from = mc_react_cxt_expanded_num(rc);
+  succ_i_from = mc_react_cxt_expanded_num(mcrc);
 
   /* 1step目: generate successor membrane */
   for (r_i = 0; r_i < at_set->size(); r_i++) {
     Task::react_rule(rc, mem, at_set->get_rule(r_i));
-    if (mc_react_cxt_expanded_num(rc) > succ_i_from) {
+    if (mc_react_cxt_expanded_num(mcrc) > succ_i_from) {
       r_i++;
       break;
     }
@@ -232,16 +232,16 @@ static BOOL react_ruleset_atomic_sync(MCReactContext* rc, LmnMembraneRef mem,
     /* ignore all but the last reaction */
     LmnMembraneRef succ_m;
 
-    LmnRuleRef succ_r = (LmnRuleRef) ((MCReactContext*)rc)->pop_expanded_rule();
-    if (rc->has_optmode(DeltaMembrane)) {
-      succ_m = (LmnMembraneRef) rc->pop_mem_delta_root();
+    LmnRuleRef succ_r = (LmnRuleRef) mcrc->pop_expanded_rule();
+    if (mcrc->has_optmode(DeltaMembrane)) {
+      succ_m = (LmnMembraneRef) mcrc->pop_mem_delta_root();
     } else {
-      succ_m = (LmnMembraneRef) rc->pop_expanded_state();
+      succ_m = (LmnMembraneRef) mcrc->pop_expanded_state();
     }
-    while (succ_i_from < mc_react_cxt_expanded_num(rc)) {
-      rc->expanded_pop();
+    while (succ_i_from < mc_react_cxt_expanded_num(mcrc)) {
+      mcrc->expanded_pop();
     }
-    mc_react_cxt_add_expanded(rc, succ_m, succ_r);
+    mc_react_cxt_add_expanded(mcrc, succ_m, succ_r);
 
     /* 2〜r_n step目 */
     //      for (i = succ_i_from; i < mc_react_cxt_expanded_num(rc); i++) {
@@ -249,7 +249,7 @@ static BOOL react_ruleset_atomic_sync(MCReactContext* rc, LmnMembraneRef mem,
     // restore the current membrane of the last reaction
     LmnMembraneRef cur_mem = rc->get_cur_mem();
 
-    rc->set_global_root(succ_m);
+    mcrc->set_global_root(succ_m);
     react_ruleset_AMAP(rc, cur_mem, system_ruleset);
     for (int j = r_i; j < at_set->size(); j++) {
       if (Task::react_rule(rc, cur_mem, at_set->get_rule(j))) {
@@ -258,7 +258,7 @@ static BOOL react_ruleset_atomic_sync(MCReactContext* rc, LmnMembraneRef mem,
     }
     //      }
 
-    rc->set_global_root(groot_m);
+    mcrc->set_global_root(groot_m);
     rc->set_mode(mode_org);
     at_set->invalidate_atomic();
   }
@@ -273,7 +273,7 @@ static BOOL react_ruleset_atomic_sync(MCReactContext* rc, LmnMembraneRef mem,
  * ルールセットの停止性と合流性を仮定している．非決定モードでも
  * 複数の書換え経路の探索は行わない．
  */
-static inline BOOL react_ruleset_atomic_simulation(MCReactContext* rc,
+static inline BOOL react_ruleset_atomic_simulation(LmnReactCxtRef rc,
                                                    LmnMembraneRef mem,
                                                    LmnRuleSetRef at_set) {
   BOOL ret;
@@ -288,12 +288,13 @@ static inline BOOL react_ruleset_atomic_simulation(MCReactContext* rc,
     unsigned int i, j, succ_i_from;
     BYTE mode_org;
     LmnMembraneRef groot_m;
+    MCReactContext* mcrc = (MCReactContext*) rc;
 
-    succ_i_from = mc_react_cxt_expanded_num(rc);
+    succ_i_from = mc_react_cxt_expanded_num(mcrc);
     /* 1step目: generate successor membrane */
     for (auto r : *at_set) {
       Task::react_rule(rc, mem, r);
-      if (mc_react_cxt_expanded_num(rc) > succ_i_from) {
+      if (mc_react_cxt_expanded_num(mcrc) > succ_i_from) {
         break;
       }
     }
@@ -310,16 +311,16 @@ static inline BOOL react_ruleset_atomic_simulation(MCReactContext* rc,
       /* ignore all but the last reaction */
       LmnMembraneRef succ_m;
 
-      LmnRuleRef succ_r = (LmnRuleRef) rc->pop_expanded_rule();
-      if (rc->has_optmode(DeltaMembrane)) {
-        succ_m = (LmnMembraneRef) rc->pop_mem_delta_root();
+      LmnRuleRef succ_r = (LmnRuleRef) mcrc->pop_expanded_rule();
+      if (mcrc->has_optmode(DeltaMembrane)) {
+        succ_m = (LmnMembraneRef) mcrc->pop_mem_delta_root();
       } else {
-        succ_m = (LmnMembraneRef) rc->pop_expanded_state();
+        succ_m = (LmnMembraneRef) mcrc->pop_expanded_state();
       }
-      while (succ_i_from < mc_react_cxt_expanded_num(rc)) {
-        rc->expanded_pop();
+      while (succ_i_from < mc_react_cxt_expanded_num(mcrc)) {
+        mcrc->expanded_pop();
       }
-      mc_react_cxt_add_expanded(rc, succ_m, succ_r);
+      mc_react_cxt_add_expanded(mcrc, succ_m, succ_r);
 
       /* 2〜r_n step目 */
       //    for (i = succ_i_from; i < mc_react_cxt_expanded_num(rc); i++) {
@@ -328,7 +329,7 @@ static inline BOOL react_ruleset_atomic_simulation(MCReactContext* rc,
       LmnMembraneRef cur_mem = rc->get_cur_mem();
       BOOL reacted;
 
-      rc->set_global_root(succ_m);
+      mcrc->set_global_root(succ_m);
       react_ruleset_AMAP(rc, cur_mem, system_ruleset);
       reacted = TRUE;
       while (reacted) {
@@ -341,7 +342,7 @@ static inline BOOL react_ruleset_atomic_simulation(MCReactContext* rc,
         }
       }
       //    }
-      rc->set_global_root(groot_m);
+      mcrc->set_global_root(groot_m);
       rc->set_mode(mode_org);
       at_set->invalidate_atomic();
     }
@@ -353,11 +354,11 @@ static inline BOOL react_ruleset_atomic_simulation(MCReactContext* rc,
   return ret;
 }
 
-BOOL react_ruleset_atomic(MCReactContext* rc, LmnMembraneRef mem,
+BOOL react_ruleset_atomic(LmnReactCxtRef rc, LmnMembraneRef mem,
                           LmnRuleSetRef rs) {
   BOOL result = FALSE;
 
-  if (rc->has_mode(REACT_ND) && rc->has_optmode(DeltaMembrane)) {
+  if (rc->has_mode(REACT_ND) && ((MCReactContext*)rc)->has_optmode(DeltaMembrane)) {
     lmn_fatal("unsupported delta-membrane, atomic step");
   }
 
@@ -368,7 +369,7 @@ BOOL react_ruleset_atomic(MCReactContext* rc, LmnMembraneRef mem,
     break;
   case ATOMIC_ALL_EXHAUSTIVE:
     if (rc->has_mode(REACT_ND)) {
-      result = react_ruleset_atomic_all(rc, mem, rs);
+      result = react_ruleset_atomic_all((MCReactContext*)rc, mem, rs);
     } /*
     else  FALLTHROUTH */
   case ATOMIC_SIMULATION:
