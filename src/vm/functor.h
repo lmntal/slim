@@ -125,7 +125,7 @@ extern LmnFunctorTable *lmn_functor_table;
 #define MEM_EQ_ATOM_NAME "mem_eq"
 #define TRUE_ATOM_NAME "true"
 #define FALSE_ATOM_NAME "false"
-#define EXCLAMATION_NAME "!"
+#define HYPERLINK_NAME "!jRmVnNw.8xo[muc#qX" //通常atom名として使用されないようなランダム文字列
 
 #define LMN_IN_PROXY_FUNCTOR 0
 #define LMN_OUT_PROXY_FUNCTOR 1
