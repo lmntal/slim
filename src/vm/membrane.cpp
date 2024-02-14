@@ -170,6 +170,8 @@ LmnRuleSetRef lmn_mem_get_ruleset(LmnMembraneRef m, int i) {
  * 膜memに所属する子膜とアトムのメモリ管理は呼び出し側で行う. */
 LmnMembrane::~LmnMembrane(){
   // delete in proxies connected each other
+  // 厳密には意味論上の遷移規則(R4)と食い違ったことをしている。
+  // see: https://github.com/lmntal/slim/issues/321
   AtomListEntryRef ent;
   LmnSymbolAtomRef i0;
   
