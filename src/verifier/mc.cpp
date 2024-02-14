@@ -113,7 +113,7 @@ static inline void do_mc(LmnMembraneRef world_mem_org, AutomataRef a,
   wp = new LmnWorkerGroup(a, psyms, thread_num);
   states = worker_states(wp->get_worker(LMN_PRIMARY_ID));
   p_label = a ? a->get_init_state() : DEFAULT_STATE_ID;
-  mem = world_mem_org->copy();
+  mem = world_mem_org->copy_ex();
   init_s = new State(mem, p_label, states->use_memenc());
   state_id_issue(init_s); /* 状態に整数IDを発行 */
 #ifdef KWBT_OPT

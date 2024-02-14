@@ -235,7 +235,7 @@ static BOOL dump_data_atom(LmnPortRef port, LmnAtomRef data, LmnLinkAttr attr) {
     break;
   case LMN_HL_ATTR: {
     char buf[18];
-    port_put_raw_s(port, EXCLAMATION_NAME);
+    port_put_raw_s(port, "!");// port_put_raw_s(port, HYPERLINK_NAME);
     if (lmn_env.show_hyperlink) {
       // sprintf(buf, "H%lx",
       sprintf(buf, "H%lu",
