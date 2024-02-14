@@ -125,6 +125,8 @@ struct Vector user_system_rulesets; /* system ruleset defined by user */
 
 static inline BOOL react_ruleset(LmnReactCxtRef rc, LmnMembraneRef mem,
                                  LmnRuleSetRef ruleset);
+static inline BOOL react_ruleset_inner(LmnReactCxtRef rc, LmnMembraneRef mem,
+                                       LmnRuleSetRef rs);
 static inline void react_initial_rulesets(LmnReactCxtRef rc,
                                           LmnMembraneRef mem);
 static inline BOOL react_ruleset_in_all_mem(LmnReactCxtRef rc, LmnRuleSetRef rs,
@@ -344,7 +346,7 @@ BOOL Task::react_all_rulesets(LmnReactCxtRef rc, LmnMembraneRef cur_mem) {
 
   /* 通常実行では, 適用が発生しなかった場合にシステムルールの適用を行う
    * ndではokはFALSEなので, system_rulesetが適用される. */
-  ok = ok || react_ruleset(rc, cur_mem, system_ruleset);
+  ok = ok || react_ruleset_inner(rc, cur_mem, system_ruleset);
 
 #ifdef USE_FIRSTCLASS_RULE
   lmn_rc_execute_insertion_events(rc);
@@ -352,6 +354,10 @@ BOOL Task::react_all_rulesets(LmnReactCxtRef rc, LmnMembraneRef cur_mem) {
 
   return ok;
 }
+
+/* an extenstion rule applier, @see ext/atomic.c */
+BOOL react_ruleset_atomic(LmnReactCxtRef rc, LmnMembraneRef mem,
+                          LmnRuleSetRef rs);
 
 /** 膜memに対してルールセットrsの各ルールの適用を試みる.
  *  戻り値:
@@ -361,7 +367,29 @@ BOOL Task::react_all_rulesets(LmnReactCxtRef rc, LmnMembraneRef cur_mem) {
  */
 static inline BOOL react_ruleset(LmnReactCxtRef rc, LmnMembraneRef mem,
                                  LmnRuleSetRef rs) {
-  
+    BOOL result;
+
+  if (rc->is_atomic_step()) {
+    /* atomic_step時: atomic stepが複数ある場合,
+     *               atomic適用中のrulesetとそうでないものを区別する必要がある
+     */
+    if (rs->is_atomic()) {
+      result = react_ruleset_inner(rc, mem, rs);
+    } else {
+      result = FALSE;
+    }
+  } else if (rs->atomic == ATOMIC_NONE) {
+    result = react_ruleset_inner(rc, mem, rs);
+  } else {
+    result = react_ruleset_atomic(rc, mem, rs);
+  }
+
+  return result;
+}
+
+/**  @see react_ruleset (task.c)  */
+static inline BOOL react_ruleset_inner(LmnReactCxtRef rc, LmnMembraneRef mem,
+                                       LmnRuleSetRef rs) {
   //shuffle_ruleオプションが付いている場合はruleをシャッフル
   if(lmn_env.shuffle_rule) rs->shuffle();
 
@@ -1106,6 +1134,8 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
 
   if (lmn_env.find_atom_parallel)
     return FALSE;
+  
+  // std::cout << instr_spec.at((LmnInstruction)op).op_str << std::endl;
 
   switch (op) {
   case INSTR_SPEC: {
@@ -1410,8 +1440,16 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
           rule->undo_history();
 
           rc->warray_set(std::move(*tmp));
+          // アトミック実行の際にProcess Idのリセットを一旦撤回するために
+          // 現在の Process ID と戻すべき Process ID を記録しておく
+          rc->set_proc_next_id(env_next_id());
+          rc->set_proc_org_id(org_next_id);
           if (!rc->keep_process_id_in_nd_mode)
             env_set_next_id(org_next_id);
+          
+          /* 反応中の膜も記録しておく */
+          rc->set_cur_mem((LmnMembraneRef) rc->wt(0));
+
           delete tmp;
           return command_result::Failure;
         });
@@ -4003,6 +4041,10 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     for (auto &rs : v) {
       auto cp = new LmnRuleSet(*rs);
       lmn_mem_add_ruleset((LmnMembraneRef)rc->wt(destmemi), cp);
+      if (rc->has_mode(REACT_ATOMIC)) {
+        /* atomic step中にatomic setをコピーした場合のため */
+        cp->invalidate_atomic();
+      }
     }
     break;
   }
