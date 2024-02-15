@@ -38,7 +38,6 @@
 #include "dpor_naive.h"
 
 #include <algorithm>
-#include <bits/ranges_algo.h>
 #include <vector>
 
 #include "delta_membrane.h"

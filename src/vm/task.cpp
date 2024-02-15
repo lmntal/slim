@@ -36,6 +36,15 @@
  * $Id: task.c,v 1.37 2008/10/21 11:31:58 riki Exp $
  */
 
+#include <algorithm>
+#include <iostream>
+#include <ranges>
+#include <variant>
+#include <vector>
+
+#include <fmt/color.h>
+#include <fmt/core.h>
+
 #include "task.h"
 #include "ccallback.h"
 #include "dumper.h"
@@ -50,19 +59,10 @@
 #include "verifier/runtime_status.h"
 #include "verifier/verifier.h"
 #include "vm/atom.h"
-#include <bits/ranges_algo.h>
-#include <fmt/color.h>
-#include <fmt/core.h>
-#include <vector>
 
 #ifdef USE_FIRSTCLASS_RULE
 #include "firstclass_rule.h"
 #endif
-
-#include <algorithm>
-#include <iostream>
-#include <ranges>
-#include <variant>
 
 using callback_0 = void (*)(LmnReactCxtRef, LmnMembraneRef);
 using callback_1 = void (*)(LmnReactCxtRef, LmnMembraneRef, LmnAtomRef, LmnLinkAttr);
@@ -135,13 +135,16 @@ std::vector<LmnRuleSetRef> user_system_rulesets; /* system ruleset defined by us
       |            |              |              |<--b  +------|--->b    +--->b
       A            A              A              A             A
 */
+namespace {
 
-static inline bool react_ruleset(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleSetRef rs);
-static inline void react_initial_rulesets(LmnReactCxtRef rc, LmnMembraneRef mem);
-static inline bool react_ruleset_in_all_mem(LmnReactCxtRef rc, LmnRuleSetRef rs, LmnMembraneRef mem);
-static inline bool dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr);
+inline bool react_ruleset(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleSetRef rs);
+inline void react_initial_rulesets(LmnReactCxtRef rc, LmnMembraneRef mem);
+inline bool react_ruleset_in_all_mem(LmnReactCxtRef rc, LmnRuleSetRef rs, LmnMembraneRef mem);
+inline bool dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr);
 
-static void mem_oriented_loop(MemReactContext *ctx, LmnMembraneRef mem);
+void mem_oriented_loop(MemReactContext *ctx, LmnMembraneRef mem);
+
+} // namespace
 
 void Task::lmn_dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
   dmem_interpret(rc, rule, instr);
@@ -268,8 +271,9 @@ void Task::lmn_run(std::vector<LmnRuleSetRef> const &start_rulesets) {
   delete env_proc_id_pool();
 }
 
+namespace {
 /** 膜スタックに基づいた通常実行 */
-static void mem_oriented_loop(MemReactContext *ctx, LmnMembraneRef mem) {
+void mem_oriented_loop(MemReactContext *ctx, LmnMembraneRef mem) {
   while (!ctx->memstack_isempty()) {
     LmnMembraneRef mem = ctx->memstack_peek();
     if (!Task::react_all_rulesets(ctx, mem)) {
@@ -278,6 +282,7 @@ static void mem_oriented_loop(MemReactContext *ctx, LmnMembraneRef mem) {
     }
   }
 }
+} // namespace
 
 /**
  * @brief 膜内の0stepルールセットを適用できるだけ適用する
@@ -351,14 +356,14 @@ BOOL Task::react_all_rulesets(LmnReactCxtRef rc, LmnMembraneRef cur_mem) {
 
   return ok;
 }
-
+namespace {
 /** 膜memに対してルールセットrsの各ルールの適用を試みる.
  *  戻り値:
  *   通常実行では, 書換えに成功した場合にTRUE,
  * マッチングしなかった場合にFALSEを返す.
  *   非決定実行では常にFALSEを返す(マッチングに失敗するまでバックトラックする仕様).
  */
-static inline bool react_ruleset(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleSetRef rs) {
+inline bool react_ruleset(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleSetRef rs) {
 
   // shuffle_ruleオプションが付いている場合はruleをシャッフル
   if (lmn_env.shuffle_rule)
@@ -374,6 +379,7 @@ static inline bool react_ruleset(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleS
   }
   return false;
 }
+} // namespace
 
 /** 膜memに対してルールruleの適用を試みる.
  *  戻り値:
@@ -472,7 +478,9 @@ void Task::react_start_rulesets(LmnMembraneRef mem, std::vector<LmnRuleSetRef> c
 #endif
 }
 
-inline static void react_initial_rulesets(LmnReactCxtRef rc, LmnMembraneRef mem) {
+namespace {
+
+inline void react_initial_rulesets(LmnReactCxtRef rc, LmnMembraneRef mem) {
   BOOL reacted;
 
   do {
@@ -491,7 +499,7 @@ inline static void react_initial_rulesets(LmnReactCxtRef rc, LmnMembraneRef mem)
 }
 
 /* ルールセットrsをmem以下のすべての膜内で適用する */
-static bool react_ruleset_in_all_mem(LmnReactCxtRef rc, LmnRuleSetRef rs, LmnMembraneRef mem) {
+bool react_ruleset_in_all_mem(LmnReactCxtRef rc, LmnRuleSetRef rs, LmnMembraneRef mem) {
   for (auto *m = mem->mem_child_head(); m; m = m->mem_next()) {
     if (react_ruleset_in_all_mem(rc, rs, m))
       return true;
@@ -499,6 +507,7 @@ static bool react_ruleset_in_all_mem(LmnReactCxtRef rc, LmnRuleSetRef rs, LmnMem
 
   return react_ruleset(rc, mem, rs);
 }
+} // namespace
 
 /* Utility for reading data */
 
@@ -1016,29 +1025,27 @@ struct exec_subinstructions_branch {
   }
 };
 
-static bool push_updated_hl_cmems
-( LmnMembraneRef mem,
-  std::vector<LmnMembraneRef> &buf, int id )
-{
+static bool push_updated_hl_cmems(LmnMembraneRef mem, std::vector<LmnMembraneRef> &buf, int id) {
   bool is_updated = false;
   for (auto *cmem = mem->child_head; cmem; cmem = cmem->next) {
     /* 子膜側に再帰 */
-    bool updated_hl = push_updated_hl_cmems( cmem, buf, id );
+    bool updated_hl = push_updated_hl_cmems(cmem, buf, id);
 
     /* 現在の膜の検査. 子膜側に変化があったら冗長のためskip */
-    auto *ent = cmem->get_atomlist( LMN_HL_FUNC );
+    auto *ent = cmem->get_atomlist(LMN_HL_FUNC);
     if (!updated_hl) {
       LmnSymbolAtomRef atom;
-      EACH_ATOM( atom, ent, {
-          auto hl_id = LMN_HL_ID( LMN_HL_ATOM_ROOT_HL( atom ) );
-          updated_hl = (hl_id == id);
-          if (updated_hl) break;
-        });
+      EACH_ATOM(atom, ent, {
+        auto hl_id = LMN_HL_ID(LMN_HL_ATOM_ROOT_HL(atom));
+        updated_hl = (hl_id == id);
+        if (updated_hl)
+          break;
+      });
     }
 
     /* 変化があった場合, 当該膜をメモしておく */
     if (updated_hl) {
-      buf.push_back( cmem );
+      buf.push_back(cmem);
       is_updated = true;
     }
   }
@@ -2698,9 +2705,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule, bool 
         case LMN_HL_ATTR: {
           char buf[16];
           port_put_raw_s(port, HYPERLINK_NAME);
-          sprintf(buf, "%lx",
-                  LMN_HL_ID(LMN_HL_ATOM_ROOT_HL(
-                      (LmnSymbolAtomRef)rc->wt(srcvec->get(0)))));
+          sprintf(buf, "%lx", LMN_HL_ID(LMN_HL_ATOM_ROOT_HL((LmnSymbolAtomRef)rc->wt(srcvec->get(0)))));
           port_put_raw_s(port, buf);
           break;
         }
@@ -2857,11 +2862,11 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule, bool 
       lmn_mem_delete_atom(m, atom2, (LmnWord)attr2);
 
       if (rc->has_mode(REACT_MEM_ORIENTED) && hl1 && hl1->get_root()) {
-        std::vector<LmnMembraneRef> mbuf;/* memstackの逆順 */
-        push_updated_hl_cmems( m, mbuf, LMN_HL_ID( hl1->get_root() ) );
+        std::vector<LmnMembraneRef> mbuf; /* memstackの逆順 */
+        push_updated_hl_cmems(m, mbuf, LMN_HL_ID(hl1->get_root()));
         /* stackの逆順に親子関係が並んでいるので, 逆順にstackへ積む */
-        for (int i = (int)mbuf.size()-1; i >= 0; i--)
-          ((MemReactContext *)rc)->memstack_push( mbuf[i] );
+        for (int i = (int)mbuf.size() - 1; i >= 0; i--)
+          ((MemReactContext *)rc)->memstack_push(mbuf[i]);
       }
     }
     break;
@@ -4446,7 +4451,8 @@ bool slim::vm::interpreter::interpret(LmnReactCxt *rc, LmnRuleRef rule, LmnRuleI
   return result;
 }
 
-static bool dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
+namespace {
+bool dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr instr) {
   /*   LmnRuleInstr start = instr; */
   LmnInstrOp op;
 
@@ -5163,6 +5169,8 @@ static bool dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr inst
 #endif
   }
 }
+
+} // namespace
 
 Vector *Task::links_from_idxs(Vector const *link_idxs, LmnReactCxtRef rc) {
   auto *vec = new Vector(16);

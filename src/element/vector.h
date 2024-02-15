@@ -95,7 +95,7 @@ public:
 
 template <class T> Vector::Vector(std::vector<T> const &v) {
   static_assert(std::is_scalar<T>::value && sizeof(T) <= sizeof(LmnWord), "vector elements must be scalars.");
-  LMN_ASSERT(v.size() > 0);
+  LMN_ASSERT(!v.empty());
   this->init(v.size());
   memcpy(this->tbl, v.data(), sizeof(T) * v.size());
   this->num = v.size();
