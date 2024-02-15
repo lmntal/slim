@@ -455,13 +455,11 @@ static inline BOOL owcty_traversed_owner_is_me(State *succ, BOOL set_flag, BOOL 
       return TRUE;
     }
     flags_update = flags_fetch | set_flag;
-    auto flag    = std::atomic_ref(succ->flags);
-    return !flag.compare_exchange_strong(flags_fetch, flags_update);
+    return !succ->flags.compare_exchange_strong(flags_fetch, flags_update);
   }
   if (flags_fetch & set_flag) {
     flags_update = flags_fetch & ~(set_flag);
-    auto flag    = std::atomic_ref(succ->flags);
-    return !flag.compare_exchange_strong(flags_fetch, flags_update);
+    return !succ->flags.compare_exchange_strong(flags_fetch, flags_update);
   }
   return TRUE;
 }
@@ -668,7 +666,7 @@ static inline bool map_entry_state(State *t, State *propag, AutomataRef a) {
     if (fetch == propag) {
       break;
     }
-    if (auto map = std::atomic_ref(t->map); map.compare_exchange_strong(fetch, propag)) {
+    if (t->map.compare_exchange_strong(fetch, propag)) {
       ret = true;
       break;
     }

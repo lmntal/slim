@@ -63,16 +63,14 @@
  *             であるかを示すフラグ
  */
 
-enum StateFlags {
-  ON_STACK_MASK     = 0x01U,
-  FOR_MC_MASK       = 0x01U << 1,
-  ON_CYCLE_MASK     = 0x01U << 2,
-  EXPANDED_MASK     = 0x01U << 3,
-  DUMMY_SYMBOL_MASK = 0x01U << 4,
-  TRANS_OBJ_MASK    = 0x01U << 5,
-  MEM_ENCODED_MASK  = 0x01U << 6,
-  MEM_DIRECT_MASK   = 0x01U << 7
-};
+constexpr BYTE ON_STACK_MASK     = 0x01U << 0;
+constexpr BYTE FOR_MC_MASK       = 0x01U << 1;
+constexpr BYTE ON_CYCLE_MASK     = 0x01U << 2;
+constexpr BYTE EXPANDED_MASK     = 0x01U << 3;
+constexpr BYTE DUMMY_SYMBOL_MASK = 0x01U << 4;
+constexpr BYTE TRANS_OBJ_MASK    = 0x01U << 5;
+constexpr BYTE MEM_ENCODED_MASK  = 0x01U << 6;
+constexpr BYTE MEM_DIRECT_MASK   = 0x01U << 7;
 
 /** Flags2 (8bit)
  *  0000 0001  Partial Order
@@ -82,33 +80,31 @@ enum StateFlags {
  * (MCNDFS)red flag 0100 0000  (Visualize)visited 1000 0000
  */
 
-enum StateFlags2 {
-  STATE_REDUCED_MASK     = 0x01U,
-  STATE_DELTA_MASK       = 0x01U << 1,
-  STATE_UPDATE_MASK      = 0x01U << 2,
-  EXPLORER_VISIT_MASK    = 0x01U << 3,
-  GENERATOR_VISIT_MASK   = 0x01U << 4,
-  STATE_BLUE_MASK        = 0x01U << 5,
-  STATE_RED_MASK         = 0x01U << 6,
-  STATE_VIS_VISITED_MASK = 0x01U << 7
-};
+constexpr BYTE STATE_REDUCED_MASK     = 0x01U << 0;
+constexpr BYTE STATE_DELTA_MASK       = 0x01U << 1;
+constexpr BYTE STATE_UPDATE_MASK      = 0x01U << 2;
+constexpr BYTE EXPLORER_VISIT_MASK    = 0x01U << 3;
+constexpr BYTE GENERATOR_VISIT_MASK   = 0x01U << 4;
+constexpr BYTE STATE_BLUE_MASK        = 0x01U << 5;
+constexpr BYTE STATE_RED_MASK         = 0x01U << 6;
+constexpr BYTE STATE_VIS_VISITED_MASK = 0x01U << 7;
 
 /* Descriptor */
-struct State {                 /* Total:72(36)byte */
-  unsigned int  successor_num; /*  4(4)byte: サクセッサの数 */
-  BYTE          state_name;    /*  1(1)byte: 同期積オートマトンの性質ラベル */
-  BYTE          flags;         /*  1(1)byte: フラグ管理用ビットフィールド */
-  BYTE          flags2;        /*  1(1)byte: フラグ管理用ビットフィールド2 */
-  BYTE          flags3;        /*  1(1)byte: アラインメントの隙間(一時的にdpor_naiveで使用中) */
-  unsigned long hash;          /*  8(4)byte: 通常時: 膜memのハッシュ値, --mem-enc時:
-                                  膜の一意なバイト列のハッシュ値  */
-  state_data_t     data;       /*  8(4)byte: 膜, バイナリストリングのどちらか */
-  TreeCompressData tcd;        /*  8(8)byte: Tree Compression 用のデータ無理やり8 Byteにしている */
-  succ_data_t     *successors; /*  8(4)byte: サクセッサポインタの配列 */
-  State           *next;       /*  8(4)byte: 状態管理表に登録する際に必要なポインタ */
-  State           *parent;     /*  8(4)byte: 自身を生成した状態へのポインタを持たせておく */
-  unsigned long    state_id;   /*  8(4)byte: 生成順に割り当てる状態の整数ID */
-  State           *map;        /*  8(4)byte: MAP値 or 最適化実行時の前状態 */
+struct State {                     /* Total:72(36)byte */
+  unsigned int      successor_num; /*  4(4)byte: サクセッサの数 */
+  BYTE              state_name;    /*  1(1)byte: 同期積オートマトンの性質ラベル */
+  std::atomic<BYTE> flags;         /*  1(1)byte: フラグ管理用ビットフィールド */
+  std::atomic<BYTE> flags2;        /*  1(1)byte: フラグ管理用ビットフィールド2 */
+  BYTE              flags3;        /*  1(1)byte: アラインメントの隙間(一時的にdpor_naiveで使用中) */
+  unsigned long     hash;          /*  8(4)byte: 通常時: 膜memのハッシュ値, --mem-enc時:
+                                      膜の一意なバイト列のハッシュ値  */
+  state_data_t         data;       /*  8(4)byte: 膜, バイナリストリングのどちらか */
+  TreeCompressData     tcd;        /*  8(8)byte: Tree Compression 用のデータ無理やり8 Byteにしている */
+  succ_data_t         *successors; /*  8(4)byte: サクセッサポインタの配列 */
+  State               *next;       /*  8(4)byte: 状態管理表に登録する際に必要なポインタ */
+  State               *parent;     /*  8(4)byte: 自身を生成した状態へのポインタを持たせておく */
+  unsigned long        state_id;   /*  8(4)byte: 生成順に割り当てる状態の整数ID */
+  std::atomic<State *> map;        /*  8(4)byte: MAP値 or 最適化実行時の前状態 */
 
 #ifndef MINIMAL_STATE
   BYTE *local_flags; /*  8(4)byte:
@@ -136,14 +132,14 @@ struct State {                 /* Total:72(36)byte */
   void          state_expand_unlock() {}
 #endif
 
-  BOOL has_trans_obj() { return flags & TRANS_OBJ_MASK; }
-  BOOL is_binstr_user() { return flags & MEM_DIRECT_MASK; }
-  BOOL is_dummy() { return flags & DUMMY_SYMBOL_MASK; }
-  BOOL is_encoded() { return flags & MEM_ENCODED_MASK; }
-  BOOL is_expanded() { return flags & EXPANDED_MASK; }
-  BOOL is_on_cycle() { return flags & ON_CYCLE_MASK; }
-  BOOL is_on_stack() { return flags & ON_STACK_MASK; }
-  BOOL is_snd() { return flags & FOR_MC_MASK; }
+  BOOL has_trans_obj() const { return flags & TRANS_OBJ_MASK; }
+  BOOL is_binstr_user() const { return flags & MEM_DIRECT_MASK; }
+  BOOL is_dummy() const { return flags & DUMMY_SYMBOL_MASK; }
+  BOOL is_encoded() const { return flags & MEM_ENCODED_MASK; }
+  BOOL is_expanded() const { return flags & EXPANDED_MASK; }
+  BOOL is_on_cycle() const { return flags & ON_CYCLE_MASK; }
+  BOOL is_on_stack() const { return flags & ON_STACK_MASK; }
+  BOOL is_snd() const { return flags & FOR_MC_MASK; }
   void set_binstr_user() { flags |= MEM_DIRECT_MASK; }
   void set_dummy() { flags |= DUMMY_SYMBOL_MASK; }
   void set_encoded() { flags |= MEM_ENCODED_MASK; }
@@ -152,7 +148,7 @@ struct State {                 /* Total:72(36)byte */
   void set_on_stack() { flags |= ON_STACK_MASK; }
   void set_snd() { flags |= FOR_MC_MASK; }
   void set_trans_obj() { flags |= TRANS_OBJ_MASK; }
-  void unset_binstr_user() { flags &= (~MEM_DIRECT_MASK); }
+  void unset_binstr_user() { flags &= (BYTE)(~MEM_DIRECT_MASK); }
   void unset_on_stack() { flags &= (~ON_STACK_MASK); }
   void unset_trans_obj() { flags &= (~TRANS_OBJ_MASK); }
   BOOL s_is_d() { return flags2 & STATE_DELTA_MASK; }
@@ -175,14 +171,14 @@ struct State {                 /* Total:72(36)byte */
   void s_set_visited_by_visualizer() { flags2 |= STATE_VIS_VISITED_MASK; }
   void s_set_fresh() { flags3 |= STATE_FRESH_MASK; }
   void s_unset_fresh() { flags3 &= (~STATE_FRESH_MASK); }
-  BOOL s_is_fresh() { return flags3 & STATE_FRESH_MASK; }
+  BOOL s_is_fresh() const { return flags3 & STATE_FRESH_MASK; }
 #ifdef KWBT_OPT
   LmnCost cost; /*  8(4)byte: cost */
 #endif
 
   unsigned int get_id() const { return state_id; }
 
-  LmnBinStrRef state_binstr() {
+  LmnBinStrRef state_binstr() const {
     if (is_binstr_user()) {
       return (LmnBinStrRef)data;
     }
@@ -211,7 +207,7 @@ struct State {                 /* Total:72(36)byte */
 
   /* 状態sに対応する階層グラフ構造を返す.
    * 既にバイナリストリングへエンコードしている場合の呼び出しは想定外. */
-  LmnMembraneRef state_mem() {
+  LmnMembraneRef state_mem() const {
     if (is_binstr_user()) {
       return nullptr;
     }
@@ -226,8 +222,8 @@ struct State {                 /* Total:72(36)byte */
    * 状態空間構築のためのフラグはコピーしない.
    * なお, 引数memがNULLではない場合は,
    * これをsrcに対応する階層グラフ構造として扱う.　*/
-  State *duplicate(LmnMembraneRef mem) {
-    State *dst = new State();
+  State *duplicate(LmnMembraneRef mem) const {
+    auto *dst = new State();
 
     if (!is_binstr_user() && !mem) {
       mem = state_mem();
@@ -361,7 +357,7 @@ struct State {                 /* Total:72(36)byte */
 
   /* 状態sに対応する階層グラフ構造をバイナリストリングにエンコードして返す.
    * sのフラグを操作する. */
-  LmnBinStrRef mem_dump_with_tree() {
+  LmnBinStrRef mem_dump_with_tree() const {
     if (this->state_binstr()) /* 既にエンコード済みの場合は何もしない. */
       return this->state_binstr();
 
@@ -374,7 +370,7 @@ struct State {                 /* Total:72(36)byte */
 
   /* 状態sに対応した階層グラフ構造のバイナリストリングをzlibで圧縮して返す.
    * 状態sはread only */
-  LmnBinStrRef mem_dump_with_z() {
+  LmnBinStrRef mem_dump_with_z() const {
     LmnBinStrRef ret;
     if (this->is_binstr_user()) {
       /* 既にバイナリストリングを保持している場合は, なにもしない. */
@@ -395,7 +391,7 @@ struct State {                 /* Total:72(36)byte */
 
   /* 状態sに対応する階層グラフ構造と等価な階層グラフ構造を新たに構築して返す.
    * 構築できなかった場合はNULLを返す. */
-  LmnMembraneRef duplicate_membrane() {
+  LmnMembraneRef duplicate_membrane() const {
     LmnMembraneRef ret = nullptr;
     if (!this->is_binstr_user() && this->state_mem()) {
       ret = (this->state_mem())->copy();
@@ -477,7 +473,7 @@ struct State {                 /* Total:72(36)byte */
   }
 
   /* 状態sとの差分計算の対象とする状態に対する参照を返す. */
-  State *state_D_ref() {
+  State *state_D_ref() const {
     /* とりあえず親ノードにした */
     return this->parent;
   }
