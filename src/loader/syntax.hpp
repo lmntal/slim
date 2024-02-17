@@ -78,7 +78,7 @@ struct symbol {
 };
 } // namespace functor
 
-using Functor = c17::variant<functor::in_proxy, functor::out_proxy, functor::unify, functor::integer, functor::real,
+using Functor = std::variant<functor::in_proxy, functor::out_proxy, functor::unify, functor::integer, functor::real,
                              functor::string, functor::symbol>;
 
 namespace instr_arg {
@@ -92,7 +92,7 @@ struct var_list;
 struct inst_list;
 } // namespace instr_arg
 
-using InstrArg = c17::variant<std::monostate, instr_arg::var, instr_arg::label, instr_arg::string, instr_arg::lineno,
+using InstrArg = std::variant<std::monostate, instr_arg::var, instr_arg::label, instr_arg::string, instr_arg::lineno,
                               instr_arg::functor, instr_arg::ruleset, instr_arg::var_list, instr_arg::inst_list>;
 
 namespace instr_arg {
@@ -176,10 +176,10 @@ struct RuleSet {
   BOOL is_system_ruleset;
   int  id;
 
-  std::vector<il::c17::variant<Rule, Subrule>> rules;
+  std::vector<std::variant<Rule, Subrule>> rules;
 
   RuleSet() = default;
-  RuleSet(int id, std::vector<il::c17::variant<Rule, Subrule>> &&rules, BOOL is_system_ruleset)
+  RuleSet(int id, std::vector<std::variant<Rule, Subrule>> &&rules, BOOL is_system_ruleset)
       : id(id), rules(std::move(rules)), is_system_ruleset(is_system_ruleset) {}
 };
 

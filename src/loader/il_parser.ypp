@@ -84,7 +84,7 @@ namespace c17 = slim::element;
 %type <InstBlock> guard
 %type <InstBlock> memmatch
 %type <Instruction> instruction
-%type <c17::variant<Rule, Subrule>> rule
+%type <std::variant<Rule, Subrule>> rule
 %type <RuleSet> ruleSet
 %type <il::Functor> functor
 %type <il::InstrArg> arg
@@ -93,7 +93,7 @@ namespace c17 = slim::element;
 %type <std::vector<Instruction>> instructions
 %type <std::vector<Module>> module_def;
 %type <std::vector<Module>> modules;
-%type <std::vector<c17::variant<Rule, Subrule>>> ruleList
+%type <std::vector<std::variant<Rule, Subrule>>> ruleList
 %type <std::vector<RuleSet>> ruleSetList
 %type <std::vector<il::InstrArg>> args
 %type <std::vector<il::InstrArg>> args_
@@ -107,7 +107,7 @@ namespace c17 = slim::element;
 
 start:
   world _EOF { *ret_il = std::unique_ptr<IL>($1); }   /* 中間言語全体のパース */
-| rule { *ret_rule = std::unique_ptr<Rule>(new Rule(c17::get<Rule>($1))); }  /* ルールのみの入力をパース */
+| rule { *ret_rule = std::unique_ptr<Rule>(new Rule(std::get<Rule>($1))); }  /* ルールのみの入力をパース */
 ;
 
 world:
@@ -193,7 +193,7 @@ instruction:
   INST_NAME LBRACKET args RBRACKET {
   if ($1 == INSTR_COMMIT) {
     /* COMMITの第二引数を変数番号ではなく行番号とする */
-    auto &line_num_arg = c17::get<il::instr_arg::lineno>($3.at(1));
+    auto &line_num_arg = std::get<il::instr_arg::var>($3.at(1));
     $3.at(1) = il::instr_arg::lineno(line_num_arg.value);
   }
   

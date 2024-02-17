@@ -48,7 +48,6 @@
 #include "task.h"
 #include "ccallback.h"
 #include "dumper.h"
-#include "element/variant.hpp"
 #include "interactive_debug.hpp"
 #include "interpret/false_driven_enumerator.hpp"
 #include "interpret/interpreter.hpp"
@@ -888,7 +887,7 @@ BOOL ground_atoms(Vector *srcvec, Vector *avovec, std::unique_ptr<ProcessTbl> &a
   return result;
 }
 
-using Atoms = std::vector<c17::variant<std::pair<LmnLinkAttr, LmnAtomRef>, LmnFunctor>>;
+using Atoms = std::vector<std::variant<std::pair<LmnLinkAttr, LmnAtomRef>, LmnFunctor>>;
 
 Atoms read_unary_atoms(LmnReactCxt *rc, LmnRuleInstr &instr) {
   Atoms       args;
@@ -2602,10 +2601,10 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule, bool 
       auto args = (op == INSTR_ISHLGROUNDINDIRECT) ? read_unary_atoms_indirect(rc, instr) : read_unary_atoms(rc, instr);
 
       for (auto &v : args) {
-        if (c17::holds_alternative<LmnFunctor>(v)) {
-          attr_functors.push_back(c17::get<1>(v));
+        if (std::holds_alternative<LmnFunctor>(v)) {
+          attr_functors.push_back(std::get<1>(v));
         } else {
-          auto &p = c17::get<0>(v);
+          auto &p = std::get<0>(v);
           attr_dataAtom_attrs.push_back(p.first);
           attr_dataAtoms.push_back(reinterpret_cast<LmnDataAtomRef>(p.second));
         }

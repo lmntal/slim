@@ -64,7 +64,6 @@
 #include "st.h"
 #include "stack_trace.hpp"
 #include "util.h"
-#include "variant.hpp"
 #include "vector.h"
 
 #endif /* LMN_ELEMENT_H */

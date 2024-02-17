@@ -134,7 +134,7 @@ static LmnRuleSetRef load_ruleset(RuleSet const &rs) {
   auto *runtime_ruleset = new LmnRuleSet(rs.id, 10);
 
   for (auto const &r : rs.rules) {
-    runtime_ruleset->put(c17::visit(load_rule_func(), r));
+    runtime_ruleset->put(std::visit(load_rule_func(), r));
   }
 
   LmnRuleSetTable::add(runtime_ruleset, rs.id);

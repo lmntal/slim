@@ -133,7 +133,7 @@ private:
     }
 
     for (int i = 0; i < arg_num; i++)
-      c17::visit(loader(*this), inst.args[i]);
+      std::visit(loader(*this), inst.args[i]);
 
     /* ISGROUNDとCOPYGROUNDは引数の数が3と4の場合がある。3の場合は
        第４引数として空リストを追加する */
@@ -200,14 +200,14 @@ private:
   }
   void load(il::instr_arg::string const &arg) { write_forward<lmn_interned_str>(arg.value); }
   void load(il::instr_arg::lineno const &arg) { write_forward<LmnLineNum>(arg.value); }
-  void load(il::instr_arg::functor const &arg) { c17::visit(loader(*this), arg.value); }
+  void load(il::instr_arg::functor const &arg) { std::visit(loader(*this), arg.value); }
   void load(il::instr_arg::ruleset const &arg) { write_forward<LmnRulesetId>(arg.value); }
   void load(il::instr_arg::var_list const &arg) {
     const auto &var_list = arg.value;
 
     write_forward<LmnInstrVar>(var_list.size());
     for (const auto &v : var_list)
-      c17::visit(loader(*this), v);
+      std::visit(loader(*this), v);
   }
   void load(il::instr_arg::inst_list const &arg) {
     /* 命令列の長さを求めるため、開始位置を記録する */
