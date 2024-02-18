@@ -37,3 +37,8 @@
  */
 
 #include "syntax.hpp"
+
+namespace il::instr_arg {
+var_list::var_list(std::vector<InstrArg> &&value) : value(std::move(value)) {}
+inst_list::inst_list(std::vector<Instruction> &&value) : value(std::move(value)) {}
+} // namespace il::instr_arg

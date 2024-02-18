@@ -43,9 +43,6 @@
 #include "syntax.hpp"
 #include "element/element.h"
 #include "il_lexer.hpp"
-
-namespace c14 = slim::element;
-namespace c17 = slim::element;
 %}
 
 %locations

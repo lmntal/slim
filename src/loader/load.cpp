@@ -55,7 +55,7 @@
 #include <set>
 #include <string>
 
-#include "fmt/core.h"
+#include <fmt/core.h>
 
 #include "arch.h"
 #include "byte_encoder.hpp"
@@ -76,7 +76,6 @@ using std::filesystem::path;
 void build_cmd(char *buf, char *file_name);
 
 using loader_error = slim::loader::exception;
-namespace c17      = slim::element;
 
 /*
  *  Instruction Format

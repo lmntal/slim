@@ -149,8 +149,6 @@ void Task::lmn_dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule, LmnRuleInstr i
   dmem_interpret(rc, rule, instr);
 }
 
-namespace c17 = slim::element;
-
 /** 通常実行時の入口.
  *  インタタラクティブ実行時の処理フローは以下の通り[yueno]
  *    1. 後始末     normal_cleaningフラグがたっている時

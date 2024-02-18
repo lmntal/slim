@@ -53,8 +53,6 @@
 #include "state_table.hpp"
 #include "vm/vm.h"
 
-namespace c14 = slim::element;
-
 void StateSpace::make_table_pair(TablePair &t) {
   t.tbl = std::make_unique<StateTable>(this->thread_num);
   if (this->has_property())

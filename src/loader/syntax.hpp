@@ -52,8 +52,6 @@ class ByteEncoder;
 struct Instruction;
 
 namespace il {
-namespace c17 = slim::element;
-
 namespace functor {
 struct in_proxy {};
 struct out_proxy {};
@@ -122,11 +120,11 @@ struct ruleset {
 };
 struct var_list {
   std::vector<InstrArg> value;
-  var_list(std::vector<InstrArg> &&value) : value(std::move(value)) {}
+  var_list(std::vector<InstrArg> &&value);
 };
 struct inst_list {
   std::vector<Instruction> value;
-  inst_list(std::vector<Instruction> &&value) : value(std::move(value)) {}
+  inst_list(std::vector<Instruction> &&value);
 };
 } // namespace instr_arg
 } // namespace il

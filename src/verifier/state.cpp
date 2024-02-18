@@ -55,8 +55,6 @@
 #include <cstring>
 #include <string>
 
-namespace c14 = slim::element;
-
 LmnCost state_cost(State *S) {
 #ifdef KWBT_OPT
   return ((S)->cost);

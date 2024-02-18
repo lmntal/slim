@@ -40,12 +40,10 @@
 
 #include "syntax.hpp"
 
-#include "lmntal.h"
-#include "vm/vm.h"
-
 #include <map>
 
-namespace c17 = slim::element;
+#include "lmntal.h"
+#include "vm/vm.h"
 
 /* 構文木の読み込み時に使うデータ。各ルールの解析じに作成し，解析後に破
    棄する。ラベルは各ルールにローカルなものとして処理している */
