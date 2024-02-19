@@ -44,4 +44,4 @@ jobs:
           cxx-compiler: ${{ matrix.compiler.cxx }}
 
       - name: Build Project
-        runs: cmake --build build
+        run: cmake --build build
