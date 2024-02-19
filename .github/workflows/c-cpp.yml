@@ -8,11 +8,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        compiler:
-          [
-            { c: gcc, cxx: g++ },
-            { c: clang, cxx: clang++ }
-          ]
+        compiler: [{ c: gcc, cxx: g++ }, { c: clang, cxx: clang++ }]
     env:
       LMNTAL_HOME: ${{ github.workspace }}/lmntal-compiler
     steps:
@@ -20,21 +16,14 @@ jobs:
       - name: Setup LMNtal compiler
         run: |
           sudo apt -qq update
-          sudo apt install -y ant re2c ruby-full bison flex doxygen zlib1g-dev
+          sudo apt install -y ant re2c ruby-full bison flex doxygen zlib1g-dev libomp-15-dev
           git clone https://github.com/lmntal/lmntal-compiler.git
           cd lmntal-compiler && ant && cd ..
-
-      - name: Set up GCC
-        uses: egor-tensin/setup-gcc@v1
-        with:
-          version: latest
-          platform: x64
 
       - name: Set up Clang
         uses: egor-tensin/setup-clang@v1
         with:
-          version: latest
-          platform: x64
+          version: 15
 
       - name: Configure Project
         uses: threeal/cmake-action@v1.3.0
