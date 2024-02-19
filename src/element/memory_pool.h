@@ -46,6 +46,7 @@
  */
 
 #include <cstddef>
+#include <cstdlib>
 #include <memory_resource>
 
 /* each element must be bigger than void*, so align everything in sizeof(void*)
