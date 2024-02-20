@@ -23,7 +23,7 @@ jobs:
       - name: Setup prerequisites for macOS
         if: runner.os == 'macOS'
         run: |
-          brew install re2c bison flex doxygen
+          brew install re2c bison flex doxygen libomp
 
       - name: Configure Project
         uses: threeal/cmake-action@v1.3.0
