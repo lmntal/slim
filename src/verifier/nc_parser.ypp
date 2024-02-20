@@ -45,7 +45,7 @@
 #include "nc_lexer.hpp"
 %}
 
-%pure-parser
+%define api.pure
 %locations
 %parse-param {nc::lexer *scanner}
 %parse-param {AutomataRef automata}

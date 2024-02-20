@@ -9,7 +9,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-14]
-        compiler: [{ c: gcc-13, cxx: g++-13 }, { c: clang-15, cxx: clang++-15 }]
+        compiler: [{ c: gcc-13, cxx: g++-13 }, { c: clang, cxx: clang++ }]
     steps:
       - uses: actions/checkout@v4
       - name: Setup prerequisites for Linux
@@ -17,6 +17,8 @@ jobs:
         run: |
           sudo apt -qq update
           sudo apt install -y re2c ruby-full bison flex doxygen zlib1g-dev libomp-15-dev
+          sudo ln -f -s /usr/bin/clang-15 /usr/bin/clang
+          sudo ln -f -s /usr/bin/clang++-15 /usr/bin/clang++
 
       - name: Setup prerequisites for macOS
         if: runner.os == 'macOS'
