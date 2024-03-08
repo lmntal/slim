@@ -1,8 +1,8 @@
-// A Bison parser, made by GNU Bison 3.7.3.
+// A Bison parser, made by GNU Bison 3.8.2.
 
 // Locations for Bison parsers in C++
 
-// Copyright (C) 2002-2015, 2018-2020 Free Software Foundation, Inc.
+// Copyright (C) 2002-2015, 2018-2021 Free Software Foundation, Inc.
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -15,7 +15,7 @@
 // GNU General Public License for more details.
 
 // You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 // As a special exception, you may create a larger work that contains
 // part or all of the Bison parser skeleton and distribute that work
@@ -31,12 +31,12 @@
 // version 2.2 of Bison.
 
 /**
- ** \file location.hh
+ ** \file /home/qrwells/repos/slim/src/loader/location.hh
  ** Define the il::location class.
  */
 
-#ifndef YY_IL_LOCATION_HH_INCLUDED
-# define YY_IL_LOCATION_HH_INCLUDED
+#ifndef YY_IL_HOME_QRWELLS_REPOS_SLIM_SRC_LOADER_LOCATION_HH_INCLUDED
+# define YY_IL_HOME_QRWELLS_REPOS_SLIM_SRC_LOADER_LOCATION_HH_INCLUDED
 
 # include <iostream>
 # include <string>
@@ -54,7 +54,7 @@
 # endif
 
 namespace il {
-#line 58 "location.hh"
+#line 58 "/home/qrwells/repos/slim/src/loader/location.hh"
 
   /// A point in a source file.
   class position
@@ -299,6 +299,6 @@ namespace il {
   }
 
 } // il
-#line 303 "location.hh"
+#line 303 "/home/qrwells/repos/slim/src/loader/location.hh"
 
-#endif // !YY_IL_LOCATION_HH_INCLUDED
+#endif // !YY_IL_HOME_QRWELLS_REPOS_SLIM_SRC_LOADER_LOCATION_HH_INCLUDED

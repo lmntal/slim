@@ -35,6 +35,12 @@ gtags.conf
 *~
 \#*\#
 .vscode/*
+.cache/*
+
+# CMake
+
+CMakeFiles/
+build/
 
 #mac 
 .DS_Store
