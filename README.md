@@ -25,8 +25,7 @@ Build the package as follows:
 ```bash
 export LMNTAL_HOME=/path/to/devel # set the path to the compiler
 cd slim
-mkdir build && cd build
-cmake -DCMAKE_BUILD_TYPE=Release ..
+cmake -DCMAKE_INSTALL_PREFIX=$(pwd) -DCMAKE_BUILD_TYPE=Release -B build -S .
 make -j
 make -j install
 ```
@@ -36,10 +35,17 @@ or
 ```bash
 tar xvzf slim-x.y.z.tar.gz
 cd slim-x.y.z
-mkdir build && cd build
-cmake -DCMAKE_BUILD_TYPE=Release ..
+cmake -DCMAKE_INSTALL_PREFIX=$(pwd) -DCMAKE_BUILD_TYPE=Release -B build -S .
 make -j
 make -j install
+```
+
+If Ninja is preferred, you can use it as follows:
+
+```bash
+cmake -G Ninja -DCMAKE_INSTALL_PREFIX=$(pwd) -DCMAKE_BUILD_TYPE=Release -B build -S .
+ninja
+ninja install
 ```
 
 Among generated files, `bin/slim` is the LMNtal interpreter.
