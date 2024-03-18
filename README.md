@@ -26,8 +26,7 @@ Build the package as follows:
 ```bash
 export LMNTAL_HOME=/path/to/devel # set the path to the compiler
 cd slim
-./autogen.sh
-./configure --prefix=$(pwd) # Generate a binary at $(pwd)/bin/slim
+cmake -DCMAKE_INSTALL_PREFIX=$(pwd) -DCMAKE_BUILD_TYPE=Release -B build -S .
 make -j # `-j` for a parallel build
 make -j install # set up libraries
 ```
@@ -37,7 +36,7 @@ or
 ```bash
 tar xvzf slim-x.y.z.tar.gz
 cd slim-x.y.z
-./configure
+cmake -DCMAKE_INSTALL_PREFIX=$(pwd) -DCMAKE_BUILD_TYPE=Release -B build -S .
 make -j
 make -j install
 ```

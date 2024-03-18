@@ -26,7 +26,7 @@ set(SLIM_DATA_ROOT_DIR "${CMAKE_INSTALL_PREFIX}/share/slim" CACHE PATH "Root dir
 set(SLIM_LIB_DIR "${SLIM_DATA_ROOT_DIR}/lib" CACHE PATH "Directory of library files")
 set(SLIM_EXT_DIR "${SLIM_DATA_ROOT_DIR}/ext" CACHE PATH "Directory of external files")
 
-# ================================
+message(STATUS "Set install prefix to ${CMAKE_INSTALL_PREFIX}")
 
 # On macOS, search Homebrew for keg-only versions of Bison and Flex. Xcode does
 # not provide new enough versions for us to use.
