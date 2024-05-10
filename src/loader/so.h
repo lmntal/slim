@@ -175,6 +175,9 @@
     for (i = 0; i < v.size(); i++) {				\
       LmnRuleSetRef cp = new LmnRuleSet(*(v[i]));      \
       lmn_mem_add_ruleset((LmnMembraneRef)rc->wt(destmemi), cp);               \
+      if (rc->has_mode(REACT_ATOMIC)) {                                     \
+        cp->invalidate_atomic();                                     \
+      }                                                                        \
     }                                                                          \
   } while (0)
 

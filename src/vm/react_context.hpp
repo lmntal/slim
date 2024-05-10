@@ -149,12 +149,21 @@ struct RuleContext {
 #define REACT_STAND_ALONE (0x01U << 2) /* 非決定実行: 状態は展開しない */
 #define REACT_PROPERTY                                                         \
   (0x01U << 3) /* LTLモデル検査: 性質ルールのマッチングのみ */
+#define REACT_ATOMIC (0x01U << 4) /* Atomic Step中: インタリーブの抑制 */
 
 struct LmnReactCxt : slim::vm::RuleContext {
   LmnMembrane
       *global_root; /* ルール適用対象となるグローバルルート膜. != wt[0] */
 private:
   unsigned int trace_num; /* ルール適用回数 (通常実行用トレース実行で使用)  */
+  
+  // 以下、atomic_ruleset周り
+  LmnRulesetId atomic_id; /* atomic step中: atomic set id(signed int), default:-1 */
+  ProcessID proc_org_id; /* atomic step終了時に Process ID をこの値に復帰 */
+  ProcessID proc_next_id; /* atomic step継続時に Process ID をこの値に設定 */
+  LmnMembraneRef cur_mem; /* atomic step継続時に現在膜をこの値に設定 */
+  BYTE flag; /* mode以外に指定するフラグ */
+  
 public:
   BYTE mode;
   bool is_zerostep;
@@ -167,22 +176,37 @@ public:
   LmnReactCxt() : is_zerostep(false), keep_process_id_in_nd_mode(false), trace_num(0) {}
   LmnReactCxt(LmnMembrane *groot, BYTE mode)
       : is_zerostep(false), keep_process_id_in_nd_mode(false), trace_num(0),
-        mode(mode), global_root(groot) {
+        mode(mode), global_root(groot), flag(0x00U), atomic_id(-1) {
   }
 
   LmnReactCxt &operator=(const LmnReactCxt &from) {
     this->RuleContext::operator=(from);
     this->mode = from.mode;
     this->global_root = from.global_root;
+    this->flag = from.flag;
+    this->atomic_id = from.atomic_id;
     return *this;
   }
 
   unsigned int get_reaction_count() const { return trace_num; }
   void increment_reaction_count() { trace_num++; }
 
+  // 以下、atomic_ruleset周り
+  void start_atomic_step(LmnRulesetId id) { atomic_id = id; }
+  bool is_atomic_step() { return atomic_id >= 0; }
+  void finish_atomic_step() { atomic_id = -1; }
+  ProcessID get_proc_org_id() { return proc_org_id; }
+  void set_proc_org_id(ProcessID id) { proc_org_id = id; }
+  ProcessID get_proc_next_id() { return proc_next_id; }
+  void set_proc_next_id(ProcessID id) { proc_next_id = id; }
+  LmnMembraneRef get_cur_mem() { return cur_mem; }
+  void set_cur_mem(LmnMembraneRef mem) { cur_mem = mem; }
+
   bool has_mode(BYTE mode) const {
     return (this->mode & mode) != 0;
   }
+
+  void set_mode(BYTE mode) { this->mode = mode; }
 
   LmnMembrane *get_global_root() { return global_root; }
   SimpleHashtbl *get_hl_sameproccxt() { return hl_sameproccxt; }
@@ -361,7 +385,12 @@ struct MCReactContext : LmnReactCxt {
   void push_expanded_state(void *s) {
     roots.push_back(s);
   }
-
+  LmnWord pop_expanded_state() {
+    auto s = roots.back();
+    roots.pop_back();
+    return (LmnWord)s;
+  }
+  
   LmnRule *get_expanded_rule(int i) {
     return rules.at(i);
   }
@@ -370,6 +399,11 @@ struct MCReactContext : LmnReactCxt {
   }
   void push_expanded_rule(LmnRule *rule) {
     rules.push_back(rule);
+  }
+  LmnWord pop_expanded_rule() {
+    auto ret = rules.back();
+    rules.pop_back();
+    return (LmnWord)ret;
   }
   void clear_expanded_rules() {
     rules.clear();
@@ -399,6 +433,21 @@ struct MCReactContext : LmnReactCxt {
   }
   void push_mem_delta_root(MemDeltaRoot *root) {
     mem_deltas.push_back(root);
+  }
+
+  LmnWord pop_mem_delta_root() {
+    auto d = mem_deltas.back();
+    mem_deltas.pop_back();
+    return (LmnWord)d;
+  }
+
+  LmnWord expanded_pop(){
+    pop_expanded_rule();
+    if (this->has_optmode(DeltaMembrane)){
+      return pop_mem_delta_root();
+    } else {
+      return pop_expanded_state();
+    }
   }
 
 private:

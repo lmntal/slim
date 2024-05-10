@@ -114,6 +114,7 @@ struct StateSpace : public std::conditional<slim::config::profile, MemIdHash,
     }
     return predecessor;
   }
+  std::vector<std::vector<State *>> end_states; /* 最終状態の集合 */
 
 private:
   bool using_memenc;
@@ -140,8 +141,6 @@ private:
   TablePair mhash_table;
   /* memid_hashをkeyに, 状態のアドレスを登録する状態管理表 */
   TablePair memid_table;
-
-  std::vector<std::vector<State *>> end_states; /* 最終状態の集合 */
 
   std::unique_ptr<StateTable> &insert_destination(State *s, unsigned long hashv);
   std::unique_ptr<StateTable> &resize_destination(std::unique_ptr<StateTable> &def, State *ret, State *s);
