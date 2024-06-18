@@ -87,11 +87,6 @@ void mell_copy(LmnReactCxtRef rc, LmnMembraneRef mem,
       return;
     }
 
-  // 自由リンク
-  LmnSymbolAtomRef free0, free1;
-  free0 = (LmnSymbolAtomRef)(((LmnSymbolAtomRef)a6));
-  free1 = (LmnSymbolAtomRef)(((LmnSymbolAtomRef)a7));
-
   { 
     AtomListEntryRef ent = org_mem->get_atomlist(LMN_IN_PROXY_FUNCTOR);
 
@@ -145,9 +140,9 @@ void mell_copy(LmnReactCxtRef rc, LmnMembraneRef mem,
 
           // portとfreeをcutでつなげる
           lmn_newlink_in_symbols(cut_copy_out_port0, 1, org_port_out, 1);
-          newlink_symbol_and_something(cut_copy_out_free0, 1, free0, t6);
+          newlink_symbol_and_something(cut_copy_out_free0, 1, a6, t6);
           lmn_newlink_in_symbols(cut_copy_out_port1, 1, trg_port_out, 1);
-          newlink_symbol_and_something(cut_copy_out_free1, 1, free1, t7);
+          newlink_symbol_and_something(cut_copy_out_free1, 1, a7, t7);
 
           delete cut_atom_map0;
           delete cut_atom_map1;
