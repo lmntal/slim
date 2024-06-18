@@ -2,20 +2,21 @@
 {
 module(mell).
 
-//R=mell.copy(M) :- R=mell.copy(M, copied).
-
 /**
- * mell.copy(+Mem, +CopyTagAtom, -Res):
+ * mell.copy(+Mem, +Cont1, +Cont2, +Cont3, +Cut1, +Cut2, +Free1, +Free2):
  *
  * 与えられた膜を複製する．複製された膜のMem以外の自由リンクは
- * それぞれ、指定されたunaryアトムと同名の三引数アトムの複製に接続される．
- * @param +Mem 複製する膜
- * @param +CopyTagAtom 複製された膜の自由リンクに接続される三引数アトムと同名のunaryアトム
- * @param -Res 結果( 成功時 copied(Mem, Mem_copied, Res) 失敗時 copy_error(Mem, Res) )
+ * 1. 複製された膜の自由リンク(主ポート以外)に接続される三引数のプロセス文脈(contractionにあたる)
+ * 2. 複製された膜の自由リンク(主ポート)に接続される二引数のプロセス文脈(cutにあたる)
+ * 3. 複製された膜の自由リンク(主ポート)に接続される自由リンク(元のcontractionの自由リンクにあたる)
+ * @param +Mem                   複製する膜
+ * @param +Cont1, +Cont2, +Cont3 複製された膜の自由リンク(主ポート)に接続される三引数のプロセス文脈
+ * @param +Cut1,  +Cut2          複製された膜の自由リンク(主ポート)に接続される二引数のプロセス文脈
+ * @param +Free1, +Free2         複製された膜の自由リンク(主ポート)に接続される自由リンク
  * @example
- * R=mell.copy(M, cpd), {$p[M|*Z]}
+ * mell.copy(M, A1, A2, A3, B1, B2, C1, C2), {$p[M|*Z]}, {$a[A1,A2,A3]}, {$b[B1,B2]}
  * ==>
- * R=copied(M,M'), {$p[M|*Z]}, {$p[M'|*Z']}, cpd(*Z')
+ * {$p1[M1|*Z1]}, {$p2[M2|*Z2]}, $a[*Z1,*Z2,*Z], $b[M1,C1], $b[M2,C2]
  */
 mell.copy(M,A1,A2,A3,B1,B2,C1,C2) :-
     '$callback'('mell_copy', M, A1, A2, A3, B1, B2, C1, C2).
@@ -24,14 +25,13 @@ mell.copy(M,A1,A2,A3,B1,B2,C1,C2) :-
 mell.kill({$p,@p}), :- mell.kill({$p,@p}, X), {killed(X)}.
 
 /**
- * mell.kill(+Mem, +KillTagProc)
+ * mell.kill(+Mem, +Weakn)
  *
  * 与えられた膜を破棄する．その膜のMem以外の自由リンクにはそれぞれ、
- * 指定されたunaryアトムの複製が接続される．
- * ( Memが子膜へのリンクでない場合，Memにkill_error/1が接続される．)
+ * 指定されたプロセス文脈の複製が接続される．
  * @param +Mem 破棄する膜
- * @param +KillTagProc 破棄された膜の自由リンクに接続されるプロセス文脈
- * @example mell.kill(M, kld),{$p[M|*Z]} ==> kld(*Z)
+ * @param +Weakn 破棄された膜の自由リンクに接続されるプロセス文脈(weakeningにあたる)
+ * @example mell.kill(M, K),{$p[M|*Z]}, {$k[K]} ==> $k[*Z]
  */
 //mell.kill(M, T) :- unary(T) | '$callback'('mell_kill', M, T).
 mell.kill(M, T) :- '$callback'('mell_kill', M, T).
