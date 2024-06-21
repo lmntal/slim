@@ -22,19 +22,19 @@ mell.copy(M,A1,A2,A3,B1,B2,C1,C2) :-
     '$callback'('mell_copy', M, A1, A2, A3, B1, B2, C1, C2).
 
 
-mell.kill({$p,@p}), :- mell.kill({$p,@p}, X), {killed(X)}.
+mell.delete({$p,@p}), :- mell.delete({$p,@p}, X), {deleted(X)}.
 
 /**
- * mell.kill(+Mem, +Weakn)
+ * mell.delete(+Mem, +Weakn)
  *
  * 与えられた膜を破棄する．その膜のMem以外の自由リンクにはそれぞれ、
  * 指定されたプロセス文脈の複製が接続される．
  * @param +Mem 破棄する膜
  * @param +Weakn 破棄された膜の自由リンクに接続されるプロセス文脈(weakeningにあたる)
- * @example mell.kill(M, K),{$p[M|*Z]}, {$k[K]} ==> $k[*Z]
+ * @example mell.delete(M, K),{$p[M|*Z]}, {$k[K]} ==> $k[*Z]
  */
-//mell.kill(M, T) :- unary(T) | '$callback'('mell_kill', M, T).
-mell.kill(M, T) :- '$callback'('mell_kill', M, T).
+//mell.delete(M, T) :- unary(T) | '$callback'('mell_delete', M, T).
+mell.delete(M, T) :- '$callback'('mell_delete', M, T).
 
 }.
 

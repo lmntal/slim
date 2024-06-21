@@ -1,5 +1,5 @@
 /*
- * mell.c - Nonlinear-Membrane
+ * mell.c - Membrane Extension for Multiplicative Exponential Linear Logic
  *
  *   Copyright (c) 2008, Ueda Laboratory LMNtal Group
  *                                         <lmntal@ueda.info.waseda.ac.jp>
@@ -219,7 +219,7 @@ void mell_copy(LmnReactCxtRef rc, LmnMembraneRef mem,
   }
 }
 
-void mell_kill(LmnReactCxtRef rc,
+void mell_delete(LmnReactCxtRef rc,
                 LmnMembraneRef mem,
                 LmnAtomRef a0, LmnLinkAttr t0,
                 LmnAtomRef a1, LmnLinkAttr t1)
@@ -233,11 +233,11 @@ void mell_kill(LmnReactCxtRef rc,
   LmnMembraneRef tag_mem;
 
   if (((LmnSymbolAtomRef)a0)->get_functor() != LMN_OUT_PROXY_FUNCTOR) {
-    fprintf(stderr, "mell.C, mell_kill: first argument must be a membrane");
+    fprintf(stderr, "mell.C, mell_delete: first argument must be a membrane");
     return;
   }
   if (((LmnSymbolAtomRef)a1)->get_functor() != LMN_OUT_PROXY_FUNCTOR) {
-    fprintf(stderr, "mell.C, mell_kill: second argument must be a membrane");
+    fprintf(stderr, "mell.C, mell_delete: second argument must be a membrane");
     return;
   }
 
@@ -298,5 +298,5 @@ void mell_kill(LmnReactCxtRef rc,
 
 void init_mell(void) {
   CCallback::lmn_register_c_fun("mell_copy", (void *)mell_copy, 8);
-  CCallback::lmn_register_c_fun("mell_kill", (void *)mell_kill, 2);
+  CCallback::lmn_register_c_fun("mell_delete", (void *)mell_delete, 2);
 }
