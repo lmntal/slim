@@ -5,6 +5,12 @@ module(mell).
 mell.copy(M,A1,A2,A3,C1,C2), :- 
   mell.copy(M,A1,A2,A3,B1,B2,C1,C2), {B1=B2}.
 
+mell.copy(M,A1,A2,A3,C), {$a[A1,A2,A3]} :- 
+   mell.copy(M,A1,A2,A3,B1,B2,C1,C2), {$a[A1,A2,A3]}, {B1=B2}, $a[C1,C2,C].
+
+ mell.copy(M,C), :- 
+   mell.copy(M,A1,A2,A3,B1,B2,C1,C2), {cp(A1,A2,A3)}, {B1=B2}, cp(C1,C2,C).
+
 /**
  * mell.copy(+Mem, +Cont1, +Cont2, +Cont3, +Cut1, +Cut2, +Free1, +Free2):
  *
