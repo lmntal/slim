@@ -284,6 +284,14 @@ const std::map<LmnInstruction, InstrSpec> instr_spec = {
     {INSTR_MERGESET, {"mergeset", {InstrVar, InstrVar}}},
     {INSTR_FREESET, {"freeset", {InstrVar}}},
 
+    /* QLMNtal */
+    {INSTR_CARDPUSH, {"cardpush", {InstrVar, InstrVarList}}},
+    {INSTR_CARDPICK, {"cardpick", {InstrVar, InstrVar, InstrVar}}},
+    {INSTR_CARDPOP, {"cardpop", {InstrVar}}},
+    {INSTR_CARDNEQATOM, {"cardneqatom", {InstrVar, InstrVarList}}},
+    {INSTR_CARDNEQMEM, {"cardneqmem", {InstrVar, InstrVarList}}},
+    {INSTR_ANYATOM, {"anyatom", {InstrVar, InstrVar}}},
+
     /* etc */
     {INSTR_CELLDUMP, {"celldump", {}}}};
 

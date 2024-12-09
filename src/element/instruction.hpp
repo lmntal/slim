@@ -273,6 +273,14 @@ enum LmnInstruction {
 
   INSTR_PRINTINSTR,
 
+  /* QLMNtal */
+  INSTR_CARDPUSH,
+  INSTR_CARDPICK,
+  INSTR_CARDPOP,
+  INSTR_CARDNEQATOM,
+  INSTR_CARDNEQMEM,
+  INSTR_ANYATOM,
+
   NUM_INSTRS // this must be the last
 };
 
