@@ -1106,12 +1106,13 @@ static bool push_updated_hl_cmems
   return is_updated;
 }
 
+/* QLMNtal */
 BOOL cardneqatom(size_t atom1, std::vector<size_t> atom2list, LmnReactCxt *rc, LmnRegister queue_reg){
   CardQueue queue = ((LmnCardRef)(queue_reg.register_wt()))->get_queue();
-  if(1 == atom2list.size()){
-    for (CardMap map: queue){
-      for (CardPair pair: map){
-        if(atom2list[0] == pair.first){
+  if (atom2list.size() == 1) {
+    for (CardMap map: queue) {
+      for (CardPair pair: map) {
+        if (atom2list[0] == pair.first) {
           if (!(LMN_ATTR_IS_DATA(rc->at(atom1)) || LMN_ATTR_IS_DATA(pair.second.register_at()) ||
             LMN_SATOM(rc->wt(atom1)) != LMN_SATOM(pair.second.register_wt()))) {
               return FALSE;
@@ -1122,10 +1123,10 @@ BOOL cardneqatom(size_t atom1, std::vector<size_t> atom2list, LmnReactCxt *rc, L
   } else {
     size_t atom2list_head = atom2list[0];
     atom2list.erase(atom2list.begin());
-    for (CardMap map: queue){
-      for (CardPair pair: map){
-        if(atom2list_head == pair.first){
-          if (!cardneqatom(atom1, atom2list, rc, pair.second)){
+    for (CardMap map: queue) {
+      for (CardPair pair: map) {
+        if (atom2list_head == pair.first) {
+          if (!cardneqatom(atom1, atom2list, rc, pair.second)) {
             return FALSE;
           }
         }
@@ -1135,12 +1136,13 @@ BOOL cardneqatom(size_t atom1, std::vector<size_t> atom2list, LmnReactCxt *rc, L
   return TRUE;
 }
 
+/* QLMNtal */
 BOOL cardneqmem(size_t mem1, std::vector<size_t> mem2list, LmnReactCxt *rc, LmnRegister queue_reg){
   CardQueue queue = ((LmnCardRef)(queue_reg.register_wt()))->get_queue();
-  if(1 == mem2list.size()){
-    for (CardMap map: queue){
-      for (CardPair pair: map){
-        if(mem2list[0] == pair.first){
+  if(mem2list.size() == 1) {
+    for (CardMap map: queue) {
+      for (CardPair pair: map) {
+        if(mem2list[0] == pair.first) {
           if (rc->wt(mem1) == pair.second.register_wt()) {
               return FALSE;
             }
@@ -1150,10 +1152,10 @@ BOOL cardneqmem(size_t mem1, std::vector<size_t> mem2list, LmnReactCxt *rc, LmnR
   } else {
     size_t mem2list_head = mem2list[0];
     mem2list.erase(mem2list.begin());
-    for (CardMap map: queue){
-      for (CardPair pair: map){
-        if(mem2list_head == pair.first){
-          if (!cardneqatom(mem1, mem2list, rc, pair.second)){
+    for (CardMap map: queue) {
+      for (CardPair pair: map) {
+        if(mem2list_head == pair.first) {
+          if (!cardneqmem(mem1, mem2list, rc, pair.second)) {
             return FALSE;
           }
         }
@@ -1163,9 +1165,10 @@ BOOL cardneqmem(size_t mem1, std::vector<size_t> mem2list, LmnReactCxt *rc, LmnR
   return TRUE;
 }
 
+/* QLMNtal */
 void slim::vm::interpreter::anyatom(LmnMembrane *mem, size_t reg){
   std::map<LmnFunctor, AtomListEntry *> atomlists = mem->atom_lists();
-  std::vector<LmnRegister> atom_regs = std::vector<LmnRegister>();
+  auto atom_regs = std::vector<LmnRegister>();
   for (std::pair<LmnFunctor, AtomListEntry *> atomlist: atomlists) { 
     auto iter = std::begin(*atomlist.second);
     auto end = std::end(*atomlist.second);
@@ -1183,27 +1186,28 @@ void slim::vm::interpreter::anyatom(LmnMembrane *mem, size_t reg){
   this->false_driven_enumerate(reg, std::move(atom_regs));
 }
 
+/* QLMNtal */
 int replace_in_card_by_tbl(ProcessTableRef p, LmnCardRef card, LmnWord *value) {
   CardQueue queue = card->get_queue();
   CardQueue new_queue = CardQueue();
-  for (CardMap map: queue){
-    CardMap new_map = CardMap();
-    for(CardPair pair: map){
+  for (CardMap map: queue) {
+    auto new_map = CardMap();
+    for (CardPair pair: map) {
       LmnWord t;
-      if(pair.second.register_tt() == TT_ATOM){
-        if (proc_tbl_get_by_atom(p, (LmnSymbolAtomRef)pair.second.register_wt(), &t)){
+      if (pair.second.register_tt() == TT_ATOM) {
+        if (proc_tbl_get_by_atom(p, (LmnSymbolAtomRef)pair.second.register_wt(), &t)) {
           new_map.push_back(CardPair{pair.first, {t, 0, TT_CARD}});
         } else {
           return 0;
         }
-      } else if(pair.second.register_tt() == TT_MEM){
-        if (proc_tbl_get_by_mem(p, (LmnMembraneRef)pair.second.register_wt(), &t)){
+      } else if (pair.second.register_tt() == TT_MEM) {
+        if (proc_tbl_get_by_mem(p, (LmnMembraneRef)pair.second.register_wt(), &t)) {
           new_map.push_back(CardPair{pair.first, {t, 0, TT_CARD}});
         } else {
           return 0;
         }
-      } else if(pair.second.register_tt() == TT_CARD){
-        if (replace_in_card_by_tbl(p, (LmnCardRef)pair.second.register_wt(), &t)){
+      } else if (pair.second.register_tt() == TT_CARD) {
+        if (replace_in_card_by_tbl(p, (LmnCardRef)pair.second.register_wt(), &t)) {
           new_map.push_back(CardPair{pair.first, {t, 0, TT_CARD}});
         } else {
           return 0;
@@ -1264,6 +1268,7 @@ void print_op(LmnInstrOp op){
     std::cout << "op: " << op << std::endl;
   }
 }
+
 /* 後で消す */
 void print_atoms(LmnMembrane *mem){
   std::map<LmnFunctor, AtomListEntry *> atomlists = mem->atom_lists();
@@ -1585,7 +1590,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
               //              allocmem命令の場合はTT_OTHERになっている(2014-05-08
               //              ueda)
             }
-          } else if (r->register_tt() == TT_CARD) {
+          } else if (r->register_tt() == TT_CARD) { /* QLMNtal */
             if (replace_in_card_by_tbl(copymap, (LmnCardRef)rc->wt(i), &t)) {
               r->register_set_wt((LmnWord)t);
             } else {
@@ -4843,14 +4848,14 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     READ_VAL(LmnInstrVar, instr, dstqueue);
     LmnInstrVar argnum;
     READ_VAL(LmnInstrVar, instr, argnum);
-    CardMap map = CardMap();
-    for (int i; i < argnum; i++){
+    auto map = CardMap();
+    for (int i; i < argnum; i++) {
       LmnInstrVar regi;
       READ_VAL(LmnInstrVar, instr, regi);
       LmnRegister reg_clone = this->rc->work_array[regi];
       map.push_back(std::make_pair((size_t)regi, reg_clone));
     }
-    if (TT_OTHER == (int)(this->rc->reg(dstqueue).register_tt())){
+    if ((int)(this->rc->reg(dstqueue).register_tt()) != TT_CARD) {
       LmnCardRef card;
       card = new LmnCard(CardQueue());
       this->rc->reg(dstqueue) = {(LmnWord)card, 0, TT_CARD};
@@ -4858,30 +4863,29 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     ((LmnCardRef)(this->rc->wt(dstqueue)))->push_map(map);
     return FALSE;
   }
+  /* QLMNtal */
   case INSTR_CARDPICK: {
     LmnInstrVar dstqueue, srcqueue, max;
     READ_VAL(LmnInstrVar, instr, dstqueue);
     READ_VAL(LmnInstrVar, instr, srcqueue);
     READ_VAL(LmnInstrVar, instr, max);
-    std::vector<LmnRegister> queue_combination;
-    if (TT_CARD == (int)(this->rc->reg(srcqueue).register_tt())){
-      queue_combination = ((LmnCardRef)(this->rc->wt(srcqueue)))->get_queue_combination(max);
+    std::vector<LmnRegister> picked_maps_regs;
+    if (TT_CARD == (int)(this->rc->reg(srcqueue).register_tt())) {
+      picked_maps_regs = ((LmnCardRef)(this->rc->wt(srcqueue)))->calc_picked_maps_regs(max);
       ((LmnCardRef)(this->rc->wt(srcqueue)))->reset_queue();
-    }else{
+    } else {
       LmnCardRef card;
       card = new LmnCard(CardQueue());
-      queue_combination = std::vector<LmnRegister>{{(LmnWord)card, 0, TT_CARD}};
+      picked_maps_regs = std::vector<LmnRegister>{{(LmnWord)card, 0, TT_CARD}};
     }
-    if(lmn_env.shuffle_atom) {
-      std::random_shuffle(queue_combination.begin(), queue_combination.end()); // 後で消す
-    }
-    this->false_driven_enumerate(dstqueue, std::move(queue_combination));
-    return false;
+    this->false_driven_enumerate(dstqueue, std::move(picked_maps_regs));
+    return FALSE;
   }
+  /* QLMNtal */
   case INSTR_CARDPOP: {
     LmnInstrVar srcqueue;
     READ_VAL(LmnInstrVar, instr, srcqueue);
-    if (TT_CARD == (int)(this->rc->reg(srcqueue).register_tt())
+    if ((int)(this->rc->reg(srcqueue).register_tt()) == TT_CARD
       && ((LmnCardRef)(this->rc->wt(srcqueue)))->get_queue().size() > 0){
       CardMap map = ((LmnCardRef)(this->rc->wt(srcqueue)))->pop_map();
       for (CardPair pair: map) {
@@ -4892,12 +4896,13 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       return FALSE;
     }
   }
+  /* QLMNtal */
   case INSTR_CARDNEQATOM: {
     LmnInstrVar atom1;
     READ_VAL(LmnInstrVar, instr, atom1);
     LmnInstrVar argnum;
     READ_VAL(LmnInstrVar, instr, argnum);
-    std::vector<size_t> atom2list = std::vector<size_t>(argnum);
+    auto atom2list = std::vector<size_t>(argnum);
     for (int i; i < argnum; i++){
       LmnInstrVar regi;
       READ_VAL(LmnInstrVar, instr, regi);
@@ -4905,17 +4910,18 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     }
     size_t atom2list_head = atom2list[0];
     atom2list.erase(atom2list.begin());
-    if (!cardneqatom(atom1, atom2list, this->rc, this->rc->reg(atom2list_head))){
+    if (!cardneqatom(atom1, atom2list, this->rc, this->rc->reg(atom2list_head))) {
       return FALSE;
     }
     break;
   }
+  /* QLMNtal */
   case INSTR_CARDNEQMEM: {
     LmnInstrVar mem1;
     READ_VAL(LmnInstrVar, instr, mem1);
     LmnInstrVar argnum;
     READ_VAL(LmnInstrVar, instr, argnum);
-    std::vector<size_t> mem2list = std::vector<size_t>(argnum);
+    auto mem2list = std::vector<size_t>(argnum);
     for (int i; i < argnum; i++){
       LmnInstrVar regi;
       READ_VAL(LmnInstrVar, instr, regi);
@@ -4923,11 +4929,12 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     }
     size_t mem2list_head = mem2list[0];
     mem2list.erase(mem2list.begin());
-    if (!cardneqmem(mem1, mem2list, this->rc, this->rc->reg(mem2list_head))){
+    if (!cardneqmem(mem1, mem2list, this->rc, this->rc->reg(mem2list_head))) {
       return FALSE;
     }
     break;
   }
+  /* QLMNtal */
   case INSTR_ANYATOM: {
     LmnInstrVar dstatom, srcmem;
     READ_VAL(LmnInstrVar, instr, dstatom);

@@ -1,5 +1,3 @@
-#include <iostream> // 後で消す
-
 /* QLMNtal */
 #ifndef CARDINALITY_HPP
 
@@ -16,80 +14,84 @@ struct LmnCard {
     queue(queue),
     included_list(std::vector<LmnRegister>()) {};
   
-  CardQueue get_queue(){
+  CardQueue get_queue() {
     return queue;
   }
   
-  void reset_queue(){
+  void reset_queue() {
     queue = CardQueue();
   }
   
-  void push_map(CardMap map){
+  void push_map(CardMap map) {
     queue.push_back(map);
   }
 
-  CardMap pop_map(){
+  CardMap pop_map() {
     CardMap map = queue[0];
     queue.erase(queue.begin());
     return map;
   }
 
-  std::vector<LmnRegister> get_included_list(){
+  std::vector<LmnRegister> get_included_list() {
     return included_list;
   }
 
-  void add_included(std::vector<LmnRegister> included){
+  void concat_included_list(std::vector<LmnRegister> included) {
     included_list.insert(included_list.end(), included.begin(), included.end());
   }
   
-  std::vector<LmnRegister> get_queue_combination(size_t max){
+  std::vector<LmnRegister> calc_picked_maps_regs(size_t max) {
     LmnCard* card;
     card = new LmnCard(CardQueue());
-    std::vector<LmnRegister> queue_combination = std::vector<LmnRegister>{{(LmnWord)card, 0, TT_CARD}};
+    auto picked_maps_regs = std::vector<LmnRegister>{{(LmnWord)card, 0, TT_CARD}};
     for (CardMap map: queue) {
-      std::vector<LmnRegister> map_included_list = std::vector<LmnRegister>();
+      auto map_included_list = std::vector<LmnRegister>();
       for (CardPair pair: map) {
-        if (TT_ATOM == pair.second.register_tt() || TT_MEM == pair.second.register_tt()) {
+        if (pair.second.register_tt() == TT_ATOM || pair.second.register_tt() == TT_MEM) {
           map_included_list.push_back(pair.second);
-        } else if (TT_CARD == pair.second.register_tt()) {
+        } else if (pair.second.register_tt() == TT_CARD) {
           std::vector<LmnRegister> queue_reg_included_list = ((LmnCard*)(pair.second.register_wt()))->get_included_list();
           map_included_list.insert(map_included_list.end(), queue_reg_included_list.begin(), queue_reg_included_list.end());
         }
       }
-      std::vector<LmnRegister> new_queue_combination = std::vector<LmnRegister>();
-      for (LmnRegister queue_combination_element: queue_combination){
-        new_queue_combination.push_back(queue_combination_element);
-        if (max > 0 && ((LmnCard*)(queue_combination_element.register_wt()))->get_queue().size() < max) {
-          std::vector<LmnRegister> queue_included_list = ((LmnCard*)(queue_combination_element.register_wt()))->get_included_list();
-          BOOL duplication = FALSE;
-          for (LmnRegister queue_included: queue_included_list){
-            for (LmnRegister map_included: map_included_list){
-              if (TT_ATOM == queue_included.register_tt() && TT_ATOM == map_included.register_tt()) {
-                // if (LMN_SATOM(queue_included.register_wt()) == LMN_SATOM(map_included.register_wt())){
+      auto new_picked_maps_regs = std::vector<LmnRegister>();
+      for (LmnRegister reg: picked_maps_regs) {
+        new_picked_maps_regs.push_back(reg);
+        if (max > 0 && ((LmnCard*)(reg.register_wt()))->get_queue().size() < max) {
+          std::vector<LmnRegister> queue_included_list = ((LmnCard*)(reg.register_wt()))->get_included_list();
+          BOOL overlap = FALSE;
+          for (LmnRegister queue_included: queue_included_list) {
+            for (LmnRegister map_included: map_included_list) {
+              if (queue_included.register_tt() == TT_ATOM && map_included.register_tt() == TT_ATOM) {
                 if (queue_included.register_wt() == map_included.register_wt()){
-                  duplication = TRUE;
+                  overlap = TRUE;
                 }
-              } else if (TT_MEM == queue_included.register_tt() && TT_MEM == map_included.register_tt()) {
+              } else if (queue_included.register_tt() == TT_MEM && map_included.register_tt() == TT_MEM) {
                 if (queue_included.register_wt() == map_included.register_wt()){
-                  duplication = TRUE;
+                  overlap = TRUE;
                 }
               }
+              if (overlap == TRUE) {
+                break;
+              }
+            }
+            if (overlap == TRUE) {
+              break;
             }
           }
-          if (!duplication) {
-            card = new LmnCard(((LmnCard*)(queue_combination_element.register_wt()))->get_queue());
-            card->add_included(queue_included_list);
+          if (!overlap) {
+            card = new LmnCard(((LmnCard*)(reg.register_wt()))->get_queue());
+            card->concat_included_list(queue_included_list);
             card->push_map(map);
-            card->add_included(map_included_list);
-            new_queue_combination.push_back({(LmnWord)card, 0, TT_CARD});
+            card->concat_included_list(map_included_list);
+            new_picked_maps_regs.push_back({(LmnWord)card, 0, TT_CARD});
           }
         }
       }
-      queue_combination = new_queue_combination;
+      picked_maps_regs = new_picked_maps_regs;
     }
-    return queue_combination;
+    return picked_maps_regs;
   }
-
 };
 
 typedef LmnCard* LmnCardRef;
