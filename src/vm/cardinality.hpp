@@ -8,11 +8,13 @@ typedef std::vector<CardMap> CardQueue;
 struct LmnCard {
   CardQueue queue;
   std::vector<LmnRegister> included_list;
+  int pop_index;
 
   public:
   LmnCard(CardQueue queue) :
     queue(queue),
-    included_list(std::vector<LmnRegister>()) {};
+    included_list(std::vector<LmnRegister>()),
+    pop_index(0) {};
   
   CardQueue get_queue() {
     return queue;
@@ -27,8 +29,8 @@ struct LmnCard {
   }
 
   CardMap pop_map() {
-    CardMap map = queue[0];
-    queue.erase(queue.begin());
+    CardMap map = queue[pop_index];
+    pop_index++;
     return map;
   }
 
@@ -38,6 +40,14 @@ struct LmnCard {
 
   void concat_included_list(std::vector<LmnRegister> included) {
     included_list.insert(included_list.end(), included.begin(), included.end());
+  }
+
+  int get_pop_index() {
+    return pop_index;
+  }
+
+  void set_pop_index(int i) {
+    pop_index = i;
   }
   
   std::vector<LmnRegister> calc_picked_maps_regs(size_t max) {

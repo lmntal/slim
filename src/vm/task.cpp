@@ -1254,6 +1254,8 @@ void print_op(LmnInstrOp op){
     std::cout << "removeatom" << std::endl;
   } else if (op == INSTR_FREEATOM) {
     std::cout << "freeatom" << std::endl;
+  } else if (op == INSTR_NOT) {
+    std::cout << "not" << std::endl;
   } else if (op == INSTR_BRANCH) {
     std::cout << "branch" << std::endl;
   } else if (op == INSTR_LOOP) {
@@ -1264,6 +1266,10 @@ void print_op(LmnInstrOp op){
     std::cout << "cardpick" << std::endl;
   } else if (op == INSTR_CARDPOP) {
     std::cout << "cardpop" << std::endl;
+  } else if (op == INSTR_CARDNEQATOM) {
+    std::cout << "cardneqatom" << std::endl;
+  } else if (op == INSTR_CARDNEQMEM) {
+    std::cout << "cardneqmem" << std::endl;
   } else {
     std::cout << "op: " << op << std::endl;
   }
@@ -4885,14 +4891,16 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
   case INSTR_CARDPOP: {
     LmnInstrVar srcqueue;
     READ_VAL(LmnInstrVar, instr, srcqueue);
-    if ((int)(this->rc->reg(srcqueue).register_tt()) == TT_CARD
-      && ((LmnCardRef)(this->rc->wt(srcqueue)))->get_queue().size() > 0){
+    int queue_size = ((LmnCardRef)(this->rc->wt(srcqueue)))->get_queue().size();
+    int pop_index = ((LmnCardRef)(this->rc->wt(srcqueue)))->get_pop_index();
+    if ((int)(this->rc->reg(srcqueue).register_tt()) == TT_CARD && queue_size > pop_index){
       CardMap map = ((LmnCardRef)(this->rc->wt(srcqueue)))->pop_map();
       for (CardPair pair: map) {
         this->rc->work_array[pair.first] = pair.second; 
       }
       break;
     } else {
+      ((LmnCardRef)(this->rc->wt(srcqueue)))->set_pop_index(0);
       return FALSE;
     }
   }
