@@ -1246,10 +1246,12 @@ void print_op(LmnInstrOp op){
     std::cout << "lockmem" << std::endl;
   } else if (op == INSTR_NEQATOM) {
     std::cout << "neqatom" << std::endl;
-  } else if (op == INSTR_NEWATOM) {
+  } else if (op == INSTR_NEQMEM) {
     std::cout << "neqmem" << std::endl;
   } else if (op == INSTR_NEWATOM) {
     std::cout << "newatom" << std::endl;
+  } else if (op == INSTR_NEWMEM) {
+    std::cout << "newmem" << std::endl;
   } else if (op == INSTR_REMOVEATOM) {
     std::cout << "removeatom" << std::endl;
   } else if (op == INSTR_FREEATOM) {
@@ -1316,7 +1318,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
   if (lmn_env.find_atom_parallel)
     return FALSE;
 
-  // print_op(op);
+  // print_op(op); // 後で消す
   switch (op) {
   case INSTR_SPEC: {
     LmnInstrVar s0;
@@ -4867,7 +4869,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       this->rc->reg(dstqueue) = {(LmnWord)card, 0, TT_CARD};
     }
     ((LmnCardRef)(this->rc->wt(dstqueue)))->push_map(map);
-    return FALSE;
+    break;
   }
   /* QLMNtal */
   case INSTR_CARDPICK: {
