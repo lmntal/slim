@@ -285,11 +285,11 @@ const std::map<LmnInstruction, InstrSpec> instr_spec = {
     {INSTR_FREESET, {"freeset", {InstrVar}}},
 
     /* QLMNtal */
-    {INSTR_CARDPUSH, {"cardpush", {InstrVar, InstrVarList}}},
-    {INSTR_CARDPICK, {"cardpick", {InstrVar, InstrVar, InstrVar}}},
-    {INSTR_CARDPOP, {"cardpop", {InstrVar}}},
-    {INSTR_CARDNEQATOM, {"cardneqatom", {InstrVar, InstrVarList}}},
-    {INSTR_CARDNEQMEM, {"cardneqmem", {InstrVar, InstrVarList}}},
+    {INSTR_PUSHMAP, {"pushmap", {InstrVar, InstrVarList}}},
+    {INSTR_PICKMAPS, {"pickmaps", {InstrVar, InstrVar, InstrVar}}},
+    {INSTR_POPMAP, {"popmap", {InstrVar}}},
+    {INSTR_MAPNEQATOM, {"mapneqatom", {InstrVar, InstrVarList}}},
+    {INSTR_MAPNEQMEM, {"mapneqmem", {InstrVar, InstrVarList}}},
     {INSTR_ANYATOM, {"anyatom", {InstrVar, InstrVar}}},
 
     /* etc */

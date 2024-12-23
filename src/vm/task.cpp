@@ -1262,16 +1262,18 @@ void print_op(LmnInstrOp op){
     std::cout << "branch" << std::endl;
   } else if (op == INSTR_LOOP) {
     std::cout << "loop" << std::endl;
-  } else if (op == INSTR_CARDPUSH) {
-    std::cout << "cardpush" << std::endl;
-  } else if (op == INSTR_CARDPICK) {
-    std::cout << "cardpick" << std::endl;
-  } else if (op == INSTR_CARDPOP) {
-    std::cout << "cardpop" << std::endl;
-  } else if (op == INSTR_CARDNEQATOM) {
-    std::cout << "cardneqatom" << std::endl;
-  } else if (op == INSTR_CARDNEQMEM) {
+  } else if (op == INSTR_PUSHMAP) {
+    std::cout << "pushmap" << std::endl;
+  } else if (op == INSTR_PICKMAPS) {
+    std::cout << "pickmaps" << std::endl;
+  } else if (op == INSTR_POPMAP) {
+    std::cout << "popmap" << std::endl;
+  } else if (op == INSTR_MAPNEQATOM) {
+    std::cout << "mapneqatom" << std::endl;
+  } else if (op == INSTR_MAPNEQMEM) {
     std::cout << "cardneqmem" << std::endl;
+  } else if (op == INSTR_ANYATOM) {
+    std::cout << "anyatom" << std::endl;
   } else {
     std::cout << "op: " << op << std::endl;
   }
@@ -4851,7 +4853,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     break;
   }
   /* QLMNtal */
-  case INSTR_CARDPUSH: {
+  case INSTR_PUSHMAP: {
     LmnInstrVar dstqueue;
     READ_VAL(LmnInstrVar, instr, dstqueue);
     LmnInstrVar argnum;
@@ -4872,7 +4874,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     break;
   }
   /* QLMNtal */
-  case INSTR_CARDPICK: {
+  case INSTR_PICKMAPS: {
     LmnInstrVar dstqueue, srcqueue, max;
     READ_VAL(LmnInstrVar, instr, dstqueue);
     READ_VAL(LmnInstrVar, instr, srcqueue);
@@ -4890,7 +4892,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     return FALSE;
   }
   /* QLMNtal */
-  case INSTR_CARDPOP: {
+  case INSTR_POPMAP: {
     LmnInstrVar srcqueue;
     READ_VAL(LmnInstrVar, instr, srcqueue);
     int queue_size = ((LmnCardRef)(this->rc->wt(srcqueue)))->get_queue().size();
@@ -4907,7 +4909,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     }
   }
   /* QLMNtal */
-  case INSTR_CARDNEQATOM: {
+  case INSTR_MAPNEQATOM: {
     LmnInstrVar atom1;
     READ_VAL(LmnInstrVar, instr, atom1);
     LmnInstrVar argnum;
@@ -4926,7 +4928,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     break;
   }
   /* QLMNtal */
-  case INSTR_CARDNEQMEM: {
+  case INSTR_MAPNEQMEM: {
     LmnInstrVar mem1;
     READ_VAL(LmnInstrVar, instr, mem1);
     LmnInstrVar argnum;
