@@ -1172,7 +1172,7 @@ void slim::vm::interpreter::anyatom(LmnMembrane *mem, size_t reg){
   for (std::pair<LmnFunctor, AtomListEntry *> atomlist: atomlists) { 
     auto iter = std::begin(*atomlist.second);
     auto end = std::end(*atomlist.second);
-    if (iter == end)
+    if (iter == end || atomlist.first == 0 || atomlist.first == 1)
       continue;
     auto v = std::vector<LmnRegister>(atomlist.second->size());
     std::transform(iter, end, v.begin(), [](LmnSymbolAtomRef atom) {
@@ -1195,10 +1195,15 @@ int replace_in_card_by_tbl(ProcessTableRef p, LmnCardRef card, LmnWord *value) {
     for (CardPair pair: map) {
       LmnWord t;
       if (pair.second.register_tt() == TT_ATOM) {
-        if (proc_tbl_get_by_atom(p, (LmnSymbolAtomRef)pair.second.register_wt(), &t)) {
-          new_map.push_back(CardPair{pair.first, {t, 0, TT_CARD}});
+        if (LMN_ATTR_IS_DATA(pair.second.register_at())) {
+          // かなりあやしい
+          new_map.push_back(CardPair{pair.first, {lmn_copy_data_atom(pair.second.register_wt(), pair.second.register_at()), pair.second.register_at(), TT_CARD}});
         } else {
-          return 0;
+          if (proc_tbl_get_by_atom(p, (LmnSymbolAtomRef)pair.second.register_wt(), &t)) {
+            new_map.push_back(CardPair{pair.first, {t, 0, TT_CARD}});
+          } else {
+            return 0;
+          }
         }
       } else if (pair.second.register_tt() == TT_MEM) {
         if (proc_tbl_get_by_mem(p, (LmnMembraneRef)pair.second.register_wt(), &t)) {
@@ -1469,55 +1474,55 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
   }
   case INSTR_COMMIT: {
     lmn_interned_str rule_name;
-
+    
     READ_VAL(lmn_interned_str, instr, rule_name);
     SKIP_VAL(LmnLineNum, instr);
-
+    
     if (lmn_env.findatom_parallel_mode) {
       lmn_fatal("Couldn't find sync instruction!!");
     }
-
-#ifdef KWBT_OPT
+    
+    #ifdef KWBT_OPT
     {
       LmnInstrVar cost;
       READ_VAL(LmnInstrVar, instr, cost);
       rule->cost = cost;
     }
-#endif
+    #endif
 
     rule->name = rule_name;
 
     profile_apply();
-
+    
     /*
-     * MC mode
-     *
-     * グローバル変数global_rootに格納されているグローバルルート膜をコピーして
-     * そのコピーに対してボディ命令を適用する．
-     * その際に変数配列の情報もコピー前のものからコピー後のものへと書き換える．
+    * MC mode
+    *
+    * グローバル変数global_rootに格納されているグローバルルート膜をコピーして
+    * そのコピーに対してボディ命令を適用する．
+    * その際に変数配列の情報もコピー前のものからコピー後のものへと書き換える．
      *
      * CONTRACT: COMMIT命令に到達したルールはマッチング検査に成功している
      */
     if (rc->has_mode(REACT_ND) && !rc->is_zerostep) {
       auto mcrc = dynamic_cast<MCReactContext *>(rc);
       ProcessID org_next_id = env_next_id();
-
+      
       if (mcrc->has_optmode(DeltaMembrane)) {
         /** >>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<< **/
         /** >>>>>>>> enable delta-membrane <<<<<<< **/
         /** >>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<< **/
         struct MemDeltaRoot *d =
-            new MemDeltaRoot(rc->get_global_root(), rule, env_next_id());
+        new MemDeltaRoot(rc->get_global_root(), rule, env_next_id());
         RC_ND_SET_MEM_DELTA_ROOT(rc, d);
-
+        
         /* dmem_commit/revertとの整合性を保つため,
-         * uniq処理の特殊性を吸収しておく */
+        * uniq処理の特殊性を吸収しておく */
         rule->undo_history();
-
+        
         if (mcrc->has_optmode(DynamicPartialOrderReduction)) {
           dpor_transition_gen_LHS(RC_POR_DATA(rc), d, rc);
         }
-
+        
         dmem_interpret(rc, rule, instr);
         dmem_root_finish(d);
 
@@ -1527,14 +1532,14 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
           } else {
             mc_react_cxt_add_mem_delta(mcrc, d, rule);
           }
-
+          
           /* サクセッサへの差分オブジェクトが複数できあがることになるが,
-           * 差分オブジェクト間では生成したプロセスのIDに重複があってはならない.
-           */
-          RC_ND_SET_MEM_DELTA_ROOT(rc, NULL);
-          return FALSE;
+          * 差分オブジェクト間では生成したプロセスのIDに重複があってはならない.
+          */
+         RC_ND_SET_MEM_DELTA_ROOT(rc, NULL);
+         return FALSE;
         }
-
+        
         mc_react_cxt_add_mem_delta(mcrc, d, rule);
         RC_ND_SET_MEM_DELTA_ROOT(rc, NULL);
       } else {
@@ -1544,18 +1549,18 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
         ProcessTableRef copymap;
         LmnMembraneRef tmp_global_root;
         unsigned int i, n;
-
+        
 #ifdef PROFILE
         if (lmn_env.profile_level >= 3) {
           profile_start_timer(PROFILE_TIME__STATE_COPY_IN_COMMIT);
         }
-#endif
-
+        #endif
+        
         tmp_global_root = lmn_mem_copy_with_map_ex(rc->get_global_root(), &copymap);
-
+        
         /** 変数配列および属性配列のコピー */
         auto v = LmnRegisterArray(rc->capacity());
-
+        
         /** copymapの情報を基に変数配列を書換える */
         for (i = 0; i < rc->capacity(); i++) {
           LmnWord t;
@@ -1568,7 +1573,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
               /* data-atom */
               if (r->register_at() == LMN_HL_ATTR) {
                 if (proc_tbl_get_by_hlink(
-                        copymap,
+                  copymap,
                         lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)rc->wt(i)),
                         &t)) {
                   r->register_set_wt((LmnWord)((HyperLink *)t)->hl_to_at());
@@ -1578,10 +1583,10 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
                 }
               } else {
                 r->register_set_wt((LmnWord)lmn_copy_data_atom(
-                    (LmnAtom)rc->wt(i), r->register_at()));
+                  (LmnAtom)rc->wt(i), r->register_at()));
               }
             } else if (proc_tbl_get_by_atom(copymap,
-                                            (LmnSymbolAtomRef)rc->wt(i), &t)) {
+              (LmnSymbolAtomRef)rc->wt(i), &t)) {
               /* symbol-atom */
               r->register_set_wt((LmnWord)t);
             } else {
@@ -1589,7 +1594,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
             }
           } else if (r->register_tt() == TT_MEM) {
             if (rc->wt(i) ==
-                (LmnWord)rc->get_global_root()) { /* グローバルルート膜 */
+            (LmnWord)rc->get_global_root()) { /* グローバルルート膜 */
               r->register_set_wt((LmnWord)tmp_global_root);
             } else if (proc_tbl_get_by_mem(copymap, (LmnMembraneRef)rc->wt(i),
                                            &t)) {
@@ -1609,6 +1614,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
           } else { /* TT_OTHER */
             r->register_set_wt(rc->wt(i));
           }
+          std::cout << rc->wt(i) << " -> " << r->register_wt() << std::endl;
         }
         delete copymap;
 
@@ -1617,32 +1623,32 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
         rc->warray_set(std::move(v));
 
 #ifdef PROFILE
-        if (lmn_env.profile_level >= 3) {
-          profile_finish_timer(PROFILE_TIME__STATE_COPY_IN_COMMIT);
-        }
+if (lmn_env.profile_level >= 3) {
+  profile_finish_timer(PROFILE_TIME__STATE_COPY_IN_COMMIT);
+}
 #endif
 
-        this->push_stackframe([=](interpreter &itr, bool result) {
-          react_zerostep_recursive(
-              rc, tmp_global_root); /**< 0stepルールを適用する */
-          mc_react_cxt_add_expanded(mcrc, tmp_global_root, rule);
-
-          rule->undo_history();
-
-          rc->warray_set(std::move(*tmp));
-          if (!rc->keep_process_id_in_nd_mode)
+this->push_stackframe([=](interpreter &itr, bool result) {
+  react_zerostep_recursive(
+    rc, tmp_global_root); /**< 0stepルールを適用する */
+    mc_react_cxt_add_expanded(mcrc, tmp_global_root, rule);
+    
+    rule->undo_history();
+    
+    rc->warray_set(std::move(*tmp));
+    if (!rc->keep_process_id_in_nd_mode)
             env_set_next_id(org_next_id);
-          delete tmp;
-          return command_result::Failure;
-        });
-        break;
-      }
-
-      return FALSE; /* matching backtrack! */
-    } else if (rc->has_mode(REACT_PROPERTY)) {
-      return TRUE; /* propertyはmatchingのみ */
+            delete tmp;
+            return command_result::Failure;
+          });
+          break;
+        }
+        
+        return FALSE; /* matching backtrack! */
+      } else if (rc->has_mode(REACT_PROPERTY)) {
+        return TRUE; /* propertyはmatchingのみ */
     }
-
+    
     break;
   }
   case INSTR_FINDATOM: {
@@ -1652,39 +1658,39 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     READ_VAL(LmnInstrVar, instr, atomi);
     READ_VAL(LmnInstrVar, instr, memi);
     READ_VAL(LmnLinkAttr, instr, attr);
-
+    
     if (LMN_ATTR_IS_DATA(attr))
-      throw std::runtime_error("cannot find data atoms.");
-
+    throw std::runtime_error("cannot find data atoms.");
+    
     if (lmn_env.find_atom_parallel)
-      return false;
+    return false;
 
     LmnFunctor f;
     READ_VAL(LmnFunctor, instr, f);
     auto mem = (LmnMembraneRef)rc->wt(memi);
-
+    
     if (rc_hlink_opt(atomi, rc)) {
       /* hyperlink の接続関係を利用したルールマッチング最適化 */
       if (!rc->get_hl_sameproccxt())
-        rc->prepare_hl_spc();
+      rc->prepare_hl_spc();
       auto spc =
-          (SameProcCxt *)hashtbl_get(rc->get_hl_sameproccxt(), (HashKeyType)atomi);
+      (SameProcCxt *)hashtbl_get(rc->get_hl_sameproccxt(), (HashKeyType)atomi);
       findatom_through_hyperlink(rc, rule, instr, spc, mem, f, atomi);
     } else {
       if(lmn_env.history_management) findatom_history_management(rule, mem, f, atomi);
       else findatom(rc, rule, instr, mem, f, atomi);
     }
-
+    
     return false; // false driven loop
   }
   case INSTR_FINDATOM2: {
     LmnInstrVar atomi, memi, findatomid;
     LmnLinkAttr attr;
-
+    
     if (rc->has_mode(REACT_ND) && !rc->is_zerostep) {
       lmn_fatal("This mode:exhaustive search can't use instruction:FindAtom2");
     }
-
+    
     READ_VAL(LmnInstrVar, instr, atomi);
     READ_VAL(LmnInstrVar, instr, memi);
     READ_VAL(LmnInstrVar, instr, findatomid);
