@@ -1,6 +1,8 @@
 /* QLMNtal */
 #ifndef CARDINALITY_HPP
 
+#define LMN_ATTR_IS_CARD(ATTR) ((ATTR) == LMN_CARD_ATTR)
+
 typedef std::pair<size_t, LmnRegister> CardPair;
 typedef std::vector<CardPair> CardMap;
 typedef std::vector<CardMap> CardQueue;
@@ -53,13 +55,13 @@ struct LmnCard {
   std::vector<LmnRegister> calc_picked_maps_regs(size_t max) {
     LmnCard* card;
     card = new LmnCard(CardQueue());
-    auto picked_maps_regs = std::vector<LmnRegister>{{(LmnWord)card, 0, TT_CARD}};
+    auto picked_maps_regs = std::vector<LmnRegister>{{(LmnWord)card, LMN_CARD_ATTR, TT_OTHER}};
     for (CardMap map: queue) {
       auto map_included_list = std::vector<LmnRegister>();
       for (CardPair pair: map) {
         if (pair.second.register_tt() == TT_ATOM || pair.second.register_tt() == TT_MEM) {
           map_included_list.push_back(pair.second);
-        } else if (pair.second.register_tt() == TT_CARD) {
+        } else if (LMN_ATTR_IS_CARD(pair.second.register_at())) {
           std::vector<LmnRegister> queue_reg_included_list = ((LmnCard*)(pair.second.register_wt()))->get_included_list();
           map_included_list.insert(map_included_list.end(), queue_reg_included_list.begin(), queue_reg_included_list.end());
         }
@@ -94,7 +96,7 @@ struct LmnCard {
             card->concat_included_list(queue_included_list);
             card->push_map(map);
             card->concat_included_list(map_included_list);
-            new_picked_maps_regs.push_back({(LmnWord)card, 0, TT_CARD});
+            new_picked_maps_regs.push_back({(LmnWord)card, LMN_CARD_ATTR, TT_OTHER});
           }
         }
       }

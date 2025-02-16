@@ -76,8 +76,7 @@
 enum {
   TT_OTHER = 0,
   TT_ATOM = 1, /* symbol atom  */
-  TT_MEM = 2,  /* membrane */
-  TT_CARD = 3  /* QLMNtal */
+  TT_MEM = 2   /* membrane */
 };
 class Task{
   static void task_init();//呼び出し元不明
