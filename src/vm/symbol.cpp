@@ -48,7 +48,7 @@ static lmn_mutex_t sym_mtx;
 /* prototypes */
 
 void sym_tbl_init(void);
-int free_sym_tbl_entry(st_data_t name, st_data_t _v, int _i);
+int free_sym_tbl_entry(st_data_t name, st_data_t _v, st_data_t _i);
 void sym_tbl_destroy(void);
 lmn_interned_str create_new_id(void);
 
@@ -66,14 +66,14 @@ void sym_tbl_init() {
     lmn_mutex_init(&(sym_mtx));
 }
 
-int free_sym_tbl_entry(st_data_t name, st_data_t _v, int _i) {
+int free_sym_tbl_entry(st_data_t name, st_data_t _v, st_data_t _i) {
   LMN_FREE(name);
   return ST_DELETE;
 }
 
 void sym_tbl_destroy() {
   /* テーブル中の文字列の領域を解放 */
-  st_foreach(sym_tbl, (st_iter_func)free_sym_tbl_entry, 0);
+  st_foreach(sym_tbl, free_sym_tbl_entry, 0);
 
   st_free_table(sym_tbl);
   st_free_table(sym_rev_tbl);
