@@ -9,4 +9,8 @@ DISTCLEANFILES = VERSION arch.h
 
 MOSTLYCLEANFILES = -rf $(DX_CLEANFILES)
 
+LIBTOOL_DEPS = @LIBTOOL_DEPS@
+libtool: $(LIBTOOL_DEPS)
+	$(SHELL) ./config.status libtool
+
 @DX_RULES@
