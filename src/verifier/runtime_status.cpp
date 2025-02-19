@@ -292,7 +292,7 @@ void lmn_profiler_finalize() {
   }
 
   if (lmn_prof.prules) {
-    st_foreach(lmn_prof.prules, (st_iter_func)rule_profiler_free_f,
+    st_foreach(lmn_prof.prules, rule_profiler_free_f,
                (st_data_t)0);
     st_free_table(lmn_prof.prules);
   }

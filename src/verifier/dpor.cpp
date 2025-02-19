@@ -365,7 +365,7 @@ static void dpor_data_free(McDporData *d) {
   delete d->wt_gatoms;
   delete d->wt_flags;
   delete d->ample_cand;
-  st_foreach(d->delta_tbl, (st_iter_func)contextC1_free_f, (st_data_t)0);
+  st_foreach(d->delta_tbl, contextC1_free_f, (st_data_t)0);
   st_free_table(d->delta_tbl);
   for (i = 0; i < d->free_deltas->get_num(); i++) {
     MemDeltaRoot *delt = (MemDeltaRoot *)d->free_deltas->get(i);
@@ -379,7 +379,7 @@ static void dpor_data_clear(McDporData *d, MCReactContext *rc) {
   d->wt_gatoms->clear();
   (d->wt_flags)->tbl_clear();
   d->ample_cand->clear();
-  st_foreach(d->delta_tbl, (st_iter_func)contextC1_free_f, (st_data_t)0);
+  st_foreach(d->delta_tbl, contextC1_free_f, (st_data_t)0);
   st_clear(d->delta_tbl);
 
   while (!d->free_deltas->is_empty()) {
@@ -1142,8 +1142,8 @@ static int dpor_LHS_procs_dump_f(LmnWord _k, LmnWord _v, LmnWord _arg);
 static int dpor_RHS_procs_dump_f(LmnWord _k, LmnWord _v, LmnWord _arg);
 
 void dpor_contextC1_dump(McDporData *d) {
-  st_foreach(d->delta_tbl, (st_iter_func)dpor_LHS_procs_dump_f, (st_data_t)0);
-  st_foreach(d->delta_tbl, (st_iter_func)dpor_RHS_procs_dump_f, (st_data_t)0);
+  st_foreach(d->delta_tbl, dpor_LHS_procs_dump_f, (st_data_t)0);
+  st_foreach(d->delta_tbl, dpor_RHS_procs_dump_f, (st_data_t)0);
 }
 
 void dpor_contextC1_dump_eachL(ContextC1Ref c) {

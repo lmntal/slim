@@ -58,7 +58,7 @@ void CCallback::ccallback_init() { ccallback_tbl = st_init_numtable(); }
 
 
 void CCallback::ccallback_finalize() {
-  st_foreach(ccallback_tbl, (st_iter_func)free_v, 0);
+  st_foreach(ccallback_tbl, free_v, 0);
   st_free_table(ccallback_tbl);
 }
 
