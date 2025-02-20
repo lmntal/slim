@@ -168,29 +168,29 @@ int McPorData::independency_vec_free(st_data_t _k, st_data_t vec, st_data_t _a) 
 }
 
 /* PORのために一時的に構築した状態空間上の頂点を削除する. */
-int McPorData::destroy_tmp_state_graph(State *s, LmnWord _a) {
-  if (s != mc_por.root) {
-    if (is_outside_exist(s)) {
+int McPorData::destroy_tmp_state_graph(st_data_t dummy, st_data_t s, st_data_t _a) {
+  if (((State *) s) != mc_por.root) {
+    if (is_outside_exist(((State *) s))) {
       /* 展開元の状態から1stepで遷移可能な頂点(rootのサクセサ)が状態空間に追加されている場合
        */
-      s->succ_clear();
-      s->flags3 = 0x00U;
+      ((State *) s)->succ_clear();
+      ((State *) s)->flags3 = 0x00U;
     } else {
       /* それ以外は, rootでなければ開放 */
-     delete(s);
+     delete(((State *) s));
     }
   } else if (!mc_has_trans(((BOOL)_a))) {
     /* rootなら, サクセッサの遷移オブジェクトを調整 */
     unsigned int i;
-    for (i = 0; i < s->successor_num; i++) {
+    for (i = 0; i < ((State *) s)->successor_num; i++) {
       TransitionRef succ_t;
       State *succ_s;
-      succ_t = transition(s, i);
+      succ_t = transition(((State *) s), i);
       succ_s = transition_next_state(succ_t);
       transition_free(succ_t);
-      s->successors[i] = (succ_data_t)succ_s;
+      ((State *) s)->successors[i] = (succ_data_t)succ_s;
     }
-    s->unset_trans_obj();
+    ((State *) s)->unset_trans_obj();
   }
 
   return ST_DELETE;
@@ -198,9 +198,9 @@ int McPorData::destroy_tmp_state_graph(State *s, LmnWord _a) {
 
 void McPorData::finalize_ample(BOOL org_f) {
   next_strans_id = POR_ID_INITIALIZER;
-  st_foreach(strans_independency, (st_iter_func)&McPorData::independency_vec_free,
+  st_foreach(strans_independency, &McPorData::independency_vec_free,
              (st_data_t)0);
-  st_foreach(states, (st_iter_func)&McPorData::destroy_tmp_state_graph,
+  st_foreach(states, &McPorData::destroy_tmp_state_graph,
              (LmnWord)org_f);
   queue->clear();
   ample_candidate->clear();
@@ -231,7 +231,7 @@ BOOL McPorData::ample(StateSpaceRef ss, State *s, MCReactContext *rc, Vector *ne
    * -- この処理では，sにおいてC1を満足するためには絶対にample(s)内に
    *    含めておかなくてはならない遷移の集合をample_candidate内にPUSHする. */
   st_foreach(strans_independency,
-             (st_iter_func)&McPorData::build_ample_satisfying_lemma, (st_data_t)s);
+             &McPorData::build_ample_satisfying_lemma, (st_data_t)s);
 
   /* ここでample_candidateが空の場合は，sで可能なすべての遷移が互いに独立であることになるので，
    * その中でC2，C3を共に満足する1本をample_candidateの要素とする */
@@ -293,7 +293,7 @@ BOOL McPorData::ample(StateSpaceRef ss, State *s, MCReactContext *rc, Vector *ne
 
   POR_DEBUG({
     printf("*** C1--3 ok! ample set calculated\n");
-    st_foreach(strans_independency, (st_iter_func)dump__strans_independency,
+    st_foreach(strans_independency, dump__strans_independency,
                (st_data_t)0);
     dump__ample_candidate();
   });
@@ -561,7 +561,7 @@ BOOL McPorData::independency_check(State *s, AutomataRef a, Vector *psyms) {
 
   POR_DEBUG({
     printf("\nbefore\n");
-    st_foreach(states, (st_iter_func)dump__tmp_graph, (st_data_t)FALSE);
+    st_foreach(states, dump__tmp_graph, (st_data_t)FALSE);
     printf("\n");
   });
 
@@ -623,7 +623,7 @@ BOOL McPorData::independency_check(State *s, AutomataRef a, Vector *psyms) {
 
   POR_DEBUG({
     printf("after\n");
-    st_foreach(states, (st_iter_func)dump__tmp_graph, (st_data_t)FALSE);
+    st_foreach(states, dump__tmp_graph, (st_data_t)FALSE);
     printf("\n");
   });
 
@@ -688,10 +688,10 @@ BOOL McPorData::check_C1(State *s, AutomataRef a, Vector *psyms) {
       /* Fに反する経路Pが検出されたので偽を返して終了する */
       POR_DEBUG({
         printf("   λ.. C1 violate_id::%lu\n", transition_id(succ_t));
-        st_foreach(strans_independency, (st_iter_func)dump__strans_independency,
+        st_foreach(strans_independency, dump__strans_independency,
                    (st_data_t)0);
         dump__ample_candidate();
-        st_foreach(states, (st_iter_func)dump__tmp_graph, (st_data_t)FALSE);
+        st_foreach(states, dump__tmp_graph, (st_data_t)FALSE);
         printf("\n");
       });
       return FALSE;

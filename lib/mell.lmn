@@ -1,0 +1,57 @@
+
+{
+module(mell).
+
+/**
+ * mell.copy(+Mem, +Cont1, +Cont2, +Cont3, +Cut1, +Cut2, +Free1, +Free2):
+ *
+ * 与えられた膜を複製する．複製された膜のMem以外の自由リンクは
+ * 1. 複製された膜の自由リンク(主ポート以外)に接続される三引数のプロセス文脈(contractionにあたる)
+ * 2. 複製された膜の自由リンク(主ポート)に接続される二引数のプロセス文脈(cutにあたる)
+ * 3. 複製された膜の自由リンク(主ポート)に接続される自由リンク(元のcontractionの自由リンクにあたる)
+ * @param +Mem                   複製する膜
+ * @param +Cont1, +Cont2, +Cont3 複製された膜の自由リンク(主ポート)に接続される三引数のプロセス文脈
+ * @param +Cut1,  +Cut2          複製された膜の自由リンク(主ポート)に接続される二引数のプロセス文脈
+ * @param +Free1, +Free2         複製された膜の自由リンク(主ポート)に接続される自由リンク
+ * @example
+ * mell.copy(M, A1, A2, A3, B1, B2, C1, C2), {$p[M|*Z]}, {$a[A1,A2,A3]}, {$b[B1,B2]}
+ * ==>
+ * {$p1[M1|*Z1]}, {$p2[M2|*Z2]}, $a[*Z1,*Z2,*Z], $b[M1,C1], $b[M2,C2]
+ */
+
+_mell_copy@@
+mell.copy(M,A1,A2,A3,B1,B2,C1,C2) :-
+    '$callback'('mell_copy', M, A1, A2, A3, B1, B2, C1, C2).
+
+_mell_copy_sub1@@
+mell.copy(M,A1,A2,A3,C1,C2), :- 
+  mell.copy(M,A1,A2,A3,B1,B2,C1,C2), {B1=B2}.
+
+_mell_copy_sub2@@
+mell.copy(M,A1,A2,A3,C), {$a[A1,A2,A3]} :- 
+   mell.copy(M,A1,A2,A3,B1,B2,C1,C2), {$a[A1,A2,A3]}, {B1=B2}, $a[C1,C2,C].
+
+_mell_copy_sub3@@
+mell.copy(M,C), :- 
+   mell.copy(M,A1,A2,A3,B1,B2,C1,C2), {cp(A1,A2,A3)}, {B1=B2}, cp(C1,C2,C).
+
+
+
+/**
+ * mell.delete(+Mem, +Weakn)
+ *
+ * 与えられた膜を破棄する．その膜のMem以外の自由リンクにはそれぞれ、
+ * 指定されたプロセス文脈の複製が接続される．
+ * @param +Mem 破棄する膜
+ * @param +Weakn 破棄された膜の自由リンクに接続されるプロセス文脈(weakeningにあたる)
+ * @example mell.delete(M, K),{$p[M|*Z]}, {$k[K]} ==> $k[*Z]
+ */
+
+_mell_delete@@
+mell.delete(M, T) :- '$callback'('mell_delete', M, T).
+
+_mell_delete_sub@@
+mell.delete(M), :- mell.delete(M, X), {deleted(X)}.
+
+}.
+

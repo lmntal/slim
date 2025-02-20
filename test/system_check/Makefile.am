@@ -200,7 +200,12 @@ check_DATA = \
 	testsuite/uniq/case6.il \
 	testsuite/cslmntal/skiplist1.il \
 	testsuite/cslmntal/skiplist2.il \
-	testsuite/cslmntal/skiplist3.il
+	testsuite/cslmntal/skiplist3.il \
+	testsuite/cslmntal/isbinarytree.il \
+	testsuite/cslmntal/context_add.il \
+	testsuite/cslmntal/list_rmhead.il \
+	testsuite/cslmntal/list_rmend.il \
+	testsuite/cslmntal/list_sort.il
 
 CLEANFILES = $(check_DATA)
 

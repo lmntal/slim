@@ -71,6 +71,23 @@ typedef void (*callback_5)(LmnReactCxtRef, LmnMembraneRef, LmnAtomRef,
                            LmnLinkAttr, LmnAtomRef, LmnLinkAttr, LmnAtomRef,
                            LmnLinkAttr);
 
+typedef void (*callback_6)(LmnReactCxtRef, LmnMembraneRef, LmnAtomRef,
+                           LmnLinkAttr, LmnAtomRef, LmnLinkAttr, LmnAtomRef,
+                           LmnLinkAttr, LmnAtomRef, LmnLinkAttr, LmnAtomRef,
+                           LmnLinkAttr, LmnAtomRef, LmnLinkAttr);
+
+typedef void (*callback_7)(LmnReactCxtRef, LmnMembraneRef, LmnAtomRef,
+                           LmnLinkAttr, LmnAtomRef, LmnLinkAttr, LmnAtomRef,
+                           LmnLinkAttr, LmnAtomRef, LmnLinkAttr, LmnAtomRef,
+                           LmnLinkAttr, LmnAtomRef, LmnLinkAttr, LmnAtomRef,
+                           LmnLinkAttr);
+
+typedef void (*callback_8)(LmnReactCxtRef, LmnMembraneRef, LmnAtomRef,
+                           LmnLinkAttr, LmnAtomRef, LmnLinkAttr, LmnAtomRef,
+                           LmnLinkAttr, LmnAtomRef, LmnLinkAttr, LmnAtomRef,
+                           LmnLinkAttr, LmnAtomRef, LmnLinkAttr, LmnAtomRef,
+                           LmnLinkAttr, LmnAtomRef, LmnLinkAttr);
+
 struct Vector user_system_rulesets; /* system ruleset defined by user */
 
 /**
@@ -1058,6 +1075,35 @@ struct exec_subinstructions_branch {
     }
   }
 };
+
+static bool push_updated_hl_cmems
+( LmnMembraneRef mem,
+  std::vector<LmnMembraneRef> &buf, int id )
+{
+  bool is_updated = false;
+  for (auto *cmem = mem->child_head; cmem; cmem = cmem->next) {
+    /* 子膜側に再帰 */
+    bool updated_hl = push_updated_hl_cmems( cmem, buf, id );
+
+    /* 現在の膜の検査. 子膜側に変化があったら冗長のためskip */
+    auto *ent = cmem->get_atomlist( LMN_HL_FUNC );
+    if (!updated_hl) {
+      LmnSymbolAtomRef atom;
+      EACH_ATOM( atom, ent, {
+          auto hl_id = LMN_HL_ID( LMN_HL_ATOM_ROOT_HL( atom ) );
+          updated_hl = (hl_id == id);
+          if (updated_hl) break;
+        });
+    }
+
+    /* 変化があった場合, 当該膜をメモしておく */
+    if (updated_hl) {
+      buf.push_back( cmem );
+      is_updated = true;
+    }
+  }
+  return is_updated;
+}
 
 /**
  *  execute a command at instr.
@@ -2796,7 +2842,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
         }
         case LMN_HL_ATTR: {
           char buf[16];
-          port_put_raw_s(port, EXCLAMATION_NAME);
+          port_put_raw_s(port, HYPERLINK_NAME);
           sprintf(buf, "%lx",
                   LMN_HL_ID(LMN_HL_ATOM_ROOT_HL(
                       (LmnSymbolAtomRef)rc->wt(srcvec->get(0)))));
@@ -2967,6 +3013,14 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       lmn_mem_delete_atom(m, (LmnAtomRef)rc->wt(atomi), rc->at(atomi));
       lmn_mem_delete_atom(m, atom1, (LmnWord)attr1);
       lmn_mem_delete_atom(m, atom2, (LmnWord)attr2);
+
+      if (rc->has_mode(REACT_MEM_ORIENTED) && hl1 && hl1->get_root()) {
+        std::vector<LmnMembraneRef> mbuf;/* memstackの逆順 */
+        push_updated_hl_cmems( m, mbuf, LMN_HL_ID( hl1->get_root() ) );
+        /* stackの逆順に親子関係が並んでいるので, 逆順にstackへ積む */
+        for (int i = (int)mbuf.size()-1; i >= 0; i--)
+          ((MemReactContext *)rc)->memstack_push( mbuf[i] );
+      }
     }
     break;
   }
@@ -4397,6 +4451,34 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
             atom->get_link(3), atom->get_attr(3), atom->get_link(4),
             atom->get_attr(4), atom->get_link(5), atom->get_attr(5));
         break;
+      case 7:
+        ((callback_6)c->get_f())(
+            rc, (LmnMembraneRef)rc->wt(memi), atom->get_link(1),
+            atom->get_attr(1), atom->get_link(2), atom->get_attr(2),
+            atom->get_link(3), atom->get_attr(3), atom->get_link(4),
+            atom->get_attr(4), atom->get_link(5), atom->get_attr(5),
+            atom->get_link(6), atom->get_attr(6));
+        break;
+      case 8:
+        ((callback_7)c->get_f())(
+            rc, (LmnMembraneRef)rc->wt(memi), atom->get_link(1),
+            atom->get_attr(1), atom->get_link(2), atom->get_attr(2),
+            atom->get_link(3), atom->get_attr(3), atom->get_link(4),
+            atom->get_attr(4), atom->get_link(5), atom->get_attr(5),
+            atom->get_link(6), atom->get_attr(6), atom->get_link(7),
+            atom->get_attr(7));
+        break;
+      case 9:
+        ((callback_8)c->get_f())(
+            rc, (LmnMembraneRef)rc->wt(memi), atom->get_link(1),
+            atom->get_attr(1), atom->get_link(2), atom->get_attr(2),
+            atom->get_link(3), atom->get_attr(3), atom->get_link(4),
+            atom->get_attr(4), atom->get_link(5), atom->get_attr(5),
+            atom->get_link(6), atom->get_attr(6), atom->get_link(7),
+            atom->get_attr(7), atom->get_link(8), atom->get_attr(8)
+            );
+        break;
+   
       default:
         printf("EXTERNAL FUNCTION: too many arguments\n");
         break;
@@ -5397,6 +5479,40 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
                                    atom->get_link(3), atom->get_attr(3),
                                    atom->get_link(4), atom->get_attr(4));
           break;
+        case 6:
+        ((callback_5)c->get_f())(
+            rc, (LmnMembraneRef)rc->wt(memi), atom->get_link(1),
+            atom->get_attr(1), atom->get_link(2), atom->get_attr(2),
+            atom->get_link(3), atom->get_attr(3), atom->get_link(4),
+            atom->get_attr(4), atom->get_link(5), atom->get_attr(5));
+          break;
+        case 7:
+        ((callback_6)c->get_f())(
+            rc, (LmnMembraneRef)rc->wt(memi), atom->get_link(1),
+            atom->get_attr(1), atom->get_link(2), atom->get_attr(2),
+            atom->get_link(3), atom->get_attr(3), atom->get_link(4),
+            atom->get_attr(4), atom->get_link(5), atom->get_attr(5),
+            atom->get_link(6), atom->get_attr(6));
+        break;
+      case 8:
+        ((callback_7)c->get_f())(
+            rc, (LmnMembraneRef)rc->wt(memi), atom->get_link(1),
+            atom->get_attr(1), atom->get_link(2), atom->get_attr(2),
+            atom->get_link(3), atom->get_attr(3), atom->get_link(4),
+            atom->get_attr(4), atom->get_link(5), atom->get_attr(5),
+            atom->get_link(6), atom->get_attr(6), atom->get_link(7),
+            atom->get_attr(7));
+        break;
+      case 9:
+        ((callback_8)c->get_f())(
+            rc, (LmnMembraneRef)rc->wt(memi), atom->get_link(1),
+            atom->get_attr(1), atom->get_link(2), atom->get_attr(2),
+            atom->get_link(3), atom->get_attr(3), atom->get_link(4),
+            atom->get_attr(4), atom->get_link(5), atom->get_attr(5),
+            atom->get_link(6), atom->get_attr(6), atom->get_link(7),
+            atom->get_attr(7), atom->get_link(8), atom->get_attr(8)
+            );
+        break;
         default:
           printf("EXTERNAL FUNCTION: too many arguments\n");
           break;

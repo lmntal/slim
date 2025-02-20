@@ -75,7 +75,7 @@ struct PredefinedFunctor predefined_functors[] = {
     {LMN_FALSE_FUNCTOR, FALSE, FALSE_ATOM_NAME, 1},
     /* hyperlinkは第二引数にHyperLink構造体へのポインタを埋め込むため二引数として登録する
      */
-    {LMN_EXCLAMATION_FUNCTOR, FALSE, EXCLAMATION_NAME, 2},
+    {LMN_EXCLAMATION_FUNCTOR, FALSE, HYPERLINK_NAME, 2},
 #ifdef USE_FIRSTCLASS_RULE
     {LMN_COLON_MINUS_FUNCTOR, FALSE, COLON_MINUS_ATOM_NAME, 3},
 #endif
@@ -143,13 +143,13 @@ LmnFunctorTable::LmnFunctorTable() {
   }
 }
 
-int LmnFunctorTable::functor_entry_free(LmnFunctorEntry *e) {
-  LMN_FREE(e);
+int LmnFunctorTable::functor_entry_free(st_data_t e, st_data_t d1, st_data_t d2) {
+  LMN_FREE((LmnFunctorEntry *) e);
   return ST_DELETE;
 }
 
 LmnFunctorTable::~LmnFunctorTable() {
-  st_foreach(this->functor_id_tbl, (st_iter_func)&LmnFunctorTable::functor_entry_free, 0);
+  st_foreach(this->functor_id_tbl, &LmnFunctorTable::functor_entry_free, 0);
   st_free_table(this->functor_id_tbl);
   LMN_FREE(entry);
 }

@@ -2,7 +2,7 @@
 
 # If types $1 and $2 are compatible, perform action $3
 AC_DEFUN([AC_TYPES_COMPATIBLE],
-  [AC_TRY_COMPILE([#include <stddef.h>], [$1 v1 = 0; $2 v2 = 0; return (&v1 - &v2)], $3)])
+  [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <stddef.h>]], [[$1 v1 = 0; $2 v2 = 0; return (&v1 - &v2)]])],[$3],[])])
 
 define(AC_PRIUS_COMMENT, [printf format code for printing a size_t and ssize_t])
 

@@ -743,7 +743,7 @@ static void print_trans_modules(const char *filename)
   counter = 0;
   fprintf(OUT, "struct trans_module trans_%s_maindata_modules[%d] = {\n",
           filename, count);
-  st_foreach(module_table, (st_iter_func)print_trans_module_f,
+  st_foreach(module_table, print_trans_module_f,
              (st_data_t)&counter);
   fprintf(OUT, "};\n\n");
 }

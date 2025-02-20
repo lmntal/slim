@@ -1,0 +1,3 @@
+typedef binarytree(R) { R = nil. R = node(LEFT,RIGHT) :- binarytree(LEFT), binarytree(RIGHT). }. isBinaryTree @@ btp(H) :- binarytree(H) | yes. btp(node(node(nil,nil),node(nil,nil))).
+yes
+ok

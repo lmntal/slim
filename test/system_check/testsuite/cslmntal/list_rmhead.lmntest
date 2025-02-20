@@ -1,0 +1,3 @@
+typedef dlist(R) { R = []. R = '.'($a, A) :- unary($a), dlist(A). }. rmvhead @@ list(H1), '.'($m, H2, H1), $d[H2] :- dlist($d), int($m) | list(H1), $d[H1]. list([1, 2, 3, 4, 5]).
+list([]).
+ok.

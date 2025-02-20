@@ -1,0 +1,40 @@
+unit_test.use.
+
+tap_producer = {
+  test_suite = {
+    setup = { nlmem.use. }.
+
+    test_case = {
+      name = "nlmem.kill case 1".
+
+      init = { nlmem.kill(L2,L3). f(L0). f(L1). a(L3). {p(L2). p(L0). p(L1). }. }.
+
+      ruleset = {}.
+
+      stable = {
+        f(a). f(a).
+      }.
+    }.
+    teardown = { nlmem.use :- . }.
+
+  }.
+
+  test_suite = {
+    setup = { nlmem.use. }.
+
+    test_case = {
+      name = "nlmem.copy case 1".
+
+      init = { nlmem.copy(L0,L1,pport). {p(L0). p(L2). p(L3). }. a(L1). f(L2). f(L3).  }.
+
+      ruleset = {}.
+
+      stable = {
+        pport(a(L0,L3)). f(a(L1,L4)). f(a(L2,L5)). {p(L3). p(L4). p(L5). }, {p(L0). p(L1). p(L2). }.
+      }.
+    }.
+
+    teardown = { nlmem.use :- . }.
+
+  }.
+}.

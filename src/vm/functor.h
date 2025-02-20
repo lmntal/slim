@@ -78,8 +78,7 @@ public:
                               int arity);
   void register_functor(int id, BOOL special, lmn_interned_str module,
                              lmn_interned_str name, int arity);
-  static int functor_entry_free(LmnFunctorEntry *e);
-
+  static int functor_entry_free(st_data_t e, st_data_t dummy1, st_data_t dummy_2);
   LmnFunctorEntry *get_entry(unsigned int f);
   unsigned int get_size();
   unsigned int get_next_id();
@@ -125,7 +124,7 @@ extern LmnFunctorTable *lmn_functor_table;
 #define MEM_EQ_ATOM_NAME "mem_eq"
 #define TRUE_ATOM_NAME "true"
 #define FALSE_ATOM_NAME "false"
-#define EXCLAMATION_NAME "!"
+#define HYPERLINK_NAME "!jRmVnNw.8xo[muc#qX" //通常atom名として使用されないようなランダム文字列
 
 #define LMN_IN_PROXY_FUNCTOR 0
 #define LMN_OUT_PROXY_FUNCTOR 1

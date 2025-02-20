@@ -117,7 +117,7 @@ start:
     exponent = [eE][-+]?integer;
     blank = [ \t\n\r];
 
-    sstr = "'"  [^']* "'";
+    sstr = "'"  ([^']|"\\'")* "'";
     dstr = "\"" ([^"]|"\\\"")* "\"";
 
     linecomment = ("//"|"%"|"#") .* [\n];
@@ -127,7 +127,7 @@ start:
 
     '-'?digit+ {
       string s = get_token();
-      yylval->as<int>() = s.empty() ? 0 : stol(s);
+      yylval->as<long>() = s.empty() ? 0 : stol(s);
       return parser::token::INT;
     }
     '-'?integer("."integer)?exponent? {

@@ -5,12 +5,16 @@ LOG_DRIVER = env AM_TAP_AWK='$(AWK)' $(SHELL) \
 TESTS = \
 	testsuite/integer/check.sh \
 	testsuite/set/check.sh \
-	testsuite/statespace/check.sh
+	testsuite/statespace/check.sh \
+	testsuite/nlmem/check.sh \
+	testsuite/mell/check.sh
 
 check_DATA = \
 	testsuite/integer/integer_set.il \
 	testsuite/set/set.il \
-	testsuite/statespace/statespace.il
+	testsuite/statespace/statespace.il \
+	testsuite/nlmem/nlmem.il \
+	testsuite/mell/mell.il
 
 CLEANFILES = $(check_DATA)
 

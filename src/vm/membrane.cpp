@@ -166,10 +166,48 @@ LmnRuleSetRef lmn_mem_get_ruleset(LmnMembraneRef m, int i) {
   return (LmnRuleSetRef)m->get_rulesets()[i];
 }
 
-
 /* 膜memの解放を行う.
  * 膜memに所属する子膜とアトムのメモリ管理は呼び出し側で行う. */
 LmnMembrane::~LmnMembrane(){
+  // delete in proxies connected each other
+  // 厳密には意味論上の遷移規則(R4)と食い違ったことをしている。
+  // see: https://github.com/lmntal/slim/issues/321
+  AtomListEntryRef ent;
+  LmnSymbolAtomRef i0;
+  
+  ent = this->get_atomlist(LMN_IN_PROXY_FUNCTOR);
+
+  BOOL flag = TRUE;
+  do{
+    flag = FALSE;
+    EACH_ATOM(i0, ent, ({
+      LmnSymbolAtomRef i1;
+      
+      if (i0->get_functor() == LMN_RESUME_FUNCTOR)
+        continue;
+      
+      if (LMN_ATTR_IS_DATA(i0->get_attr(1))){
+        break;
+      }
+      i1 = (LmnSymbolAtomRef)i0->get_link(1);
+      if (i1->get_functor() == LMN_IN_PROXY_FUNCTOR){
+        LmnSymbolAtomRef o0 =
+                      (LmnSymbolAtomRef)i0->get_link(0);
+        LmnSymbolAtomRef o1 =
+                      (LmnSymbolAtomRef)i1->get_link(0);
+        ent->remove(o0);
+        ent->remove(o1);
+        lmn_delete_atom(o0);
+        lmn_delete_atom(o1);
+        lmn_mem_unify_atom_args(this->mem_parent(), o0, 1, o1, 1);
+        ent->remove(i0);
+        ent->remove(i1);
+        flag = TRUE;
+        break;
+      }
+    }));
+  } while (flag);
+
   /* free all atomlists  */
   for (int i = 0; i < max_functor; i++) {
     if (!this->atomset[i])
