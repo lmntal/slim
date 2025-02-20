@@ -78,7 +78,6 @@ public:
                               int arity);
   void register_functor(int id, BOOL special, lmn_interned_str module,
                              lmn_interned_str name, int arity);
-  //static int functor_entry_free(LmnFunctorEntry *e);
   static int functor_entry_free(st_data_t e, st_data_t dummy1, st_data_t dummy_2);
   LmnFunctorEntry *get_entry(unsigned int f);
   unsigned int get_size();
