@@ -29,12 +29,6 @@ DX_INIT_DOXYGEN(SLIM, doc/doxygen.cfg, doc/doxygen)
 # Checks for programs.
 #
 
-# CFLAGS="-O -std=c11 -g -fsanitize=address -fno-omit-frame-pointer -D_XOPEN_SOURCE=700 -Wall $CFLAGS"
-CFLAGS="-O -std=c11 -g -fno-omit-frame-pointer -D_XOPEN_SOURCE=700 -Wall $CFLAGS"
-# CXXFLAGS="-O -std=c++11 -g -fsanitize=address -fno-omit-frame-pointer $CXXFLAGS"
-# CXXFLAGS="-O2 -std=c++11 -g -fno-omit-frame-pointer $CXXFLAGS"
-CXXFLAGS="-O -std=c++11 -g -fno-omit-frame-pointer $CXXFLAGS"
-
 case "$host" in
   *-*-darwin* | *-*-ios*)
     # we first check if clang is installed, because gcc is an alias of clang in macOS.
@@ -90,7 +84,7 @@ AC_ARG_ENABLE([devel],
 # debug mode
 AC_ARG_ENABLE([debug],
               [AS_HELP_STRING([--enable-debug],
-                              [turn on debugging (default no)])],
+                              [turn on debugging (affects performance, default no)])],
               [],
               [enable_debug="$default_enable_debug"])
 
@@ -165,9 +159,12 @@ if test "$enable_debug" = "yes"; then
   AC_MSG_RESULT([enable debug: yes])
   AC_DEFINE([DEBUG], 1,
             [enable debug])
-  CFLAGS="$CFLAGS -g"
+  CFLAGS="-O -std=c11 -g -fno-omit-frame-pointer -D_XOPEN_SOURCE=700 -Wall"
+  CXXFLAGS="-O -std=c++11 -g -fno-omit-frame-pointer -Wall"
 else
   AC_MSG_RESULT([enable debug: no])
+  CFLAGS="-O3 -std=c11"
+  CXXFLAGS="-O3 -std=c++11"
 fi
 
 # gprof
