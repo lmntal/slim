@@ -66,15 +66,15 @@ Automata::~Automata() {
   unsigned int i;
 
   /* free key strings */
-  st_foreach(this->state_name_to_id, (st_iter_func)free_key_str_f, (st_data_t)0);
+  st_foreach(this->state_name_to_id, free_key_str_f, (st_data_t)0);
   st_free_table(this->state_name_to_id);
 
   /* free value strings */
-  st_foreach(this->id_to_state_name, (st_iter_func)free_val_str_f, (st_data_t)0);
+  st_foreach(this->id_to_state_name, free_val_str_f, (st_data_t)0);
   st_free_table(this->id_to_state_name);
 
   /* free key strings */
-  st_foreach(this->prop_to_id, (st_iter_func)free_key_str_f, (st_data_t)0);
+  st_foreach(this->prop_to_id, free_key_str_f, (st_data_t)0);
   st_free_table(this->prop_to_id);
 
   /* free states */

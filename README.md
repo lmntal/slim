@@ -10,7 +10,7 @@ This is a runtime and a model checker for the
 ### Requirements
 
 1. automake 1.14.1
-2. autoconf 2.69
+2. autoconf 2.71
 3. g++
 4. flex 2.5.35
 5. re2c 1.0.3
@@ -37,7 +37,8 @@ or
 ```bash
 tar xvzf slim-x.y.z.tar.gz
 cd slim-x.y.z
-./configure
+./autogen.sh
+./configure --prefix=$(pwd)
 make -j
 make -j install
 ```
