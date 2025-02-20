@@ -1,0 +1,3 @@
+typedef dlist(T, H) { H = T. H = [$a | $d[T]]  :- unary($a), dlist($d). }. exchange @@ sort($d1[T1]), T1 = [$n | $d2[T2]], T2 = [$m | T3] :- dlist($d1), dlist($d2), $n > $m | sort($d1[T]), T = [$m | $d2[T2]], T2 = [$n | T3]. sort([5,4,3,2,1]).
+sort([1,2,3,4,5]).
+ok.
