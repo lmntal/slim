@@ -1,0 +1,3 @@
+typedef dlist(T, H) { H = T. H = [$a|H1], $d[T, H1] :- unary($a), dlist($d). }. rmvend @@ list(H1), $d1[T1, H1], '.'($m, T2, T1), '[]'(T2) :- dlist($d1), int($m) | list(H1), $d1[T2, H1], '[]'(T2). list([1, 2, 3, 4, 5]).
+list([]).
+ok.
