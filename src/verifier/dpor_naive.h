@@ -111,7 +111,6 @@ public:
 	void free_por_vars();//public
 	void por_calc_ampleset(StateSpaceRef ss, State *s, MCReactContext *rc, Vector *new_s, BOOL flag);//public
 	static int independency_vec_free(st_data_t _k, st_data_t vec, st_data_t _a);//public
-	//static int destroy_tmp_state_graph(State *s, LmnWord _a);//public
 	static int destroy_tmp_state_graph(st_data_t dummy, st_data_t s, st_data_t _a);//public
 	void por_gen_successors(State *s, MCReactContext *rc, AutomataRef a, Vector *psyms);//called by only independency check
 	void por_store_successors(State *s, MCReactContext *rc, BOOL is_store);//called by only independency check

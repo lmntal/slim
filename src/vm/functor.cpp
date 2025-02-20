@@ -143,7 +143,6 @@ LmnFunctorTable::LmnFunctorTable() {
   }
 }
 
-//int LmnFunctorTable::functor_entry_free(LmnFunctorEntry *e) {
 int LmnFunctorTable::functor_entry_free(st_data_t e, st_data_t d1, st_data_t d2) {
   LMN_FREE((LmnFunctorEntry *) e);
   return ST_DELETE;
