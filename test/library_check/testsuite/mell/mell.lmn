@@ -76,18 +76,6 @@ tap_producer = {
 
       init = { {p(A),p(B),p(C)},pport(A),f(B),f(C) }.
 
-      ruleset = { {$p[X|*X]},pport(X) :- mell.copy(X,A1,A2,A3,B1,B2,C1,C2), {$p[X|*X]}, {a1(A1),a2(A2),a3(A3)}, {b(B1,B2)}, pport2(C1),pport2(C2). }.
-
-      stable = {
-        f(a3). f(a3). pport2(b(L2)). pport2(b(L5)). a1(L0). a1(L1). a2(L3). a2(L4). {p(L5). p(L3). p(L4). }, {p(L2). p(L0). p(L1). }. 
-      }.
-    }.
-    
-    test_case = {
-      name = "mell.copy case 4".
-
-      init = { {p(A),p(B),p(C)},pport(A),f(B),f(C) }.
-
       ruleset = { {$p[X|*X]},pport(X) :- mell.copy(X,A1,A2,A3,B1,B2,C1,C2), {$p[X|*X]}, {a1(A1,N),{a23(N,A2,A3)}}, {b(B1,B2)}, pport2(C1),pport2(C2). }.
 
       stable = {
@@ -96,7 +84,7 @@ tap_producer = {
     }.
     
     test_case = {
-      name = "mell.copy case 5".
+      name = "mell.copy case 4".
 
       init = { {p(A),p(B),p(C)},pport(A),f(B),f(C) }.
 
@@ -104,6 +92,18 @@ tap_producer = {
 
       stable = {
         f(a(L0,L3)). f(a(L1,L4)). pport2(L2). pport2(L5). {p(L5). p(L3). p(L4). }, {p(L2). p(L0). p(L1). }.
+      }.
+    }.
+
+    test_case = {
+      name = "mell.copy case 5".
+
+      init = { {p(X),f(X2)},p(X,X1,X2),f(X1) }.
+
+      ruleset = { {$p[X|*X]},p(X,X1,X2) :- mell.copy(X,A1,A2,A3,B1,B2,X1,X2), {$p[X|*X]}, {a(A1,A2,A3)}, {b(B1,B2)}. }.
+
+      stable = {
+        f(b(L1)). a(L0,L3,b(L2)). {p(L2). f(L3). }, {p(L1). f(L0). }.
       }.
     }.
     teardown = { mell.use :- . }.
