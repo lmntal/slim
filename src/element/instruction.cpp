@@ -291,6 +291,7 @@ const std::map<LmnInstruction, InstrSpec> instr_spec = {
     {INSTR_MAPNEQATOM, {"mapneqatom", {InstrVar, InstrVarList}}},
     {INSTR_MAPNEQMEM, {"mapneqmem", {InstrVar, InstrVarList}}},
     {INSTR_ANYATOM, {"anyatom", {InstrVar, InstrVar}}},
+    {INSTR_EQMAPS, {"eqmaps", {InstrVar, InstrVar}}},
 
     /* etc */
     {INSTR_CELLDUMP, {"celldump", {}}}};

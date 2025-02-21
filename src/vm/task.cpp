@@ -1106,204 +1106,6 @@ static bool push_updated_hl_cmems
   return is_updated;
 }
 
-/* QLMNtal */
-BOOL mapneqatom(size_t atom1, std::vector<size_t> atom2list, LmnReactCxt *rc, LmnRegister queue_reg){
-  CardQueue queue = ((LmnCardRef)(queue_reg.register_wt()))->get_queue();
-  if (atom2list.size() == 1) {
-    for (CardMap map: queue) {
-      for (CardPair pair: map) {
-        if (atom2list[0] == pair.first) {
-          if (!(LMN_ATTR_IS_DATA(rc->at(atom1)) || LMN_ATTR_IS_DATA(pair.second.register_at()) ||
-            LMN_SATOM(rc->wt(atom1)) != LMN_SATOM(pair.second.register_wt()))) {
-              return FALSE;
-            }
-        }
-      }
-    }
-  } else {
-    size_t atom2list_head = atom2list[0];
-    atom2list.erase(atom2list.begin());
-    for (CardMap map: queue) {
-      for (CardPair pair: map) {
-        if (atom2list_head == pair.first) {
-          if (!mapneqatom(atom1, atom2list, rc, pair.second)) {
-            return FALSE;
-          }
-        }
-      }
-    }
-  }
-  return TRUE;
-}
-
-/* QLMNtal */
-BOOL mapneqmem(size_t mem1, std::vector<size_t> mem2list, LmnReactCxt *rc, LmnRegister queue_reg){
-  CardQueue queue = ((LmnCardRef)(queue_reg.register_wt()))->get_queue();
-  if(mem2list.size() == 1) {
-    for (CardMap map: queue) {
-      for (CardPair pair: map) {
-        if(mem2list[0] == pair.first) {
-          if (rc->wt(mem1) == pair.second.register_wt()) {
-              return FALSE;
-            }
-        }
-      }
-    }
-  } else {
-    size_t mem2list_head = mem2list[0];
-    mem2list.erase(mem2list.begin());
-    for (CardMap map: queue) {
-      for (CardPair pair: map) {
-        if(mem2list_head == pair.first) {
-          if (!mapneqmem(mem1, mem2list, rc, pair.second)) {
-            return FALSE;
-          }
-        }
-      }
-    }
-  }
-  return TRUE;
-}
-
-/* QLMNtal */
-void slim::vm::interpreter::anyatom(LmnMembrane *mem, size_t reg){
-  std::map<LmnFunctor, AtomListEntry *> atomlists = mem->atom_lists();
-  auto atom_regs = std::vector<LmnRegister>();
-  for (std::pair<LmnFunctor, AtomListEntry *> atomlist: atomlists) { 
-    auto iter = std::begin(*atomlist.second);
-    auto end = std::end(*atomlist.second);
-    if (iter == end || atomlist.first == 0 || atomlist.first == 1)
-      continue;
-    auto v = std::vector<LmnRegister>(atomlist.second->size());
-    std::transform(iter, end, v.begin(), [](LmnSymbolAtomRef atom) {
-      return LmnRegister({(LmnWord)atom, LMN_ATTR_MAKE_LINK(0), TT_ATOM});
-    });
-    atom_regs.insert(atom_regs.end(), v.begin(), v.end());
-  }
-  if(lmn_env.shuffle_atom) {
-    std::random_shuffle(atom_regs.begin(), atom_regs.end());
-  }
-  this->false_driven_enumerate(reg, std::move(atom_regs));
-}
-
-/* QLMNtal */
-int replace_in_card_by_tbl(ProcessTableRef p, LmnCardRef card, LmnWord *value) {
-  CardQueue queue = card->get_queue();
-  CardQueue new_queue = CardQueue();
-  for (CardMap map: queue) {
-    auto new_map = CardMap();
-    for (CardPair pair: map) {
-      LmnWord t;
-      if (pair.second.register_tt() == TT_ATOM) {
-        if (LMN_ATTR_IS_DATA(pair.second.register_at())) {
-          new_map.push_back(CardPair{pair.first, {lmn_copy_data_atom(pair.second.register_wt(), pair.second.register_at()), pair.second.register_at(), TT_ATOM}});
-        } else {
-          if (proc_tbl_get_by_atom(p, (LmnSymbolAtomRef)pair.second.register_wt(), &t)) {
-            new_map.push_back(CardPair{pair.first, {t, pair.second.register_at(), TT_ATOM}});
-          } else {
-            return 0;
-          }
-        }
-      } else if (pair.second.register_tt() == TT_MEM) {
-        if (proc_tbl_get_by_mem(p, (LmnMembraneRef)pair.second.register_wt(), &t)) {
-          new_map.push_back(CardPair{pair.first, {t, pair.second.register_at(), TT_MEM}});
-        } else {
-          return 0;
-        }
-      } else if (LMN_ATTR_IS_CARD(pair.second.register_at())) {
-        if (replace_in_card_by_tbl(p, (LmnCardRef)pair.second.register_wt(), &t)) {
-          new_map.push_back(CardPair{pair.first, {t, pair.second.register_at(), TT_OTHER}});
-        } else {
-          return 0;
-        }
-      }
-    }
-    new_queue.push_back(new_map);
-  }
-  LmnCardRef new_card;
-  new_card = new LmnCard(new_queue);
-  *value = (LmnWord)new_card;
-  return 1;
-}
-
-/* 後で消す */
-void print_op(LmnInstrOp op){
-  if (op == INSTR_SPEC) {
-    std::cout << "spec" << std::endl;
-  } else if (op == INSTR_COMMIT) {
-    std::cout << "commit" << std::endl;
-  } else if (op == INSTR_PROCEED) {
-    std::cout << "proceed" << std::endl;
-  } else if (op == INSTR_ANYMEM) {
-    std::cout << "anymem" << std::endl;
-  } else if (op == INSTR_FINDATOM) {
-    std::cout << "findatom" << std::endl;
-  } else if (op == INSTR_NORULES) {
-    std::cout << "norules" << std::endl;
-  } else if (op == INSTR_NMEMS) {
-    std::cout << "nmems" << std::endl;
-  } else if (op == INSTR_DEREF) {
-    std::cout << "deref" << std::endl;
-  } else if (op == INSTR_FUNC) {
-    std::cout << "func" << std::endl;
-  } else if (op == INSTR_LOCKMEM) {
-    std::cout << "lockmem" << std::endl;
-  } else if (op == INSTR_NEQATOM) {
-    std::cout << "neqatom" << std::endl;
-  } else if (op == INSTR_NEQMEM) {
-    std::cout << "neqmem" << std::endl;
-  } else if (op == INSTR_NEWATOM) {
-    std::cout << "newatom" << std::endl;
-  } else if (op == INSTR_NEWMEM) {
-    std::cout << "newmem" << std::endl;
-  } else if (op == INSTR_REMOVEATOM) {
-    std::cout << "removeatom" << std::endl;
-  } else if (op == INSTR_FREEATOM) {
-    std::cout << "freeatom" << std::endl;
-  } else if (op == INSTR_NOT) {
-    std::cout << "not" << std::endl;
-  } else if (op == INSTR_BRANCH) {
-    std::cout << "branch" << std::endl;
-  } else if (op == INSTR_LOOP) {
-    std::cout << "loop" << std::endl;
-  } else if (op == INSTR_PUSHMAP) {
-    std::cout << "pushmap" << std::endl;
-  } else if (op == INSTR_PICKMAPS) {
-    std::cout << "pickmaps" << std::endl;
-  } else if (op == INSTR_POPMAP) {
-    std::cout << "popmap" << std::endl;
-  } else if (op == INSTR_MAPNEQATOM) {
-    std::cout << "mapneqatom" << std::endl;
-  } else if (op == INSTR_MAPNEQMEM) {
-    std::cout << "mapneqmem" << std::endl;
-  } else if (op == INSTR_ANYATOM) {
-    std::cout << "anyatom" << std::endl;
-  } else {
-    std::cout << "op: " << op << std::endl;
-  }
-}
-
-/* 後で消す */
-void print_atoms(LmnMembrane *mem){
-  std::map<LmnFunctor, AtomListEntry *> atomlists = mem->atom_lists();
-  std::vector<LmnRegister> atom_regs = std::vector<LmnRegister>();
-  for (std::pair<LmnFunctor, AtomListEntry *> atomlist: atomlists) { 
-    auto iter = std::begin(*atomlist.second);
-    auto end = std::end(*atomlist.second);
-    if (iter == end)
-      continue;
-    auto v = std::vector<LmnRegister>(atomlist.second->size());
-    std::transform(iter, end, v.begin(), [](LmnSymbolAtomRef atom) {
-      return LmnRegister({(LmnWord)atom, LMN_ATTR_MAKE_LINK(0), TT_ATOM});
-    });
-    atom_regs.insert(atom_regs.end(), v.begin(), v.end());
-  }
-  for (LmnRegister atom_reg: atom_regs){
-    std::cout << (LmnAtomRef)atom_reg.register_wt() << " ";
-  }
-  std::cout << std::endl;
-}
-
 /**
  *  execute a command at instr.
  *  instr is incremented by the size of operation.
@@ -1324,7 +1126,6 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
   if (lmn_env.find_atom_parallel)
     return FALSE;
 
-  // print_op(op); // 後で消す
   switch (op) {
   case INSTR_SPEC: {
     LmnInstrVar s0;
@@ -4958,6 +4759,18 @@ this->push_stackframe([=](interpreter &itr, bool result) {
     auto mem = (LmnMembraneRef)rc->wt(srcmem);
     anyatom(mem, dstatom);
     return FALSE;
+  }
+  /* QLMNtal */
+  case INSTR_EQMAPS: {
+    LmnInstrVar queue1_reg, queue2_reg;
+    READ_VAL(LmnInstrVar, instr, queue1_reg);
+    READ_VAL(LmnInstrVar, instr, queue2_reg);
+    CardQueue queue1 = ((LmnCardRef)(this->rc->wt(queue1_reg)))->get_queue();
+    CardQueue queue2 = ((LmnCardRef)(this->rc->wt(queue2_reg)))->get_queue();
+    if (!eqmaps(queue1, queue2)) {
+      return FALSE;
+    }
+    break;
   }
   default:
     fprintf(stderr, "interpret: Unknown operation %d\n", op);

@@ -280,6 +280,7 @@ enum LmnInstruction {
   INSTR_MAPNEQATOM,
   INSTR_MAPNEQMEM,
   INSTR_ANYATOM,
+  INSTR_EQMAPS,
 
   NUM_INSTRS // this must be the last
 };
