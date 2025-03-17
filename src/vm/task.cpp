@@ -3010,10 +3010,6 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
         lmn_fatal("too many arguments to >< atom");
       }
 
-      lmn_mem_delete_atom(m, (LmnAtomRef)rc->wt(atomi), rc->at(atomi));
-      lmn_mem_delete_atom(m, atom1, (LmnWord)attr1);
-      lmn_mem_delete_atom(m, atom2, (LmnWord)attr2);
-
       if (rc->has_mode(REACT_MEM_ORIENTED) && hl1 && hl1->get_root()) {
         std::vector<LmnMembraneRef> mbuf;/* memstackの逆順 */
         push_updated_hl_cmems( m, mbuf, LMN_HL_ID( hl1->get_root() ) );
@@ -3021,6 +3017,11 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
         for (int i = (int)mbuf.size()-1; i >= 0; i--)
           ((MemReactContext *)rc)->memstack_push( mbuf[i] );
       }
+
+      lmn_mem_delete_atom(m, (LmnAtomRef)rc->wt(atomi), rc->at(atomi));
+      lmn_mem_delete_atom(m, atom1, (LmnWord)attr1);
+      lmn_mem_delete_atom(m, atom2, (LmnWord)attr2);
+
     }
     break;
   }
