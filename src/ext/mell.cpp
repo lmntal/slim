@@ -72,7 +72,6 @@ void mell_copy(LmnReactCxtRef rc, LmnMembraneRef mem,
   cont_mem = LMN_PROXY_GET_MEM(cont_in0);
   if(LMN_PROXY_GET_MEM(cont_in1) != LMN_PROXY_GET_MEM(cont_in1) || 
      LMN_PROXY_GET_MEM(cont_in1) != LMN_PROXY_GET_MEM(cont_in2)) {
-      fprintf(stderr, "mell.C, mell_copy: illegal argumetns in cont mem\n");
       return;
     }
   
@@ -83,21 +82,47 @@ void mell_copy(LmnReactCxtRef rc, LmnMembraneRef mem,
   cut_in_free = (LmnSymbolAtomRef)(((LmnSymbolAtomRef)a5)->get_link(0));
   cut_mem = LMN_PROXY_GET_MEM(cut_in_port);
   if(LMN_PROXY_GET_MEM(cut_in_port) != LMN_PROXY_GET_MEM(cut_in_free)) {
-      fprintf(stderr, "mell.C, mell_copy: illegal argumetns in cut mem\n");
       return;
     }
+
+  LmnSymbolAtomRef six_port_in, seven_port_in;
+  six_port_in = (LmnSymbolAtomRef)(((LmnSymbolAtomRef)a6)->get_link(0));
+  seven_port_in = (LmnSymbolAtomRef)(((LmnSymbolAtomRef)a7)->get_link(0));
 
   { 
     AtomListEntryRef ent = org_mem->get_atomlist(LMN_IN_PROXY_FUNCTOR);
 
     if (ent) {
       LmnSymbolAtomRef org_in, org_out, trg_in, trg_out;
+      LmnSymbolAtomRef six_in, six_out, seven_in, seven_out;
+      LmnSymbolAtomRef seven_trg_in, seven_trg_out, six_trg_in, six_trg_out;
       LmnSymbolAtomRef org_port_out, trg_port_in, trg_port_out;
       LmnWord t = 0;
+      LmnWord h = 0;
+
+      bool six_inner_flag = false;
+      bool seven_inner_flag = false;
+      
 
       EACH_ATOM(org_in, ent, ({
+        if (org_in == six_port_in) {
+          six_in = org_in;
+          six_inner_flag = true;
+        }
+        if (org_in == seven_port_in) {
+          seven_in = org_in;
+          seven_inner_flag = true;
+        }
+      }));
 
-        if (org_in == org_port_in) {
+
+      EACH_ATOM(org_in, ent, ({
+         
+        if (org_in == six_port_in || org_in == seven_port_in) {
+          continue;
+        }
+        else if (org_in == org_port_in) {
+          org_out = (LmnSymbolAtomRef)(org_in->get_link(0));
           LmnSymbolAtomRef cut_copy_in_port0, cut_copy_in_port1, cut_copy_in_free0, cut_copy_in_free1;
           LmnSymbolAtomRef cut_copy_out_port0, cut_copy_out_port1, cut_copy_out_free0, cut_copy_out_free1;
           LmnMembraneRef cut_copy_mem0, cut_copy_mem1;
@@ -139,10 +164,113 @@ void mell_copy(LmnReactCxtRef rc, LmnMembraneRef mem,
           lmn_newlink_in_symbols(cut_copy_in_free1, 0, cut_copy_out_free1, 0);
 
           // portとfreeをcutでつなげる
-          lmn_newlink_in_symbols(cut_copy_out_port0, 1, org_port_out, 1);
-          newlink_symbol_and_something(cut_copy_out_free0, 1, a6, t6);
-          lmn_newlink_in_symbols(cut_copy_out_port1, 1, trg_port_out, 1);
-          newlink_symbol_and_something(cut_copy_out_free1, 1, a7, t7);
+          // ここでa6, a7の安全性を確認する必要がある
+          if (six_inner_flag) {
+            proc_tbl_get_by_atom(atom_map, six_in, &h);
+            six_trg_in = (LmnSymbolAtomRef)(h);
+            six_out = (LmnSymbolAtomRef)(six_in->get_link(0));
+            six_trg_out = lmn_mem_newatom(mem, LMN_OUT_PROXY_FUNCTOR);
+            lmn_newlink_in_symbols(six_trg_in, 0, six_trg_out, 0);
+
+            // cont_memをコピーする
+            LmnSymbolAtomRef cont_copy_in0, cont_copy_in1, cont_copy_in2;
+            LmnSymbolAtomRef cont_copy_out0, cont_copy_out1, cont_copy_out2;
+            LmnMembraneRef cont_copy_mem;
+            ProcessTableRef cont_atom_map;
+            LmnWord t_cont0, t_cont1, t_cont2;
+           
+            cont_copy_mem = new LmnMembrane();
+            cont_atom_map = lmn_mem_copy_cells(cont_copy_mem, cont_mem);
+            mem->add_child_mem(cont_copy_mem);
+
+            // cont_copyのproxyアトムを用意する
+            proc_tbl_get_by_atom(cont_atom_map, cont_in0, &t_cont0);
+            proc_tbl_get_by_atom(cont_atom_map, cont_in1, &t_cont1);
+            proc_tbl_get_by_atom(cont_atom_map, cont_in2, &t_cont2);
+            cont_copy_in0 = (LmnSymbolAtomRef)(t_cont0);
+            cont_copy_in1 = (LmnSymbolAtomRef)(t_cont1);
+            cont_copy_in2 = (LmnSymbolAtomRef)(t_cont2);
+
+            cont_copy_out0 = lmn_mem_newatom(mem, LMN_OUT_PROXY_FUNCTOR);
+            cont_copy_out1 = lmn_mem_newatom(mem, LMN_OUT_PROXY_FUNCTOR);
+            cont_copy_out2 = lmn_mem_newatom(mem, LMN_OUT_PROXY_FUNCTOR);
+
+            lmn_newlink_in_symbols(cont_copy_in0, 0, cont_copy_out0, 0);
+            lmn_newlink_in_symbols(cont_copy_in1, 0, cont_copy_out1, 0);
+            lmn_newlink_in_symbols(cont_copy_in2, 0, cont_copy_out2, 0);
+
+            // contにsixをつなげる
+            lmn_newlink_in_symbols(cont_copy_out0, 1, six_out, 1);
+            lmn_newlink_in_symbols(cont_copy_out1, 1, six_trg_out, 1);
+
+            // portとfreeをcutでつなげる
+            lmn_newlink_in_symbols(cut_copy_out_port0, 1, org_port_out, 1);
+            lmn_newlink_in_symbols(cut_copy_out_port1, 1, trg_port_out, 1);
+            newlink_symbol_and_something(cut_copy_out_free1, 1, a7, t7);
+
+            // freeとcontをつなげる
+            lmn_newlink_in_symbols(cut_copy_out_free0, 1, cont_copy_out2, 1);
+
+            mem->remove_mem(cont_copy_mem);
+            cont_copy_mem->remove_proxies();
+            mem->move_cells(cont_copy_mem);
+          }
+          else if (seven_inner_flag) {
+            proc_tbl_get_by_atom(atom_map, seven_in, &h);
+            seven_trg_in = (LmnSymbolAtomRef)(h);
+            seven_out = (LmnSymbolAtomRef)(seven_in->get_link(0));
+            seven_trg_out = lmn_mem_newatom(mem, LMN_OUT_PROXY_FUNCTOR);
+            lmn_newlink_in_symbols(seven_trg_in, 0, seven_trg_out, 0);
+
+            // cont_memをコピーする
+            LmnSymbolAtomRef cont_copy_in0, cont_copy_in1, cont_copy_in2;
+            LmnSymbolAtomRef cont_copy_out0, cont_copy_out1, cont_copy_out2;
+            LmnMembraneRef cont_copy_mem;
+            ProcessTableRef cont_atom_map;
+            LmnWord t_cont0, t_cont1, t_cont2;
+           
+            cont_copy_mem = new LmnMembrane();
+            cont_atom_map = lmn_mem_copy_cells(cont_copy_mem, cont_mem);
+            mem->add_child_mem(cont_copy_mem);
+
+            // cont_copyのproxyアトムを用意する
+            proc_tbl_get_by_atom(cont_atom_map, cont_in0, &t_cont0);
+            proc_tbl_get_by_atom(cont_atom_map, cont_in1, &t_cont1);
+            proc_tbl_get_by_atom(cont_atom_map, cont_in2, &t_cont2);
+            cont_copy_in0 = (LmnSymbolAtomRef)(t_cont0);
+            cont_copy_in1 = (LmnSymbolAtomRef)(t_cont1);
+            cont_copy_in2 = (LmnSymbolAtomRef)(t_cont2);
+
+            cont_copy_out0 = lmn_mem_newatom(mem, LMN_OUT_PROXY_FUNCTOR);
+            cont_copy_out1 = lmn_mem_newatom(mem, LMN_OUT_PROXY_FUNCTOR);
+            cont_copy_out2 = lmn_mem_newatom(mem, LMN_OUT_PROXY_FUNCTOR);
+
+            lmn_newlink_in_symbols(cont_copy_in0, 0, cont_copy_out0, 0);
+            lmn_newlink_in_symbols(cont_copy_in1, 0, cont_copy_out1, 0);
+            lmn_newlink_in_symbols(cont_copy_in2, 0, cont_copy_out2, 0);
+
+            // contにsevenをつなげる
+            lmn_newlink_in_symbols(cont_copy_out0, 1, seven_out, 1);
+            lmn_newlink_in_symbols(cont_copy_out1, 1, seven_trg_out, 1);
+
+            // portとfreeをcutでつなげる
+            lmn_newlink_in_symbols(cut_copy_out_port0, 1, org_port_out, 1);
+            newlink_symbol_and_something(cut_copy_out_free0, 1, a6, t6);
+            lmn_newlink_in_symbols(cut_copy_out_port1, 1, trg_port_out, 1);
+
+            // freeとcontをつなげる
+            lmn_newlink_in_symbols(cut_copy_out_free1, 1, cont_copy_out2, 1);
+
+            mem->remove_mem(cont_copy_mem);
+            cont_copy_mem->remove_proxies();
+            mem->move_cells(cont_copy_mem);
+          }
+          else {
+            lmn_newlink_in_symbols(cut_copy_out_port0, 1, org_port_out, 1);
+            newlink_symbol_and_something(cut_copy_out_free0, 1, a6, t6);
+            lmn_newlink_in_symbols(cut_copy_out_port1, 1, trg_port_out, 1);
+            newlink_symbol_and_something(cut_copy_out_free1, 1, a7, t7);
+          }
 
           delete cut_atom_map0;
           delete cut_atom_map1;
@@ -233,11 +361,9 @@ void mell_delete(LmnReactCxtRef rc,
   LmnMembraneRef tag_mem;
 
   if (((LmnSymbolAtomRef)a0)->get_functor() != LMN_OUT_PROXY_FUNCTOR) {
-    fprintf(stderr, "mell.C, mell_delete: first argument must be a membrane");
     return;
   }
   if (((LmnSymbolAtomRef)a1)->get_functor() != LMN_OUT_PROXY_FUNCTOR) {
-    fprintf(stderr, "mell.C, mell_delete: second argument must be a membrane");
     return;
   }
 

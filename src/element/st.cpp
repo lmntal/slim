@@ -489,7 +489,7 @@ static int delete_never(st_data_t key LMN_UNUSED, st_data_t value,
 void st_cleanup_safe(st_table_t table, st_data_t never) {
   int num_entries = table->num_entries;
 
-  st_foreach(table, (st_iter_func)delete_never, never);
+  st_foreach(table, delete_never, never);
   table->num_entries = num_entries;
 }
 
@@ -497,7 +497,7 @@ static int clear_f(st_data_t some, st_data_t some2, st_data_t some3) {
   return ST_DELETE;
 }
 
-void st_clear(st_table_t table) { st_foreach(table, (st_iter_func)clear_f, 0); }
+void st_clear(st_table_t table) { st_foreach(table, clear_f, 0); }
 
 /* テーブルの各要素に対し，第一引数にキー，第二引数に値，
  * 第三引数にargでfuncを呼び出す．
@@ -509,7 +509,7 @@ void st_clear(st_table_t table) { st_foreach(table, (st_iter_func)clear_f, 0); }
  *
  * なお，第三引数argは，funcの処理にテーブル内の要素以外のデータが必要な場合に利用する．
  */
-int st_foreach(st_table_t table, int (*func)(ANYARGS), st_data_t arg) {
+int st_foreach(st_table_t table, int (*func)(st_data_t, st_data_t, st_data_t), st_data_t arg) {
   st_table_entry *ptr, *last, *tmp;
   enum st_retval retval;
   int i;
@@ -609,7 +609,7 @@ static int insert_f(st_data_t key, st_data_t value, st_data_t tbl1) {
 }
 
 void st_concat(st_table_t tbl1, const st_table_t tbl2) {
-  st_foreach((st_table_t)tbl2, (st_iter_func)insert_f, (st_data_t)tbl1);
+  st_foreach((st_table_t)tbl2, insert_f, (st_data_t)tbl1);
 }
 
 /*　st_tableが持つ要素を表示する　*/
@@ -653,11 +653,11 @@ static int st_value_push_vec_f(st_data_t _key, st_data_t _v, st_data_t _arg) {
 
 /*　st_tableが持つ要素をVectorに昇順に格納する　*/
 void st_get_entries_key(st_table_t st, Vector *vec) {
-  st_foreach(st, (st_iter_func)st_key_push_vec_f, (st_data_t)vec);
+  st_foreach(st, st_key_push_vec_f, (st_data_t)vec);
 }
 
 void st_get_entries_value(st_table_t st, Vector *vec) {
-  st_foreach(st, (st_iter_func)st_value_push_vec_f, (st_data_t)vec);
+  st_foreach(st, st_value_push_vec_f, (st_data_t)vec);
 }
 
 static inline BOOL st_equals_inner(st_table_t cmp_dst, st_table_t cmp_src) {

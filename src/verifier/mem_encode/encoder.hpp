@@ -119,7 +119,7 @@ class encoder {
     if (visited->get_mem(mem, &n_visited)) {
       bsp.push_visited_mem(n_visited);
 
-      if (from_atom) { /* 引き続きアトムをたどる */
+      if (from_atom || LMN_ATTR_IS_DATA(attr)) { /* 引き続きアトムをたどる */
         write_mol(from_atom, attr, from, bsp, visited, is_id);
       }
       return;
@@ -131,7 +131,7 @@ class encoder {
     if (!bsp.is_valid())
       return;
 
-    if (from_atom) {
+    if (from_atom || LMN_ATTR_IS_DATA(attr)) {
       write_mol(from_atom, attr, from, bsp, visited, is_id);
     }
 
@@ -147,25 +147,26 @@ class encoder {
       /* 膜memに存在するデータアトムを起点にしたinside
        * proxyアトムをちゃんと書き込んでおく */
 
-      auto ent = mem->get_atomlist(LMN_IN_PROXY_FUNCTOR);
-      if (ent) {
-        for (auto in : *ent) {
-          if (!LMN_ATTR_IS_DATA(in->get_attr(1)) ||
-              visited->get_atom(in, NULL)) {
-            continue;
-          }
-          /* -------------------------+
-           * [DATA ATOM]-0--1-[in]-0--|--0-[out]-1--..
-           * -------------------------+
-           */
-          bsp.push_escape_mem_data(in->get_link(1),
-                                   in->get_attr(1), visited);
-          auto out = (LmnSymbolAtomRef)in->get_link(0);
-          write_mol(out->get_link(1), out->get_attr(1),
-                    LMN_ATTR_GET_VALUE(out->get_attr(1)), bsp,
-                    visited, is_id);
-        };
-      }
+      // auto ent = mem->get_atomlist(LMN_IN_PROXY_FUNCTOR);
+      // if (ent) {
+      //   for (auto in : *ent) {
+      //     if (!LMN_ATTR_IS_DATA(in->get_attr(1)) ||
+      //         visited->get_atom(in, NULL)) {
+      //       continue;
+      //     }
+      //     printf("dataatom!!!\n");
+      //     /* -------------------------+
+      //      * [DATA ATOM]-0--1-[in]-0--|--0-[out]-1--..
+      //      * -------------------------+
+      //      */
+      //     bsp.push_escape_mem_data(in->get_link(1),
+      //                              in->get_attr(1), visited);
+      //     auto out = (LmnSymbolAtomRef)in->get_link(0);
+      //     write_mol(out->get_link(1), out->get_attr(1),
+      //               LMN_ATTR_GET_VALUE(out->get_attr(1)), bsp,
+      //               visited, is_id);
+      //   };
+      // }
     }
 
     write_rulesets(mem, bsp);
@@ -365,7 +366,7 @@ class encoder {
                         VisitLogRef visited) {
     for (auto m = mem->mem_child_head(); m; m = m->mem_next()) {
       if (!visited->get_mem(m, NULL)) {
-        write_mem(m, 0, -1, -1, bsp, visited, FALSE);
+        write_mem(m, 0, 0, -1, bsp, visited, FALSE);
       }
     }
   }

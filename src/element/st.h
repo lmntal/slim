@@ -37,7 +37,6 @@ typedef struct st_table *st_table_t;
 
 typedef int (*st_cmp_func)(void *, void *);
 typedef long (*st_hash_func)(void *);
-typedef int (*st_iter_func)(ANYARGS);
 
 struct st_hash_type {
   int (*compare)(
@@ -100,7 +99,7 @@ int st_lookup(st_table_t tbl, st_data_t key, st_data_t *value);
 int st_lookup_with_col(st_table_t tbl, st_data_t key, st_data_t *value,
                        long *n_col);
 int st_contains(st_table_t tbl, st_data_t key);
-int st_foreach(st_table_t tbl, st_iter_func f, st_data_t arg);
+int st_foreach(st_table_t tbl, int (*func)(st_data_t, st_data_t, st_data_t), st_data_t arg);
 void st_add_direct(st_table_t tbl, st_data_t key, st_data_t value);
 unsigned long st_table_space(st_table_t tbl);
 void st_free_table(st_table_t tbl);
