@@ -142,7 +142,8 @@ std::string string_of_template_membrane(Vector *link_connections,
   std::string result;
   AtomListEntryRef ent;
   LmnFunctor f;
-  char istr[(int)(8 * sizeof(int) * 0.3010) + 2]; /* int型の桁数 + 1より長い */
+  const int length = (int)(8 * sizeof(int) * 0.3010) + 2;
+  char istr[length]; /* int型の桁数 + 1より長い */
 
   for (auto it : mem->atom_lists()) {
     auto &ent = it.second;
@@ -167,19 +168,19 @@ std::string string_of_template_membrane(Vector *link_connections,
             if (cm_atom == out_proxy->get_link(1))
               continue;
 
-            sprintf(istr, "%d",
+            snprintf(istr, length, "%d",
                     linkconnection_make_linkno(link_connections, satom, 0));
             result += atom_name;
             result += LINK_PREFIX;
             result += istr;
           } else if (strcmp(atom_name, "==") == 0) {
             result += LINK_PREFIX;
-            sprintf(istr, "%d",
+            snprintf(istr, length, "%d",
                     linkconnection_make_linkno(link_connections, satom, 0));
             result += istr;
             result += "=";
             result += LINK_PREFIX;
-            sprintf(istr, "%d",
+            snprintf(istr, length, "%d",
                     linkconnection_make_linkno(link_connections, satom, 1));
             result += istr;
           } else if (atom_name[0] == '@') {
@@ -192,7 +193,7 @@ std::string string_of_template_membrane(Vector *link_connections,
               if (i > 0)
                 result += ",";
               result += LINK_PREFIX;
-              sprintf(istr, "%d",
+              snprintf(istr, length, "%d",
                       linkconnection_make_linkno(link_connections, satom, i));
               result += istr;
             }
@@ -218,8 +219,8 @@ std::string string_of_template_membrane(Vector *link_connections,
 
                 if (LMN_ATTR_IS_DATA(attr) && LMN_HL_ATTR == attr) {
                   result += LINK_PREFIX;
-                  sprintf(
-                      istr, "%d",
+                  snprintf(
+                      istr, length, "%d",
                       linkconnection_make_linkno(link_connections, satom, i));
                   result += istr;
                 } else if (LMN_ATTR_IS_DATA(attr) && LMN_INT_ATTR == attr) {
@@ -229,12 +230,12 @@ std::string string_of_template_membrane(Vector *link_connections,
                 } else if (LMN_ATTR_IS_DATA(attr) && LMN_DBL_ATTR == attr) {
                   LmnAtomRef data = satom->get_link(i);
                   char buf[64];
-                  sprintf(buf, "%#g", lmn_get_double((LmnDataAtomRef)data));
+                  snprintf(buf, 64, "%#g", lmn_get_double((LmnDataAtomRef)data));
                   result += buf;
                 } else {
                   result += LINK_PREFIX;
-                  sprintf(
-                      istr, "%d",
+                  snprintf(
+                      istr, length, "%d",
                       linkconnection_make_linkno(link_connections, satom, i));
                   result += istr;
                 }

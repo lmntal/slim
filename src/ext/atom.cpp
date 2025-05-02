@@ -50,7 +50,7 @@ static LmnSymbolAtomRef lmn_make_atom(LmnMembraneRef mem, LmnAtomRef s, LmnWord 
          lmn_functor_table->intern(ANONYMOUS,
 			    lmn_intern(reinterpret_cast<LmnString *>(s)->c_str()),
 			    size));
-  for (int k = 0; k < (int)size-1; k++) {
+  for (intptr_t k = 0; k < (intptr_t)size-1; k++) {
     lmn_mem_newlink(mem,
                     a, LMN_ATTR_MAKE_LINK(0), k,
                     0, LMN_INT_ATTR, 0);

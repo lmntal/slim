@@ -49,12 +49,14 @@ char *build_path(const char *dir, const char *component) {
   char *buf;
 
   if (dir_len > 0 && dir[dir_len - 1] == DIR_SEPARATOR_CHAR) {
-    buf = (char *)malloc(sizeof(char) * dir_len + comp_len + 1);
-    sprintf(buf, "%s%s", dir, component);
+    int length = sizeof(char) * dir_len + comp_len + 1;
+    buf = (char *)malloc(length);
+    snprintf(buf, length, "%s%s", dir, component);
   } else {
-    buf = (char *)malloc(sizeof(char) * dir_len + comp_len +
-                         strlen(DIR_SEPARATOR_STR) + comp_len + 1);
-    sprintf(buf, "%s%s%s", dir, DIR_SEPARATOR_STR, component);
+    int length = sizeof(char) * dir_len + comp_len +
+                         strlen(DIR_SEPARATOR_STR) + comp_len + 1;
+    buf = (char *)malloc(length);
+    snprintf(buf, length, "%s%s%s", dir, DIR_SEPARATOR_STR, component);
   }
 
   return buf;
@@ -89,8 +91,9 @@ char *extension(const char *path) {
   if (i < 0) {
     ext = strdup("");
   } else {
-    ext = (char *)malloc(sizeof(char) * (len - i));
-    sprintf(ext, "%s", path + i + 1);
+    int length = sizeof(char) * (len - i);
+    ext = (char *)malloc(length);
+    snprintf(ext, length, "%s", path + i + 1);
   }
 
   return ext;

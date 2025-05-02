@@ -72,7 +72,7 @@ void cb_string_make(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
       to_be_freed = TRUE;
       break;
     case LMN_DBL_ATTR:
-      sprintf(buf, "%#g", lmn_get_double((LmnDataAtomRef)a0));
+      snprintf(buf, 64, "%#g", lmn_get_double((LmnDataAtomRef)a0));
       s = buf;
       break;
     case LMN_STRING_ATTR:

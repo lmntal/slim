@@ -489,9 +489,9 @@ void cb_port_getc(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
 
   c = port_get_raw_c(LMN_PORT(a0));
   if (c == EOF)
-    sprintf(buf, "eof");
+    snprintf(buf, 8, "eof");
   else
-    sprintf(buf, "%c", c);
+    snprintf(buf, 8, "%c", c);
   a = lmn_new_atom(lmn_functor_table->intern(ANONYMOUS, lmn_intern(buf), 1));
   mem_push_symbol_atom(mem, (LmnSymbolAtomRef)a);
   lmn_mem_newlink(mem, a2, t2, LMN_ATTR_GET_VALUE(t2), a, LMN_ATTR_MAKE_LINK(0),
@@ -547,7 +547,7 @@ void cb_port_putc(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
 
     case LMN_DBL_ATTR: {
       char buf[64];
-      sprintf(buf, "%#g", lmn_get_double((LmnDataAtomRef)a1));
+      snprintf(buf, 64, "%#g", lmn_get_double((LmnDataAtomRef)a1));
       port_put_raw_s(LMN_PORT(a0), buf);
     } break;
 

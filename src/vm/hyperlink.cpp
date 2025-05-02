@@ -675,14 +675,14 @@ void lmn_hyperlink_print(FILE *fp, LmnMembraneRef gr) {
   place_e = hyperlink_print_get_place(element);
 
   if (group < 2)
-    sprintf(tail_g, "group, ");
+    snprintf(tail_g, 8, "group, ");
   else
-    sprintf(tail_g, "groups,");
+    snprintf(tail_g, 8, "groups,");
 
   if (element < 2)
-    sprintf(tail_e, "element =====");
+    snprintf(tail_e, 14, "element =====");
   else
-    sprintf(tail_e, "elements ====");
+    snprintf(tail_e, 14, "elements ====");
 
   place_e =
       WIDTH - sizeof(tail_g) - sizeof(tail_e) - (place_g + 1) - (place_e + 1);

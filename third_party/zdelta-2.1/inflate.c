@@ -65,8 +65,7 @@ struct zd_internal_state {
 };
 
 
-int ZEXPORT zd_inflateReset(z)
-     zd_streamp z;
+int ZEXPORT zd_inflateReset(zd_streamp z)
 {
   if (z == ZD_NULL || z->state == ZD_NULL ||
       z->refnum<0 || z->refnum>REFNUM)
@@ -80,8 +79,7 @@ int ZEXPORT zd_inflateReset(z)
 }
 
 
-int ZEXPORT zd_inflateEnd(z)
-     zd_streamp z;
+int ZEXPORT zd_inflateEnd(zd_streamp z)
 {
   if (z == ZD_NULL || z->state == ZD_NULL || z->zfree == ZD_NULL)
     return ZD_STREAM_ERROR;
@@ -93,11 +91,7 @@ int ZEXPORT zd_inflateEnd(z)
   return ZD_OK;
 }
 
-int ZEXPORT zd_inflateInit2_(z, w, version, stream_size)
-     zd_streamp z;
-     int w;
-     const char *version;
-     int stream_size;
+int ZEXPORT zd_inflateInit2_(zd_streamp z, int w, const char *version, int stream_size)
 {
   if (version == ZD_NULL || version[0] != ZDLIB_VERSION[0] ||
       stream_size != sizeof(zd_stream))
@@ -157,10 +151,7 @@ int ZEXPORT zd_inflateInit2_(z, w, version, stream_size)
 }
 
 
-int ZEXPORT zd_inflateInit_(z, version, stream_size)
-     zd_streamp z;
-     const char *version;
-     int stream_size;
+int ZEXPORT zd_inflateInit_(zd_streamp z, const char *version, int stream_size)
 {
   return zd_inflateInit2_(z, DEF_WBITS, version, stream_size);
 }
@@ -172,9 +163,7 @@ int ZEXPORT zd_inflateInit_(z, version, stream_size)
 /* 
  * zdelta: modified
  */
-int ZEXPORT zd_inflate(z, f)
-     zd_streamp z;
-     int f;
+int ZEXPORT zd_inflate(zd_streamp z, int f)
 {
   int r;
   uInt b;
@@ -275,8 +264,7 @@ int ZEXPORT zd_inflate(z, f)
 }
 
 
-int ZEXPORT zd_inflateSync(z)
-zd_streamp z;
+int ZEXPORT zd_inflateSync(zd_streamp z)
 {
   uInt n;       /* number of bytes to look at */
   Bytef *p;     /* pointer to bytes */

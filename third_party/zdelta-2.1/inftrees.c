@@ -141,17 +141,17 @@ local const uInt cplext[L_CODES] = {/* Extra bits for length codes */
 /* If BMAX needs to be larger than 16, then h and x[] should be uLong. */
 #define BMAX 15         /* maximum bit length of any code */
 
-local int huft_build(b, n, s, d, e, t, m, hp, hn, v)
-uIntf *b;               /* code lengths in bits (all assumed <= BMAX) */
-uInt n;                 /* number of codes (assumed <= 288) */
-uInt s;                 /* number of simple-valued codes (0..s-1) */
-const uIntf *d;         /* list of base values for non-simple codes */
-const uIntf *e;         /* list of extra bits for non-simple codes */
-inflate_huft * FAR *t;  /* result: starting table */
-uIntf *m;               /* maximum lookup bits, returns actual */
-inflate_huft *hp;       /* space for trees */
-uInt *hn;               /* hufts used in space */
-uIntf *v;               /* working area: values in order of bit length */
+local int huft_build(uIntf *b, uInt n, uInt s, const uIntf *d, const uIntf *e, inflate_huft * FAR *t, uIntf *m, inflate_huft *hp, uIntf *hn, uIntf *v)
+// uIntf *b;               /* code lengths in bits (all assumed <= BMAX) */
+// uInt n;                 /* number of codes (assumed <= 288) */
+// uInt s;                 /* number of simple-valued codes (0..s-1) */
+// const uIntf *d;         /* list of base values for non-simple codes */
+// const uIntf *e;         /* list of extra bits for non-simple codes */
+// inflate_huft * FAR *t;  /* result: starting table */
+// uIntf *m;               /* maximum lookup bits, returns actual */
+// inflate_huft *hp;       /* space for trees */
+// uInt *hn;               /* hufts used in space */
+// uIntf *v;               /* working area: values in order of bit length */
 /* Given a list of code lengths and a maximum table size, make a set of
    tables to decode that set of codes.  Return ZD_OK on success, Z_BUF_ERROR
    if the given code set is incomplete (the tables are still built in this
@@ -342,12 +342,12 @@ uIntf *v;               /* working area: values in order of bit length */
 }
 
 
-int inflate_trees_bits(c, bb, tb, hp, z)
-uIntf *c;               /* 19 code lengths */
-uIntf *bb;              /* bits tree desired/actual depth */
-inflate_huft * FAR *tb; /* bits tree result */
-inflate_huft *hp;       /* space for trees */
-zd_streamp z;            /* for messages */
+int inflate_trees_bits(uIntf *c, uIntf *bb, inflate_huft * FAR *tb, inflate_huft *hp, zd_streamp z)
+// uIntf *c;               /* 19 code lengths */
+// uIntf *bb;              /* bits tree desired/actual depth */
+// inflate_huft * FAR *tb; /* bits tree result */
+// inflate_huft *hp;       /* space for trees */
+// zd_streamp z;            /* for messages */
 {
   int r;
   uInt hn = 0;          /* hufts used in space */
@@ -394,14 +394,14 @@ local inflate_huft *fixed_tzd;
  * zdelta: modified
  *         in addition set zdelta static code tree
  */
-int inflate_trees_fixed(bl, bd, bzd, tl, td, tzd, z)
-uIntf *bl;               /* literal desired/actual bit depth     */
-uIntf *bd;               /* distance desired/actual bit depth    */
-uIntf *bzd;              /* zdelta code desired/actual bit depth */
-inflate_huft * FAR *tl;  /* literal/length tree result           */
-inflate_huft * FAR *td;  /* distance tree result                 */
-inflate_huft * FAR *tzd; /* zdelta code tree result              */
-zd_streamp z;             /* for memory allocation                */
+int inflate_trees_fixed(uIntf *bl, uIntf *bd, uIntf *bzd, inflate_huft * FAR *tl, inflate_huft * FAR * td, inflate_huft * FAR * tzd, zd_streamp z)
+// uIntf *bl;               /* literal desired/actual bit depth     */
+// uIntf *bd;               /* distance desired/actual bit depth    */
+// uIntf *bzd;              /* zdelta code desired/actual bit depth */
+// inflate_huft * FAR *tl;  /* literal/length tree result           */
+// inflate_huft * FAR *td;  /* distance tree result                 */
+// inflate_huft * FAR *tzd; /* zdelta code tree result              */
+// zd_streamp z;             /* for memory allocation                */
 {
 #ifdef BUILDFIXED
 /* build fixed tables if not already */
@@ -498,19 +498,19 @@ if (!fixed_built)
  * zdelta: modified
  *         in addition builds zdelta code tree 
  */
-int inflate_trees_dynamic(nl, nd, nzd, c, bl, bd, bzd, tl, td, tzd, hp, z)
-uInt nl;                /* number of literal/length codes */
-uInt nd;                /* number of distance codes */
-uInt nzd;               /* number of zdelta  codes */
-uIntf *c;               /* that many (total) code lengths */
-uIntf *bl;              /* literal desired/actual bit depth */
-uIntf *bd;              /* distance desired/actual bit depth */
-uIntf *bzd;             /* zdelta codes desired/actual bit depth */
-inflate_huft * FAR *tl; /* literal/length tree result */
-inflate_huft * FAR *td; /* distance tree result */
-inflate_huft * FAR *tzd;/* zdelta flags tree result */
-inflate_huft *hp;       /* space for trees */
-zd_streamp z;            /* for messages */
+int inflate_trees_dynamic(uInt nl, uInt nd, uInt nzd, uIntf *c, uIntf *bl, uIntf *bd, uIntf *bzd, inflate_huft * FAR *tl, inflate_huft * FAR *td, inflate_huft * FAR *tzd, inflate_huft *hp, zd_streamp z)
+// uInt nl;                /* number of literal/length codes */
+// uInt nd;                /* number of distance codes */
+// uInt nzd;               /* number of zdelta  codes */
+// uIntf *c;               /* that many (total) code lengths */
+// uIntf *bl;              /* literal desired/actual bit depth */
+// uIntf *bd;              /* distance desired/actual bit depth */
+// uIntf *bzd;             /* zdelta codes desired/actual bit depth */
+// inflate_huft * FAR *tl; /* literal/length tree result */
+// inflate_huft * FAR *td; /* distance tree result */
+// inflate_huft * FAR *tzd;/* zdelta flags tree result */
+// inflate_huft *hp;       /* space for trees */
+// zd_streamp z;            /* for messages */
 {
   int r;
   uInt hn = 0;          /* hufts used in space */

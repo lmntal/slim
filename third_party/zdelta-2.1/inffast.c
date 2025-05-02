@@ -41,13 +41,7 @@
 /*
  * zdelta: modified
  */
-int inflate_fast(bl, bd, bzd, tl, td, tzd, s, z)
-uInt bl, bd, bzd;
-inflate_huft *tl;
-inflate_huft *td;
-inflate_huft *tzd; /* need separate declaration for Borland C++ */
-inflate_blocks_statef *s;
-zd_streamp z;
+int inflate_fast(uInt bl, uInt bd, uInt bzd, inflate_huft *tl, inflate_huft *td, inflate_huft *tzd, inflate_blocks_statef *s, zd_streamp z)
 {
   inflate_huft *t;      /* temporary pointer */
   uInt e;               /* extra bits or operation */

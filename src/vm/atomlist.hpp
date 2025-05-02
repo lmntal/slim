@@ -432,14 +432,14 @@ extern RecordList record_list;
     for (auto it : (MEM)->atom_lists()) {                                      \
       (ENT) = it.second;                                                       \
       (F) = it.first;                                                          \
-      (CODE);                                                                  \
+      CODE;                                                                  \
     }                                                                          \
   } while (0)
 #define EACH_ATOMLIST(MEM, ENT, CODE)                                          \
   do {                                                                         \
     for (auto it : (MEM)->atom_lists()) {                                      \
       (ENT) = it.second;                                                       \
-      (CODE);                                                                  \
+      CODE;                                                                  \
     }                                                                          \
   } while (0)
 
@@ -452,7 +452,7 @@ extern RecordList record_list;
       (V) = iter_;                                                             \
       if (((LmnSymbolAtomRef)(V))->get_functor() !=                      \
           LMN_RESUME_FUNCTOR) {                                                \
-        (CODE);                                                                \
+        CODE;                                                                \
       }                                                                        \
     }                                                                          \
   }
@@ -465,7 +465,7 @@ extern RecordList record_list;
       if (((LmnSymbolAtomRef)(V))->get_functor() !=                      \
               LMN_RESUME_FUNCTOR &&                                            \
           id == 0) {                                                           \
-        (CODE);                                                                \
+        CODE;                                                                \
         id = (NUM);                                                            \
       }                                                                        \
       id--;                                                                    \
@@ -492,7 +492,7 @@ extern RecordList record_list;
       if (((LmnSymbolAtomRef)(V))->get_functor() !=                      \
               LMN_RESUME_FUNCTOR &&                                            \
           id == 0) {                                                           \
-        (CODE);                                                                \
+        CODE;                                                                \
         id = (NUM);                                                            \
       }                                                                        \
       id--;                                                                    \
@@ -508,7 +508,7 @@ extern RecordList record_list;
       {                                                                        \
         (V) = iter_;                                                           \
         if ((V)->get_functor() != LMN_RESUME_FUNCTOR) {                \
-          (CODE);                                                              \
+          CODE;                                                              \
         }                                                                      \
       }                                                                        \
     }                                                                          \
@@ -520,7 +520,7 @@ extern RecordList record_list;
       for (auto iter_ : *ent_.second) {                                        \
         (V) = iter_;                                                           \
         if ((V)->get_functor() != LMN_RESUME_FUNCTOR) {                \
-          (CODE);                                                              \
+          CODE;                                                              \
         }                                                                      \
       }                                                                        \
     };                                                                         \

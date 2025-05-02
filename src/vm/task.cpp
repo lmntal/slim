@@ -2836,14 +2836,14 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
         }
         case LMN_DBL_ATTR: {
           char buf[64];
-          sprintf(buf, "%f", lmn_get_double(rc->wt(srcvec->get(0))));
+          snprintf(buf, 64, "%f", lmn_get_double(rc->wt(srcvec->get(0))));
           port_put_raw_s(port, buf);
           break;
         }
         case LMN_HL_ATTR: {
           char buf[16];
           port_put_raw_s(port, HYPERLINK_NAME);
-          sprintf(buf, "%lx",
+          snprintf(buf, 16, "%lx",
                   LMN_HL_ID(LMN_HL_ATOM_ROOT_HL(
                       (LmnSymbolAtomRef)rc->wt(srcvec->get(0)))));
           port_put_raw_s(port, buf);

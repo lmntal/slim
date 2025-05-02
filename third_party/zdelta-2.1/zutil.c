@@ -88,8 +88,8 @@ void zd_z_error (m)
  */
 /*
  * zdelta: added prefix zd
- */const char * ZEXPORT zd_zError(err)
-    int err;
+ */
+const char * ZEXPORT zd_zError(int err)
 {
     return ERR_MSG(err);
 }
@@ -97,10 +97,7 @@ void zd_z_error (m)
 
 #ifndef HAVE_MEMCPY
 
-void zmemcpy(dest, source, len)
-    Bytef* dest;
-    const Bytef* source;
-    uInt  len;
+void zmemcpy(Bytef *dest, const Bytef *source, uInt len)
 {
     if (len == 0) return;
     do {
@@ -108,10 +105,7 @@ void zmemcpy(dest, source, len)
     } while (--len != 0);
 }
 
-int zmemcmp(s1, s2, len)
-    const Bytef* s1;
-    const Bytef* s2;
-    uInt  len;
+int zmemcmp(const Bytef *s1, const Bytef *s2, uInt len)
 {
     uInt j;
 
@@ -121,9 +115,7 @@ int zmemcmp(s1, s2, len)
     return 0;
 }
 
-void zmemzero(dest, len)
-    Bytef* dest;
-    uInt  len;
+void zmemzero(Bytef *dest, uInt len)
 {
     if (len == 0) return;
     do {
@@ -255,10 +247,7 @@ extern void   free   OF((voidpf ptr));
 /*
  * zdelta: added prefix zd
  */
-voidpf zd_zcalloc (opaque, items, size)
-    voidpf opaque;
-    unsigned items;
-    unsigned size;
+voidpf zd_zcalloc (voidpf opaque, unsigned items, unsigned size)
 {
     if (opaque) items += size - size; /* make compiler happy */
     return (voidpf)calloc(items, size);
@@ -266,9 +255,7 @@ voidpf zd_zcalloc (opaque, items, size)
 /*
  * zdelta: added prefix zd
  */
-void  zd_zcfree (opaque, ptr)
-    voidpf opaque;
-    voidpf ptr;
+void  zd_zcfree (voidpf opaque, voidpf ptr)
 {
     free(ptr);
     if (opaque) return; /* make compiler happy */

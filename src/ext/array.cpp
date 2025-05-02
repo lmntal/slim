@@ -395,7 +395,7 @@ void LmnArray::sp_cb_array_dump(void *array, LmnPortRef port) {
     if (type == LMN_INT_ATTR) {
       port_put_raw_s(port, int_to_str((LmnWord)data[0]));
     } else if (type == LMN_DBL_ATTR) {
-      sprintf(buf, "%#g", lmn_get_double((LmnDataAtomRef)data[0]));
+      snprintf(buf, 64, "%#g", lmn_get_double((LmnDataAtomRef)data[0]));
       port_put_raw_s(port, buf);
     } else if (type == LMN_HL_ATTR) {
       lmn_dump_atom(port, data[0], type);
@@ -407,7 +407,7 @@ void LmnArray::sp_cb_array_dump(void *array, LmnPortRef port) {
       if (type == LMN_INT_ATTR) {
         port_put_raw_s(port, int_to_str((LmnWord)data[i]));
       } else if (type == LMN_DBL_ATTR) {
-        sprintf(buf, "%#g", lmn_get_double((LmnDataAtomRef)data[i]));
+        snprintf(buf, 64, "%#g", lmn_get_double((LmnDataAtomRef)data[i]));
         port_put_raw_s(port, buf);
       } else if (type == LMN_HL_ATTR) {
         lmn_dump_atom(port, (LmnAtomRef)data[i], type);

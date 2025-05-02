@@ -84,12 +84,7 @@ struct inflate_codes_state {
  * zdelta: modified
  *         handle the additional zdelta code
  */
-inflate_codes_statef *inflate_codes_new(bl, bd, bzd, tl, td, tzd, z)
-     uInt bl, bd, bzd;
-     inflate_huft *tl;
-     inflate_huft *td; 
-     inflate_huft *tzd; /* need separate declaration for Borland C++ */
-     zd_streamp z;
+inflate_codes_statef *inflate_codes_new(uInt bl, uInt bd, uInt bzd, inflate_huft *tl, inflate_huft *td, inflate_huft *tzd, zd_streamp z)
 {
   inflate_codes_statef *c;
 
@@ -111,10 +106,7 @@ inflate_codes_statef *inflate_codes_new(bl, bd, bzd, tl, td, tzd, z)
 /*
  * zdelta: modified
  */
-int inflate_codes(s, z, r)
-     inflate_blocks_statef *s;
-     zd_streamp z;
-     int r;
+int inflate_codes(inflate_blocks_statef *s, zd_streamp z, int r)
 {
   uInt j;               /* temporary storage */
   inflate_huft *t;      /* temporary pointer */
@@ -355,9 +347,7 @@ int inflate_codes(s, z, r)
 }
 
 
-void inflate_codes_free(c, z)
-     inflate_codes_statef *c;
-     zd_streamp z;
+void inflate_codes_free(inflate_codes_statef *c, zd_streamp z)
 {
   ZFREE(z, c);
   Tracev((stderr, "inflate:       codes free\n"));

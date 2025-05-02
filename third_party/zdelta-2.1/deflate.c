@@ -249,8 +249,7 @@ struct static_tree_desc_s {int dummy;}; /* for buggy compilers */
 /* zdelta: modified
  *         added zd prefix to the name
  */
-int ZEXPORT zd_deflateReset (strm)
-    zd_streamp strm;
+int ZEXPORT zd_deflateReset (zd_streamp strm)
 {
   deflate_state *s;
   int rw;
@@ -302,10 +301,7 @@ int ZEXPORT zd_deflateReset (strm)
 /* zdelta: modified
  *         added zd prefix to the name
  */
-int ZEXPORT zd_deflateParams(strm, level, strategy)
-    zd_streamp strm;
-    int level;
-    int strategy;
+int ZEXPORT zd_deflateParams(zd_streamp strm, int level, int strategy)
 {
     deflate_state *s;
     compress_func func;
@@ -339,11 +335,7 @@ int ZEXPORT zd_deflateParams(strm, level, strategy)
 }
 
 /* ========================================================================= */
-int ZEXPORT zd_deflateInit_(strm, level, version, stream_size)
-    zd_streamp strm;
-    int level;
-    const char *version;
-    int stream_size;
+int ZEXPORT zd_deflateInit_(zd_streamp strm, int level, const char *version, int stream_size)
 {
   return zd_deflateInit2_(strm, level, ZD_DEFLATED, MAX_WBITS, 
 			  DEF_MEM_LEVEL, ZD_DEFAULT_STRATEGY, version, 
@@ -355,16 +347,8 @@ int ZEXPORT zd_deflateInit_(strm, level, version, stream_size)
 /* zdelta: modified
  *         added zd prefix to the name
  */
-int ZEXPORT zd_deflateInit2_(strm, level, method, windowBits, memLevel, 
-			     strategy, version, stream_size)
-    zd_streamp strm;
-    int  level;
-    int  method;
-    int  windowBits;
-    int  memLevel;
-    int  strategy;
-    const char *version;
-    int stream_size;
+int ZEXPORT zd_deflateInit2_(zd_streamp strm, int level, int method, int windowBits, int memLevel, 
+			     int strategy, const char *version, int stream_size)
 {
   deflate_state *s;
   int noheader = 0;
@@ -449,9 +433,9 @@ int ZEXPORT zd_deflateInit2_(strm, level, method, windowBits, memLevel,
   s->pending_buf = (uchf *) overlay;
   s->pending_buf_size = (ulg)s->lit_bufsize * (sizeof(ush)+2L);
 
-  if (s->ref_window  == ZD_NULL || s->prev        == ZD_NULL ||
-      s->head        == ZD_NULL || s->ref_prev    == ZD_NULL ||
-      s->ref_head    == ZD_NULL || s->pending_buf == ZD_NULL)
+  if (s->prev        == ZD_NULL ||
+      s->head        == ZD_NULL ||
+      s->pending_buf == ZD_NULL)
   {
     strm->msg = (char*)ERR_MSG(ZD_MEM_ERROR);
     zd_deflateEnd (strm);
@@ -486,9 +470,7 @@ int ZEXPORT zd_deflateInit2_(strm, level, method, windowBits, memLevel,
  * IN assertion: the stream state is correct and there is enough room in
  * pending_buf.
  */
-local void putShortMSB (s, b)
-     deflate_state *s;
-     uInt b;
+local void putShortMSB (deflate_state *s, uInt b)
 {
   put_byte(s, (Byte)(b >> 8));
   put_byte(s, (Byte)(b & 0xff));
@@ -500,8 +482,7 @@ local void putShortMSB (s, b)
  * to avoid allocating a large strm->next_out buffer and copying into it.
  * (See also read_buf()).
  */
-local void flush_pending(strm)
-     zd_streamp strm;
+local void flush_pending(zd_streamp strm)
 {
   unsigned len = strm->state->pending;
   
@@ -524,9 +505,7 @@ local void flush_pending(strm)
  *         added prefix zd to the name
  *         no code for preset dictionaries
  */
-int ZEXPORT zd_deflate (strm, flush)
-    zd_streamp strm;
-    int flush;
+int ZEXPORT zd_deflate (zd_streamp strm, int flush)
 {
   int old_flush; /* value of flush param for previous deflate call */
   deflate_state *s;
@@ -657,8 +636,7 @@ int ZEXPORT zd_deflate (strm, flush)
  *         added prefix zd to the name
  *         modified to handle multiple reference files
  */
-int ZEXPORT zd_deflateEnd (strm)
-    zd_streamp strm;
+int ZEXPORT zd_deflateEnd (zd_streamp strm)
 {
   int status;
 
@@ -694,10 +672,7 @@ int ZEXPORT zd_deflateEnd (strm)
  * allocating a large strm->next_in buffer and copying from it.
  * (See also flush_pending()).
  */
-local int read_buf(strm, buf, size)
-     zd_streamp strm;
-     Bytef *buf;
-     unsigned size;
+local int read_buf(zd_streamp strm, Bytef *buf, unsigned size)
 {
   unsigned len = strm->avail_in;
 
@@ -722,11 +697,7 @@ local int read_buf(strm, buf, size)
  * Read new data from the reference input stream;
  * updates the total number of bytes read. 
  */
-local int read_ref_buf(strm, buf, size, rw)
-     zd_streamp strm;
-     Bytef *buf;
-     unsigned size;
-     int rw;
+local int read_ref_buf(zd_streamp strm, Bytef *buf, unsigned size, int rw)
 {
   unsigned len = strm->base_avail[rw]; 
 
@@ -747,8 +718,7 @@ local int read_ref_buf(strm, buf, size, rw)
  *        only one compression level
  *        Initialize the "longest match" routines for a new zlib stream
  */
-local void lm_init (s)
-    deflate_state *s;
+local void lm_init (deflate_state *s)
 {
   int i;
   int refnum = s->strm->refnum;
@@ -793,8 +763,7 @@ local void lm_init (s)
  *    option -- not supported here).
  */
 local void 
-fill_window(s)
-    deflate_state *s;
+fill_window(deflate_state *s)
 {
   register unsigned n, m;
   register Posf *p;
@@ -893,9 +862,7 @@ fill_window(s)
  *    At least one byte has been read, or base_avail == 0;
  */
 local void 
-fill_ref_window(s, rw)
-    deflate_state *s;
-    int rw;
+fill_ref_window(deflate_state *s, int rw)
 {
   uInt i;
   uInt wsize = s->w_size;
@@ -937,9 +904,7 @@ fill_ref_window(s, rw)
  * called only once at the beginnig of deflatation
  */
 local void 
-init_ref_window(s, rw)
-    deflate_state *s;
-    int rw;
+init_ref_window(deflate_state *s, int rw)
 {
     uInt i;
     uInt n;
@@ -969,8 +934,7 @@ init_ref_window(s, rw)
  *    At least one byte has been read, or avail_in == 0; 
  */
 local void 
-init_window(s)
-    deflate_state *s;
+init_window(deflate_state *s)
 {
 
     s->lookahead = read_buf(s->strm, s->window, (unsigned) s->window_size);
@@ -1037,10 +1001,7 @@ init_window(s)
  *   are set to pointet to it
  */
 
-local void reference_longest_match(s, cur_match, rw)
-     deflate_state *s;
-     IPos cur_match;
-     int rw;
+local void reference_longest_match(deflate_state *s, IPos cur_match, int rw)
 {
   register Bytef *scan = s->window + s->strstart; /* current string */
   register Bytef *match;                          /* matched string */
@@ -1202,9 +1163,7 @@ local void reference_longest_match(s, cur_match, rw)
  *   s->match_sign, s->match_ptr 
  *   are set to pointet to it
  */
-local void target_longest_match(s, cur_match)
-     deflate_state *s;
-     IPos cur_match;
+local void target_longest_match(deflate_state *s, IPos cur_match)
 {
   register Bytef *scan = s->window + s->strstart;/* current string */
   register Bytef *match;                         /* matched string */
@@ -1318,9 +1277,7 @@ local void target_longest_match(s, cur_match)
  * NOTE: this function should be optimized to avoid extra copying from
  * window to pending_buf.
  */
-local block_state deflate_stored(s, flush)
-    deflate_state *s;
-    int flush;
+local block_state deflate_stored(deflate_state *s, int flush)
 {
     /* Stored blocks are limited to 0xffff bytes, pending_buf is limited
      * to pending_buf_size, and each stored block has a 5 byte header:

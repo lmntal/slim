@@ -63,7 +63,7 @@
         __next = (V)->get_next();                                  \
         if ((V)->get_functor() != LMN_RESUME_FUNCTOR &&                \
             !((D) && dmem_is_removed_atom((D), (MEM), (V)))) {                 \
-          (CODE);                                                              \
+          CODE;                                                              \
         }                                                                      \
       }                                                                        \
     }                                                                          \
@@ -78,7 +78,7 @@
         (V) = (LmnSymbolAtomRef)(D)->new_proxies.get(__i);               \
         if ((V)->get_functor() == F &&                                   \
             !dmem_is_removed_atom((D), (MEM), (V))) {                          \
-          (CODE);                                                              \
+          CODE;                                                              \
         }                                                                      \
       }                                                                        \
     }                                                                          \
@@ -109,13 +109,13 @@
     for ((V) = MEM->mem_child_head(); (V); (V) = __next) { \
       __next = V->mem_next();                              \
       if (!(D) || !dmem_is_removed_mem((D), (MEM), (V))) {   \
-        (CODE);                                              \
+        CODE;                                              \
       }                                                      \
     }                                                        \
     if ((D)) {                                               \
       for (i = 0; i < (D)->new_mems.get_num(); i++) {        \
         (V) = (LmnMembraneRef)(D)->new_mems.get(i);          \
-        (CODE);                                              \
+        CODE;                                              \
       }                                                      \
     }                                                        \
   } while (0)

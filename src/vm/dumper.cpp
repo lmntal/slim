@@ -227,7 +227,7 @@ static BOOL dump_data_atom(LmnPortRef port, LmnAtomRef data, LmnLinkAttr attr) {
   } break;
   case LMN_DBL_ATTR: {
     char buf[64];
-    sprintf(buf, "%#g", lmn_get_double((LmnDataAtomRef)data));
+    snprintf(buf, 64, "%#g", lmn_get_double((LmnDataAtomRef)data));
     port_put_raw_s(port, buf);
   } break;
   case LMN_SP_ATOM_ATTR:
@@ -237,17 +237,15 @@ static BOOL dump_data_atom(LmnPortRef port, LmnAtomRef data, LmnLinkAttr attr) {
     char buf[18];
     port_put_raw_s(port, "!");// port_put_raw_s(port, HYPERLINK_NAME);
     if (lmn_env.show_hyperlink) {
-      // sprintf(buf, "H%lx",
-      sprintf(buf, "H%lu",
+      snprintf(buf, 18, "H%lu",
               LMN_HL_ID(lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)data)));
     } else {
-      // sprintf(buf, "H%lx",
-      sprintf(buf, "H%lu",
+      snprintf(buf, 18, "H%lu",
               LMN_HL_ID(LMN_HL_ATOM_ROOT_HL((LmnSymbolAtomRef)data)));
     }
     if (LMN_HL_HAS_ATTR(lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)data))) {
       port_put_raw_s(port, buf);
-      sprintf(buf, ":");
+      snprintf(buf, 18, ":");
       port_put_raw_s(port, buf);
       dump_hl_attratom(
           port, LMN_HL_ATTRATOM(lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)data)),

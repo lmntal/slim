@@ -106,10 +106,7 @@ zdelta modifications:
 /* 
  * zdelta: modified
  */
-void inflate_blocks_reset(s, z, c)
-inflate_blocks_statef *s;
-zd_streamp z;
-uLongf *c;
+void inflate_blocks_reset(inflate_blocks_statef *s, zd_streamp z, uLongf *c)
 {
   int i;
   if (c != ZD_NULL)
@@ -136,10 +133,7 @@ uLongf *c;
 }
 
 
-inflate_blocks_statef *inflate_blocks_new(z, c, w)
-zd_streamp z;
-check_func c;
-uInt w;
+inflate_blocks_statef *inflate_blocks_new(zd_streamp z, check_func c, uInt w)
 {
   inflate_blocks_statef *s;
 
@@ -168,10 +162,7 @@ uInt w;
 }
 
 
-int inflate_blocks(s, z, r)
-inflate_blocks_statef *s;
-zd_streamp z;
-int r;
+int inflate_blocks(inflate_blocks_statef *s, zd_streamp z, int r)
 {
   uInt t;               /* temporary storage */
   uLong b;              /* bit buffer */
@@ -441,9 +432,7 @@ int r;
 }
 
 
-int inflate_blocks_free(s, z)
-     inflate_blocks_statef *s;
-     zd_streamp z;
+int inflate_blocks_free(inflate_blocks_statef *s, zd_streamp z)
 {
   inflate_blocks_reset(s, z, ZD_NULL);
   ZFREE(z, s->window);

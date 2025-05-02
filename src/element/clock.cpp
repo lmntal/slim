@@ -75,6 +75,7 @@ double get_cpu_time() {
 #
 #else
   fprintf(stderr, "not support the time profiler on this environment.");
+  return 0;
 #endif
 }
 
@@ -92,5 +93,6 @@ double get_wall_time() {
 #
 #else
   fprintf(stderr, "not support the time profiler on this environment.");
+  return 0;
 #endif
 }

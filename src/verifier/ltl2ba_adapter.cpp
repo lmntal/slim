@@ -45,7 +45,7 @@ FILE *ltl2ba_str(char *ltl) {
   char buf[2048] = {0};
 
   if ((cmd = getenv(ENV_LTL2BA))) {
-    sprintf(buf, "%s -f \"%s\"", cmd, ltl);
+    snprintf(buf, 2048, "%s -f \"%s\"", cmd, ltl);
     return popen(buf, "r");
   } else {
     fprintf(stderr, "environment variable \"%s\" is not set", ENV_LTL2BA);
