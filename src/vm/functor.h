@@ -45,8 +45,9 @@
  * @{
  */
 
+#include <unordered_map>
+
 #include "lmntal.h"
-#include "element/element.h"
 
 /* Functor Information */
 
@@ -55,39 +56,53 @@ struct LmnFunctorEntry {
   lmn_interned_str module;
   lmn_interned_str name;
   LmnArity arity;
+
+  bool operator==(const LmnFunctorEntry &rhs) const {
+    return (this->module == rhs.module && this->name == rhs.name && this->arity == rhs.arity);
+  }
+  bool operator!=(const LmnFunctorEntry &rhs) const {
+    return !(*this == rhs);
+  }
+
+  struct Hasher {
+    std::size_t operator()(const LmnFunctorEntry &entry) const {
+      return entry.module * 31 * 31 + entry.name * 31 + entry.arity;      
+    }
+  };
 };
 
 class LmnFunctorTable {
-
   unsigned int size;
   unsigned int next_id;
   LmnFunctorEntry *entry;
-  st_table_t
-    functor_id_tbl; /* ファンクタ構造体からIDへの対応を要素に持つテーブル */
+  std::unordered_map<LmnFunctorEntry, unsigned int, LmnFunctorEntry::Hasher> functor_id_map;
 
   LmnFunctor functor_intern(BOOL special, lmn_interned_str module,
                                  lmn_interned_str name, int arity);
-  LmnFunctorEntry *lmn_id_to_functor(int functor_id) const;
+
 public:
   LmnFunctorTable();
   ~LmnFunctorTable();
-  static int functor_cmp(LmnFunctorEntry *x, LmnFunctorEntry *y);
-  static long functor_hash(LmnFunctorEntry *x);
-  void lmn_register_predefined_functor(void);//not found
+
   LmnFunctor intern(lmn_interned_str module, lmn_interned_str name,
-                              int arity);
-  void register_functor(int id, BOOL special, lmn_interned_str module,
-                             lmn_interned_str name, int arity);
-  static int functor_entry_free(st_data_t e, st_data_t dummy1, st_data_t dummy_2);
-  LmnFunctorEntry *get_entry(unsigned int f);
-  unsigned int get_size();
-  unsigned int get_next_id();
+                              int arity) {
+    return functor_intern(FALSE, module, name, arity);
+  }
+
+  LmnFunctorEntry *get_entry(unsigned int f) {
+    return &entry[f];
+  }
+  unsigned int get_size() {
+    return size;
+  }
+  unsigned int get_next_id() {
+    return next_id;
+  }
 
   #ifdef DEBUG
   void print(void);
   void functor_printer(LmnFunctor f);
   #endif
-
 };
 
 #define LMN_FUNCTOR_NAME_ID(T,F) (T->get_entry(F)->name)
