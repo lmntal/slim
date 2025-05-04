@@ -45,10 +45,10 @@
  * @{
  */
 
-#include "membrane.hpp"
-
 typedef struct AtomListEntry *AtomListEntryRef;
 typedef struct LinkObj *LinkObjRef;
+
+#include "membrane.hpp"
 
 #include "atom.h"
 #include "element/element.h"
@@ -58,6 +58,7 @@ typedef struct LinkObj *LinkObjRef;
 #include "rule.h"
 
 #include <vector>
+#include <unordered_set>
 
 /*
  * extended ground
@@ -138,6 +139,7 @@ LmnMembraneRef lmn_mem_copy_with_map(LmnMembraneRef srcmem,
 ProcessTableRef lmn_mem_copy_cells_ex(LmnMembraneRef dest, LmnMembraneRef src,
                                       BOOL hl_nd);
 ProcessTableRef lmn_mem_copy_cells(LmnMembraneRef dest, LmnMembraneRef srcmem);
+LmnMembraneRef lmn_mem_copy_with_map_ex(LmnMembraneRef src, std::unordered_map<ProcessID, void *> *ret_copymap);
 
 BOOL lmn_mem_cmp_ground(const Vector *srcvec, const Vector *dstvec);
 BOOL lmn_mem_is_ground(Vector *srcvec, Vector *avovec, unsigned long *natoms);
@@ -157,7 +159,7 @@ void lmn_mem_copy_hlground(LmnMembraneRef mem, Vector *srcvec,
 void lmn_mem_remove_hlground(LmnMembraneRef mem, Vector *srcvec,
                              ProcessTableRef *attr_sym, Vector *attr_data,
                              Vector *attr_data_at);
-void lmn_mem_free_ground(Vector *srcvec);
+void lmn_mem_free_ground(const std::vector<LinkObjRef> &srcvec);
 void lmn_mem_free_hlground(Vector *srcvec, ProcessTableRef *attr_sym,
                            Vector *attr_data, Vector *attr_data_at);
 BOOL ground_atoms(Vector *srcvec, Vector *avovec, ProcessTableRef *atoms,
@@ -166,6 +168,18 @@ BOOL ground_atoms(Vector *srcvec, Vector *avovec, ProcessTableRef *atoms,
                   Vector *attr_dataAtom_attrs);
 BOOL ground_atoms_old(Vector *srcvec, Vector *avovec, HashSet **atoms,
                       unsigned long *natoms);
+/**
+ * 
+ */
+bool ground_atoms(
+    const std::vector<LinkObjRef> &srcvec,
+    std::unordered_map<ProcessID, LmnSymbolAtomRef> &atoms, /* ground内の発見済みのシンボルアトム */
+    size_t *number_of_atoms = nullptr,
+    const std::vector<LinkObjRef> &avovec = std::vector<LinkObjRef>(),
+    std::unordered_set<HyperLink *> *hlinks = nullptr, /* hlinks!=NULLなら、hlgroundとして探索 */
+    const std::unordered_set<LmnFunctor> &attr_functors = std::unordered_set<LmnFunctor>(), /* hlgroundの属性（unary atom）*/
+    const std::vector<std::pair<LmnAtomRef, LmnLinkAttr>> &attr_dataAtoms = std::vector<std::pair<LmnAtomRef, LmnLinkAttr>>()         /* hlgroundの属性（data atom）*/
+      );
 
 void move_symbol_atom_to_atomlist_head(LmnSymbolAtomRef a, LmnMembraneRef mem);
 void move_symbol_atomlist_to_atomlist_tail(LmnSymbolAtomRef a,

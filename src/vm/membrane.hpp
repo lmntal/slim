@@ -55,6 +55,7 @@ struct LmnMembrane;
 struct LmnRuleSet;
 typedef struct LmnMembrane *LmnMembraneRef;
 typedef struct AtomListEntry **AtomSet;
+typedef struct LinkObj *LinkObjRef;
 
 struct LmnMembrane {
   AtomSet atomset;
@@ -281,7 +282,7 @@ struct LmnMembrane {
   LmnMembraneRef copy();
   LmnMembraneRef copy_ex();
   //まだリファクタリングしていない
-  void remove_ground(Vector *srcvec);
+  void remove_ground(const std::vector<LinkObjRef> &srcvec);
   void delete_ground(Vector *srcvec);
   BOOL equals(LmnMembraneRef mem2);
   void remove_mem(LmnMembraneRef mem);

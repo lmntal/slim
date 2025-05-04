@@ -93,7 +93,9 @@ public:
                             const Vector *links);
 
   static Vector *links_from_idxs(const Vector *link_idxs, LmnReactCxtRef v);
+  static std::vector<LinkObjRef> links_from_indexes(const Vector *link_idxs, LmnReactCxtRef v);
   static void free_links(Vector *links);
+  static void free_links(const std::vector<LinkObjRef> &links);
 };
 
 /* @} */

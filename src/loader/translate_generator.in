@@ -630,14 +630,14 @@ BOOL interpret_generated(LmnReactCxtRef rc,
 
 #removeground LmnInstrVar LmnInstrVar
   {
-    Vector *srcvec = Task::links_from_idxs((Vector*)rc->wt($0), rc);
+    auto srcvec = Task::links_from_indexes((Vector*)rc->wt($0), rc);
     ((LmnMembraneRef)rc->wt($1))->remove_ground(srcvec);
     Task::free_links(srcvec);
   }
 
 #freeground LmnInstrVar
   {
-    Vector *srcvec = Task::links_from_idxs((Vector*)rc->wt($0), rc);
+    auto srcvec = Task::links_from_indexes((Vector*)rc->wt($0), rc);
     lmn_mem_free_ground(srcvec);
     Task::free_links(srcvec);
   }

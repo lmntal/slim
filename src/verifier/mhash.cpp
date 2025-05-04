@@ -63,7 +63,7 @@ typedef unsigned long mhash_t;
 static mhash_t mhash_sub(LmnMembraneRef mem, unsigned long tbl_size);
 static inline mhash_t mhash_membrane(LmnMembraneRef mem,
                                      LmnMembraneRef calc_mem,
-                                     ProcessTableRef ctx);
+                                     std::unordered_map<ProcessID, mhash_t> &ctx);
 
 static int mhash_depth = MHASH_TREE_D;
 
@@ -79,7 +79,7 @@ mhash_t mhash(LmnMembraneRef mem) {
 }
 
 static mhash_t mhash_sub(LmnMembraneRef mem, unsigned long tbl_size) {
-  ProcessTableRef c = new ProcessTbl(tbl_size);
+  std::unordered_map<ProcessID, mhash_t> c;
   mhash_t t;
 
 #ifdef PROFILE
@@ -88,7 +88,6 @@ static mhash_t mhash_sub(LmnMembraneRef mem, unsigned long tbl_size) {
 #endif
 
   t = mhash_membrane(mem, NULL, c);
-  delete c;
 
 #ifdef PROFILE
   if (lmn_env.profile_level >= 3)
@@ -98,10 +97,10 @@ static mhash_t mhash_sub(LmnMembraneRef mem, unsigned long tbl_size) {
 }
 
 static inline mhash_t molecule(LmnSymbolAtomRef atom, LmnMembraneRef calc_mem,
-                               ProcessTableRef ctx);
+                               std::unordered_map<ProcessID, mhash_t> &ctx);
 static inline mhash_t memunit(LmnMembraneRef mem,
                               LmnSymbolAtomRef from_in_proxy,
-                              LmnMembraneRef calc_mem, ProcessTableRef ctx,
+                              LmnMembraneRef calc_mem, std::unordered_map<ProcessID, mhash_t> &ctx,
                               int depth);
 static mhash_t mhash_rulesets(const std::vector<LmnRuleSet *> &rulesets);
 
@@ -109,16 +108,17 @@ static mhash_t mhash_rulesets(const std::vector<LmnRuleSet *> &rulesets);
  * 計算の根となる膜をcalc_memとして渡す.  */
 static inline mhash_t mhash_membrane(LmnMembraneRef mem,
                                      LmnMembraneRef calc_mem,
-                                     ProcessTableRef ctx) {
-  mhash_t t;
-
+                                     std::unordered_map<ProcessID, mhash_t> &ctx) {
   if (mem == calc_mem) {
     /* 膜memを起点にしたトレースでmem自身に到達可能な場合の無限ループを防ぐため,
      * 計算中の膜calc_mem( ==mem )のハッシュ値が必要になる場合は定数を返す. */
     return MHASH_CALCULATING_MEM;
-  } else if (proc_tbl_get_by_mem(ctx, mem, &t)) {
+  }
+
+  auto p = ctx.find(slim::process_id(mem));
+  if (p != ctx.end()) {
     /* memのハッシュ値を計算済みなら, それを返す */
-    return (mhash_t)t;
+    return (mhash_t)p->second;
   } else {
     mhash_t ret, hash_sum, hash_mul;
 
@@ -138,7 +138,7 @@ static inline mhash_t mhash_membrane(LmnMembraneRef mem,
               continue;
             EACH_ATOM(atom, ent, ({
                         /* 各連結分子のハッシュ値の値を求める. */
-                        if (!proc_tbl_get_by_atom(ctx, atom, NULL)) {
+                        if (ctx.find(slim::process_id(atom)) == ctx.end()) {
                           mhash_t tmp = molecule(atom, mem, ctx);
                           hash_sum += tmp;
                           hash_mul *= tmp;
@@ -178,18 +178,18 @@ static inline mhash_t mhash_membrane(LmnMembraneRef mem,
 
     /* finalzie */
     ret = hash_sum ^ hash_mul;
-    ctx->proc_tbl_put_mem(mem, ret);
+    ctx.emplace(slim::process_id(mem), ret);
     return ret;
   }
 }
 
 static inline void do_molecule(LmnAtomRef atom, LmnLinkAttr attr,
-                               LmnMembraneRef calc_mem, ProcessTableRef ctx,
+                               LmnMembraneRef calc_mem, std::unordered_map<ProcessID, mhash_t> &ctx,
                                int i_parent, mhash_t *sum, mhash_t *mul);
 
 /* 膜calc_memに所属しているアトムatomをrootにした連結分子のハッシュ値を返す. */
 static inline mhash_t molecule(LmnSymbolAtomRef atom, LmnMembraneRef calc_mem,
-                               ProcessTableRef ctx) {
+                               std::unordered_map<ProcessID, mhash_t> &ctx) {
   mhash_t sum, mul;
 
   sum = MHASH_ADD_0;
@@ -200,14 +200,14 @@ static inline mhash_t molecule(LmnSymbolAtomRef atom, LmnMembraneRef calc_mem,
 }
 
 static inline mhash_t mhash_unit(LmnAtomRef atom, LmnLinkAttr attr,
-                                 LmnMembraneRef calc_mem, ProcessTableRef ctx,
+                                 LmnMembraneRef calc_mem, std::unordered_map<ProcessID, mhash_t> &ctx,
                                  int depth);
 static inline mhash_t mhash_data(LmnAtomRef atom, LmnLinkAttr attr);
 
 /* アトムatomのハッシュ値を求め, 連結分子のハッシュ値sum, mulに掛け合わせる.
  * atomのリンク先アトムに対して再帰する. */
 static inline void do_molecule(LmnAtomRef atom, LmnLinkAttr attr,
-                               LmnMembraneRef calc_mem, ProcessTableRef ctx,
+                               LmnMembraneRef calc_mem, std::unordered_map<ProcessID, mhash_t> &ctx,
                                int i_parent, mhash_t *sum, mhash_t *mul) {
   mhash_t t;
 
@@ -217,8 +217,7 @@ static inline void do_molecule(LmnAtomRef atom, LmnLinkAttr attr,
     (*sum) += t;
     (*mul) *= t;
   } else if (((LmnSymbolAtomRef)atom)->get_functor() !=
-                 LMN_IN_PROXY_FUNCTOR &&
-             ctx->put_new_atom((LmnSymbolAtomRef)atom, 1)) {
+                 LMN_IN_PROXY_FUNCTOR && ctx.emplace(slim::process_id((LmnSymbolAtomRef)atom), 1).second) {
     /* シンボルアトムの場合:
      *  (連結分子計算は膜の外部に出て行かないものとしているため,
      * proxyならば打切り)
@@ -248,7 +247,7 @@ static inline void do_molecule(LmnAtomRef atom, LmnLinkAttr attr,
 static inline mhash_t mhash_symbol(LmnSymbolAtomRef atom);
 static inline mhash_t mhash_data(LmnAtomRef atom, LmnLinkAttr attr);
 static inline mhash_t memlink(LmnSymbolAtomRef in_proxy,
-                              LmnMembraneRef calc_mem, ProcessTableRef ctx);
+                              LmnMembraneRef calc_mem, std::unordered_map<ProcessID, mhash_t> &ctx);
 
 /* アトムatomを起点にした深さdepthからDまでのTree構造のハッシュ値を返す.
  * Treeの頂点は,
@@ -262,7 +261,7 @@ static inline mhash_t memlink(LmnSymbolAtomRef in_proxy,
  * 深さDに到達していなくともatomを枝としたトレースを打ち切る.
  * 4のように子膜を頂点とする場合は, 子膜のInSideProxyアトムをトレースする.  */
 static mhash_t mhash_unit(LmnAtomRef atom, LmnLinkAttr attr,
-                          LmnMembraneRef calc_mem, ProcessTableRef ctx,
+                          LmnMembraneRef calc_mem, std::unordered_map<ProcessID, mhash_t> &ctx,
                           int depth) {
   if (LMN_ATTR_IS_DATA(attr)) {
     /* 3. データアトムの場合:
@@ -333,7 +332,7 @@ static mhash_t mhash_unit(LmnAtomRef atom, LmnLinkAttr attr,
  * ------------------------------------------------------------+  */
 static inline mhash_t memunit(LmnMembraneRef child_mem,
                               LmnSymbolAtomRef from_in_proxy,
-                              LmnMembraneRef calc_mem, ProcessTableRef ctx,
+                              LmnMembraneRef calc_mem, std::unordered_map<ProcessID, mhash_t> &ctx,
                               int depth) {
   mhash_t hash, child_h;
   AtomListEntryRef insides;
@@ -382,7 +381,7 @@ static inline mhash_t memunit(LmnMembraneRef child_mem,
  * -----------------------------+                              |
  * ------------------------------------------------------------+  */
 static inline mhash_t memlink(LmnSymbolAtomRef in_proxy,
-                              LmnMembraneRef calc_mem, ProcessTableRef ctx) {
+                              LmnMembraneRef calc_mem, std::unordered_map<ProcessID, mhash_t> &ctx) {
   LmnAtomRef atom;
   mhash_t hash = 0;
   LmnLinkAttr attr;
