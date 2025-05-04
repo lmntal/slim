@@ -40,10 +40,16 @@
 #include "lmntal.h"
 #include <stdarg.h>
 #include <stdlib.h>
+#include <cstdlib>
 
 void do_lmn_fatal(const char *file, int line, const char *msg) {
   fprintf(stderr, "%s(%d) %s\n", file, line, msg);
   fflush(stderr);
+#ifdef DEBUG
+  assert(false);
+#else
+  exit(EXIT_FAILURE);
+#endif
 }
 
 void lmn_report(const char *msg, ...) {
