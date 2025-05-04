@@ -73,13 +73,75 @@ struct LmnMembrane {
   std::vector<LmnRuleSet *> firstclass_rulesets;
 #endif
 
-  std::map<LmnFunctor, AtomListEntry *> atom_lists() const {
-    std::map<LmnFunctor, AtomListEntry *> res;
-    for (int i = 0; i < max_functor; i++)
-      if (atomset[i])
-        res[i] = atomset[i];
-    return res;
+  /**
+   * An iterator of |AtomListEntry *|.
+   * It may be undefined behavior that its source membrane is modified during an iteration.
+   */
+  class atom_list_iterator {
+    const LmnMembrane &membrane;
+    size_t current;
+
+  public:
+    using difference_type = size_t;
+    using value_type = std::pair<LmnFunctor, AtomListEntry *>;
+    using pointer = std::pair<LmnFunctor, AtomListEntry *>*;
+    using reference = std::pair<LmnFunctor, AtomListEntry *>&;
+    typedef typename std::input_iterator_tag iterator_category;
+
+    atom_list_iterator(const LmnMembrane &membrane, size_t current) : membrane(membrane), current(current) {
+      while (this->current < this->membrane.max_functor && !this->membrane.atomset[this->current]) {
+        this->current++;
+      }
+    }
+
+    atom_list_iterator &operator++() {
+      this->current++;
+      while (this->current < this->membrane.max_functor && !this->membrane.atomset[this->current]) {
+        this->current++;
+      }
+      return *this;
+    }
+    atom_list_iterator operator++(int _) {
+      auto ret = *this;
+      ++ret;
+      return ret;
+    }
+    value_type operator*() const {
+      return std::make_pair(current, this->membrane.atomset[current]);
+    }
+
+    bool operator==(const atom_list_iterator &iter) const {
+      return &this->membrane == &iter.membrane && this->current == iter.current;
+    }
+    bool operator!=(const atom_list_iterator &iter) const {
+      return !(*this == iter);
+    }
+  };
+
+  /**
+   * An range object of |atom_list_iterator|.
+   */
+  class atom_list_range {
+    const LmnMembrane &membrane;
+  public:
+    atom_list_range(const LmnMembrane &membrane)
+      : membrane(membrane) {}
+
+    atom_list_iterator begin() const {
+      return atom_list_iterator(this->membrane, 0);
+    }
+    atom_list_iterator end() const {
+      return atom_list_iterator(this->membrane, this->membrane.max_functor);
+    }
+  };
+
+  /**
+   * Get an range of this membrane's atomlist.
+   */
+  atom_list_range atom_lists() const {
+    return atom_list_range(*this);
   }
+
   LmnMembrane();
   ~LmnMembrane();
   lmn_interned_str NAME_ID() {

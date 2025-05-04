@@ -553,10 +553,10 @@ static std::string __to_string_atomlist(const AtomListEntry* atomlist, dump_hist
   return header + list;
 }
 
-std::string to_string_atomlists(std::map<LmnFunctor,AtomListEntry*> atomlists) {
+std::string to_string_atomlists(const LmnMembrane::atom_list_range &atomlists) {
   dump_history_table ht;
   std::string retVal = "";
-  for (auto &p : atomlists) {
+  for (const auto &p : atomlists) {
     retVal += __to_string_atomlist(p.second, ht);
     retVal += "\n";
   }
@@ -576,7 +576,7 @@ static std::string __to_string_cell_internal(const LmnMembraneRef mem, dump_hist
   std::vector<std::vector<LmnSymbolAtomRef>> pred_atoms(PRI_NUM);
 
   // アトムリストごとに処理
-  for (auto &pair : mem->atom_lists()) {
+  for (const auto &pair : mem->atom_lists()) {
     LmnFunctor functor = pair.first;
     AtomListEntryRef atomlist = pair.second;
 

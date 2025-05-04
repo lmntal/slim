@@ -70,7 +70,7 @@ std::string to_string_atomlist(const AtomListEntry* atomlist);
  * 膜内のすべてのアトムリストの文字列表現を返す
  * すべてのアトムのリンク関係は適切に表現される
  */
-std::string to_string_atomlists(std::map<LmnFunctor,AtomListEntry*> atomlists);
+std::string to_string_atomlists(const LmnMembrane::atom_list_range &atomlists);
 /**
  * 膜の文字列表現を返す
  */

@@ -44,6 +44,7 @@
 #include "verifier/verifier.h"
 #include <ctype.h>
 #include <limits.h>
+#include "vm/debug_printer.hpp"
 
 #ifdef PROFILE
 #include "verifier/runtime_status.h"
@@ -56,6 +57,7 @@
 #include "membrane.hpp"
 #include "rule.hpp"
 #include <cassert>
+#include <iostream>
 
 /** ----
  *  AtomListEntry.
@@ -658,43 +660,41 @@ void lmn_mem_relink_atom_args(LmnMembraneRef mem, LmnAtomRef atom0,
       ((LmnSymbolAtomRef)atom1)->get_attr(pos1));
 }
 void LmnMembrane::move_cells(LmnMembraneRef srcmem) {
-  AtomListEntry *srcent;
-  LmnMembraneRef m, next;
-  int dst_data_atom_n, src_data_atom_n;
-
-  dst_data_atom_n = this->data_atom_num();
-  src_data_atom_n = srcmem->data_atom_num();
+  auto dst_data_atom_n = this->data_atom_num();
+  auto src_data_atom_n = srcmem->data_atom_num();
 
   /* move atoms */
-  EACH_ATOMLIST(
-      srcmem, srcent, ({
-        LmnSymbolAtomRef a, next;
+  std::vector<LmnSymbolAtomRef> atoms;
+  atoms.reserve(srcmem->symb_atom_num());
+  for (const auto &it : srcmem->atom_lists()) {
+    auto &srcent = it.second;
+    if (it.first == LMN_RESUME_FUNCTOR)
+      continue;
 
-        for (a = atomlist_head((srcent)); a != lmn_atomlist_end((srcent));
-             a = next) {
-          next = a->get_next();
+    for (auto a = atomlist_head(srcent); a != lmn_atomlist_end(srcent); a = a->get_next()) {
+      atoms.push_back(a);
+    }
+  }
 
+  for (const auto &a : atoms) {
 #ifdef USE_FIRSTCLASS_RULE
-          exec_firstclass_rewriting(srcmem, a);
+    exec_firstclass_rewriting(srcmem, a);
 #endif
-          if (a->get_functor() != LMN_RESUME_FUNCTOR) {
-            int i, arity;
 
-            mem_remove_symbol_atom(srcmem, a);
-            mem_push_symbol_atom(this, a);
-            arity = a->get_link_num();
-            for (i = 0; i < arity; i++) {
-              if (LMN_ATTR_IS_DATA_WITHOUT_EX(a->get_attr(i))) {
-                lmn_mem_push_atom(this, a->get_link(i),
-                                  a->get_attr(i));
-              }
-            }
-          }
-        }
-      }));
+    mem_remove_symbol_atom(srcmem, a);
+    mem_push_symbol_atom(this, a);
+    auto arity = a->get_link_num();
+    for (auto i = 0; i < arity; i++) {
+      if (LMN_ATTR_IS_DATA_WITHOUT_EX(a->get_attr(i))) {
+        lmn_mem_push_atom(this, a->get_link(i),
+                          a->get_attr(i));
+      }
+    }
+  }
 
   /* move membranes */
-  for (m = srcmem->child_head; m; m = next) {
+  LmnMembraneRef next;
+  for (auto m = srcmem->child_head; m; m = next) {
     next = m->next;
     srcmem->remove_mem(m);
     this->add_child_mem(m);
