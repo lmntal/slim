@@ -45,9 +45,10 @@
 #include "lmntal.h"
 
 /* Error */
-#define lmn_fatal(Msg) do_lmn_fatal(__FILE__, __LINE__, Msg);
+#define lmn_fatal(Msg) do_lmn_fatal(__FILE__, __LINE__, Msg)
 
-LMN_EXTERN void do_lmn_fatal(const char *file, int line, const char *msg);
+[[noreturn]]
+LMN_EXTERN int do_lmn_fatal(const char *file, int line, const char *msg);
 LMN_EXTERN void lmn_report(const char *msg, ...);
 
 /* @} */

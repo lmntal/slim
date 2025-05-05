@@ -42,7 +42,8 @@
 #include <stdlib.h>
 #include <cstdlib>
 
-void do_lmn_fatal(const char *file, int line, const char *msg) {
+[[noreturn]]
+int do_lmn_fatal(const char *file, int line, const char *msg) {
   fprintf(stderr, "%s(%d) %s\n", file, line, msg);
   fflush(stderr);
 #ifdef DEBUG
