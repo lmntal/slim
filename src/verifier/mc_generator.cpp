@@ -159,13 +159,8 @@ void dfs_worker_init(LmnWorker *w) {
 
     if (lmn_env.core_num == 1) {
       mc->q = new Queue();
-    } else if (worker_on_dynamic_lb(w)) {
-      if (worker_use_mapndfs(w))
-        mc->q = new Queue(LMN_Q_MRMW);
-      else
-        mc->q = new Queue(LMN_Q_MRSW);
     } else {
-      mc->q = new Queue(LMN_Q_SRSW);
+      mc->q = new Queue(LMN_Q_MRMW);
     }
   }
 
