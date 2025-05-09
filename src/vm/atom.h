@@ -49,6 +49,8 @@ struct LmnMembrane;
  */
 
 #include "lmntal.h"
+#include "element/element.h"
+#include <type_traits>
 
 /**
  * @interface LmnAtom
@@ -80,7 +82,7 @@ typedef LmnWord LmnDataAtomRef;
  *     リンク属性は, 先頭1ビットが立っていない場合は,
  * 下位7bitが接続先リンクの番号を記録しており, 先頭1ビットが立っている場合は,
  * Primitiveデータの種類を記録する。 
- * [Link Number]  0------- 
+ * [Link Number]  0--- ---- 
  * [int]          1000 0000 
  * [double]       1000 0001 
  * [special]      1000 0011 
@@ -103,9 +105,105 @@ typedef struct LmnSymbolAtom *LmnSymbolAtomRef;
 /* プロキシの3番目の引数番号の領域を remove_proxy, insert_proxyで利用中。
  * 所属する膜へのポインタを持っている */
 
-#define LMN_ATOM_ATTR(X) ((LmnLinkAttr)(X))
-#define LMN_ATTR_MASK (0x7fU)
-#define LMN_ATTR_FLAG (0x80U)
+using namespace binary_literal;
+
+namespace slim {
+namespace vm {
+  /**
+   * リンク属性の定数を定義する列挙体
+   */
+  enum class link_attribute_flag : LmnLinkAttr {
+    //! データを抽出するビットマスク
+    mask_bits = 01111111_b,
+    //! プリミティブデータかどうかを判定するフラグビット
+    data_flag = 10000000_b,
+
+    //! integer literal
+    integer       = data_flag | 00000000_b,
+    //! double literal
+    decimal       = data_flag | 00000001_b,
+    //! special atom
+    special       = data_flag | 00000010_b,
+    //! string literal (same as special atom)
+    string        = special,
+    //! @deprecated constant string literal
+    const_string  = data_flag | 00000100_b,
+    //! @deprecated constant double literal
+    const_decimal = data_flag | 00000101_b,
+    //! exclamation atom
+    hyperlink     = data_flag | 00001010_b,
+  };
+
+  /**
+   * リンク属性に可能な演算を定義するクラス
+   */
+  class link_attribute final {
+    LmnLinkAttr _value;
+
+    constexpr link_attribute(LmnLinkAttr value) : _value(value) {}
+
+  public:
+    link_attribute() = default;
+    constexpr link_attribute(link_attribute_flag value) : _value((LmnLinkAttr)value) {}
+
+    static constexpr link_attribute symbol(int n) { return link_attribute(static_cast<LmnLinkAttr>(n)); }
+
+    constexpr link_attribute operator|(const link_attribute &other) const {
+      return link_attribute(_value | other._value);
+    }
+    constexpr link_attribute operator&(const link_attribute &other) const {
+      return link_attribute(_value & other._value);
+    }
+    constexpr link_attribute operator~() const {
+      return link_attribute(~_value);
+    }
+    constexpr bool operator ==(const link_attribute &other) const {
+      return _value == other._value;
+    }
+    constexpr bool operator !=(const link_attribute &other) const {
+      return !(*this == other);
+    }
+    constexpr explicit operator LmnLinkAttr() const {
+      return _value;
+    }
+
+    /**
+     * @brief check whether a link attribute is for data.
+     */
+    constexpr bool is_data() const {
+      return (*this & slim::vm::link_attribute_flag::data_flag) == slim::vm::link_attribute_flag::data_flag;
+    }
+
+    /**
+     * @brief check whether a link attribute is for data except an exclamation atom.
+     */
+    constexpr bool is_data_except_hyperlink() const {
+      return is_data() && *this != link_attribute_flag::hyperlink;
+    }
+
+    /**
+     * @brief check whether a link attribute is for an exclamation atom.
+     */
+    constexpr bool is_hyperlink() const {
+      return *this == link_attribute_flag::hyperlink;
+    }
+
+    /**
+     * @brief get link attribute value (remove tag)
+     */
+    constexpr int get_link_value() const {
+      return (*this & slim::vm::link_attribute_flag::mask_bits)._value;
+    }
+  };
+
+  // メモリ的にはLmnLinkAttrと同じように扱えることを保証しておきたい
+  static_assert(sizeof(link_attribute) == sizeof(LmnLinkAttr), "");
+  static_assert(std::is_trivially_default_constructible<link_attribute>::value, "");
+  static_assert(std::is_trivially_copyable<link_attribute>::value, "");
+  static_assert(std::is_trivially_copy_assignable<link_attribute>::value, "");
+  static_assert(std::is_standard_layout<link_attribute>::value, "");
+}
+}
 
 #define LMN_ATOM(X) ((LmnAtom)(X))
 #define LMN_SATOM(X) ((LmnSAtom)(X))
@@ -117,16 +215,14 @@ typedef struct LmnSymbolAtom *LmnSymbolAtomRef;
  * ハイパーリンクアトム (⊂ extended atom ⊂ data atom ⊂ unary) <br>
  * ハイパーリンクアトムはプロキシと同様シンボルアトムとしても扱われることに注意
  */
-enum LmnLinkAttribute {
-  LMN_INT_ATTR = LMN_ATTR_FLAG | 0x00U,     /**< integer literal */
-  LMN_DBL_ATTR = LMN_ATTR_FLAG | 0x01U,     /**< double literal */
-  LMN_SP_ATOM_ATTR = LMN_ATTR_FLAG | 0x03U, /**< special atom */
-  LMN_STRING_ATTR = LMN_SP_ATOM_ATTR,       /**< string literal */
-  LMN_CONST_STR_ATTR =
-      LMN_ATTR_FLAG | 0x04U, /**< @deprecated constant string literal */
-  LMN_CONST_DBL_ATTR =
-      LMN_ATTR_FLAG | 0x05U, /**< @deprecated constant double literal */
-  LMN_HL_ATTR = LMN_ATTR_FLAG | 0x0aU /**< exclamation atom */
+enum LmnLinkAttribute : LmnLinkAttr {
+  LMN_INT_ATTR       = (LmnLinkAttr)slim::vm::link_attribute_flag::integer,
+  LMN_DBL_ATTR       = (LmnLinkAttr)slim::vm::link_attribute_flag::decimal,
+  LMN_SP_ATOM_ATTR   = (LmnLinkAttr)slim::vm::link_attribute_flag::special,
+  LMN_STRING_ATTR    = (LmnLinkAttr)slim::vm::link_attribute_flag::string,
+  LMN_CONST_STR_ATTR = (LmnLinkAttr)slim::vm::link_attribute_flag::const_string,
+  LMN_CONST_DBL_ATTR = (LmnLinkAttr)slim::vm::link_attribute_flag::const_decimal,
+  LMN_HL_ATTR        = (LmnLinkAttr)slim::vm::link_attribute_flag::hyperlink,
 };
 
 #include "element/element.h"
@@ -142,8 +238,8 @@ struct LmnSymbolAtom {
   int rule_number = -1;
   union {
     struct {
-      LmnFunctor functor;
-      LmnLinkAttr attr[0];
+      slim::vm::functor functor;
+      slim::vm::link_attribute attr[0];
     };
     LmnAtomRef links[0];
   };
@@ -153,28 +249,28 @@ struct LmnSymbolAtom {
    * 呼び出し側で適宜なんとかする
    * @memberof LmnSymbolAtom
    */
-  LmnSymbolAtomRef get_prev() const;
+  LmnSymbolAtomRef get_prev() const { return this->prev; }
   /**
    * @brief アトムリストからATOMのprevアトムを設定する.
    *        アトムリストから履歴アトムを読み飛ばさないので,
    * 呼び出し側で適宜なんとかする
    * @memberof LmnSymbolAtom
    */
-  void set_prev(LmnSymbolAtomRef prev);
+  void set_prev(LmnSymbolAtomRef prev) { this->prev = prev; }
   /**
    * @brief アトムリストからATOMのnextアトムを取得する.
    *        アトムリストから履歴アトムを読み飛ばさないので,
    * 呼び出し側で適宜なんとかする
    * @memberof LmnSymbolAtom
    */
-  LmnSymbolAtomRef get_next() const;
+  LmnSymbolAtomRef get_next() const { return this->next; }
   /**
    * @brief アトムリストからATOMのnextアトムを設定する.
    *        アトムリストから履歴アトムを読み飛ばさないので,
    * 呼び出し側で適宜なんとかする
    * @memberof LmnSymbolAtom
    */
-  void set_next(LmnSymbolAtomRef next);
+  void set_next(LmnSymbolAtomRef next) { this->next = next; }
   /** ファンクタIDの取得/設定,
    * ファンクタIDからリンク数の取得のユーティリティ
    * （プロキシはリンク1本分余分にデータ領域があるので分岐する）
@@ -184,94 +280,126 @@ struct LmnSymbolAtom {
    * @brief アトムATOMのプロセスIDを取得
    * @memberof LmnSymbolAtom
    */
-  LmnWord get_id() const;
+  LmnWord get_id() const { return this->procId; }
   /**
    * @brief アトムATOMのプロセスIDを設定
    * @memberof LmnSymbolAtom
    */
-  void set_id(LmnWord id);
+  void set_id(LmnWord id) { this->procId = id; }
   /**
    * @brief ファンクタIDの取得
    * @memberof LmnSymbolAtom
    */
-  LmnFunctor get_functor() const;
+  LmnFunctor get_functor() const { return static_cast<LmnFunctor>(this->functor); }
   /**
    * @brief ファンクタIDの設定
    * @memberof LmnSymbolAtom
    */
-  void set_functor(LmnFunctor func);
+  void set_functor(LmnFunctor func) { this->functor = slim::vm::functor(func); }
   /**
    * @brief 価数の取得
    * @memberof LmnSymbolAtom
    */
-  int get_arity() const;
+  int get_arity() const { return LMN_FUNCTOR_ARITY(lmn_functor_table, this->get_functor()); }
   /**
    * @brief リンク本数の取得
    * @memberof LmnSymbolAtom
    */
-  int get_link_num() const;
+  int get_link_num() const { return slim::vm::functor(get_functor()).get_link_num(); }
 
   /* アトムATOMのN番目のリンク属性/リンクデータを取得 */
   /**
    * @brief アトムATOMのN番目のリンク属性を取得
    * @memberof LmnSymbolAtom
    */
-  LmnLinkAttr get_attr(int n) const;
+  LmnLinkAttr get_attr(int n) const { return static_cast<LmnLinkAttr>(this->attr[n]); }
   /**
    * @brief アトムATOMのN番目のリンク属性を設定
    * @memberof LmnSymbolAtom
    */
-  void set_attr(int n, LmnLinkAttr attr);
+  void set_attr(int n, LmnLinkAttr attr) { this->attr[n] = static_cast<slim::vm::link_attribute_flag>(attr); }
   /**
    * @brief アトムATOMのN番目のリンク情報を取得
    * @memberof LmnSymbolAtom
    */
-  LmnAtomRef get_link(int n) const;
+  LmnAtomRef get_link(int n) const { return this->links[get_attr_word_size(this->get_arity()) + n]; }
   /**
    * @brief アトムATOMのN番目のリンク属性を設定
    * @memberof LmnSymbolAtom
    */
-  void set_link(int n, LmnAtomRef v);
+  void set_link(int n, LmnAtomRef v) { this->links[get_attr_word_size(this->get_arity()) + n] = v; }
 
   /**
    * @brief アトムATOMのN番目のリンク情報のフィールドへのポインタを取得する
    * @memberof LmnSymbolAtom
    */
-  const LmnAtomRef *get_plink(int n) const;
+  const LmnAtomRef *get_plink(int n) const { return &this->links[get_attr_word_size(this->get_arity()) + n]; }
 
   /**
    * @brief check whether an atom is a proxy atom.
    * @memberof LmnSymbolAtom
    */
-  BOOL is_proxy() const;
+  bool is_proxy() const { return slim::vm::functor(get_functor()).is_proxy(); }
 
   /**
    * @brief get a string representation of a symbol atom.
    * @memberof LmnSymbolAtom
    */
-  const char *str() const;
+  const char *str() const { return LMN_SYMBOL_STR(LMN_FUNCTOR_NAME_ID(lmn_functor_table, this->get_functor())); }
+
+  /**
+   * @brief リンク属性ATTRであるアトムATOMのファンクタがFUNCならばTRUEを返す
+   * @memberof LmnSymbolAtom
+   */
+  bool has_functor(slim::vm::link_attribute attr, LmnFunctor functor) const {
+    return !attr.is_data() && (get_functor() == functor);
+  }
+
+  /**
+   * @brief get the membrane of a proxy
+   * @memberof LmnSymbolAtom
+   */
+  LmnMembrane *get_proxy_membrane() const {
+    return (LmnMembrane *)get_link(2);
+  }
+
+  /**
+   * @brief set the membrane of a proxy
+   * @memberof LmnSymbolAtom
+   */
+  void set_proxy_membrane(LmnMembrane *X) {
+    set_link(2, X);
+  }
 
   /* 以下, 履歴管理用アトム(nakata)の追加関数*/
   void atom_swap_forward();
   void swap_to_head(LmnSymbolAtomRef head);
   void remove_atom();
   /* ここまで(nakata)*/
+
+  /**
+   * @brief アトムのサイズを取得する
+   * @memberof LmnSymbolAtom
+   *
+   * @details size of atom の加算は prev, next, id, functorのワード
+   */
+  static inline size_t calc_size(int arity) {
+    return offsetof(struct LmnSymbolAtom, links) + (get_attr_word_size(arity) + arity) * LMN_WORD_BYTES;
+  }
+
+  /* リンク番号のタグのワード数。ファンクタと同じワードにある分も数える */
+  static inline int get_attr_word_size(int arity) {
+    return 1 + ((arity + sizeof(LmnFunctor) - 1) >> LMN_WORD_SHIFT);
+  }
 };
 
 /**
  * @brief ファンクタから価数を取得する
  * @memberof LmnSymbolAtom
  */
-int LMN_FUNCTOR_GET_LINK_NUM(LmnFunctor atom);
-
-/* リンク番号のタグのワード数。ファンクタと同じワードにある分も数える */
-int LMN_ATTR_WORDS(int arity);
-
-/**
- * @brief ハイパーリンクアトムATOMにリンクを設定する
- * @memberof LmnSymbolAtom
- */
-void LMN_HLATOM_SET_LINK(LmnSymbolAtomRef atom, LmnAtomRef v);
+static inline int LMN_FUNCTOR_GET_LINK_NUM(LmnFunctor func) {
+  return slim::vm::functor(func).get_link_num();
+}
 
 /**
  * @brief アトムのサイズを取得する
@@ -279,82 +407,98 @@ void LMN_HLATOM_SET_LINK(LmnSymbolAtomRef atom, LmnAtomRef v);
  *
  * @details size of atom の加算は prev, next, id, functorのワード
  */
-size_t LMN_SATOM_SIZE(int arity);
+static inline size_t LMN_SATOM_SIZE(int arity) {
+  return LmnSymbolAtom::calc_size(arity);
+}
 
 /**
  * @brief リンク属性ATTRであるアトムATOMのファンクタがFUNCならばTRUEを返す
  * @memberof LmnSymbolAtom
  */
-BOOL LMN_HAS_FUNCTOR(LmnSymbolAtomRef ATOM, LmnLinkAttr ATTR, LmnFunctor FUNC);
+static inline bool LMN_HAS_FUNCTOR(LmnSymbolAtomRef atom, LmnLinkAttr attr, LmnFunctor func) {
+  return atom->has_functor(slim::vm::link_attribute(static_cast<slim::vm::link_attribute_flag>(attr)), func);
+}
 
 /**
  * @brief check whether a link attribute is for data.
  * @memberof LmnLinkAttr
  */
-BOOL LMN_ATTR_IS_DATA(LmnLinkAttr attr);
-/**
- * @brief make a link attribute for data from value
- * @memberof LmnLinkAttr
- */
-LmnLinkAttr LMN_ATTR_MAKE_DATA(int X);
+static inline bool LMN_ATTR_IS_DATA(LmnLinkAttr attr) {
+  return slim::vm::link_attribute(static_cast<slim::vm::link_attribute_flag>(attr)).is_data();
+}
+
 /**
  * @brief make a link attribute for link from value
  * @memberof LmnLinkAttr
+ * TODO: this function should probably be deleted.
  */
-LmnLinkAttr LMN_ATTR_MAKE_LINK(int X);
+static inline LmnLinkAttr LMN_ATTR_MAKE_LINK(int X) { return X; }
 /**
  * @brief get link attribute value (remove tag)
  * @memberof LmnLinkAttr
  */
-int LMN_ATTR_GET_VALUE(int X);
-/**
- * @brief set link attribute value. Tag is not changed.
- * @memberof LmnLinkAttr
- */
-void LMN_ATTR_SET_VALUE(LmnLinkAttr *PATTR, int X);
+static inline int LMN_ATTR_GET_VALUE(LmnLinkAttr X) {
+  return slim::vm::link_attribute(static_cast<slim::vm::link_attribute_flag>(X)).get_link_value();
+}
 
 /**
  * @brief get the membrane of a proxy
  * @memberof LmnSymbolAtom
  */
-LmnMembrane *LMN_PROXY_GET_MEM(LmnSymbolAtomRef PROXY_ATM);
+static inline LmnMembrane *LMN_PROXY_GET_MEM(LmnSymbolAtomRef PROXY_ATM) {
+  return PROXY_ATM->get_proxy_membrane();
+}
 /**
  * @brief set the membrane of a proxy
  * @memberof LmnSymbolAtom
  */
-void LMN_PROXY_SET_MEM(LmnSymbolAtomRef PROXY_ATM, LmnMembrane *X);
+static inline void LMN_PROXY_SET_MEM(LmnSymbolAtomRef PROXY_ATM, LmnMembrane *X) {
+  return PROXY_ATM->set_proxy_membrane(X);
+}
 /**
  * @brief check whether a functor is a proxy functor.
  * @memberof LmnFunctor
  */
-BOOL LMN_IS_PROXY_FUNCTOR(LmnFunctor FUNC);
+static inline BOOL LMN_IS_PROXY_FUNCTOR(LmnFunctor FUNC) {
+  return slim::vm::functor(FUNC).is_proxy();
+}
 /**
  * @brief check whether a functor represents a symbol atom.
  * @memberof LmnFunctor
  */
-BOOL LMN_IS_SYMBOL_FUNCTOR(LmnFunctor FUNC);
+static inline BOOL LMN_IS_SYMBOL_FUNCTOR(LmnFunctor FUNC) {
+  return slim::vm::functor(FUNC).is_symbol();
+}
 
 /**
  * @brief get a string representation of a functor.
  * @memberof LmnFunctor
  */
-const char *LMN_FUNCTOR_STR(LmnFunctor F);
+static inline const char *LMN_FUNCTOR_STR(LmnFunctor F) {
+  return slim::vm::functor(F).to_string();
+}
 
 /**
  * @brief check whether a link attribute is for data except an exclamation atom.
  * @memberof LmnLinkAttr
  */
-BOOL LMN_ATTR_IS_DATA_WITHOUT_EX(LmnLinkAttr ATTR);
+static inline BOOL LMN_ATTR_IS_DATA_WITHOUT_EX(LmnLinkAttr ATTR) {
+  return slim::vm::link_attribute(static_cast<slim::vm::link_attribute_flag>(ATTR)).is_data_except_hyperlink();
+}
 /**
  * @brief check whether a link attribute is for an exclamation atom.
  * @memberof LmnLinkAttr
  */
-BOOL LMN_ATTR_IS_EX(LmnLinkAttr ATTR);
+static inline BOOL LMN_ATTR_IS_EX(LmnLinkAttr ATTR) {
+  return slim::vm::link_attribute(static_cast<slim::vm::link_attribute_flag>(ATTR)).is_hyperlink();
+}
 /**
  * @brief check whether a functor represents an exclamation atom.
  * @memberof LmnFunctor
  */
-BOOL LMN_IS_EX_FUNCTOR(LmnFunctor FUNC);
+static inline BOOL LMN_IS_EX_FUNCTOR(LmnFunctor FUNC) {
+  return slim::vm::functor(FUNC).is_hyperlink();
+}
 
 /**
  * @brief create a new symbol atom.

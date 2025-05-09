@@ -48,6 +48,7 @@
 #include <unordered_map>
 
 #include "lmntal.h"
+#include "symbol.h"
 
 /* Functor Information */
 
@@ -168,6 +169,69 @@ extern LmnFunctorTable *lmn_functor_table;
 #define COLON_MINUS_ATOM_NAME ":-"
 #define LMN_COLON_MINUS_FUNCTOR 22
 #endif
+
+namespace slim {
+namespace vm {
+
+  class functor final {
+    LmnFunctor _value;
+
+    static const LmnFunctor LMN_PROXY_FUNCTOR_NUM = 3;
+
+  public:
+    functor() = default;
+    constexpr functor(LmnFunctor func) : _value(func) {}
+
+    constexpr explicit operator LmnFunctor() const { return _value; }
+
+    /**
+     * @brief check whether a functor is a proxy functor.
+     * @memberof LmnFunctor
+     */
+    constexpr bool is_proxy() const {
+      return _value < LMN_PROXY_FUNCTOR_NUM;
+    }
+    /**
+     * @brief check whether a functor represents a symbol atom.
+     * @memberof LmnFunctor
+     */
+    constexpr bool is_symbol() const {
+      return _value >= LMN_PROXY_FUNCTOR_NUM;
+    }
+
+    /**
+     * @brief ファンクタから価数を取得する
+     * @memberof LmnSymbolAtom
+     */
+    int get_link_num() const {
+      return LMN_FUNCTOR_ARITY(lmn_functor_table, _value) - (is_proxy() ? 1U : 0U);
+    }
+
+    /**
+     * @brief get a string representation of a functor.
+     * @memberof LmnFunctor
+     */
+    const char *to_string() const {
+      return LMN_SYMBOL_STR(LMN_FUNCTOR_NAME_ID(lmn_functor_table, _value));
+    }
+
+    /**
+     * @brief check whether a functor represents an exclamation atom.
+     * @memberof LmnFunctor
+     */
+    constexpr bool is_hyperlink() const {
+      return _value == LMN_EXCLAMATION_FUNCTOR;
+    }
+  };
+
+  // メモリ的にはLmnFunctorと同じように扱えることを保証しておきたい
+  static_assert(sizeof(functor) == sizeof(LmnFunctor), "");
+  static_assert(std::is_trivially_default_constructible<functor>::value, "");
+  static_assert(std::is_trivially_copyable<functor>::value, "");
+  static_assert(std::is_trivially_copy_assignable<functor>::value, "");
+  static_assert(std::is_standard_layout<functor>::value, "");
+}
+}
 
 /* @} */
 

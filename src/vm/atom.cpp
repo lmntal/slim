@@ -41,65 +41,6 @@
 
 #include "hyperlink.h"
 
-LmnSymbolAtomRef LmnSymbolAtom::get_prev() const{
-  return this->prev;
-}
-
-void LmnSymbolAtom::set_prev(LmnSymbolAtomRef prev) {
-  this->prev = prev;
-}
-
-LmnSymbolAtomRef LmnSymbolAtom::get_next() const{
-  return this->next;
-}
-void LmnSymbolAtom::set_next(LmnSymbolAtomRef next) {
-  this->next = next;
-}
-
-LmnWord LmnSymbolAtom::get_id() const {
-  return this->procId;
-}
-void LmnSymbolAtom::set_id(LmnWord id){
-  this->procId = id;
-}
-
-LmnFunctor LmnSymbolAtom::get_functor() const{
-  return this->functor;
-}
-void LmnSymbolAtom::set_functor(LmnFunctor func) {
-  this->functor = func;
-}
-int LmnSymbolAtom::get_arity() const{
-  return LMN_FUNCTOR_ARITY(lmn_functor_table, this->get_functor());
-}
-int LmnSymbolAtom::get_link_num() const{
-  return LMN_FUNCTOR_GET_LINK_NUM(this->get_functor());
-}
-LmnLinkAttr LmnSymbolAtom::get_attr(int n) const{
-  return this->attr[n];
-}
-/* set link attribute value. Tag is not changed. */
-void LmnSymbolAtom::set_attr(int n, LmnLinkAttr attr) {
-  this->attr[n] = attr;
-}
-LmnAtomRef LmnSymbolAtom::get_link(int n) const{
-  return this->links[LMN_ATTR_WORDS(this->get_arity()) + n];
-}
-void LmnSymbolAtom::set_link(int n, LmnAtomRef v) {
-  this->links[LMN_ATTR_WORDS(this->get_arity()) + n] = v;
-}
-
-const LmnAtomRef *LmnSymbolAtom::get_plink(int n) const{
-  return &this->links[LMN_ATTR_WORDS(this->get_arity()) + n];
-}
-
-BOOL LmnSymbolAtom::is_proxy() const{
-  return LMN_IS_PROXY_FUNCTOR(this->get_functor());
-}
-
-const char *LmnSymbolAtom::str() const {
-  return LMN_SYMBOL_STR(LMN_FUNCTOR_NAME_ID(lmn_functor_table, this->get_functor()));
-}
 
 /* 以下, 履歴管理用アトムの追加コード(nakata) */
 void LmnSymbolAtom::atom_swap_forward() {
@@ -134,70 +75,6 @@ void LmnSymbolAtom::remove_atom() {
   this->next->prev = this->prev;
 }
 /* ここまで */
-
-size_t LMN_SATOM_SIZE(int arity) {
-  return offsetof(struct LmnSymbolAtom, links) +
-         (LMN_ATTR_WORDS(arity) + arity) * LMN_WORD_BYTES;
-}
-
-int LMN_FUNCTOR_GET_LINK_NUM(LmnFunctor func) {
-  return LMN_FUNCTOR_ARITY(lmn_functor_table, func) - (LMN_IS_PROXY_FUNCTOR(func) ? 1U : 0U);
-}
-
-int LMN_ATTR_WORDS(int arity) {
-  return 1 + ((arity + sizeof(LmnFunctor) - 1) >> LMN_WORD_SHIFT);
-}
-
-void LMN_HLATOM_SET_LINK(LmnSymbolAtomRef atom, LmnAtomRef v) {
-  atom->set_link(0, v);
-}
-
-BOOL LMN_HAS_FUNCTOR(LmnSymbolAtomRef ATOM, LmnLinkAttr ATTR, LmnFunctor FUNC) {
-  return LMN_ATTR_IS_DATA(ATTR) ? FALSE : ATOM->get_functor() == FUNC;
-}
-
-BOOL LMN_ATTR_IS_DATA(LmnLinkAttr attr) { return attr & ~LMN_ATTR_MASK; }
-
-LmnLinkAttr LMN_ATTR_MAKE_DATA(int X) { return 0x80U | X; }
-LmnLinkAttr LMN_ATTR_MAKE_LINK(int X) { return X; }
-
-int LMN_ATTR_GET_VALUE(int X) { return X & LMN_ATTR_MASK; }
-
-void LMN_ATTR_SET_VALUE(LmnLinkAttr *PATTR, int X) {
-  *PATTR = (X & ~LMN_ATTR_MASK) | X;
-}
-
-/////
-
-LmnMembraneRef LMN_PROXY_GET_MEM(LmnSymbolAtomRef PROXY_ATM) {
-  return (LmnMembraneRef)PROXY_ATM->get_link(2);
-}
-void LMN_PROXY_SET_MEM(LmnSymbolAtomRef PROXY_ATM, LmnMembraneRef X) {
-  PROXY_ATM->set_link(2, X);
-}
-#define LMN_PROXY_FUNCTOR_NUM (3)
-BOOL LMN_IS_PROXY_FUNCTOR(LmnFunctor FUNC) {
-  return FUNC < LMN_PROXY_FUNCTOR_NUM;
-}
-BOOL LMN_IS_SYMBOL_FUNCTOR(LmnFunctor FUNC) {
-  return FUNC >= LMN_PROXY_FUNCTOR_NUM;
-}
-
-/////
-
-const char *LMN_FUNCTOR_STR(LmnFunctor F) {
-  return LMN_SYMBOL_STR(LMN_FUNCTOR_NAME_ID(lmn_functor_table, F));
-}
-
-/////
-
-BOOL LMN_ATTR_IS_DATA_WITHOUT_EX(LmnLinkAttr ATTR) {
-  return LMN_ATTR_IS_DATA(ATTR) && !LMN_ATTR_IS_HL(ATTR);
-}
-BOOL LMN_ATTR_IS_EX(LmnLinkAttr ATTR) {
-  return LMN_ATTR_IS_DATA(ATTR) && LMN_ATTR_IS_HL(ATTR);
-}
-BOOL LMN_IS_EX_FUNCTOR(LmnFunctor FUNC) { return FUNC == LMN_HL_FUNC; }
 
 /////
 
@@ -279,7 +156,7 @@ LmnSymbolAtomRef lmn_copy_satom_with_data(LmnSymbolAtomRef atom,
                                atom->get_attr(i));
         newatom->set_link(i, (LmnAtomRef)dt);
         if (atom->get_attr(i) == LMN_HL_ATTR) {
-          LMN_HLATOM_SET_LINK((LmnSymbolAtomRef)dt, newatom);
+          ((LmnSymbolAtomRef)dt)->set_link(0, newatom);
         }
       }
     }

@@ -152,6 +152,22 @@ static inline int lmn_byte_cmp(const unsigned char *a, long alen,
   }
 }
 
+namespace binary_literal {
+  constexpr unsigned long _bib(const char *s, int acc) {
+    return s[0] == '\0' ?
+      acc :
+      _bib(s + 1, (acc << 1) | (s[0] != '0'));
+  }
+
+  /**
+   * ビット表現を 0001000_b のように書くためのユーザ定義リテラル
+   * C++14にして２進数リテラルが使えるようになったら削除
+   */
+  constexpr unsigned long operator"" _b(const char *s) {
+    return _bib(s, 0);
+  }
+}
+
 /** ----------------------
  *  else
  */
