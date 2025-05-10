@@ -240,7 +240,7 @@ struct LmnSymbolAtom {
     struct {
       slim::vm::functor functor;
       slim::vm::link_attribute attr[0];
-    };
+    } link_header;
     LmnAtomRef links[0];
   };
   /**
@@ -290,12 +290,12 @@ struct LmnSymbolAtom {
    * @brief ファンクタIDの取得
    * @memberof LmnSymbolAtom
    */
-  LmnFunctor get_functor() const { return static_cast<LmnFunctor>(this->functor); }
+  LmnFunctor get_functor() const { return static_cast<LmnFunctor>(this->link_header.functor); }
   /**
    * @brief ファンクタIDの設定
    * @memberof LmnSymbolAtom
    */
-  void set_functor(LmnFunctor func) { this->functor = slim::vm::functor(func); }
+  void set_functor(LmnFunctor func) { this->link_header.functor = slim::vm::functor(func); }
   /**
    * @brief 価数の取得
    * @memberof LmnSymbolAtom
@@ -312,12 +312,12 @@ struct LmnSymbolAtom {
    * @brief アトムATOMのN番目のリンク属性を取得
    * @memberof LmnSymbolAtom
    */
-  LmnLinkAttr get_attr(int n) const { return static_cast<LmnLinkAttr>(this->attr[n]); }
+  LmnLinkAttr get_attr(int n) const { return static_cast<LmnLinkAttr>(this->link_header.attr[n]); }
   /**
    * @brief アトムATOMのN番目のリンク属性を設定
    * @memberof LmnSymbolAtom
    */
-  void set_attr(int n, LmnLinkAttr attr) { this->attr[n] = static_cast<slim::vm::link_attribute_flag>(attr); }
+  void set_attr(int n, LmnLinkAttr attr) { this->link_header.attr[n] = static_cast<slim::vm::link_attribute_flag>(attr); }
   /**
    * @brief アトムATOMのN番目のリンク情報を取得
    * @memberof LmnSymbolAtom
