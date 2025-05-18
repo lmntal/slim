@@ -57,25 +57,25 @@
                           成功したら真を返す */
 #define CAS(A, B, C) __sync_bool_compare_and_swap(&(A), B, C)
 #else
-#define CAS(A, B, C) lmn_fatal("disable ATOMIC OPERATION, unexpected.");
+#define CAS(A, B, C) lmn_fatal("disable ATOMIC OPERATION, unexpected.")
 #endif /* HAVE_ATOMIC_CAS */
 #
 #ifdef HAVE_ATOMIC_ADD /* AにBを加算し, 加算後のAの値を返す */
 #define ADD_AND_FETCH(A, B) __sync_add_and_fetch(&(A), B)
 #else
-#define ADD_AND_FETCH(A, B) lmn_fatal("disable ATOMIC OPERATION, unexpected.");
+#define ADD_AND_FETCH(A, B) lmn_fatal("disable ATOMIC OPERATION, unexpected.")
 #endif /* HAVE_ATOMIC_ADD */
 #
 #ifdef HAVE_ATOMIC_SUB
 #define SUB_AND_FETCH(A, B) __sync_sub_and_fetch(&(A), B)
 #else
-#define SUB_AND_FETCH(A, B) lmn_fatal("disable ATOMIC OPERATION, unexpected.");
+#define SUB_AND_FETCH(A, B) lmn_fatal("disable ATOMIC OPERATION, unexpected.")
 #endif /* HAVE_ATOMIC_SUB */
 #
 #ifdef HAVE_ATOMIC_LOGICAL_AND
 #define AND_AND_FETCH(A, B) __sync_and_and_fetch(&(A), B)
 #else
-#define AND_AND_FETCH(A, B) lmn_fatal("disable ATOMIC OPERATION, unexpected.");
+#define AND_AND_FETCH(A, B) lmn_fatal("disable ATOMIC OPERATION, unexpected.")
 #endif /* HAVE_ATOMIC_LOGICAL_AND */
 #
 #ifdef HAVE_ATOMIC_LOGICAL_OR
