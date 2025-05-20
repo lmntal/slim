@@ -57,6 +57,16 @@ typedef struct LmnMembrane *LmnMembraneRef;
 typedef struct AtomListEntry **AtomSet;
 typedef struct LinkObj *LinkObjRef;
 
+struct LinkObj {
+  LmnAtomRef ap;
+  LmnLinkAttr pos;
+  LinkObj() = default;
+  LinkObj(LmnAtomRef ap, LmnLinkAttr pos) : ap(ap), pos(pos) {
+  }
+  LmnAtomRef GetAtom();
+  LmnLinkAttr GetPos();
+};
+
 struct LmnMembrane {
   AtomSet atomset;
   ProcessID id;
@@ -282,8 +292,8 @@ struct LmnMembrane {
   LmnMembraneRef copy();
   LmnMembraneRef copy_ex();
   //まだリファクタリングしていない
-  void remove_ground(const std::vector<LinkObjRef> &srcvec);
-  void delete_ground(Vector *srcvec);
+  void remove_ground(const std::vector<LinkObj> &srcvec);
+  void delete_ground(const std::vector<LinkObj> &srcvec);
   BOOL equals(LmnMembraneRef mem2);
   void remove_mem(LmnMembraneRef mem);
   void free_rec();

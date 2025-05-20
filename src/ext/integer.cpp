@@ -77,14 +77,14 @@ void integer_set(LmnReactCxtRef rc,
                  LmnAtomRef a1, LmnLinkAttr t1,
                  LmnAtomRef a2, LmnLinkAttr t2)
 {
-  Vector *srcvec;
   LmnWord i;
   long long n, start, end;
 
   start  = (long long)a0;
   end    = (long long)a1;
-  srcvec = new Vector(16);
-  srcvec->push((LmnWord)LinkObj_make(a2, t2));
+  auto srcvec = std::vector<LinkObj>();
+  srcvec.reserve(16);
+  srcvec.emplace_back(a2, t2);
 
   for (i = 0, n = start; n <= end; i++, n++) {
     Vector *dstlovec;
@@ -110,9 +110,6 @@ void integer_set(LmnReactCxtRef rc,
   lmn_mem_delete_atom(mem, a1, t1);
 
   mem->delete_ground(srcvec);
-
-  for (i = 0; i < srcvec->get_num(); i++) LMN_FREE(srcvec->get(i));
-  delete srcvec;
 }
 
 

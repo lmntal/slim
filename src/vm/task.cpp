@@ -2718,8 +2718,8 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     READ_VAL(LmnInstrVar, instr, srclisti);
     READ_VAL(LmnInstrVar, instr, avolisti);
 
-    auto src = Task::links_from_indexes((Vector *)rc->wt(srclisti), rc);
-    auto avo = Task::links_from_indexes((Vector *)rc->wt(avolisti), rc);
+    auto src = Task::links_from_indexes(*(Vector *)rc->wt(srclisti), rc);
+    auto avo = Task::links_from_indexes(*(Vector *)rc->wt(avolisti), rc);
     auto atoms = std::unordered_map<ProcessID, LmnSymbolAtomRef>();
 
     switch (op) {
@@ -2750,8 +2750,6 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       break;
     }
     }
-    Task::free_links(src);
-    Task::free_links(avo);
 
     if (!b)
       return false;
@@ -3101,19 +3099,15 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
   case INSTR_EQGROUND:
   case INSTR_NEQGROUND: {
     LmnInstrVar srci, dsti;
-    Vector *srcvec, *dstvec;
     BOOL ret_flag;
 
     READ_VAL(LmnInstrVar, instr, srci);
     READ_VAL(LmnInstrVar, instr, dsti);
 
-    srcvec = Task::links_from_idxs((Vector *)rc->wt(srci), rc);
-    dstvec = Task::links_from_idxs((Vector *)rc->wt(dsti), rc);
+    auto srcvec = Task::links_from_indexes(*(Vector *)rc->wt(srci), rc);
+    auto dstvec = Task::links_from_indexes(*(Vector *)rc->wt(dsti), rc);
 
     ret_flag = lmn_mem_cmp_ground(srcvec, dstvec);
-
-    Task::free_links(srcvec);
-    Task::free_links(dstvec);
 
     if ((!ret_flag && INSTR_EQGROUND == op) ||
         (ret_flag && INSTR_NEQGROUND == op)) {
@@ -3125,7 +3119,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
   case INSTR_COPYHLGROUNDINDIRECT:
   case INSTR_COPYGROUND: {
     LmnInstrVar dstlist, srclist, memi;
-    Vector *srcvec, *dstlovec, *retvec; /* 変数番号のリスト */
+    Vector *dstlovec, *retvec; /* 変数番号のリスト */
     ProcessTableRef atommap;
     ProcessTableRef hlinkmap = NULL;  // ueda; may not be used in copyground
 
@@ -3134,7 +3128,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     READ_VAL(LmnInstrVar, instr, memi);
 
     /* リンクオブジェクトのベクタを構築 */
-    srcvec = Task::links_from_idxs((Vector *)rc->wt(srclist), rc);
+    auto srcvec = Task::links_from_indexes(*(Vector *)rc->wt(srclist), rc);
 
     switch (op) {
     case INSTR_COPYHLGROUND:
@@ -3237,7 +3231,6 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
 
       break;
     }
-    Task::free_links(srcvec);
 
     /* 返り値の作成 */
     retvec = new Vector(2);
@@ -3267,7 +3260,6 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
   case INSTR_REMOVEGROUND:
   case INSTR_FREEGROUND: {
     LmnInstrVar listi, memi;
-    Vector *srcvec; /* 変数番号のリスト */
 
     READ_VAL(LmnInstrVar, instr, listi);
     if (INSTR_REMOVEGROUND == op || INSTR_REMOVEHLGROUND == op ||
@@ -3276,19 +3268,15 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     } else {
       memi = 0;
     }
-    srcvec = Task::links_from_idxs((Vector *)rc->wt(listi), rc);
+    auto srcvec = Task::links_from_indexes(*(Vector *)rc->wt(listi), rc);
 
     switch (op) {
     case INSTR_REMOVEHLGROUND:
     case INSTR_REMOVEHLGROUNDINDIRECT:
     case INSTR_FREEHLGROUND:
     case INSTR_FREEHLGROUNDINDIRECT: {
-      ProcessTableRef attr_functors;
-      Vector attr_dataAtoms;
-      Vector attr_dataAtom_attrs;
-      attr_dataAtoms.init(16);
-      attr_dataAtom_attrs.init(16);
-      attr_functors = new ProcessTbl(16);
+      std::unordered_set<LmnFunctor> attr_functors;
+      std::vector<std::pair<LmnAtomRef, LmnLinkAttr>> attr_dataAtoms;
       LmnInstrVar i = 0, n;
 
       READ_VAL(LmnInstrVar, instr, n);
@@ -3300,12 +3288,11 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
         for (; n--; i++) {
           READ_VAL(LmnInstrVar, instr, ai);
           if (LMN_ATTR_IS_DATA(rc->at(ai))) {
-            attr_dataAtom_attrs.push(rc->at(ai));
-            attr_dataAtoms.push(rc->wt(ai));
+            attr_dataAtoms.push_back(std::make_pair((LmnAtomRef)rc->wt(ai), rc->at(ai)));
           } else {
             LmnFunctor f;
             f = ((LmnSymbolAtomRef)rc->wt(ai))->get_functor();
-            attr_functors->proc_tbl_put(f, f);
+            attr_functors.emplace(f);
           }
         }
         break;
@@ -3317,13 +3304,12 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
           READ_VAL(LmnLinkAttr, instr, attr);
           if (LMN_ATTR_IS_DATA(attr)) {
             LmnAtomRef at;
-            attr_dataAtom_attrs.push(attr);
             READ_DATA_ATOM(at, attr);
-            attr_dataAtoms.push((LmnWord)at);
+            attr_dataAtoms.push_back(std::make_pair(at, attr));
           } else {
             LmnFunctor f;
             READ_VAL(LmnFunctor, instr, f);
-            attr_functors->proc_tbl_put(f, f);
+            attr_functors.emplace(f);
           }
         }
         break;
@@ -3332,36 +3318,26 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       switch (op) {
       case INSTR_REMOVEHLGROUND:
       case INSTR_REMOVEHLGROUNDINDIRECT:
-        srcvec = Task::links_from_idxs((Vector *)rc->wt(listi), rc);
         lmn_mem_remove_hlground((LmnMembraneRef)rc->wt(memi), srcvec,
-                                &attr_functors, &attr_dataAtoms,
-                                &attr_dataAtom_attrs);
-        Task::free_links(srcvec);
+                                attr_functors, attr_dataAtoms);
         break;
       case INSTR_FREEHLGROUND:
       case INSTR_FREEHLGROUNDINDIRECT:
-        srcvec = Task::links_from_idxs((Vector *)rc->wt(listi), rc);
         lmn_mem_free_hlground(
             srcvec, // this may also cause a bug, see 15 lines below
-            &attr_functors, &attr_dataAtoms, &attr_dataAtom_attrs);
-        Task::free_links(srcvec);
+            attr_functors, attr_dataAtoms);
         break;
       }
-      delete attr_functors;
-      attr_dataAtoms.destroy();
-      attr_dataAtom_attrs.destroy();
       break;
     }
     case INSTR_REMOVEGROUND: {
-      auto ports = Task::links_from_indexes((Vector *)rc->wt(listi), rc);
+      auto ports = Task::links_from_indexes(*(Vector *)rc->wt(listi), rc);
       ((LmnMembraneRef)rc->wt(memi))->remove_ground(ports);
-      Task::free_links(ports);
       break;
     }
     case INSTR_FREEGROUND: {
-      auto ports = Task::links_from_indexes((Vector *)rc->wt(listi), rc);
+      auto ports = Task::links_from_indexes(*(Vector *)rc->wt(listi), rc);
       lmn_mem_free_ground(ports);
-      Task::free_links(ports);
       break;
       }      
     }
@@ -5556,6 +5532,16 @@ std::vector<LinkObjRef> Task::links_from_indexes(const Vector *link_idxs, LmnRea
   for (auto i = 0; i < link_idxs->get_num(); i++) {
     vec_data_t t = link_idxs->get(i);
     vec[i] = LinkObj_make((LmnAtomRef)rc->wt(t), rc->at(t));
+  }
+  return std::move(vec);
+}
+
+std::vector<LinkObj> Task::links_from_indexes(const Vector &link_idxs, LmnReactCxtRef rc) {
+  std::vector<LinkObj> vec(link_idxs.get_num());
+  /* リンクオブジェクトのベクタを構築 */
+  for (auto i = 0; i < link_idxs.get_num(); i++) {
+    vec_data_t t = link_idxs.get(i);
+    vec[i] = LinkObj((LmnAtomRef)rc->wt(t), rc->at(t));
   }
   return std::move(vec);
 }

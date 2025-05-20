@@ -578,33 +578,28 @@ BOOL interpret_generated(LmnReactCxtRef rc,
 
 #eqground LmnInstrVar LmnInstrVar
   {
-    Vector *srcvec = Task::links_from_idxs((Vector*)rc->wt($0), rc);
-    Vector *dstvec = Task::links_from_idxs((Vector*)rc->wt($1), rc);
+    auto srcvec = Task::links_from_indexes(*(Vector*)rc->wt($0), rc);
+    auto dstvec = Task::links_from_indexes(*(Vector*)rc->wt($1), rc);
     BOOL same = lmn_mem_cmp_ground(srcvec, dstvec);
-    Task::free_links(srcvec);
-    Task::free_links(dstvec);
     if(! same) $f;
   }
 
 #neqground LmnInstrVar LmnInstrVar
   {
-    Vector *srcvec = Task::links_from_idxs((Vector*)rc->wt($0), rc);
-    Vector *dstvec = Task::links_from_idxs((Vector*)rc->wt($1), rc);
+    auto srcvec = Task::links_from_indexes(*(Vector*)rc->wt($0), rc);
+    auto dstvec = Task::links_from_indexes(*(Vector*)rc->wt($1), rc);
     BOOL same = lmn_mem_cmp_ground(srcvec, dstvec);
-    Task::free_links(srcvec);
-    Task::free_links(dstvec);
     if(same) $f;
   }
 
 #copyground LmnInstrVar LmnInstrVar LmnInstrVar
   {
-    Vector *srcvec = Task::links_from_idxs((Vector*)rc->wt($1), rc);
+    auto srcvec = Task::links_from_indexes(*(Vector*)rc->wt($1), rc);
     Vector *dstlovec, *retvec;
     ProcessTableRef atommap;
 
     lmn_mem_copy_ground((LmnMembraneRef)rc->wt($2), srcvec, &dstlovec, &atommap,
                         NULL, NULL, NULL, NULL);
-    Task::free_links(srcvec);
 
     /* 返り値の作成 */
     retvec = new Vector(2);
@@ -630,16 +625,14 @@ BOOL interpret_generated(LmnReactCxtRef rc,
 
 #removeground LmnInstrVar LmnInstrVar
   {
-    auto srcvec = Task::links_from_indexes((Vector*)rc->wt($0), rc);
+    auto srcvec = Task::links_from_indexes(*(Vector*)rc->wt($0), rc);
     ((LmnMembraneRef)rc->wt($1))->remove_ground(srcvec);
-    Task::free_links(srcvec);
   }
 
 #freeground LmnInstrVar
   {
-    auto srcvec = Task::links_from_indexes((Vector*)rc->wt($0), rc);
+    auto srcvec = Task::links_from_indexes(*(Vector*)rc->wt($0), rc);
     lmn_mem_free_ground(srcvec);
-    Task::free_links(srcvec);
   }
 
 #stable LmnInstrVar

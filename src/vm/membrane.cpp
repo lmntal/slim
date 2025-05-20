@@ -1325,21 +1325,11 @@ LmnMembraneRef lmn_mem_copy_with_map_ex(LmnMembraneRef src, std::unordered_map<P
   }
 }
 
-struct LinkObj {
-  LmnAtomRef ap;
-  LmnLinkAttr pos;
-  LinkObj(LmnAtomRef ap,LmnLinkAttr pos);
-  LmnAtomRef GetAtom();
-  LmnLinkAttr GetPos();
-};
 LmnAtomRef LinkObj::GetAtom() { return this->ap; }
 LmnAtomRef LinkObjGetAtom(LinkObjRef o) { return o->ap; }
 LmnLinkAttr LinkObj::GetPos() { return this->pos; }
 LmnLinkAttr LinkObjGetPos(LinkObjRef o) { return o->pos; }
-LinkObj::LinkObj(LmnAtomRef ap, LmnLinkAttr pos) {
-  this->ap = ap;
-  this->pos = pos;
-}
+
 LinkObjRef LinkObj_make(LmnAtomRef ap, LmnLinkAttr pos) {
   LinkObjRef ret = LMN_MALLOC(struct LinkObj);
   ret->ap = ap;
@@ -1528,7 +1518,7 @@ mem_map_hlink(LmnMembraneRef mem, LmnSymbolAtomRef root_hlAtom,
  * extended ground か通常の ground かは最後の三引数がNULLかどうかで判定可能 */
 
 static inline void
-mem_copy_ground_sub(LmnMembraneRef mem, Vector *srcvec, 
+mem_copy_ground_sub(LmnMembraneRef mem, const std::vector<LinkObj> &srcvec, 
                     ProcessTableRef *global_hlink, // extended
                     Vector **ret_dstlovec,
                     ProcessTableRef *ret_atommap, ProcessTableRef *ret_hlinkmap,
@@ -1549,8 +1539,8 @@ mem_copy_ground_sub(LmnMembraneRef mem, Vector *srcvec,
   /* 根をスタックに積む.
    * スタックにはリンクオブジェクトではなくアトムを積むため,
    * ここで根の先のアトムをコピーしスタックに積む必要がある */
-  for (i = 0; i < srcvec->get_num(); i++) {
-    LinkObjRef l = (LinkObjRef)srcvec->get(i);
+  for (i = 0; i < srcvec.size(); i++) {
+    const LinkObj *l = &srcvec[i];
     LmnAtomRef cpatom;
 
 
@@ -1725,7 +1715,7 @@ mem_copy_ground_sub(LmnMembraneRef mem, Vector *srcvec,
     //  }
 }
 
-void lmn_mem_copy_ground(LmnMembraneRef mem, Vector *srcvec,
+void lmn_mem_copy_ground(LmnMembraneRef mem, const std::vector<LinkObj> &srcvec,
                          Vector **ret_dstlovec, ProcessTableRef *ret_atommap,
                          ProcessTableRef *ret_hlinkmap,   // extended
                          ProcessTableRef *attr_functors,  // extended
@@ -1759,7 +1749,7 @@ void lmn_mem_copy_ground(LmnMembraneRef mem, Vector *srcvec,
   delete global_hlinks;
 }
 
-void lmn_mem_copy_hlground(LmnMembraneRef mem, Vector *srcvec,
+void lmn_mem_copy_hlground(LmnMembraneRef mem, const std::vector<LinkObj> &srcvec,
                            Vector **ret_dstlovec, ProcessTableRef *ret_atommap,
                            ProcessTableRef *ret_hlinkmap,
                            ProcessTableRef *attr_functors,
@@ -1776,99 +1766,85 @@ void lmn_mem_copy_hlground(LmnMembraneRef mem, Vector *srcvec,
  * ground検査はすんでいるものとする. srcとdstが同じ形なら真を返す.
  *
  * TODO: 構造化 */
-BOOL lmn_mem_cmp_ground(const Vector *srcvec, const Vector *dstvec) {
+BOOL lmn_mem_cmp_ground(const std::vector<LinkObj> &srcvec, const std::vector<LinkObj> &dstvec) {
   unsigned int i, j;
   BOOL ret_flag = TRUE;
-  Vector stack1, stack2;
+  std::vector<LinkObj> stack1, stack2;
   SimpleHashtbl map; /* 比較元->比較先 */
-  LinkObjRef start1, start2;
 
   hashtbl_init(&map, 256);
 
-  stack1.init(16);
-  stack2.init(16);
+  stack1.reserve(16);
+  stack2.reserve(16);
 
   /* startはstackにつまれるので処理中に壊されるためコピー */
-  start1 = new LinkObj(((LinkObjRef)srcvec->get(0))->ap,
-                        ((LinkObjRef)srcvec->get(0))->pos);
-  start2 = new LinkObj(((LinkObjRef)dstvec->get(0))->ap,
-                        ((LinkObjRef)dstvec->get(0))->pos);
+  auto &start1 = srcvec[0];
+  auto &start2 = dstvec[0];
 
-  if (!LMN_ATTR_IS_DATA(start1->pos) && !LMN_ATTR_IS_DATA(start2->pos)) {
+  if (!LMN_ATTR_IS_DATA(start1.pos) && !LMN_ATTR_IS_DATA(start2.pos)) {
     /* ともにシンボルアトムの場合 */
-    stack1.push((LmnWord)start1);
-    stack2.push((LmnWord)start2);
+    stack1.push_back(start1);
+    stack2.push_back(start2);
   } else { /* data atom は積まない */
-    if (!lmn_data_atom_eq((LmnDataAtomRef)start1->ap, start1->pos,
-                          (LmnDataAtomRef)start2->ap, start2->pos)) {
+    if (!lmn_data_atom_eq((LmnDataAtomRef)start1.ap, start1.pos,
+                          (LmnDataAtomRef)start2.ap, start2.pos)) {
       ret_flag = FALSE;
     }
-    LMN_FREE(start1);
-    LMN_FREE(start2);
   }
 
-  while (!stack1.is_empty()) { /* main loop: start */
-    LinkObjRef l1, l2;
+  while (!stack1.empty()) { /* main loop: start */
     BOOL contains1, contains2;
 
-    l1 = (LinkObjRef)stack1.pop();
-    l2 = (LinkObjRef)stack2.pop();
+    auto l1 = stack1.back();
+    auto l2 = stack2.back();
     contains1 = FALSE;
     contains2 = FALSE;
+    stack1.pop_back();
+    stack2.pop_back();
 
-    for (i = 0; i < srcvec->get_num(); i++) {
-      LinkObjRef lobj = (LinkObjRef)srcvec->get(i);
-      if (l1->ap == ((LmnSymbolAtomRef)lobj->ap)->get_link(lobj->pos) &&
-          l1->pos ==
-              ((LmnSymbolAtomRef)lobj->ap)->get_attr(lobj->pos)) {
+    for (i = 0; i < srcvec.size(); i++) {
+      auto &lobj = srcvec[i];
+      if (l1.ap == ((LmnSymbolAtomRef)lobj.ap)->get_link(lobj.pos) &&
+          l1.pos ==
+              ((LmnSymbolAtomRef)lobj.ap)->get_attr(lobj.pos)) {
         contains1 = TRUE;
         break;
       }
     }
-    for (j = 0; j < dstvec->get_num(); j++) {
-      LinkObjRef lobj = (LinkObjRef)dstvec->get(j);
-      if (l2->ap == ((LmnSymbolAtomRef)lobj->ap)->get_link(lobj->pos) &&
-          l2->pos ==
-              ((LmnSymbolAtomRef)lobj->ap)->get_attr(lobj->pos)) {
+    for (j = 0; j < dstvec.size(); j++) {
+      auto &lobj = dstvec[j];
+      if (l2.ap == ((LmnSymbolAtomRef)lobj.ap)->get_link(lobj.pos) &&
+          l2.pos ==
+              ((LmnSymbolAtomRef)lobj.ap)->get_attr(lobj.pos)) {
         contains2 = TRUE;
         break;
       }
     }
     if (i != j) { /* 根の位置が違う */
-      LMN_FREE(l1);
-      LMN_FREE(l2);
       ret_flag = FALSE;
       break;
     }
     if (contains1) { /* 根に到達した場合 */
-      LMN_FREE(l1);
-      LMN_FREE(l2);
       continue;
     }
 
-    if (l1->pos != l2->pos) { /* 引数検査 */
-      LMN_FREE(l1);
-      LMN_FREE(l2);
+    if (l1.pos != l2.pos) { /* 引数検査 */
       ret_flag = FALSE;
       break;
     }
 
-    if (((LmnSymbolAtomRef)l1->ap)->get_functor() !=
-        ((LmnSymbolAtomRef)l2->ap)->get_functor()) {
+    if (((LmnSymbolAtomRef)l1.ap)->get_functor() !=
+        ((LmnSymbolAtomRef)l2.ap)->get_functor()) {
       /* ファンクタ検査 */
-      LMN_FREE(l1);
-      LMN_FREE(l2);
       ret_flag = FALSE;
       break;
     }
 
-    if (!hashtbl_contains(&map, (HashKeyType)l1->ap)) {
+    if (!hashtbl_contains(&map, (HashKeyType)l1.ap)) {
       /* 未出 */
-      hashtbl_put(&map, (HashKeyType)l1->ap, (HashValueType)l2->ap);
-    } else if ((LmnAtomRef)hashtbl_get(&map, (HashKeyType)l1->ap) != l2->ap) {
+      hashtbl_put(&map, (HashKeyType)l1.ap, (HashValueType)l2.ap);
+    } else if ((LmnAtomRef)hashtbl_get(&map, (HashKeyType)l1.ap) != l2.ap) {
       /* 既出で不一致 */
-      LMN_FREE(l1);
-      LMN_FREE(l2);
       ret_flag = FALSE;
       break;
     } else {
@@ -1876,45 +1852,34 @@ BOOL lmn_mem_cmp_ground(const Vector *srcvec, const Vector *dstvec) {
       continue;
     }
 
-    for (i = 0; i < ((LmnSymbolAtomRef)l1->ap)->get_arity(); i++) {
-      LinkObjRef n1, n2;
-      if (i == l1->pos)
+    for (i = 0; i < ((LmnSymbolAtomRef)l1.ap)->get_arity(); i++) {
+      if (i == l1.pos)
         continue;
-      if (!LMN_ATTR_IS_DATA(((LmnSymbolAtomRef)l1->ap)->get_attr(i)) &&
-          !LMN_ATTR_IS_DATA(((LmnSymbolAtomRef)l1->ap)->get_attr(i))) {
-        n1 = new LinkObj(((LmnSymbolAtomRef)l1->ap)->get_link(i),
+      if (!LMN_ATTR_IS_DATA(((LmnSymbolAtomRef)l1.ap)->get_attr(i)) &&
+          !LMN_ATTR_IS_DATA(((LmnSymbolAtomRef)l1.ap)->get_attr(i))) {
+        auto n1 = LinkObj(((LmnSymbolAtomRef)l1.ap)->get_link(i),
                           LMN_ATTR_GET_VALUE(
-                              ((LmnSymbolAtomRef)l1->ap)->get_attr(i)));
-        n2 = new LinkObj(((LmnSymbolAtomRef)l2->ap)->get_link(i),
+                              ((LmnSymbolAtomRef)l1.ap)->get_attr(i)));
+        auto n2 = LinkObj(((LmnSymbolAtomRef)l2.ap)->get_link(i),
                           LMN_ATTR_GET_VALUE(
-                              ((LmnSymbolAtomRef)l2->ap)->get_attr(i)));
-        stack1.push((LmnWord)n1);
-        stack2.push((LmnWord)n2);
+                              ((LmnSymbolAtomRef)l2.ap)->get_attr(i)));
+        stack1.push_back(n1);
+        stack2.push_back(n2);
       } else { /* data atom は積まない */
         if (!lmn_data_atom_eq(
-                (LmnDataAtomRef)((LmnSymbolAtomRef)l1->ap)->get_link(i),
-                ((LmnSymbolAtomRef)l1->ap)->get_attr(i),
-                (LmnDataAtomRef)((LmnSymbolAtomRef)l2->ap)->get_link(i),
-                ((LmnSymbolAtomRef)l2->ap)->get_attr(i))) {
-          LMN_FREE(l1);
-          LMN_FREE(l2);
+                (LmnDataAtomRef)((LmnSymbolAtomRef)l1.ap)->get_link(i),
+                ((LmnSymbolAtomRef)l1.ap)->get_attr(i),
+                (LmnDataAtomRef)((LmnSymbolAtomRef)l2.ap)->get_link(i),
+                ((LmnSymbolAtomRef)l2.ap)->get_attr(i))) {
           ret_flag = FALSE;
           goto CMPGROUND_BREAK;
         }
       }
     }
 
-    LMN_FREE(l1);
-    LMN_FREE(l2);
   } /* main loop: end */
 
 CMPGROUND_BREAK:
-  for (i = 0; i < stack1.get_num(); i++)
-    LMN_FREE((LinkObjRef)stack1.get(i));
-  for (i = 0; i < stack2.get_num(); i++)
-    LMN_FREE((LinkObjRef)stack2.get(i));
-  stack1.destroy();
-  stack2.destroy();
   hashtbl_destroy(&map);
 
   return ret_flag;
@@ -2243,9 +2208,9 @@ returning:
   return result;
 }
 
-bool is_connected_to(LmnSymbolAtomRef atom, LmnLinkAttr pos, const std::vector<LinkObjRef> &links) {
+bool is_connected_to(LmnSymbolAtomRef atom, LmnLinkAttr pos, const std::vector<LinkObj> &links) {
   for (auto &ln : links) {
-    if (atom->get_link(pos) == ln->ap && atom->get_attr(pos) == ln->pos) {
+    if (atom->get_link(pos) == ln.ap && atom->get_attr(pos) == ln.pos) {
       return true;
     }
   }
@@ -2259,10 +2224,10 @@ bool is_connected_to(LmnSymbolAtomRef atom, LmnLinkAttr pos, const std::vector<L
  * hlinksがNULLでなければhlgroundとして探索
  * attr_functors, attr_dataAtoms, attr_dataAtoms_attrはhlgroundの属性 */
 bool ground_atoms(
-    const std::vector<LinkObjRef> &srcvec,
+    const std::vector<LinkObj> &srcvec,
     std::unordered_map<ProcessID, LmnSymbolAtomRef> &atoms, /* ground内の発見済みのシンボルアトム */
     size_t *number_of_atoms,
-    const std::vector<LinkObjRef> &avovec,
+    const std::vector<LinkObj> &avovec,
     std::unordered_set<HyperLink *> *hlinks, /* hlinks!=NULLなら、hlgroundとして探索 */
     const std::unordered_set<LmnFunctor> &attr_functors, /* hlgroundの属性（unary atom）*/
     const std::vector<std::pair<LmnAtomRef, LmnLinkAttr>> &attr_dataAtoms         /* hlgroundの属性（data atom）*/
@@ -2277,7 +2242,7 @@ bool ground_atoms(
 
   /* groundはつながったグラフなので1つの根からだけたどればよい */
   int reached_root_count = 1; /* 到達した根の個数(1つは始点) */
-  unsearched_link_stack.push(*srcvec[0]);
+  unsearched_link_stack.push(srcvec[0]);
 
   while (!unsearched_link_stack.empty()) {
     auto &&l = unsearched_link_stack.top();
@@ -2409,7 +2374,7 @@ bool ground_atoms(
 BOOL extended_ground_atoms( 
     ProcessTableRef *global_hlinks,
     ProcessTableRef *local_atoms,
-    Vector          *srcvec,     //store root link
+    const std::vector<LinkObj> &srcvec,     //store root link
     Vector          *avovec,     //other links of source atom
     // ProcessTableRef *atoms,      /* collects atom within hlground */
     // ProcessTableRef *hlinks,     /* collects hyperlinks local to hlground; if not NULL, searched as hlground */
@@ -2420,7 +2385,7 @@ BOOL extended_ground_atoms(
 
   BOOL result= TRUE;            //TRUE if it is hlground
 
-  LinkObjRef t_link = (LinkObjRef)srcvec->get(0);
+  LinkObjRef t_link = (LinkObjRef)&srcvec[0];
   LmnAtomRef root_ap = t_link->ap;
   LmnLinkAttr root_pos = t_link->pos;
 
@@ -2565,16 +2530,16 @@ void dfs_scope_finder(
 }
 
 // TODO: cycle check is not necessary but keep code just in case
-BOOL purecycle_exist(Vector *srcvec, Vector *avovec) {
+BOOL purecycle_exist(const std::vector<LinkObj> &srcvec, Vector *avovec) {
 
   BOOL m_find=FALSE;
-  int m = srcvec->get_num();
+  int m = srcvec.size();
   int i;
 
   for(i=0;i<m;i++) {
     Vector * stack = new Vector(10);
-    LinkObjRef root = LinkObj_make(((LinkObjRef)srcvec->get(i))->ap,
-				   ((LinkObjRef)srcvec->get(i))->pos);
+    LinkObjRef root = LinkObj_make(((LinkObjRef)&srcvec[i])->ap,
+				   ((LinkObjRef)&srcvec[i])->pos);
     ProcessTableRef atoms = new ProcessTbl(64);
     BOOL m_first=TRUE;
 
@@ -2937,7 +2902,7 @@ int mem_remove_symbol_atom_with_buddy_data_f(LmnWord _k, LmnWord _v,
   return 1;
 }
 
-void LmnMembrane::remove_ground(const std::vector<LinkObjRef> &srcvec) {
+void LmnMembrane::remove_ground(const std::vector<LinkObj> &srcvec) {
   std::unordered_map<ProcessID, LmnSymbolAtomRef> atoms;
 
   ground_atoms(srcvec, atoms);
@@ -2948,37 +2913,38 @@ void LmnMembrane::remove_ground(const std::vector<LinkObjRef> &srcvec) {
   /* atomsはシンボルアトムしか含まないので、
    * srcvecのリンクが直接データアトムに接続している場合の処理をする */
   for (auto &l : srcvec) {
-    if (LMN_ATTR_IS_DATA_WITHOUT_EX(l->pos)) {
-      lmn_mem_remove_data_atom(this, (LmnDataAtomRef)l->ap, l->pos);
-    } else if (LMN_ATTR_IS_EX(l->pos)) {
-      mem_remove_symbol_atom(this, (LmnSymbolAtomRef)l->ap);
+    if (LMN_ATTR_IS_DATA_WITHOUT_EX(l.pos)) {
+      lmn_mem_remove_data_atom(this, (LmnDataAtomRef)l.ap, l.pos);
+    } else if (LMN_ATTR_IS_EX(l.pos)) {
+      mem_remove_symbol_atom(this, (LmnSymbolAtomRef)l.ap);
     }
   }
 }
 
-void lmn_mem_remove_hlground(LmnMembraneRef mem, Vector *srcvec,
-                             ProcessTableRef *attr_sym, Vector *attr_data,
-                             Vector *attr_data_at) {
-  ProcessTableRef atoms;
-  ProcessTableRef hlinks;
+void lmn_mem_remove_hlground(LmnMembraneRef mem, const std::vector<LinkObj> &srcvec,
+                             const std::unordered_set<LmnFunctor> &attr_functors,
+                             const std::vector<std::pair<LmnAtomRef, LmnLinkAttr>> &attr_dataAtoms) {
+  std::unordered_map<ProcessID, LmnSymbolAtomRef> atoms;
+  std::unordered_set<HyperLink *> hlinks;
   unsigned long i, t;
 
-  ground_atoms(srcvec, NULL, &atoms, &t, &hlinks, attr_sym, attr_data,
-               attr_data_at);
-  atoms->tbl_foreach(mem_remove_symbol_atom_with_buddy_data_f,
-                   (LmnWord)mem);
+  // ground_atoms(srcvec, NULL, &atoms, &t, &hlinks, attr_sym, attr_data,
+  //              attr_data_at);
+  ground_atoms(srcvec, atoms, nullptr, std::vector<LinkObj>(), &hlinks, attr_functors, attr_dataAtoms);
+  for (auto &a : atoms) {
+    mem_remove_symbol_atom_with_buddy_data(mem, a.second);
+  }
 
   /* atomsはシンボルアトムしか含まないので、
    * srcvecのリンクが直接データアトムに接続している場合の処理をする */
-  for (i = 0; i < srcvec->get_num(); i++) {
-    LinkObjRef l = (LinkObjRef)srcvec->get(i);
+  for (i = 0; i < srcvec.size(); i++) {
+    auto l = (LinkObjRef)&srcvec[i];
     if (LMN_ATTR_IS_DATA_WITHOUT_EX(l->pos)) {
       lmn_mem_remove_data_atom(mem, (LmnDataAtomRef)l->ap, l->pos);
     } else if (LMN_ATTR_IS_EX(l->pos)) {
       mem_remove_symbol_atom(mem, (LmnSymbolAtomRef)l->ap);
     }
   }
-  delete atoms;
 }
 
 int free_symbol_atom_with_buddy_data_f(LmnWord _k, LmnWord _v, LmnWord _arg) {
@@ -2986,7 +2952,7 @@ int free_symbol_atom_with_buddy_data_f(LmnWord _k, LmnWord _v, LmnWord _arg) {
   return 1;
 }
 
-void lmn_mem_free_ground(const std::vector<LinkObjRef> &srcvec) {
+void lmn_mem_free_ground(const std::vector<LinkObj> &srcvec) {
   std::unordered_map<ProcessID, LmnSymbolAtomRef> atoms;
 
   if (ground_atoms(srcvec, atoms)) {
@@ -2998,55 +2964,56 @@ void lmn_mem_free_ground(const std::vector<LinkObjRef> &srcvec) {
   /* atomsはシンボルアトムしか含まないので、srcvecのリンクが直接データ
      アトムに接続している場合の処理をする */
   for (auto &l : srcvec) {
-    if (LMN_ATTR_IS_DATA(l->pos))
-      lmn_free_atom(l->ap, l->pos);
+    if (LMN_ATTR_IS_DATA(l.pos))
+      lmn_free_atom(l.ap, l.pos);
   }
 }
 
-void lmn_mem_free_hlground(Vector *srcvec, ProcessTableRef *attr_sym,
-                           Vector *attr_data, Vector *attr_data_at) {
-  ProcessTableRef atoms;
-  ProcessTableRef hlinks;
+void lmn_mem_free_hlground(const std::vector<LinkObj> &srcvec,
+                          const std::unordered_set<LmnFunctor> &attr_functors,
+                          const std::vector<std::pair<LmnAtomRef, LmnLinkAttr>> &attr_dataAtoms) {
+  std::unordered_map<ProcessID, LmnSymbolAtomRef> atoms;
+  std::unordered_set<HyperLink *> hlinks;
   unsigned long i, t;
 
-  hlinks = NULL;
-  if (ground_atoms(srcvec, NULL, &atoms, &t, &hlinks, attr_sym, attr_data,
-                   attr_data_at)) {
-    atoms->tbl_foreach(free_symbol_atom_with_buddy_data_f, (LmnWord)0);
-    delete atoms;
+  if (ground_atoms(srcvec, atoms, nullptr, std::vector<LinkObj>(), &hlinks, attr_functors, attr_dataAtoms)) {
+    for (auto &a : atoms) {
+      free_symbol_atom_with_buddy_data(a.second);
+    }
   }
 
   /* atomsはシンボルアトムしか含まないので、srcvecのリンクが直接データ
      アトムに接続している場合の処理をする */
-  for (i = 0; i < srcvec->get_num(); i++) {
-    LinkObjRef l = (LinkObjRef)srcvec->get(i);
+  for (i = 0; i < srcvec.size(); i++) {
+    auto l = (LinkObjRef)&srcvec[i];
     if (LMN_ATTR_IS_DATA(l->pos))
       lmn_free_atom(l->ap, l->pos);
   }
 }
-void LmnMembrane::delete_ground(Vector *srcvec) {
-  ProcessTableRef atoms;
+void LmnMembrane::delete_ground(const std::vector<LinkObj> &srcvec) {
+  std::unordered_map<ProcessID, LmnSymbolAtomRef> atoms;
   unsigned long i, t;
 
-  if (!ground_atoms(srcvec, NULL, &atoms, &t, NULL, NULL, NULL, NULL)) {
+  if (!ground_atoms(srcvec, atoms)) {
     fprintf(stderr, "remove ground false\n");
   }
 
-  atoms->tbl_foreach(mem_remove_symbol_atom_with_buddy_data_f,
-                   (LmnWord)this);
-  atoms->tbl_foreach(free_symbol_atom_with_buddy_data_f, (LmnWord)0);
+  for (auto &a : atoms) {
+    mem_remove_symbol_atom_with_buddy_data(this, a.second);
+  }
+  for (auto &a : atoms) {
+    free_symbol_atom_with_buddy_data(a.second);
+  }
 
   /* atomsはシンボルアトムしか含まないので、srcvecのリンクが直接データ
      アトムに接続している場合の処理をする */
-  for (i = 0; i < srcvec->get_num(); i++) {
-    LinkObjRef l = (LinkObjRef)srcvec->get(i);
+  for (i = 0; i < srcvec.size(); i++) {
+    const LinkObj *l = &srcvec[i];
     if (LMN_ATTR_IS_DATA(l->pos)) {
       lmn_mem_remove_data_atom(this, (LmnDataAtomRef)l->ap, l->pos);
       lmn_free_atom(l->ap, l->pos);
     }
   }
-
-  delete atoms;
 }
 
 /** ===========================
