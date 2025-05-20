@@ -363,18 +363,15 @@ public:
     return true;
   }
 
-  LmnBinStr *to_lmn_binstr() const {
-    struct LmnBinStr *ret_bs;
-    int size = (this->cur + 1) / 2;
-    ret_bs = LMN_MALLOC(struct LmnBinStr);
-    ret_bs->v = LMN_NALLOC(BYTE, size);
+  LmnBinStr *to_lmn_binstr() {
+    auto ret_bs = new LmnBinStr();
+    ret_bs->v = this->v;
     ret_bs->type = 0x00U;
-    memcpy(ret_bs->v, this->v, size);
     ret_bs->len = this->cur;
     if (ret_bs->len & 1) {
       ret_bs->v[ret_bs->len >> 1] = ret_bs->v[ret_bs->len >> 1] & 0x0f;
     }
-
+    this->v = nullptr;
     return ret_bs;
   }
 
