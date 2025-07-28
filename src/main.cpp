@@ -65,6 +65,12 @@ void destroy_rules();
 void sym_tbl_destroy();
 void sym_tbl_init();
 
+// ログ制御用グローバル変数のextern宣言
+extern bool enable_atom_pool_log;
+extern bool enable_memory_pool_log;
+extern bool enable_alloc_log;
+extern bool enable_memory_log;
+
 static void usage(void) {
   fprintf(
       stderr,
@@ -140,7 +146,11 @@ static void usage(void) {
       "  --visualize          (MC) Output information for visualize\n"
       "  --run-test           Run CUnit\n"
       "  --version            Prints version and exits.\n"
-      "  --help               This Help.\n");
+      "  --help               This Help.\n"
+      "  --log-atom-pool     Enable atom_pool_log.txt output (for debugging memory pool)\n"
+      "  --log-memory-pool   Enable memory_pool_log.txt output (for debugging memory pool)\n"
+      "  --log-alloc         Enable alloc_log.txt output (for debugging allocations)\n"
+      "  --log-memory        Enable memory_log.txt output (for debugging allocations)\n");
   exit(1);
 }
 
@@ -243,6 +253,10 @@ static void parse_options(int *optid, int argc, char *argv[]) {
                                   {"shuffle-atom",0,0,6081},
                                   {"shuffle",0,0,6082},
                                   {"interactive-debug", 0, 0, 6090},
+                                  {"log-atom-pool", 0, 0, 9001},
+                                  {"log-memory-pool", 0, 0, 9002},
+                                  {"log-alloc", 0, 0, 9003},
+                                  {"log-memory", 0, 0, 9004},
                                   {0, 0, 0, 0}};
 
   while ((c = getopt_long(argc, argv, "+dvhtI:O::p::", long_options,
@@ -609,6 +623,18 @@ static void parse_options(int *optid, int argc, char *argv[]) {
       break;
     case 6090:
       lmn_env.interactive_debug = TRUE;
+      break;
+    case 9001:
+      enable_atom_pool_log = true;
+      break;
+    case 9002:
+      enable_memory_pool_log = true;
+      break;
+    case 9003:
+      enable_alloc_log = true;
+      break;
+    case 9004:
+      enable_memory_log = true;
       break;
     case 'I':
       lmn_env.load_path[lmn_env.load_path_num++] = optarg;

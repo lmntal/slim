@@ -38,7 +38,20 @@
 
 #include "memory_pool.h"
 #include "lmntal.h"
+#include <chrono>
+#include <iomanip>
+#include <sstream>
+#include <string>
+// ログ出力ON/OFF用のグローバル変数をexternで参照
+extern bool enable_memory_pool_log; // alloc.cppで定義
 
+/*
+[変更履歴]
+- enable_memory_pool_logフラグをexternで参照し、コマンドラインオプションでメモリプールログ出力をON/OFFできるようにした。
+- 各種メモリプール操作ログ（log_memory_pool_event）にミリ秒精度のタイムスタンプを付与。
+- memory_pool_new, memory_pool_malloc, memory_pool_free, memory_pool_deleteの各操作で詳細な動作を記録するようにした。
+- 再帰呼び出し防止のためin_log変数を導入。
+*/
 #define REF_CAST(T, X) (*(T *)&(X))
 
 /* each element must be bigger than void*, so align everything in sizeof(void*)
@@ -47,6 +60,45 @@
 #define ALIGNED_SIZE(X)                                                        \
   (((X + sizeof(void *) - 1) / sizeof(void *)) * sizeof(void *))
 
+// メモリプール専用ログ関数
+static std::string now_str() {
+    using namespace std::chrono;
+    auto now = std::chrono::system_clock::now();
+    auto t = std::chrono::system_clock::to_time_t(now);
+    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
+    std::ostringstream oss;
+    oss << std::put_time(std::localtime(&t), "%F %T")
+        << "." << std::setfill('0') << std::setw(3) << ms.count();
+    return oss.str();
+}
+
+static void log_memory_pool_event(const char* event, memory_pool* p, void* ptr, const char* details) {
+  static int in_log = 0;
+  if (in_log || !enable_memory_pool_log) return;
+  in_log = 1;
+  FILE* log = fopen("memory_pool_log.txt", "a");
+  if (log) {
+    std::string ts = now_str();
+    fprintf(log, "[%s] %s: pool=%p, ptr=%p, element_size=%d, block_head=%p, free_head=%p %s\n", 
+            ts.c_str(), event, p, ptr, p ? p->sizeof_element : 0, p ? p->block_head : 0, p ? p->free_head : 0, details);
+    fclose(log);
+  }
+  in_log = 0;
+}
+
+// 再利用追跡用のログ
+static void log_reuse_event(const char* event, void* ptr, void* old_ptr) {
+  static int in_log = 0;
+  if (in_log) return;
+  in_log = 1;
+  FILE* log = fopen("memory_reuse_log.txt", "a");
+  if (log) {
+    fprintf(log, "%s: ptr=%p, old_ptr=%p\n", event, ptr, old_ptr);
+    fclose(log);
+  }
+  in_log = 0;
+}
+
 memory_pool *memory_pool_new(int s) {
   memory_pool *res = LMN_MALLOC(memory_pool);
 
@@ -54,6 +106,7 @@ memory_pool *memory_pool_new(int s) {
   res->block_head = 0;
   res->free_head = 0;
 
+  log_memory_pool_event("POOL_NEW", res, 0, "");
   /* fprintf(stderr, "this memory_pool allocate %d, aligned as %d\n", s,
    * res->sizeof_element); */
 
@@ -68,6 +121,7 @@ void *memory_pool_malloc(memory_pool *p) {
     char *rawblock;
     int i;
 
+    log_memory_pool_event("POOL_ALLOC_NEW_BLOCK", p, 0, "creating new block");
     /* fprintf(stderr, "no more free space, so allocate new block\n"); */
 
     /* top of block is used as pointer to head of next block */
@@ -92,11 +146,13 @@ void *memory_pool_malloc(memory_pool *p) {
   res = p->free_head;
   p->free_head = *(void **)p->free_head;
 
+  log_memory_pool_event("POOL_MALLOC", p, res, "allocated from pool");
   return res;
 }
 
 void memory_pool_free(memory_pool *p, void *e) {
   if (p) {
+    log_memory_pool_event("POOL_FREE", p, e, "returning to pool");
     *(void **)e = p->free_head;
     p->free_head = e;
   }
@@ -105,13 +161,14 @@ void memory_pool_free(memory_pool *p, void *e) {
 void memory_pool_delete(memory_pool *p) {
   void *blockhead = p->block_head;
 
+  log_memory_pool_event("POOL_DELETE", p, 0, "deleting pool");
   while (blockhead) {
     void *next_blockhead = *(void **)blockhead;
-    free(blockhead);
+    lmn_free(blockhead);
     blockhead = next_blockhead;
   }
 
-  free(p);
+  lmn_free(p);
 }
 
 /*

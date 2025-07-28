@@ -227,7 +227,8 @@ void cb_string_substr(LmnReactCxtRef rc, LmnMembraneRef mem, LmnAtomRef a0,
     s = LMN_NALLOC(char, end - begin + 1);
     snprintf(s, end - begin + 1, "%s", src + begin);
   } else {
-    s = strdup("");
+    s = (char*)lmn_malloc(1);
+    s[0] = '\0';
   }
 
   ret = new LmnString(s);

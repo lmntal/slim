@@ -36,6 +36,13 @@
  * $Id: memory_pool.h,v 1.2 2008/09/19 05:18:17 taisuke Exp $
  */
 
+/*
+[変更履歴]
+- memory_pool構造体とAPIの説明コメントを整理。
+- memory_pool_new, memory_pool_malloc, memory_pool_free, memory_pool_deleteの各関数の役割を明記。
+  （主な実装変更はmemory_pool.cpp側）
+*/
+
 #ifndef LMN_MEMORY_POOL_H
 #define LMN_MEMORY_POOL_H
 
