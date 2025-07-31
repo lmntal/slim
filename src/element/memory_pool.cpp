@@ -76,7 +76,7 @@ static void log_memory_pool_event(const char* event, memory_pool* p, void* ptr, 
   static int in_log = 0;
   if (in_log || !enable_memory_pool_log) return;
   in_log = 1;
-  FILE* log = fopen("memory_pool_log.txt", "a");
+  FILE* log = fopen("memory_pool.log", "a");
   if (log) {
     std::string ts = now_str();
     fprintf(log, "[%s] %s: pool=%p, ptr=%p, element_size=%d, block_head=%p, free_head=%p %s\n", 

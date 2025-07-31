@@ -146,11 +146,11 @@ static void usage(void) {
       "  --visualize          (MC) Output information for visualize\n"
       "  --run-test           Run CUnit\n"
       "  --version            Prints version and exits.\n"
-      "  --help               This Help.\n"
-      "  --log-atom-pool     Enable atom_pool_log.txt output (for debugging memory pool)\n"
-      "  --log-memory-pool   Enable memory_pool_log.txt output (for debugging memory pool)\n"
-      "  --log-alloc         Enable alloc_log.txt output (for debugging allocations)\n"
-      "  --log-memory        Enable memory_log.txt output (for debugging allocations)\n");
+      "  --log-atom-pool     Enable atom_pool.log output (for debugging memory pool)\n"
+      "  --log-memory-pool   Enable memory_pool.log output (for debugging memory pool)\n"
+      "  --log-alloc         Enable alloc.log output (for debugging allocations)\n"
+      "  --log-memory        Enable memory.log output (for debugging allocations)\n"
+      "  --help               This Help.\n");
   exit(1);
 }
 

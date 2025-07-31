@@ -84,7 +84,7 @@ static void log_atom_pool_event(const char* event, int arity, int cid, void* ptr
   static int in_log = 0;
   if (in_log || !enable_atom_pool_log) return;
   in_log = 1;
-  FILE* log = fopen("atom_pool_log.txt", "a");
+  FILE* log = fopen("atom_pool.log", "a");
   if (log) {
     std::string ts = now_str();
     fprintf(log, "[%s] %s: arity=%d, thread=%d, ptr=%p %s\n", ts.c_str(), event, arity, cid, ptr, details);
@@ -110,9 +110,9 @@ static void log_atom_reuse_event(const char* event, void* ptr, void* old_ptr, in
 // log_alloc_event: 呼び出し元情報付き
 static void log_alloc_event(const char* event, void* ptr, size_t size, const char* file, int line, const char* caller) {
   static int in_log = 0;
-  if (in_log || !enable_memory_log) return; // memory_log.txt用
+  if (in_log || !enable_memory_log) return; // memory.log用
   in_log = 1;
-  FILE* log = fopen("memory_log.txt", "a");
+  FILE* log = fopen("memory.log", "a");
   if (log) {
     std::string ts = now_str();
     if (size)
@@ -127,9 +127,9 @@ static void log_alloc_event(const char* event, void* ptr, size_t size, const cha
 // log_alloc_func: 呼び出し元情報付き
 static void log_alloc_func(const char* func, const char* file, int line, const char* caller, const char* fmt, ...) {
   static int in_log = 0;
-  if (in_log || !enable_alloc_log) return; // alloc_log.txt用
+  if (in_log || !enable_alloc_log) return; // alloc.log用
   in_log = 1;
-  FILE* log = fopen("alloc_log.txt", "a");
+  FILE* log = fopen("alloc.log", "a");
   if (log) {
     std::string ts = now_str();
     fprintf(log, "[%s] %s: ", ts.c_str(), func);
