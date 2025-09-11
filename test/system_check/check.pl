@@ -12,14 +12,14 @@
 use Cwd;
 $pwd = Cwd::getcwd();
 
-$lmntal_runtime = $pwd . "/../../src/slim";
+$lmntal_runtime = $ENV{SLIM_BINARY} || $pwd . "/../../src/slim";
 $count = 1;
 $options = $ENV{slim_CHECK_OPTIONS};
 
 print $count . ".." . ($#ARGV + 1) . "\n";
 for (@ARGV) {
 	$filename = $_;
-	$check_run = $lmntal_runtime . " " . $options ." ". $pwd . $filename . ".il";
+	$check_run = $lmntal_runtime . " --hide-ruleset " . $options ." ". $pwd . $filename . ".il";
 	$checked = `$check_run`;
 
 	$result = index ($checked, "ok");
