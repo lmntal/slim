@@ -97,3 +97,20 @@ src/loader/location.hh
 src/loader/stack.hh
 src/loader/position.hh
 third_party/google-perftools-1.8.3/test-suite.log
+
+
+# CMake specific additions
+build*/
+cmake-build-*/
+*_parser.cpp
+*_parser.hpp
+*_lexer.cpp
+location.hh
+position.hh
+stack.hh
+translate_generated.cpp
+interpret_generated.cpp
+
+# IDE files
+.vscode/
+.idea/
