@@ -81,7 +81,7 @@ find test -name "*_run.sh" -exec chmod +x {} \; 2>/dev/null || true
 
 echo ""
 echo "Build completed successfully!"
-echo "Binary location: $BUILD_DIR/src/slim"
+echo "Binary location: $BUILD_DIR/bin/slim"
 echo ""
 echo "To run tests:"
 echo "  make test"
