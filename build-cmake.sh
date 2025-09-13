@@ -70,8 +70,8 @@ cmake .. \
 echo "Building SLIM..."
 make -j$(nproc)
 
-# Install
-echo "Installing SLIM..."
+# Install (local installation to build directory - safe)
+echo "Installing SLIM locally..."
 make install
 
 # Fix test script permissions

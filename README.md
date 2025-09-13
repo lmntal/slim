@@ -9,61 +9,70 @@ This is a runtime and a model checker for the
 
 ### Requirements
 
-1. automake 1.14.1
-2. autoconf 2.71
-3. g++
-4. flex 2.5.35
-5. re2c 1.0.3
-6. bison 3.0
-7. ruby 1.9.3p547
-8. libtool 2.2.6b
-9. cunit
+1. cmake 3.16+
+2. g++ or clang++
+3. re2c 1.0.3+
+4. bison 3.0+
+5. ruby 1.9.3+
+6. build-essential (on Ubuntu/Debian)
 
 ### Installation
 
 Build the package as follows:
 
 ```bash
-export LMNTAL_HOME=/path/to/devel # set the path to the compiler
+export LMNTAL_HOME=/path/to/lmntal-compiler # set the path to the LMNtal compiler
 cd slim
-./autogen.sh
-./configure --prefix=$(pwd) # Generate a binary at $(pwd)/bin/slim
-make -j # `-j` for a parallel build
-make -j install # set up libraries
+./build-cmake.sh # Build with CMake (Release mode)
 ```
 
-or
+For development builds:
 
 ```bash
-tar xvzf slim-x.y.z.tar.gz
-cd slim-x.y.z
-./autogen.sh
-./configure --prefix=$(pwd)
-make -j
-make -j install
+./build-cmake.sh --debug   # Debug build
+./build-cmake.sh --devel   # Developer mode with additional checks
 ```
 
-Among generated files, `bin/slim` is the LMNtal interpreter.
+Among generated files, `build/bin/slim` is the LMNtal interpreter.
 So you can run SLIM as follows:
 
 ```sh
 lmntal --slimcode source.lmn > source.il # Compile the source.lmn file and generate a source.il
-./bin/slim source.il # Execute the runtime with the source.il
+./build/bin/slim source.il # Execute the runtime with the source.il
 ```
 
 You can see what options are available with SLIM as follows:
 
 ```
-./bin/slim --help
+./build/bin/slim --help
+```
+
+### System-wide Installation
+
+After building and testing locally, you can optionally install SLIM system-wide:
+
+```bash
+./build-cmake.sh        # Build locally
+ctest                   # Test the build
+
+# Install system-wide (optional)
+cd build
+sudo cmake --install . --prefix /usr/local
+```
+
+Then you can use `slim` from anywhere:
+```bash
+slim --help            # System-wide slim command
+slim source.il         # Run without ./build/bin/ prefix
 ```
 
 ### Model Checking
 
 ```sh
 lmntal --slimcode source.lmn > source.il
-./bin/slim --nd source.il # single core
-./bin/slim --nd --use-Ncore=12 source.il # multi-core
-./bin/slim --nd --use-Ncore=12 --delta-mem source.il # multi-core optimization
+./build/bin/slim --nd source.il # single core
+./build/bin/slim --nd --use-Ncore=12 source.il # multi-core
+./build/bin/slim --nd --use-Ncore=12 --delta-mem source.il # multi-core optimization
 ```
 
 ## Development
@@ -73,20 +82,26 @@ lmntal --slimcode source.lmn > source.il
 To test the project, run the following:
 
 ```bash
-make check
+ctest                           # Run all tests
+ctest --output-on-failure      # Show detailed output on failures
+slim_CHECK_ND=yes ctest        # Include time-consuming model checking tests
+```
+
+You can also use the legacy command:
+```bash
+make check                      # Equivalent to 'ctest --output-on-failure'
 ```
 
 To add or modify a test, see [test](test).
 
 ### Formatting
 
-We are currently **NOT** using any formatter
-but we **strongly recommend** you to use [ClangFormat](https://clang.llvm.org/docs/ClangFormat.html)
-if you are to add any additional lines.
+We use [ClangFormat](https://clang.llvm.org/docs/ClangFormat.html) for code formatting.
 Install ClangFormat and run the following:
 
 ```bash
-clang-format -i filename.cpp
+clang-format -i filename.cpp      # Format individual files
+./scripts/format.sh               # Format all source files
 ```
 
 ## For the further information ...

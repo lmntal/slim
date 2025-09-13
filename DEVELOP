@@ -1,165 +1,222 @@
--*- mode: org; -*-
-#+STARTUP: showall
+# SLIM開発者ガイド
 
-* コンパイル
-現在Autoconf, Automakeというツールを使っている.
-これらは,コンパイル時の環境を検査し, 適切なMakefileやconfig.hを作成をする.
-autoconfはversion 2.61以上でないとコンパイルできない.
-また, コンパイルには以下の環境が必要.
-- flex 2.5.35以上
-- bison 2.3以上
-- libtool http://www.gnu.org/software/libtool/
+## ビルド
 
-** configureを作る
-configureはGNU系のプログラムでよく使われる環境の違いを吸収するためのスクリプト.
-configure.acのあるディレクトリで以下のコマンドを実行して作成する.
+### CMakeを使った通常ビルド
 
-  $ aclocal
-  $ automake --add-missing
-  $ autoreconf
-or
-  $ ./autogen.sh
+```bash
+./build-cmake.sh
+```
 
-このconfigureはシステムを検査し，適切なMakefileとconfig.hを作成する.
-configureを新しく作る場合やconfigure.ac, Makefile.am src/Makefile.amを
-変更した場合は上記の操作を行いconfigureを作成する.
+### CMakeを使ったデバッグビルド
 
+```bash
+./build-cmake.sh --debug
+```
 
-** 環境変数を設定する
+### アドバンストビルド: 全ての開発者向け機能を有効化
 
-コンパイルを行う為には環境変数 LMNTAL_HOME を
-Javaによる処理系（LMNtalコンパイラ）にパスを設定する必要がある.
-（ライブラリのコンパイルにJavaによる処理系のコンパイラ使用しているため）
+```bash
+./build-cmake.sh --devel
+```
 
+### 手動CMakeビルド
 
-例:
- # 最後にスラッシュは付けない
- # $LMNTAL_HOME/binに実行ファイル lmntal があるようにする
- export LMNTAL_HOME=/home/taisuke/workspace/devel
+```bash
+mkdir build && cd build
+cmake .. -DCMAKE_BUILD_TYPE=Release
+make -j$(nproc)
+make install
+```
 
-** .h, .cファイルをsrcディレクトリに追加した場合
-src/Makefile.am に追加したファイルを書き加える.
+### デバッグ用手動ビルド
 
-** configureのオプション
-./configure 時にオプションが付けられる
-- --enable-debug
--- DEBUG用のコード(assert文など)を含める
-- --enable-devel
--- 開発用のコンパイルオプションを設定
-- --enable-profile
--- プロファイリング用のオプションを設定(実行時間に影響するので注意)
+```bash
+mkdir build && cd build
+cmake .. -DCMAKE_BUILD_TYPE=Debug -DENABLE_DEBUG=ON
+make -j$(nproc)
+make install
+```
 
-* コーディング
-- C99の仕様に従う
-- ただし、autoconfによりinlineキーワードやint32_t型などが使用できる
-- 一般的なUnix/Linux環境で動作させる
-- 32/64bitで動作させる
-- SLIMから外部に公開する関数, 型，マクロなどにはlmnで始まるプレフィックスを付ける
-- コンパイル時のワーニングはエラーと同等に扱う
-- 開発時は--enable-debugオプションを使う
-- テストは頻繁に実施する
-- テストは常に更新する
-- ドキュメントとコードに不整合を起こさない
+## テスト
 
-- タブ幅は半角で2
-- なるべく全体のコーディングスタイルは同じようにする(厳密ではないが)
+### 通常のテスト
 
-* テスト
+```bash
+ctest
+# または
+make check
+```
 
-slimディレクトリ以下で
+### 非決定性実行の重いテスト（モデル検査）も含む
 
- $ make check
+```bash
+slim_CHECK_ND=yes ctest
+```
 
-を実行
+### より詳細なテスト結果を表示
 
-非決定実行については時間がかかるので標準ではいくつかのケースでしかテストを実行しない。
-全てのテストケースを実行したい時は環境変数$slim_CHECK_ND=yesを設定する。
+```bash
+ctest --output-on-failure
+ctest -V  # 更に詳細
+```
 
+### 特定のテストのみ実行
 
-* デバッグ
-** dmalloc (http://dmalloc.com/)
-メモリリークおよび不正なアドレスへの書き込みを検出する
+```bash
+ctest -R "basic"           # basic テストのみ
+ctest -L "statespace"      # statespace テストのみ
+```
 
-*** 使いかた
-http://dmalloc.com/docs/latest/online/dmalloc_4.html#SEC4
-にチュートリアルがある.
+## プロファイリング
 
-automakeでdmallocようの機能があったのでそれを使ったときの手順.
-$ が付いている行はシェルコマンド
+### gcov を使ったカバレッジ測定
 
-1. $ function dmalloc { eval `command dmalloc -b $*`; }
+```bash
+mkdir build && cd build
+cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="--coverage" -DCMAKE_C_FLAGS="--coverage"
+make -j$(nproc)
+make install
+ctest
+gcov ../src/*.cpp
+```
 
-2. ./configureに --with-dmalloc を付けて実行
+### gprof を使った実行時間プロファイリング
 
-3. $ dmalloc -l dmalloc_log -i 100 low
-      * -l dmaloc_log : ログファイルの名前
-      * -i 100 : チェックする頻度。数字が小さい方がプログラムは遅くなる
-      * low    : チェックする機能の数。 runtime < low < medium < high
-                 の順にチェックが多くなる。
-4. プログラムを実行
-5. ログが dmalloc_log に書かれる
+```bash
+mkdir build && cd build
+cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="-pg" -DCMAKE_C_FLAGS="-pg" -DCMAKE_EXE_LINKER_FLAGS="-pg"
+make -j$(nproc)
+make install
+./bin/slim your_program.il
+gprof ./bin/slim gmon.out > profile.txt
+```
 
-** valgrind (http://valgrind.org/)
-メモリリークや未初期化変数の参照、配列のオーバーフローなどを検出できま
-す。便利です。
+## デバッグ
 
-* ドキュメント
-- NEWS
--- リリースノート
+### gdb を使ったデバッグ
 
-- ChangeLog
--- バージョンアップによる変更点
+```bash
+./build-cmake.sh --debug
+gdb ./build/bin/slim
+```
 
-- doc/slim.1.in
---  manページ
+### Valgrind を使ったメモリリークチェック
 
-- AUTHORS
--- コントリビュータ
+```bash
+valgrind --leak-check=full ./build/bin/slim your_program.il
+```
 
-- COPYING
--- 権利の表記
+## コードフォーマット
 
-- INSTALL
--- インストール手順
+```bash
+# 個別ファイル
+clang-format -i filename.cpp
 
-- README
--- ユーザが一番初めに読む
--- ここからインストール/アンインストール手順や使い方への情報が辿れる様にする
+# 全ファイル（スクリプト使用）
+./scripts/format.sh
 
-- DEVELOP(開発用、配布しない)
+# 手動で全ファイル
+find src -name "*.cpp" -o -name "*.h" | xargs clang-format -i
+```
 
-* 関連資料
+## 静的解析
 
-autoconf,automakeのマニュアルはオンラインで見ることが出来る。
-  autoconfのマニュアル: http://www.gnu.org/software/autoconf/manual/index.html
-  automakeのマニュアル: http://sources.redhat.com/automake/automake.html
+```bash
+# Clang-Tidy を使った静的解析
+./scripts/lint.sh
+```
 
-  また、autoconf,automakeのマニュアルはinfoドキュメントとして提供されて
-  おり、インストールされて入ればinfoコマンドを使って読むことが出来る。
+## ビルドオプション
 
-* リリースの手順
+### CMake主要オプション
 
-0. 各開発者にリリースして問題がないか確認を取る。
-   テストが通る事を確認する。
+```bash
+cmake .. -DCMAKE_BUILD_TYPE=Release|Debug     # ビルドタイプ
+cmake .. -DENABLE_DEBUG=ON|OFF                # デバッグ機能
+cmake .. -DENABLE_DEVEL=ON|OFF                # 開発者向け機能
+cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local    # インストール先
+```
 
-1. バージョンを増やす
-  configure.acファイルの記述で，AC_INITの第二引数を変更。
+### カスタムビルドディレクトリ
 
-2. ドキュメントの記述
-  NEWSに以前のバージョンからの変更点を記述する。その他，マニュアルペー
-  ジなども必要があれば修正する。
+```bash
+./build-cmake.sh --build-dir mybuild
+```
 
-3. make distで配布用ファイルを作成する
-  make distを実行すると、SLIMディレクトリに
-    slim-(バージョン).tar.gz
-  というファイルが出来る。これが配布ファイルになる。
+## リリース手順
 
-  この作業は、SLIM開発作業用のディレクトリで行うと、ローカルの変更が反映されてしまう
-  かもしれないので、新たにチェックアウトした方がいいかも。
+1. バージョン番号を更新（VERSION ファイル）
+2. NEWS ファイルを更新
+3. コミット・タグ付け
+4. CMake パッケージ作成:
+   ```bash
+   cd build
+   cpack
+   ```
+5. GitHub Releases にアップロード
 
-4. 配布用ファイルを公開する
-  配布物を登録する。
+## クリーンビルド
 
-5. リポジトリのtagsにリリース時のtrunkのコピーを release-バージョン番
-   号という名前で取る。
+```bash
+# ビルドディレクトリを削除
+rm -rf build
 
+# 再ビルド
+./build-cmake.sh
+```
+
+## 継続的インテグレーション
+
+GitHub Actions ワークフローは `.github/workflows/c-cpp.yml` で定義されています。
+
+```bash
+# ローカルでCI相当のテスト
+./build-cmake.sh
+slim_CHECK_ND=yes ctest --output-on-failure
+```
+
+## 環境変数
+
+- `LMNTAL_HOME`: LMNtal コンパイラのホームディレクトリ
+- `slim_CHECK_ND`: "yes" に設定すると非決定性実行テストを含む
+- `slim_CHECK_OPTIONS`: テスト実行時の追加オプション
+- `SLIM_BINARY`: テスト時に使用するSLIMバイナリのパス
+
+## トラブルシューティング
+
+### よくある問題
+
+1. **LMNTAL_HOME が設定されていない**
+   ```bash
+   export LMNTAL_HOME=/path/to/lmntal-compiler
+   ```
+
+2. **依存関係が不足**
+   ```bash
+   # Ubuntu/Debian
+   sudo apt install cmake build-essential bison re2c ruby
+   ```
+
+3. **テストが失敗する**
+   ```bash
+   # 詳細出力でテスト実行
+   ctest --output-on-failure -V
+   ```
+
+## パフォーマンステスト
+
+```bash
+# ベンチマークスクリプト実行（要修正）
+./benchmarkset/exec_all_ltl.sh
+```
+
+## 開発ワークフロー
+
+1. 機能ブランチを作成
+2. コードを編集
+3. フォーマット: `./scripts/format.sh`
+4. ビルド: `./build-cmake.sh`
+5. テスト: `ctest`
+6. コミット・プッシュ
+7. プルリクエスト作成
