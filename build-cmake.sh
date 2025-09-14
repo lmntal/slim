@@ -68,7 +68,7 @@ cmake .. \
 
 # Build
 echo "Building SLIM..."
-make -j$(nproc)
+make -j$(command -v nproc >/dev/null && nproc || sysctl -n hw.ncpu)
 
 # Install (local installation to build directory - safe)
 echo "Installing SLIM locally..."
