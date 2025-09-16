@@ -1,7 +1,8 @@
 # Custom commands for parser and code generation
 add_custom_command(
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/il_parser.cpp ${CMAKE_CURRENT_BINARY_DIR}/il_parser.hpp
-    COMMAND ${BISON_EXECUTABLE} -d -p il -o ${CMAKE_CURRENT_BINARY_DIR}/il_parser.cpp ${CMAKE_CURRENT_SOURCE_DIR}/il_parser.ypp
+    COMMAND ${BISON_EXECUTABLE} -d -p il --output=il_parser.cpp --defines=il_parser.hpp ${CMAKE_CURRENT_SOURCE_DIR}/il_parser.ypp
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/il_parser.ypp
     COMMENT "Generating il_parser.cpp"
 )
