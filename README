@@ -50,7 +50,7 @@ After building and testing locally, you can optionally install SLIM system-wide:
 
 ```bash
 ./build-cmake.sh        # Build locally
-ctest                   # Test the build
+./run-tests.sh          # Test the build
 
 # Install system-wide (optional)
 cd build
@@ -79,8 +79,9 @@ lmntal --slimcode source.lmn > source.il
 To test the project, run the following:
 
 ```bash
-ctest                           # Run all tests
-slim_CHECK_ND=yes ctest        # Include model checking tests
+./run-tests.sh                           # Run all tests (simplest)
+./run-tests.sh --output-on-failure      # Show detailed output on failures
+slim_CHECK_ND=yes ./run-tests.sh        # Include model checking tests
 ```
 
 To add or modify a test, see [test](test).

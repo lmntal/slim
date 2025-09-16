@@ -87,9 +87,11 @@ To test the project, run the following:
 slim_CHECK_ND=yes ./run-tests.sh        # Include time-consuming model checking tests
 ```
 
-You can also use the legacy command:
+Alternative methods:
 ```bash
-make check                      # Equivalent to 'ctest --output-on-failure'
+# From build directory
+cd build && make check          # Equivalent to 'ctest --output-on-failure'
+cd build && ctest               # Direct ctest (from build directory)
 ```
 
 To add or modify a test, see [test](test).
