@@ -61,7 +61,6 @@ namespace c17 = slim::element;
 %lex-param {il::lexer* scanner}
 
 %define api.value.type variant
-%define api.location.type {il::location}
 %token <long> INT
 %token <double> FLOAT
 %token <lmn_interned_str> ID SUBRULE_ID
