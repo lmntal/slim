@@ -43,29 +43,30 @@ make install
 ### 通常のテスト
 
 ```bash
-ctest
-# または
-make check
+# プロジェクトルートから（推奨 - 最もシンプル）
+./run-tests.sh
+# または（詳細な出力）
+./run-tests.sh --output-on-failure
 ```
 
 ### 非決定性実行の重いテスト（モデル検査）も含む
 
 ```bash
-slim_CHECK_ND=yes ctest
+slim_CHECK_ND=yes ./run-tests.sh
 ```
 
 ### より詳細なテスト結果を表示
 
 ```bash
-ctest --output-on-failure
-ctest -V  # 更に詳細
+./run-tests.sh --output-on-failure
+./run-tests.sh -V  # 更に詳細
 ```
 
 ### 特定のテストのみ実行
 
 ```bash
-ctest -R "basic"           # basic テストのみ
-ctest -L "statespace"      # statespace テストのみ
+./run-tests.sh -R "basic"           # basic テストのみ
+./run-tests.sh -L "statespace"      # statespace テストのみ
 ```
 
 ## プロファイリング
@@ -77,8 +78,8 @@ mkdir build && cd build
 cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="--coverage" -DCMAKE_C_FLAGS="--coverage"
 make -j$(nproc)
 make install
-ctest
-gcov ../src/*.cpp
+cd .. && ./run-tests.sh
+cd build && gcov ../src/*.cpp
 ```
 
 ### gprof を使った実行時間プロファイリング
@@ -173,7 +174,7 @@ GitHub Actions ワークフローは `.github/workflows/c-cpp.yml` で定義さ�
 ```bash
 # ローカルでCI相当のテスト
 ./build-cmake.sh
-slim_CHECK_ND=yes ctest --output-on-failure
+slim_CHECK_ND=yes ./run-tests.sh --output-on-failure
 ```
 
 ## 環境変数
@@ -201,7 +202,7 @@ slim_CHECK_ND=yes ctest --output-on-failure
 3. **テストが失敗する**
    ```bash
    # 詳細出力でテスト実行
-   ctest --output-on-failure -V
+   ./run-tests.sh --output-on-failure -V
    ```
 
 ## パフォーマンステスト
@@ -217,6 +218,6 @@ slim_CHECK_ND=yes ctest --output-on-failure
 2. コードを編集
 3. フォーマット: `./scripts/format.sh`
 4. ビルド: `./build-cmake.sh`
-5. テスト: `ctest`
+5. テスト: `./run-tests.sh`
 6. コミット・プッシュ
 7. プルリクエスト作成

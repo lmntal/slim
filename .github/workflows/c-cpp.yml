@@ -37,4 +37,4 @@ jobs:
     - run: git clone https://github.com/lmntal/lmntal-compiler.git
     - run: cd lmntal-compiler && ant && cd ..
     - run: ./build-cmake.sh
-    - run: ctest --output-on-failure
+    - run: ctest --test-dir build --output-on-failure

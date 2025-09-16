@@ -46,10 +46,13 @@ make test                       # Run all tests using CTest
 ctest --output-on-failure       # Run tests with detailed output
 
 # From project root (recommended)
-ctest                           # Run all 208 individual tests from root
-ctest --output-on-failure       # Run tests with detailed output from root
-ctest -R "system_basic_basic1"  # Run specific individual test
-./run-tests.sh                  # Alternative script to run tests from root
+./run-tests.sh                  # Run all 208 individual tests from root (simplest)
+./run-tests.sh --output-on-failure # Run tests with detailed output from root
+./run-tests.sh -R "system_basic_basic1" # Run specific individual test
+
+# Alternative: Direct ctest (requires --test-dir build for cross-platform compatibility)
+ctest --test-dir build          # Run all tests
+ctest --test-dir build --output-on-failure # Run tests with detailed output
 
 # If tests fail with "permission denied", fix script permissions
 ./fix-test-permissions.sh       # Fix test script permissions after rebuild
@@ -94,13 +97,13 @@ ctest -N                        # Same as --show-only
 
 ### SLIM-Specific Examples
 ```bash
-ctest -R "system_basic"         # Run all basic system tests
-ctest -R "statespace"           # Run all statespace tests  
-ctest -L "system"               # Run tests labeled as "system"
-ctest -E "statespace"           # Run all tests except statespace
-ctest -j 4                      # Run tests using 4 parallel jobs
-ctest -R "system_proccxt_case5" # Run specific individual test
-ctest --timeout 60              # Set 60-second timeout for all tests
+./run-tests.sh -R "system_basic"         # Run all basic system tests
+./run-tests.sh -R "statespace"           # Run all statespace tests
+./run-tests.sh -L "system"               # Run tests labeled as "system"
+./run-tests.sh -E "statespace"           # Run all tests except statespace
+./run-tests.sh -j 4                      # Run tests using 4 parallel jobs
+./run-tests.sh -R "system_proccxt_case5" # Run specific individual test
+./run-tests.sh --timeout 60              # Set 60-second timeout for all tests
 ```
 
 

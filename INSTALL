@@ -34,7 +34,7 @@ The simplest way to compile this package is:
      ./build-cmake.sh
 
   3. Optionally, run tests:
-     ctest
+     ./run-tests.sh
 
   4. For system-wide installation:
      cd build
@@ -55,9 +55,9 @@ TESTING
 =======
 
 To run tests:
-  ctest                        # Basic tests
-  ctest --output-on-failure   # Show detailed output on failures
-  slim_CHECK_ND=yes ctest     # Include time-consuming model checking tests
+  ./run-tests.sh                        # Basic tests (simplest)
+  ./run-tests.sh --output-on-failure   # Show detailed output on failures
+  slim_CHECK_ND=yes ./run-tests.sh     # Include time-consuming model checking tests
 
 MANUAL CMAKE BUILD
 ==================
