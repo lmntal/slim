@@ -1,0 +1,136 @@
+Compiled Ruleset @603 
+Compiled Rule 
+    --atommatch:
+    --memmatch:
+        spec           [1, 14]
+        commit         ["_init", 0]
+        newmem       [1, 0, 0]
+        loadruleset    [1, @601]
+        loadruleset    [0, @602]
+        newatom      [2, 1, 'list'_1]
+        newatom      [3, 1, '.'_3]
+        newatom      [4, 1, 1_1]
+        newatom      [5, 1, '.'_3]
+        newatom      [6, 1, 2_1]
+        newatom      [7, 1, '.'_3]
+        newatom      [8, 1, 3_1]
+        newatom      [9, 1, '.'_3]
+        newatom      [10, 1, 4_1]
+        newatom      [11, 1, '.'_3]
+        newatom      [12, 1, 5_1]
+        newatom      [13, 1, '[]'_1]
+        newlink        [2, 0, 3, 2, 1]
+        newlink        [3, 0, 4, 0, 1]
+        newlink        [3, 1, 5, 2, 1]
+        newlink        [5, 0, 6, 0, 1]
+        newlink        [5, 1, 7, 2, 1]
+        newlink        [7, 0, 8, 0, 1]
+        newlink        [7, 1, 9, 2, 1]
+        newlink        [9, 0, 10, 0, 1]
+        newlink        [9, 1, 11, 2, 1]
+        newlink        [11, 0, 12, 0, 1]
+        newlink        [11, 1, 13, 0, 1]
+        proceed        []
+
+
+Compiled Ruleset @602 
+Compiled Rule 
+    --atommatch:
+    --memmatch:
+        spec           [1, 5]
+        anymem       [1, 0, 0, null]
+        natoms         [1, 2]
+        nmems          [1, 0]
+        stable         [1]
+        findatom     [2, 1, 'list'_1]
+        deref        [3, 2, 0, 0]
+        func           [3, '[]'_1]
+        commit         ["_garb", 0]
+        removeatom     [2, 1]
+        removeatom     [3, 1]
+        removemem      [1, 0]
+        newatom      [4, 0, 'ok'_0]
+        freemem        [1]
+        freeatom       [2]
+        freeatom       [3]
+        proceed        []
+
+
+Compiled Ruleset @601    
+Compiled Rule 
+    --atommatch:
+    --memmatch:
+        spec           [1, 24]
+        findatom     [1, 0, 'list'_1]
+        getlink      [4, 1, 0]
+        findatom     [2, 0, '.'_3]
+        derefatom    [7, 2, 0]
+        isint          [7]
+        getlink      [5, 2, 2]
+        deref        [3, 2, 1, 0]
+        func           [3, '[]'_1]
+        subrule      [6, 0, "dlist", [0, 5, 4]]
+        commit         ["rmvend", 0]
+        newlist      [8]
+        getlink      [9, 2, 2]
+        addtolist      [8, 9]
+        getlink      [10, 1, 0]
+        addtolist      [8, 10]
+        removeatom     [1, 0]
+        removeatom     [2, 0]
+        removeatom     [3, 0]
+        removeground   [8, 0]
+        removeatom     [7, 0]
+        insertconnectorsinnull[11, [9, 10]]
+        newlist      [12]
+        getlink      [13, 2, 2]
+        addtolist      [12, 13]
+        getlink      [14, 1, 0]
+        addtolist      [12, 14]
+        copyground   [15, 12, 0, []]
+        getfromlist  [16, 15, 0]
+        getfromlist  [17, 15, 1]
+        newatom      [18, 0, 'list'_1]
+        newatom      [19, 0, '[]'_1]
+        alloclink    [20, 19, 0]
+        alloclink    [21, 18, 0]
+        getfromlist  [22, 16, 0]
+        getfromlist  [23, 16, 1]
+        unifylinks     [21, 23, 0]
+        unifylinks     [20, 22, 0]
+        deleteconnectors[11, 17]
+        freeatom       [1]
+        freeatom       [2]
+        freeatom       [3]
+        freeground     [12]
+        freeatom       [7]
+        proceed        []
+
+Compiled Subrule @dlist
+        spec           [3, 4]
+        branch         [[
+                  subrule      [3, 0, "dlist_0", [0, 1, 2]]
+                  succreturn     [3] ]]
+        branch         [[
+                  subrule      [3, 0, "dlist_1", [0, 1, 2]]
+                  succreturn     [3] ]]
+        failreturn     []
+
+Compiled Subrule @dlist_0
+        spec           [3, 4]
+        ispairedlink   [1, 2]
+        allocset     [3]
+        succreturn     [3]
+
+Compiled Subrule @dlist_1
+        spec           [3, 8]
+        dereflink    [3, 2, 2]
+        func           [3, '.'_3]
+        derefatom    [6, 3, 0]
+        isunary        [6]
+        getlink      [4, 3, 1]
+        subrule      [5, 0, "dlist", [0, 1, 4]]
+        allocset     [7]
+        succreturn     [7]
+
+
