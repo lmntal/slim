@@ -503,8 +503,8 @@ static void translate_ruleset(LmnRuleSetRef ruleset, const char *header)
   {
     if (i != 0)
       fprintf(OUT, ", ");
-    fprintf(OUT, "{%d, %s_%d_0}", rule_names[i], header,
-            i); /* 各ルールの名前と先頭関数を配列に */
+    fprintf(OUT, "{%d, %s_%d_0, %d}", rule_names[i], header,
+            i, ruleset->get_rule(i)->priority); /* 各ルールの名前, 先頭関数, priorityを配列に */
   }
   fprintf(OUT, "};\n\n");
 

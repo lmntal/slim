@@ -159,6 +159,8 @@ struct InstBlock {
 struct Rule {
   BOOL hasuniq;
   lmn_interned_str name;
+  /* priority: larger value means higher priority. Default 0 (normal). */
+  int priority;
   InstBlock amatch;
   InstBlock mmatch;
   InstBlock guard;
@@ -166,8 +168,8 @@ struct Rule {
 
   Rule() {}
   Rule(BOOL hasuniq, InstBlock &&amatch, InstBlock &&mmatch, InstBlock &&guard,
-       InstBlock &&body)
-      : hasuniq(hasuniq), name(ANONYMOUS), amatch(std::move(amatch)),
+       InstBlock &&body, int priority = 0)
+      : hasuniq(hasuniq), name(ANONYMOUS), priority(priority), amatch(std::move(amatch)),
         mmatch(std::move(mmatch)), guard(std::move(guard)),
         body(std::move(body)) {}
 };

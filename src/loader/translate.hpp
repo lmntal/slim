@@ -87,6 +87,7 @@
 struct trans_rule {
   lmn_interned_str name;
   LmnTranslated function;
+  int priority;
 };
 
 struct trans_ruleset {

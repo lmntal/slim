@@ -132,7 +132,16 @@ static LmnRuleSetRef load_ruleset(const RuleSet &rs) {
   auto runtime_ruleset = new LmnRuleSet(rs.id, 10);
 
   for (auto &r : rs.rules) {
-    runtime_ruleset->put(c17::visit(load_rule_func(), r));
+    // runtime_ruleset->put(c17::visit(load_rule_func(), r));
+    /* encode rule AST into runtime rule and propagate priority from AST */
+    auto encoded = c17::visit(load_rule_func(), r);
+    struct get_priority {
+      int operator()(Rule const &rule) const { return rule.priority; }
+      /* Subrule has no priority field in AST; treat as default priority 0. */
+      int operator()(Subrule const &rule) const { return 0; }
+    } gp;
+    encoded->priority = c17::visit(gp, r);
+    runtime_ruleset->put(std::move(encoded));
   }
 
   LmnRuleSetTable::add(runtime_ruleset, rs.id);
@@ -220,7 +229,12 @@ LmnRuleSetRef load_and_setting_trans_maindata(struct trans_maindata *maindata) {
     LmnRuleSetTable::add(rs, gid);
 
     for (auto &r : tr)
-      rs->put(new LmnRule(r.function, maindata->symbol_exchange[r.name]));
+          // rs->put(new LmnRule(r.function, maindata->symbol_exchange[r.name]));
+        {
+          auto rptr = new LmnRule(r.function, maindata->symbol_exchange[r.name]);
+          rptr->priority = r.priority;
+          rs->put(rptr);
+        }
 
     /* とりあえず最初の通常ルールセットを初期データ生成ルールと決め打ちしておく
      */

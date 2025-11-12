@@ -64,6 +64,8 @@ public:
   LmnTranslated translated;
   lmn_interned_str name;
   int rule_number = -1; // 履歴管理用アトムのための変数
+  /* priority value: higher value means higher priority. Default 0. */
+  int priority = 0;
 
   /* コストを動的に変えたい場合, このcostに一時的に値を入れておく or
    * costの計算式を入れる */
@@ -71,9 +73,9 @@ public:
 
 private:
   LmnRule(LmnRuleInstr inst_seq, int inst_seq_len, LmnTranslated translated,
-          lmn_interned_str name, bool is_unique_, bool is_subrule = false)
+          lmn_interned_str name, bool is_unique_, bool is_subrule = false, int priority_ = 0)
       : inst_seq(inst_seq), inst_seq_len(inst_seq_len), translated(translated),
-        name(name), latest_history_(ANONYMOUS), is_unique_(is_unique_), is_subrule_(is_subrule) {}
+        name(name), latest_history_(ANONYMOUS), is_unique_(is_unique_), is_subrule_(is_subrule), priority(priority_) {}
 
 public:
   /* 関数によるルールの処理の表現。トランスレータにより、ルールを変換して
@@ -97,6 +99,7 @@ public:
     inst_seq_len = rule.inst_seq_len;
     translated = rule.translated;
     name = rule.name;
+    priority = rule.priority;
     if (rule.is_unique()) {
       history_tbl = rule.history_tbl;
       latest_history_ = rule.latest_history_;

@@ -346,6 +346,46 @@ BOOL Task::react_all_rulesets(LmnReactCxtRef rc, LmnMembraneRef cur_mem) {
       ok = TRUE;
       break;
     }
+    // if (!rc->has_mode(REACT_ND)) {
+  //   for (i = 0; i < rulesets.size(); i++) {
+  //     if (react_ruleset(rc, cur_mem, rulesets[i])) {
+  //       /* ndでは失敗するまでマッチングバックトラックしているので必ずFALSEが返ってくる
+  //        */
+  //       ok = TRUE;
+  //       break;
+  //     }
+  //   }
+  // } else {
+  //   /* Non-deterministic execution: group rulesets by effective priority (max rule priority in ruleset)
+  //      and process groups from highest to lowest priority. For the highest-priority group that
+  //      generates any expanded successors, do not consider lower-priority groups. */
+  //   std::map<int, std::vector<LmnRuleSetRef>, std::greater<int>> groups;
+  //   for (i = 0; i < rulesets.size(); i++) {
+  //     auto rs = rulesets[i];
+  //     int maxp = 0;
+  //     for (auto r : *rs) {
+  //       if (!r) continue;
+  //       if (r->priority > maxp) maxp = r->priority;
+  //     }
+  //     groups[maxp].push_back(rs);
+  //   }
+
+  //   unsigned int before = mc_react_cxt_expanded_num(rc);
+  //   for (auto &entry : groups) {
+  //     auto &vec = entry.second;
+  //     for (auto rs : vec) {
+  //       /* react_ruleset in ND mode will push expanded successors into rc */
+  //       (void)react_ruleset(rc, cur_mem, rs);
+  //     }
+  //     unsigned int after = mc_react_cxt_expanded_num(rc);
+  //     if (after > before) {
+  //       /* Found expanded successors in this priority group; stop and do not try lower-priority groups */
+  //       break;
+  //     }
+  //   }
+  //   /* In ND mode we keep ok as FALSE to preserve existing semantics for callers;
+  //      successor information is stored in rc (MCReactContext) for the model checker. */
+  //   ok = FALSE;
   }
 
 #ifdef USE_FIRSTCLASS_RULE 
@@ -382,7 +422,13 @@ static inline BOOL react_ruleset(LmnReactCxtRef rc, LmnMembraneRef mem,
   //shuffle_ruleオプションが付いている場合はruleをシャッフル
   if(lmn_env.shuffle_rule) rs->shuffle();
 
+  printf("===\n");
+
+  // TODO: 非決定実行でも react_rule で書き換えが発生したかどうかを取得できるようにする
+
   for (auto r : *rs) {
+    printf("Trying rule: %s", lmn_id_to_name(r->name));
+    printf(" (priority: %d)\n", r->priority);
 #ifdef PROFILE
     if (!lmn_env.nd && lmn_env.profile_level >= 2)
       profile_rule_obj_set(rs, r);

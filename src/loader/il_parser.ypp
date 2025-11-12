@@ -72,7 +72,7 @@ namespace c17 = slim::element;
 %token COMMA PERIOD COLON UNDERBAR LBRACE RBRACE LBRACKET RBRACKET
 %token INSIDE_PROXY OUTSIDE_PROXY
 %token KW_COMPILED_RULESET KW_COMPILED_SYSTEM_RULESET KW_COMPILED_UNIQ_RULE KW_COMPILED_RULE KW_ATOMMATCH KW_MEMMATCH KW_COMPILED_SUBRULE
-%token KW_GUARD KW_BODY KW_INLINE KW_MODULE
+%token KW_GUARD KW_BODY KW_INLINE KW_MODULE KW_PRIORITY
 
 %token <LmnInstruction> INST_TK_LOOP
 %token <LmnInstruction> INST_TK_RUN
@@ -106,6 +106,7 @@ namespace c17 = slim::element;
 %type <std::vector<il::InstrArg>> var_list;
 %type <std::vector<il::InstrArg>> var_list_;
 %type <std::vector<lmn_interned_str>> inlines;
+%type <int> priority_opt
 
 
 %% /* Grammar rules and actions follow.  */
@@ -156,11 +157,11 @@ ruleList:
 ;
 
 rule:
-  KW_COMPILED_UNIQ_RULE atommatch memmatch guard body {
-    $$ = Rule(true, std::move($2), std::move($3), std::move($4), std::move($5));
+  KW_COMPILED_UNIQ_RULE priority_opt atommatch memmatch guard body {
+    $$ = Rule(true, std::move($3), std::move($4), std::move($5), std::move($6), $2);
   }
-| KW_COMPILED_RULE atommatch memmatch guard body {
-    $$ = Rule(false, std::move($2), std::move($3), std::move($4), std::move($5));
+| KW_COMPILED_RULE priority_opt atommatch memmatch guard body {
+    $$ = Rule(false, std::move($3), std::move($4), std::move($5), std::move($6), $2);
   }
 | KW_COMPILED_SUBRULE SUBRULE_ID instructions {
     $$ = Subrule($2, InstBlock(std::move($3)));
@@ -253,6 +254,12 @@ inst_list_arg:
     $$.push_back(il::instr_arg::inst_list(std::move($2)));
   }
 ;
+
+/* optional priority specification */
+priority_opt:
+  /* empty */ { $$ = 0; }
+| KW_PRIORITY COLON INT { $$ = (int)$3; }
+
 
 functor:
   INSIDE_PROXY { $$ = il::functor::in_proxy(); }
