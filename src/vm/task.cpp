@@ -170,7 +170,6 @@ namespace c17 = slim::element;
 void Task::lmn_run(Vector *start_rulesets) {
   static LmnMembraneRef mem;
   static std::unique_ptr<MemReactContext> mrc = nullptr;
-
   if (!mrc)
     mrc = c14::make_unique<MemReactContext>(nullptr);
 
@@ -286,12 +285,15 @@ void Task::lmn_run(Vector *start_rulesets) {
 
 /** 膜スタックに基づいた通常実行 */
 static void mem_oriented_loop(MemReactContext *ctx, LmnMembraneRef mem) {
-  while (!ctx->memstack_isempty()) {
-    LmnMembraneRef mem = ctx->memstack_peek();
-    if (!Task::react_all_rulesets(ctx, mem)) {
+  unsigned int maxSteps,nowStep=0;
+  maxSteps=lmn_env.depth_limits;
+  while (!ctx->memstack_isempty()&&nowStep<maxSteps) {
+    LmnMembraneRef mem = ctx->memstack_peek();//一個前を覗いて
+    if (!Task::react_all_rulesets(ctx, mem)) {//ルールを適用
       /* ルールが何も適用されなければ膜スタックから先頭を取り除く */
       ctx->memstack_pop();
     }
+    else nowStep++;
   }
 }
 
