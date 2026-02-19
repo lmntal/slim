@@ -89,9 +89,9 @@ test/**/*.trs
 # Exclude generated .il files but allow test data
 test/**/*.il
 # But include test data files needed for tests
-!test/library_check/testsuite/**/*.il
-!test/system_check/testsuite/**/*.il  
-!test/statespace/testsuite/**/*.il
+# !test/library_check/testsuite/**/*.il
+# !test/system_check/testsuite/**/*.il  
+# !test/statespace/testsuite/**/*.il
 .dirstamp
 il_lexer.cpp
 il_parser.cpp
