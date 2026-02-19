@@ -24,7 +24,7 @@ This is a runtime and a model checker for the
 Build the package as follows:
 
 ```bash
-export LMNTAL_HOME=/path/to/devel # set the path to the compiler
+export LMNTAL_HOME=/home/matsumura/lmntal-compiler # set the path to the compiler
 cd slim
 ./autogen.sh
 ./configure --prefix=$(pwd) # Generate a binary at $(pwd)/bin/slim

@@ -48,6 +48,7 @@ const std::map<LmnInstruction, InstrSpec> instr_spec = {
 
     {INSTR_LOCKMEM, {"lockmem", {InstrVar, InstrVar, String}}},
     {INSTR_ANYMEM, {"anymem", {InstrVar, InstrVar, InstrVar, String}}},
+    {INSTR_ANYMEM_CACHE, {"anymemcache", {InstrVar, InstrVar}}},
 
     {INSTR_GETMEM, {"getmem", {InstrVar, InstrVar, InstrVar, String}}},
     {INSTR_GETPARENT, {"getparent", {InstrVar, InstrVar}}},
@@ -120,6 +121,7 @@ const std::map<LmnInstruction, InstrSpec> instr_spec = {
     {INSTR_RELINK,
      {"relink", {InstrVar, InstrVar, InstrVar, InstrVar, InstrVar}}},
     {INSTR_SWAPLINK, {"swaplink", {InstrVar, InstrVar, InstrVar, InstrVar}}},
+    {INSTR_SWAPLINK_CACHE, {"swaplinkcache", {InstrVar, InstrVar, InstrVar, InstrVar, InstrVar, InstrVar}}},
     {INSTR_UNIFY,
      {"unify", {InstrVar, InstrVar, InstrVar, InstrVar, InstrVar}}},
     {INSTR_INHERITLINK,

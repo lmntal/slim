@@ -1113,6 +1113,8 @@ static bool push_updated_hl_cmems
  *  returns true if execution finished sucessfully.
  *  stop becomes true only if executien should be aborted.
  */
+
+int memid_cache = -1;
 bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
                                          bool &stop) {
   if (lmn_env.interactive_debug) {
@@ -1125,7 +1127,6 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
 
   if (lmn_env.find_atom_parallel)
     return FALSE;
-
   switch (op) {
   case INSTR_SPEC: {
     LmnInstrVar s0;
@@ -1704,17 +1705,66 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
 
     rc->at(mem1) = 0;
     rc->tt(mem1) = TT_MEM;
-    auto children = slim::vm::membrane_children((LmnMembraneRef)rc->wt(mem2));
-    auto filtered = slim::element::make_range_remove_if(
+    auto children = slim::vm::membrane_children((LmnMembraneRef)rc->wt(mem2));//子膜を列挙
+    auto filtered = slim::element::make_range_remove_if(//子膜のうち、名前がmemnでないものを削除
         children.begin(), children.end(),
         [=](LmnMembrane &m) { return (&m)->NAME_ID() != memn; });
     std::vector<LmnRegister> v;
-    for (auto &m : filtered)
+    //int pbTimes=0;
+    for (auto &m : filtered){
+      //pbTimes++;
+      //std::cout<<m.id<<std::endl;
       v.push_back(LmnRegister({(LmnWord)&m, 0, TT_MEM}));
-
+    }
+    //printf("ANYMEM found %d candidates\n", pbTimes);
     this->false_driven_enumerate(mem1, std::move(v));
     return false;
   }
+  case INSTR_ANYMEM_CACHE: {//anymemによって膜を選択する際、前回選択された膜を優先的に選択する
+    LmnInstrVar mem1, mem2, memid; /* dst, parent, type, name */
+    READ_VAL(LmnInstrVar, instr, mem1);
+    READ_VAL(LmnInstrVar, instr, mem2);
+    memid=memid_cache;
+    rc->at(mem1) = 0;
+    rc->tt(mem1) = TT_MEM;
+    auto children = slim::vm::membrane_children((LmnMembraneRef)rc->wt(mem2));//子膜を列挙
+    std::vector<LmnRegister> v;
+    int pbTimes=0;
+    int preferred_idx = -1;
+    int i = 0;
+    for (auto &m : children){
+      //std::cout<<"child mem id = "<<m.id<<std::endl;//for debug
+      if(m.id==memid){//id一致が2つ以上あることはあり得ない。
+        pbTimes++;
+        preferred_idx = i;
+      }
+      v.push_back(LmnRegister({(LmnWord)&m, 0, TT_MEM}));
+      ++i;
+    }
+    if (preferred_idx > 0) {
+      std::swap(v[0], v[preferred_idx]); // 先頭に優先候補
+      //std::cout<<"swapped!"<<std::endl;//for debug
+    }
+    auto commit_cb = [=](slim::vm::interpreter &itr, bool ok)
+    -> slim::vm::interpreter::command_result{
+      if (ok) {
+        auto chosen = (LmnMembraneRef)itr.rc->wt(mem1);
+        if(memid_cache==-1) memid_cache = chosen->id;
+        //std::cout<<"ANYMEM_CACHE found mem: id = "<<memid_cache<<std::endl;//for debug
+      }
+      else {
+        memid_cache = -1;
+      }
+      return ok ? slim::vm::interpreter::command_result::Success
+              : slim::vm::interpreter::command_result::Failure;
+    };
+    this->push_stackframe(commit_cb); 
+    //printf("ANYMEM found %d filtered candidates with id %d\n", pbTimes, memid);//for debug
+    this->false_driven_enumerate(mem1, std::move(v));
+    return false;
+
+  }
+
   case INSTR_NMEMS: {
     LmnInstrVar memi, nmems;
 
@@ -1987,6 +2037,135 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     READ_VAL(LmnInstrVar, instr, pos1);
     READ_VAL(LmnInstrVar, instr, atom2);
     READ_VAL(LmnInstrVar, instr, pos2);
+    if (LMN_ATTR_IS_DATA_WITHOUT_EX(rc->at(atom1)) &&
+        LMN_ATTR_IS_DATA_WITHOUT_EX(rc->at(atom2))) {
+      //(D,D)
+#ifdef DEBUG
+      fprintf(stderr, "Two data atoms are specified in the arg of the "
+                      "swaplink instruction.\n");
+#endif
+    } else if (LMN_ATTR_IS_DATA_WITHOUT_EX(rc->at(atom1))) {
+      //(D,S)
+      ap2 = (LmnSymbolAtomRef)((LmnSymbolAtomRef)rc->wt(atom2))->get_link(pos2);
+      attr2 = ((LmnSymbolAtomRef)rc->wt(atom2))->get_attr(pos2);
+      ap2->set_link(attr2, (LmnAtomRef)rc->wt(atom1));
+      ap2->set_attr(attr2, rc->at(atom1));
+      break;
+    } else if (LMN_ATTR_IS_DATA_WITHOUT_EX(rc->at(atom2))) {
+      //(S,D)
+      ap1 = (LmnSymbolAtomRef)((LmnSymbolAtomRef)rc->wt(atom1))->get_link(pos1);
+      attr1 = ((LmnSymbolAtomRef)rc->wt(atom1))->get_attr(pos1);
+      ap1->set_link(attr1, (LmnAtomRef)rc->wt(atom2));
+      ap1->set_attr(attr1, rc->at(atom2));
+      break;
+    }
+    //(S,S)
+    ap1 = (LmnSymbolAtomRef)((LmnSymbolAtomRef)rc->wt(atom1))->get_link(pos1);
+    ap2 = (LmnSymbolAtomRef)((LmnSymbolAtomRef)rc->wt(atom2))->get_link(pos2);
+    attr1 = ((LmnSymbolAtomRef)rc->wt(atom1))->get_attr(pos1);
+    attr2 = ((LmnSymbolAtomRef)rc->wt(atom2))->get_attr(pos2);
+
+    if ((LmnSymbolAtomRef)rc->wt(atom1) == ap2 &&
+        (LmnSymbolAtomRef)rc->wt(atom2) == ap1 && attr1 == pos2 &&
+        attr2 == pos1) {
+      // use same link
+
+    } else if (LMN_ATTR_IS_DATA_WITHOUT_EX(attr1) &&
+               LMN_ATTR_IS_DATA_WITHOUT_EX(attr2)) {
+      //(-D,-D)
+
+      /* データアトムap2とシンボルアトムatom1 */
+      ((LmnSymbolAtomRef)rc->wt(atom1))->set_link(pos1, ap2);
+      ((LmnSymbolAtomRef)rc->wt(atom1))->set_attr(pos1, attr2);
+
+      /* データアトムap1とシンボルアトムatom2 */
+      ((LmnSymbolAtomRef)rc->wt(atom2))->set_link(pos2, ap1);
+      ((LmnSymbolAtomRef)rc->wt(atom2))->set_attr(pos2, attr1);
+
+    } else if (LMN_ATTR_IS_DATA_WITHOUT_EX(attr1)) {
+      //(-D,-S)
+
+      /* データアトムap1とシンボルアトムatom2 */
+      ((LmnSymbolAtomRef)rc->wt(atom2))->set_link(pos2, ap1);
+      ((LmnSymbolAtomRef)rc->wt(atom2))->set_attr(pos2, attr1);
+
+      /* シンボルアトムatom1とシンボルアトムap2 */
+      if (ap2 != NULL) {
+        ap2->set_link(attr2, (LmnAtomRef)rc->wt(atom1));
+        ap2->set_attr(attr2, pos1);
+        ((LmnSymbolAtomRef)rc->wt(atom1))->set_link(pos1, ap2);
+        ((LmnSymbolAtomRef)rc->wt(atom1))->set_attr(pos1, attr2);
+      } else {
+        ((LmnSymbolAtomRef)rc->wt(atom1))->set_link(pos1, 0);
+        ((LmnSymbolAtomRef)rc->wt(atom1))->set_attr(pos1, 0);
+      }
+
+    } else if (LMN_ATTR_IS_DATA_WITHOUT_EX(attr2)) {
+      //(-S,-D)
+
+      /* データアトムap2とシンボルアトムatom1 */
+      ((LmnSymbolAtomRef)rc->wt(atom1))->set_link(pos1, ap2);
+      ((LmnSymbolAtomRef)rc->wt(atom1))->set_attr(pos1, attr2);
+
+      /* シンボルアトムatom2とシンボルアトムap1 */
+      if (ap1 != NULL) {
+        ((LmnSymbolAtomRef)rc->wt(atom2))->set_link(pos2, ap1);
+        ((LmnSymbolAtomRef)rc->wt(atom2))
+            ->set_attr(pos2, LMN_ATTR_GET_VALUE(attr1));
+        ap1->set_link(attr1, (LmnAtomRef)rc->wt(atom2));
+        ap1->set_attr(attr1, pos2);
+      } else {
+        ((LmnSymbolAtomRef)rc->wt(atom2))->set_link(pos2, 0);
+        ((LmnSymbolAtomRef)rc->wt(atom2))->set_attr(pos2, 0);
+      }
+
+    } else {
+      //(-S,-S)
+
+      /* シンボルアトムatom2とシンボルアトムap1 */
+      if (ap1 != NULL) {
+        ((LmnSymbolAtomRef)rc->wt(atom2))->set_link(pos2, ap1);
+        ((LmnSymbolAtomRef)rc->wt(atom2))
+            ->set_attr(pos2, LMN_ATTR_GET_VALUE(attr1));
+        ap1->set_link(attr1, (LmnAtomRef)rc->wt(atom2));
+        ap1->set_attr(attr1, pos2);
+      } else {
+        ((LmnSymbolAtomRef)rc->wt(atom2))->set_link(pos2, 0);
+        ((LmnSymbolAtomRef)rc->wt(atom2))->set_attr(pos2, 0);
+      }
+
+      /* シンボルアトムatom1とシンボルアトムap2 */
+      if (ap2 != NULL) {
+        ap2->set_link(attr2, (LmnAtomRef)rc->wt(atom1));
+        ap2->set_attr(attr2, pos1);
+        ((LmnSymbolAtomRef)(LmnSymbolAtomRef)rc->wt(atom1))
+            ->set_link(pos1, ap2);
+        ((LmnSymbolAtomRef)rc->wt(atom1))->set_attr(pos1, attr2);
+      } else {
+        ((LmnSymbolAtomRef)rc->wt(atom1))->set_link(pos1, 0);
+        ((LmnSymbolAtomRef)rc->wt(atom1))->set_attr(pos1, 0);
+      }
+    }
+
+    break;
+  }
+
+  case INSTR_SWAPLINK_CACHE: {
+    LmnInstrVar mem1, mem2, atom1, atom2, pos1, pos2;
+    LmnSymbolAtomRef ap1, ap2;
+    LmnByte attr1, attr2;
+    READ_VAL(LmnInstrVar, instr, mem1);
+    READ_VAL(LmnInstrVar, instr, atom1);
+    READ_VAL(LmnInstrVar, instr, pos1);
+    READ_VAL(LmnInstrVar, instr, mem2);
+    READ_VAL(LmnInstrVar, instr, atom2);
+    READ_VAL(LmnInstrVar, instr, pos2);
+    int mem1id = ((LmnMembraneRef)rc->wt(mem1))->id;
+    int mem2id = ((LmnMembraneRef)rc->wt(mem2))->id;
+    if(mem1id!=mem2id){
+      memid_cache=mem2id;
+      //printf("memid_cache updated to %d\n", memid_cache);//for debug
+    }
     if (LMN_ATTR_IS_DATA_WITHOUT_EX(rc->at(atom1)) &&
         LMN_ATTR_IS_DATA_WITHOUT_EX(rc->at(atom2))) {
       //(D,D)
