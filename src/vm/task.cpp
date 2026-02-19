@@ -236,7 +236,8 @@ void Task::lmn_run(Vector *start_rulesets) {
     }
   }
 
-  mem_oriented_loop(mrc.get(), mem);
+  if(!lmn_env.nd && lmn_env.bfs_layer_sync) mem_oriented_loop_limited(mrc.get(), mem);
+  else mem_oriented_loop(mrc.get(), mem);
 
   /** PROFILE FINISH */
   if (lmn_env.profile_level >= 1) {
@@ -285,6 +286,17 @@ void Task::lmn_run(Vector *start_rulesets) {
 
 /** 膜スタックに基づいた通常実行 */
 static void mem_oriented_loop(MemReactContext *ctx, LmnMembraneRef mem) {
+  while (!ctx->memstack_isempty()) {
+    LmnMembraneRef mem = ctx->memstack_peek();//一個前を覗いて
+    if (!Task::react_all_rulesets(ctx, mem)) {//ルールを適用
+      /* ルールが何も適用されなければ膜スタックから先頭を取り除く */
+      ctx->memstack_pop();
+    }
+  }
+}
+
+/** 膜スタックに基づいた通常実行 */
+static void mem_oriented_loop_limited(MemReactContext *ctx, LmnMembraneRef mem) {
   unsigned int maxSteps,nowStep=0;
   maxSteps=lmn_env.depth_limits;
   while (!ctx->memstack_isempty()&&nowStep<maxSteps) {
