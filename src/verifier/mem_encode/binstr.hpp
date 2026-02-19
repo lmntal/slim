@@ -39,7 +39,7 @@
 #define SLIM_VERIFIER_MEM_ENCODE_BINSTR_HPP
 
 #include "lmn_binstr.hpp"
-#include "visitlog.h"
+#include "../visitlog.h"
 
 #include "lmntal.h"
 #include "vm/vm.h"

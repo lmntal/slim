@@ -1,3 +1,9 @@
 #!/bin/sh
 
-../../src/slim -I../../lib $slim_CHECK_OPTIONS testsuite/integer/integer_set.il
+# Get the directory where this script is located
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+# Get the project root (script is in test/library_check/testsuite/integer/)
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
+
+${SLIM_BINARY:-"$PROJECT_ROOT/build/bin/slim"} -I"$PROJECT_ROOT/lib" $slim_CHECK_OPTIONS "$SCRIPT_DIR/integer_set.il"

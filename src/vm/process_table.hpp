@@ -189,16 +189,20 @@ public:
     const std::pair<key_type, value_type> *operator->() const { return &value; }
 
     iterator &operator++() {
+      idx++;
+      
       for (; bucket_idx < table->num_buckets; bucket_idx++) {
         if (!table->tbl[bucket_idx])
           continue;
-        for (idx++; idx < buckets_size; idx++) {
+        for (; idx < buckets_size; idx++) {
           if (table->tbl[bucket_idx][idx] == unused)
             continue;
           value = std::make_pair(bucket_idx * buckets_size + idx,
                                  table->tbl[bucket_idx][idx]);
           return *this;
         }
+
+        idx = 0;
       }
       bucket_idx = not_found;
       idx = not_found;
