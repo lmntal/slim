@@ -101,7 +101,7 @@ void env_my_TLS_finalize() {
   env_set_my_thread_id(LMN_PRIMARY_ID); /* resetする */
 #elif defined(USE_TLS_PTHREAD_KEY)
   if (env_my_thread_id() != LMN_PRIMARY_ID) {
-    lmn_TLS_free(lmn_TLS_get_value(lmn_tls));
+    lmn_TLS_free((LmnTLS *)lmn_TLS_get_value(lmn_tls));
   }
 #endif
 }
@@ -128,7 +128,7 @@ void lmn_stream_destroy() {
 #if !defined(ENABLE_PARALLEL) || defined(USE_TLS_KEYWORD)
   lmn_TLS_destroy(&lmn_tls);
 #elif defined(USE_TLS_PTHREAD_KEY)
-  lmn_TLS_free(lmn_TLS_get_value(lmn_tls));
+  lmn_TLS_free((LmnTLS *)lmn_TLS_get_value(lmn_tls));
   lmn_TLS_key_destroy(lmn_tls);
 #endif
 }

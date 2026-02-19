@@ -1,6 +1,8 @@
 name: C/C++ CI
 
-on: push
+on: 
+  push:
+  workflow_dispatch:
 
 jobs:
   build:
@@ -33,10 +35,8 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - run: sudo apt -qq update
-    - run: sudo apt install -y ant re2c
+    - run: sudo apt install -y ant re2c cmake build-essential bison ruby
     - run: git clone https://github.com/lmntal/lmntal-compiler.git
     - run: cd lmntal-compiler && ant && cd ..
-    - run: ./autogen.sh
-    - run: ./configure $DEBUG_FLAG
-    - run: make
-    - run: make check
+    - run: ./build-cmake.sh
+    - run: ./run-tests.sh --output-on-failure

@@ -1,0 +1,35 @@
+# Arch Linux PKGBUILD for SLIM
+pkgname=slim-lmntal
+pkgver=2.8.0
+pkgrel=1
+pkgdesc="Runtime and model checker for the LMNtal language"
+arch=('x86_64')
+url="https://www.ueda.info.waseda.ac.jp/lmntal"
+license=('GPL')
+depends=('gcc-libs')
+makedepends=('cmake' 'bison' 'flex' 're2c' 'ruby')
+source=("$pkgname-$pkgver.tar.gz")
+sha256sums=('SKIP')
+
+build() {
+    cd "$pkgname-$pkgver"
+    
+    mkdir -p build
+    cd build
+    
+    cmake .. \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_INSTALL_PREFIX=/usr
+    
+    make
+}
+
+check() {
+    cd "$pkgname-$pkgver/build"
+    make test || warning "Tests failed"
+}
+
+package() {
+    cd "$pkgname-$pkgver/build"
+    make DESTDIR="$pkgdir/" install
+}

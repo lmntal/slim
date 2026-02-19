@@ -100,7 +100,9 @@ std::string lexer::get_token() const {
   return std::string(buffer->parsed_pos, buffer->YYCURSOR - buffer->parsed_pos);
 };
 
-int lexer::lex(il::parser::semantic_type *yylval, il::parser::location_type *yyloc) {
+int lexer::lex(void *yylval_raw, void *yyloc_raw) {
+  auto yylval = static_cast<il::parser::value_type*>(yylval_raw);
+  auto yyloc = static_cast<il::parser::location_type*>(yyloc_raw);
 start:
   char *YYMARKER;
   buffer->parsed_pos = buffer->YYCURSOR;
@@ -231,6 +233,6 @@ comment:
   }
 }
 
-int illex(il::parser::semantic_type *yylval, il::parser::location_type *yyloc, il::lexer *lexer) {
+int illex(void *yylval, void *yyloc, il::lexer *lexer) {
   return lexer->lex(yylval, yyloc);
 }

@@ -86,14 +86,37 @@ third_party/**/tcmalloc.h
 doc/doxygen/*
 test/**/*.log
 test/**/*.trs
+# Exclude generated .il files but allow test data
 test/**/*.il
+# But include test data files needed for tests
+!test/library_check/testsuite/**/*.il
+# !test/system_check/testsuite/**/*.il  
+# !test/statespace/testsuite/**/*.il
 .dirstamp
 il_lexer.cpp
 il_parser.cpp
 il_parser.hpp
 src/loader/interpret_generated.cpp
 src/loader/translate_generated.cpp
+src/loader/il_parser.hpp
 src/loader/location.hh
 src/loader/stack.hh
 src/loader/position.hh
 third_party/google-perftools-1.8.3/test-suite.log
+
+
+# CMake specific additions
+build*/
+cmake-build-*/
+*_parser.cpp
+*_parser.hpp
+*_lexer.cpp
+location.hh
+position.hh
+stack.hh
+translate_generated.cpp
+interpret_generated.cpp
+
+# IDE files
+.vscode/
+.idea/

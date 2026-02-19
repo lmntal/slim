@@ -12,7 +12,7 @@
 use Cwd;
 $pwd = Cwd::getcwd();
 
-$lmntal_runtime = $pwd . "/../../src/slim";
+$lmntal_runtime = $ENV{SLIM_BINARY} || $pwd . "/../../build/bin/slim";
 $count = 1;
 $options = $ENV{slim_CHECK_OPTIONS};
 

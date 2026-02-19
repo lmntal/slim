@@ -44,24 +44,11 @@
 
 #include "lmntal.h"
 
-#include <cstdlib>
-
 /* Error */
-#ifdef DEBUG
-#define lmn_fatal(Msg)                                                         \
-  do {                                                                         \
-    do_lmn_fatal(__FILE__, __LINE__, Msg);                                     \
-    assert(FALSE);                                                             \
-  } while (0);
-#else
-#define lmn_fatal(Msg)                                                         \
-  do {                                                                         \
-    do_lmn_fatal(__FILE__, __LINE__, Msg);                                     \
-    exit(EXIT_FAILURE);                                                        \
-  } while (0);
-#endif
+#define lmn_fatal(Msg) do_lmn_fatal(__FILE__, __LINE__, Msg)
 
-void do_lmn_fatal(const char *file, int line, const char *msg);
+[[noreturn]]
+LMN_EXTERN int do_lmn_fatal(const char *file, int line, const char *msg);
 LMN_EXTERN void lmn_report(const char *msg, ...);
 
 /* @} */
