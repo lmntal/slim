@@ -33,7 +33,7 @@ function(add_lmntest_suite suite_name test_files)
     )
 endfunction()
 
-# Function to extract LMNtal source from .lmntest file and compile to .il
+# Function to transform .lmntest file using AWK and compile to .il
 function(compile_lmntest_to_il lmntest_file)
     get_filename_component(test_dir ${lmntest_file} DIRECTORY)
     get_filename_component(base_name ${lmntest_file} NAME_WE)
@@ -46,15 +46,15 @@ function(compile_lmntest_to_il lmntest_file)
     set(il_file "${test_dir}/${base_name}.il")
     set(lmn_file "${test_dir}/${base_name}.lmn")
     
-    # Add custom command to extract first line and compile
+    # Add custom command to transform .lmntest using AWK and compile
     add_custom_command(
         OUTPUT ${il_file}
-        COMMAND head -1 ${lmntest_file} > ${lmn_file}
+        COMMAND awk -f ${CMAKE_CURRENT_SOURCE_DIR}/create_testdata.awk ${lmntest_file} > ${lmn_file}
         COMMAND ${LMNTAL_HOME}/bin/lmntal --slimcode ${lmn_file} > ${il_file}
         COMMAND rm -f ${lmn_file}
-        DEPENDS ${lmntest_file}
+        DEPENDS ${lmntest_file} ${CMAKE_CURRENT_SOURCE_DIR}/create_testdata.awk
         WORKING_DIRECTORY ${test_dir}
-        COMMENT "Compiling ${lmntest_file} to ${il_file}"
+        COMMENT "Transforming ${lmntest_file} with AWK and compiling to ${il_file}"
     )
     
     # Create a target for this compilation with unique name
