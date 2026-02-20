@@ -1,5 +1,5 @@
 #!/bin/sh
-if [ $slim_CHECK_ND = yes ]; then
+if [ "$slim_CHECK_ND" = "yes" ]; then
 ./check.pl \
 	../../benchmarkset/phi 7297 1\
 	../../benchmarkset/phiM 24484 1\
@@ -21,5 +21,5 @@ if [ $slim_CHECK_ND = yes ]; then
 	../../benchmarkset/lambda 63998 3\
 	../../benchmarkset/sstd 44513 1
 else
-./check.pl 
+echo "1..0 # SKIP statespace tests require slim_CHECK_ND=yes"
 fi
