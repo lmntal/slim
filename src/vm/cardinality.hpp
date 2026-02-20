@@ -1,5 +1,6 @@
 /* QLMNtal */
 #ifndef CARDINALITY_HPP
+#define CARDINALITY_HPP
 
 #define LMN_ATTR_IS_CARD(ATTR) ((ATTR) == LMN_CARD_ATTR)
 
@@ -17,17 +18,17 @@ struct LmnCard {
     queue(queue),
     included_list(std::vector<LmnRegister>()),
     pop_index(0) {};
-  
+
   CardQueue get_queue() {
     return queue;
   }
-  
+
   void reset_queue() {
     queue = CardQueue();
     included_list = std::vector<LmnRegister>();
     pop_index = 0;
   }
-  
+
   void push_map(CardMap map) {
     queue.push_back(map);
   }
@@ -53,7 +54,7 @@ struct LmnCard {
   void set_pop_index(int i) {
     pop_index = i;
   }
-  
+
   std::vector<LmnRegister> calc_picked_maps_regs(size_t max) {
     LmnCard* card;
     card = new LmnCard(CardQueue());
@@ -109,8 +110,6 @@ struct LmnCard {
 };
 
 typedef LmnCard* LmnCardRef;
-
-#endif // CARDINALITY_HPP
 
 BOOL mapneqatom(size_t atom1, std::vector<size_t> atom2list, LmnReactCxt *rc, LmnRegister queue_reg){
   CardQueue queue = ((LmnCardRef)(queue_reg.register_wt()))->get_queue();
@@ -172,7 +171,7 @@ BOOL mapneqmem(size_t mem1, std::vector<size_t> mem2list, LmnReactCxt *rc, LmnRe
 void slim::vm::interpreter::anyatom(LmnMembrane *mem, size_t reg){
   std::map<LmnFunctor, AtomListEntry *> atomlists = mem->atom_lists();
   auto atom_regs = std::vector<LmnRegister>();
-  for (std::pair<LmnFunctor, AtomListEntry *> atomlist: atomlists) { 
+  for (std::pair<LmnFunctor, AtomListEntry *> atomlist: atomlists) {
     auto iter = std::begin(*atomlist.second);
     auto end = std::end(*atomlist.second);
     if (iter == end || atomlist.first == 0 || atomlist.first == 1)
@@ -298,3 +297,5 @@ int replace_in_card_by_tbl(ProcessTableRef p, LmnCardRef card, LmnWord *value) {
   *value = (LmnWord)new_card;
   return 1;
 }
+
+#endif // CARDINALITY_HPP
