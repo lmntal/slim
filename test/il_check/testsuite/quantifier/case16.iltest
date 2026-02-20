@@ -1,0 +1,56 @@
+Compiled Ruleset @602
+Compiled Rule
+	--atommatch:
+	--memmatch:
+		spec           [1, 1]
+		jump           [L106, [0], [], []]
+	--guard:L106:
+		spec           [1, 1]
+		jump           [L107, [0], [], []]
+	--body:L107:
+		spec           [1, 5]
+		commit         ["_init", 0]
+		loadruleset    [0, @601]
+		newatom      [1, 0, 'token'_0]
+		newatom      [2, 0, 'a'_0]
+		newatom      [3, 0, 'a'_0]
+		newatom      [4, 0, 'a'_0]
+		proceed        []
+
+
+Compiled Ruleset @601
+Compiled Rule
+	--atommatch:
+	--memmatch:
+		spec           [1, 8]
+		findatom       [1, 0, 'token'_0]
+		branch         [[
+			findatom       [2, 0, 'a'_0]
+			pushmap        [3, [2]]
+			failreturn     []
+		]]
+		pickmaps       [4, 3, -1]
+		branch         [[
+			findatom       [2, 0, 'a'_0]
+			pushmap        [3, [2]]
+			failreturn     []
+		]]
+		pickmaps       [5, 3, -1]
+		eqmaps         [4, 5]
+		commit         ["test", 0]
+		removeatom     [1, 0]
+		loop           [[
+			popmap         [4]
+			removeatom     [2, 0]
+			newatom        [6, 0, 'b'_0]
+			proceed        []
+		]]
+		loop           [[
+			popmap         [5]
+			newatom        [7, 0, 'c'_0]
+			proceed        []
+		]]
+		proceed        []
+
+%%EXPECT%%
+a. a. a.

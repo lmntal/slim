@@ -1,0 +1,71 @@
+// token,a(V,W),b(W,X),a(X,Y),a(Y,Z),b(Z,V).
+// token,<*>a(X,Y) :- <*>c(X,Y).
+
+Compiled Ruleset @602
+Compiled Rule
+	--atommatch:
+	--memmatch:
+		spec           [1, 1]
+		jump           [L106, [0], [], []]
+	--guard:L106:
+		spec           [1, 1]
+		jump           [L107, [0], [], []]
+	--body:L107:
+		spec           [1, 17]
+		commit         ["_init", 0]
+		loadruleset    [0, @601]
+		newatom      [1, 0, 'a'_2]
+		newatom      [2, 0, 'b'_2]
+		newatom      [3, 0, 'a'_2]
+		newatom      [4, 0, 'a'_2]
+		newatom      [5, 0, 'b'_2]
+		alloclink    [6, 1, 0]
+		alloclink    [7, 1, 1]
+		alloclink    [8, 2, 0]
+		alloclink    [9, 2, 1]
+		alloclink    [10, 3, 0]
+		alloclink    [11, 3, 1]
+		alloclink    [12, 4, 0]
+		alloclink    [13, 4, 1]
+		alloclink    [14, 5, 0]
+		alloclink    [15, 5, 1]
+		unifylinks     [6, 15, 0]
+		unifylinks     [7, 8, 0]
+		unifylinks     [9, 10, 0]
+		unifylinks     [11, 12, 0]
+		unifylinks     [13, 14, 0]
+		newatom      [16, 0, 'token'_0] // for 1 step
+		proceed        []
+
+
+Compiled Ruleset @601
+Compiled Rule
+	--atommatch:
+	--memmatch:
+		spec           [1, 7]
+		findatom       [1, 0, 'token'_0] // for 1 step
+        branch         [[
+		    findatom       [2, 0, 'a'_2]
+            pushmap        [3, [2]]
+            failreturn     []
+        ]]
+        pickmaps       [4, 3, -1]
+        not            [[
+		    findatom       [5, 0, 'a'_2]
+            mapneqatom     [5, [4, 2]]
+			proceed        []
+        ]]
+		commit         ["test", 0]
+		removeatom     [1, 0] // for 1 step
+        loop           [[
+            popmap         [4]
+            removeatom     [2, 0]
+            newatom        [6, 0, 'c'_2]
+            relink         [6, 0, 2, 0, 0]
+            relink         [6, 1, 2, 1, 0]
+            proceed        []
+        ]]
+		proceed        []
+
+%%EXPECT%%
+b(c(b(c(c(L0)))),L0)

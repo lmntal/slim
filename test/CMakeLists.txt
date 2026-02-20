@@ -15,8 +15,9 @@ endfunction()
 
 # Add subdirectories for different test types
 add_subdirectory(system_check)
-add_subdirectory(statespace) 
+add_subdirectory(statespace)
 add_subdirectory(library_check)
+add_subdirectory(il_check)
 
 # Set environment variables for tests
 set(ENV{slim_CHECK_OPTIONS} "")
@@ -27,6 +28,9 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/enhanced_test_framework.cmake)
 # Use enhanced test discovery and configuration - individual .lmntest files
 add_lmntest_directory("system" "system_check")
 add_lmntest_directory("statespace" "statespace")
+
+# Add IL check tests (.iltest/.iltest.nd) with suite-based labels
+add_iltest_directory("il_check")
 
 # Add library tests that don't use .lmntest files
 add_check_script_tests("library" "library_check")

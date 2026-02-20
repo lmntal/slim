@@ -1,0 +1,57 @@
+// token,{a,b},{a,c}.
+// token,<0,∞>{a,$p} :- <0,∞>{$p}.
+
+Compiled Ruleset @602
+Compiled Rule
+	--atommatch:
+	--memmatch:
+		spec           [1, 1]
+		jump           [L106, [0], [], []]
+	--guard:L106:
+		spec           [1, 1]
+		jump           [L107, [0], [], []]
+	--body:L107:
+		spec           [1, 8]
+		commit         ["_init", 0]
+		newmem       [1, 0, 0]
+		newmem       [2, 0, 0]
+		loadruleset    [0, @601]
+		newatom      [3, 1, 'a'_0]
+		newatom      [4, 1, 'b'_0]
+		newatom      [5, 2, 'a'_0]
+		newatom      [6, 2, 'c'_0]
+		newatom      [7, 0, 'token'_0]
+		proceed        []
+
+
+Compiled Ruleset @601
+Compiled Rule
+	--atommatch:
+	--memmatch:
+		spec           [1, 6]
+		findatom       [1, 0, 'token'_0]
+		branch         [[
+			anymem         [2, 0, 0, null]
+			norules        [2]
+			findatom       [3, 2, 'a'_0]
+			pushmap        [4, [2, 3]]
+            failreturn     []
+		]]
+		pickmaps       [5, 4, -1]
+		commit         ["test", 0]
+		removeatom     [1, 0]
+		loop           [[
+			popmap         [5]
+			removeatom     [3, 2]
+			removeproxies  [2]
+			enqueuemem     [2]
+			insertproxies  [0, 2]
+			freeatom       [3]
+			proceed        []
+		]]
+		freeatom       [1]
+		proceed        []
+
+%%EXPECT%%
+5
+4

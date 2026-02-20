@@ -1,0 +1,50 @@
+// token,{a,b,b},{a,b},{a}.
+// <^>{a,a,$p}, token :- ok.
+
+Compiled Ruleset @602
+Compiled Rule
+	--atommatch:
+	--memmatch:
+		spec           [1, 1]
+		jump           [L106, [0], [], []]
+	--guard:L106:
+		spec           [1, 1]
+		jump           [L107, [0], [], []]
+	--body:L107:
+		spec           [1, 11]
+		commit         ["_init", 0]
+		newmem       [1, 0, 0]
+		newmem       [2, 0, 0]
+		newmem       [3, 0, 0]
+		loadruleset    [0, @601]
+		newatom      [4, 1, 'a'_0]
+		newatom      [5, 1, 'b'_0]
+		newatom      [6, 1, 'b'_0]
+		newatom      [7, 2, 'a'_0]
+		newatom      [8, 2, 'b'_0]
+		newatom      [9, 3, 'a'_0]
+		newatom      [10, 0, 'token'_0] // for 1 step
+		proceed        []
+
+
+Compiled Ruleset @601
+Compiled Rule
+	--atommatch:
+	--memmatch:
+		spec           [1, 6]
+		findatom       [1, 0, 'token'_0] // for 1 step
+        not            [[
+            anymem         [2, 0, 0, null]
+            findatom       [3, 2, 'a'_0]
+            findatom       [4, 2, 'a'_0]
+            neqatom        [4, 3]
+            proceed        []
+        ]]
+		commit         ["test", 0]
+		removeatom     [1, 0] // for 1 step
+		newatom        [5, 0, 'ok'_0]
+		freeatom       [1]
+		proceed        []
+
+%%EXPECT%%
+ok. {a. }, {a. b. }, {a. b. b. }

@@ -5,23 +5,23 @@
 function(add_lmntest_directory test_type test_dir)
     # Find all .lmntest files in test suites
     file(GLOB_RECURSE LMNTEST_FILES "${CMAKE_CURRENT_SOURCE_DIR}/${test_dir}/testsuite/*/*.lmntest")
-    
+
     foreach(lmntest_file ${LMNTEST_FILES})
         # Extract test info from path
         get_filename_component(test_case_name ${lmntest_file} NAME_WE)
         get_filename_component(test_suite_dir ${lmntest_file} DIRECTORY)
         get_filename_component(test_suite ${test_suite_dir} NAME)
-        
+
         # Create unique test name
         set(full_test_name "${test_type}_${test_suite}_${test_case_name}")
-        
+
         # Find the check.sh script for this test suite
         set(check_script "${test_suite_dir}/check.sh")
         if(NOT EXISTS ${check_script})
             message(WARNING "No check.sh found for ${test_suite_dir}")
             continue()
         endif()
-        
+
         # Handle statespace tests specially - they need slim_CHECK_ND wrapper
         if(test_type STREQUAL "statespace")
             # Create wrapper script that checks slim_CHECK_ND and runs single test
@@ -33,12 +33,12 @@ function(add_lmntest_directory test_type test_dir)
             file(APPEND ${wrapper_script} "fi\n")
             file(APPEND ${wrapper_script} "cd ${CMAKE_CURRENT_SOURCE_DIR}/${test_dir}\n")
             file(APPEND ${wrapper_script} "./check.pl /testsuite/${test_suite}/${test_case_name}\n")
-            
+
             # Make wrapper executable with proper permissions
             file(COPY ${wrapper_script}
                  DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/${test_dir}
                  FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
-            
+
             # Add test using wrapper script
             add_test(NAME ${full_test_name} COMMAND ${wrapper_script} WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${test_dir})
         else()
@@ -47,21 +47,21 @@ function(add_lmntest_directory test_type test_dir)
             file(WRITE ${individual_script} "#!/bin/bash\n")
             file(APPEND ${individual_script} "cd ${CMAKE_CURRENT_SOURCE_DIR}/${test_dir}\n")
             file(APPEND ${individual_script} "./check.pl /testsuite/${test_suite}/${test_case_name}\n")
-            
+
             # Make script executable directly
             execute_process(COMMAND chmod +x ${individual_script})
-            
+
             # Add test using individual script
             add_test(NAME ${full_test_name} COMMAND ${individual_script} WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${test_dir})
         endif()
-        
+
         # Set test properties
         set_tests_properties(${full_test_name} PROPERTIES
             ENVIRONMENT "SLIM_BINARY=$<TARGET_FILE:slim>;LMNTAL_HOME=${LMNTAL_HOME};slim_CHECK_OPTIONS=${slim_CHECK_OPTIONS}"
             TIMEOUT 30
             LABELS "${test_type};${test_suite};${test_case_name}"
         )
-        
+
         # Add to appropriate groups
         if(test_type STREQUAL "statespace")
             set_tests_properties(${full_test_name} PROPERTIES
@@ -72,24 +72,67 @@ function(add_lmntest_directory test_type test_dir)
     endforeach()
 endfunction()
 
+# Helper function to add IL check tests from .iltest and .iltest.nd files
+function(add_iltest_directory test_dir)
+    file(GLOB_RECURSE ILTEST_FILES
+        "${CMAKE_CURRENT_SOURCE_DIR}/${test_dir}/testsuite/*/*.iltest"
+        "${CMAKE_CURRENT_SOURCE_DIR}/${test_dir}/testsuite/*/*.iltest.nd"
+    )
+
+    foreach(iltest_file ${ILTEST_FILES})
+        get_filename_component(test_filename ${iltest_file} NAME)
+        get_filename_component(test_suite_dir ${iltest_file} DIRECTORY)
+        get_filename_component(test_suite ${test_suite_dir} NAME)
+
+        # case name passed to check.pl (without extension expected by resolver)
+        set(test_case ${test_filename})
+        string(REGEX REPLACE "\\.iltest\\.nd$" "" test_case "${test_case}")
+        string(REGEX REPLACE "\\.iltest$" "" test_case "${test_case}")
+
+        # unique test name
+        set(full_test_name "il_${test_suite}_${test_case}")
+
+        # runner script
+        set(individual_script
+            "${CMAKE_CURRENT_BINARY_DIR}/${test_dir}/${test_suite}_${test_case}_run.sh")
+        file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/${test_dir}")
+        file(WRITE ${individual_script} "#!/bin/bash\n")
+        file(APPEND ${individual_script} "cd ${CMAKE_CURRENT_SOURCE_DIR}/${test_dir}\n")
+        file(APPEND ${individual_script} "./check.pl /testsuite/${test_suite}/${test_case}\n")
+        execute_process(COMMAND chmod +x ${individual_script})
+
+        add_test(
+            NAME ${full_test_name}
+            COMMAND ${individual_script}
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${test_dir}
+        )
+
+        set_tests_properties(${full_test_name} PROPERTIES
+            ENVIRONMENT "SLIM_BINARY=$<TARGET_FILE:slim>;LMNTAL_HOME=${LMNTAL_HOME};slim_CHECK_OPTIONS=${slim_CHECK_OPTIONS}"
+            TIMEOUT 30
+            LABELS "il;${test_suite};${test_case}"
+        )
+    endforeach()
+endfunction()
+
 # Helper function to add tests that don't use .lmntest files (like library tests)
 function(add_check_script_tests test_type test_dir)
     file(GLOB CHECK_SCRIPTS "${CMAKE_CURRENT_SOURCE_DIR}/${test_dir}/testsuite/*/check.sh")
-    
+
     foreach(check_script ${CHECK_SCRIPTS})
         # Extract test info from path
         get_filename_component(test_suite_dir ${check_script} DIRECTORY)
         get_filename_component(test_suite ${test_suite_dir} NAME)
-        
+
         # Skip if this directory has .lmntest files (handled by add_lmntest_directory)
         file(GLOB LMNTEST_FILES "${test_suite_dir}/*.lmntest")
         if(LMNTEST_FILES)
             continue()
         endif()
-        
+
         # Create unique test name
         set(full_test_name "${test_type}_${test_suite}")
-        
+
         # Handle statespace tests specially - they need slim_CHECK_ND wrapper
         if(test_type STREQUAL "statespace")
             # Create wrapper script that checks slim_CHECK_ND
@@ -100,26 +143,26 @@ function(add_check_script_tests test_type test_dir)
             file(APPEND ${wrapper_script} "  exit 0\n")
             file(APPEND ${wrapper_script} "fi\n")
             file(APPEND ${wrapper_script} "exec ${check_script}\n")
-            
+
             # Make wrapper executable with proper permissions
             file(COPY ${wrapper_script}
                  DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/${test_dir}
                  FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
-            
+
             # Add test using wrapper script
             add_test(NAME ${full_test_name} COMMAND ${wrapper_script} WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${test_dir})
         else()
-            # Add test using original check.sh script  
+            # Add test using original check.sh script
             add_test(NAME ${full_test_name} COMMAND ${check_script} WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${test_dir})
         endif()
-        
+
         # Set test properties
         set_tests_properties(${full_test_name} PROPERTIES
             ENVIRONMENT "SLIM_BINARY=$<TARGET_FILE:slim>;LMNTAL_HOME=${LMNTAL_HOME};slim_CHECK_OPTIONS=${slim_CHECK_OPTIONS}"
             TIMEOUT 30
             LABELS "${test_type};${test_suite}"
         )
-        
+
         # Add to appropriate groups
         if(test_type STREQUAL "statespace")
             set_tests_properties(${full_test_name} PROPERTIES
@@ -136,17 +179,17 @@ function(create_test_targets)
         COMMAND ${CMAKE_CTEST_COMMAND} -L "system|library" --output-on-failure
         COMMENT "Running quick tests (system + library)"
     )
-    
+
     add_custom_target(test-performance
         COMMAND ${CMAKE_CTEST_COMMAND} -L "performance" --output-on-failure
         COMMENT "Running performance tests"
     )
-    
+
     add_custom_target(test-parallel
         COMMAND ${CMAKE_CTEST_COMMAND} -L "parallel" --output-on-failure -j4
-        COMMENT "Running parallel execution tests"  
+        COMMENT "Running parallel execution tests"
     )
-    
+
     add_custom_target(test-model-checking
         COMMAND ${CMAKE_CTEST_COMMAND} -L "statespace" --output-on-failure
         COMMENT "Running model checking tests"

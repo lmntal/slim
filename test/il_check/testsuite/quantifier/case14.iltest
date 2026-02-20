@@ -1,0 +1,41 @@
+Compiled Ruleset @602
+Compiled Rule
+	--atommatch:
+	--memmatch:
+		spec           [1, 1]
+		jump           [L106, [0], [], []]
+	--guard:L106:
+		spec           [1, 1]
+		jump           [L107, [0], [], []]
+	--body:L107:
+		spec           [1, 4]
+		commit         ["_init", 0]
+		loadruleset    [0, @601]
+		newatom      [1, 0, 'a'_0]
+		newatom      [2, 0, 'b'_0]
+		newatom      [3, 0, 'c'_0]
+		proceed        []
+
+
+Compiled Ruleset @601
+Compiled Rule
+	--atommatch:
+	--memmatch:
+		spec           [1, 5]
+		findatom       [1, 0, 'a'_0]
+		pushmap        [2, [1]]
+		pushmap        [3, [1]]
+		findatom       [1, 0, 'b'_0]
+		pushmap        [2, [1]]
+		pushmap        [3, [1]]
+		findatom       [1, 0, 'c'_0]
+		pushmap        [2, [1]]
+		pushmap        [3, [1]]
+        eqmaps         [2, 3]
+		commit         ["test", 0]
+        removeatom     [1, 0]
+        newatom        [4, 0, 'ok'_0]
+		proceed        []
+
+%%EXPECT%%
+a. b. ok.
