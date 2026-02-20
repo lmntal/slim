@@ -150,6 +150,7 @@ static BOOL dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
                            LmnRuleInstr instr);
 
 static void mem_oriented_loop(MemReactContext *ctx, LmnMembraneRef mem);
+static void mem_oriented_loop_limited(MemReactContext *ctx, LmnMembraneRef mem);
 
 void Task::lmn_dmem_interpret(LmnReactCxtRef rc, LmnRuleRef rule,
                         LmnRuleInstr instr) {
