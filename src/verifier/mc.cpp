@@ -47,7 +47,6 @@
 #include "runtime_status.h"
 #ifdef DEBUG
 #include "vm/dumper.h"
-#include "vm/task.h"
 #endif
 #include "state.h"
 #include "state.hpp"
