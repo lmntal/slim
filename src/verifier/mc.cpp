@@ -47,6 +47,7 @@
 #include "runtime_status.h"
 #ifdef DEBUG
 #include "vm/dumper.h"
+#include "vm/task.h"
 #endif
 #include "state.h"
 #include "state.hpp"
@@ -165,7 +166,7 @@ static void mc_dump(LmnWorkerGroup *wp) {
     ss->format_states();
 
     /* 1. 状態遷移グラフの標準出力 */
-    if (lmn_env.trace) {
+    if (lmn_env.trace && !lmn_env.trace_rule_name_only) {
       ss->dump();
     }
 
@@ -206,6 +207,9 @@ static void mc_dump(LmnWorkerGroup *wp) {
     lmn_prof.has_property = TRUE;
   if (wp->workers_have_error())
     lmn_prof.found_err = TRUE;
+
+  if (lmn_env.trace_rule_name_only)
+    Task::print_rule_apply_count();
 }
 
 /** =====================================================
