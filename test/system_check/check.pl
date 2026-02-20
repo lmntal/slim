@@ -11,6 +11,7 @@
 
 use Cwd;
 use File::Basename;
+use File::Path qw(make_path);
 $pwd = Cwd::getcwd();
 
 $lmntal_runtime = $ARGV[0] || $ENV{SLIM_BINARY} || "/home/ueda/slim/build/src/slim";  # First argument is the slim binary path
@@ -19,47 +20,65 @@ $count = 1;
 $test_failed = 0;
 $options = $ENV{slim_CHECK_OPTIONS};
 
-# Generate .il files on demand using create_testdata.awk to transform .lmntest files
+# Generate .il file from .lmntest using create_testdata.awk.
+# Output goes to $TEST_BUILD_DIR/generated/<suite>/<case>.il when TEST_BUILD_DIR is set,
+# to avoid conflicts with pre-existing .il files in the source tree.
+# Returns the path of the .il file to run SLIM on.
 sub generate_il_file {
-    my ($il_file) = @_;
-    my $lmntest_file = $il_file;
+    my ($source_il) = @_;
+    my $lmntest_file = $source_il;
     $lmntest_file =~ s/\.il$/.lmntest/;
-    
-    if (-f $lmntest_file && !(-f $il_file || -M $il_file > -M $lmntest_file)) {
-        # Use create_testdata.awk to transform .lmntest file into proper LMNtal test program
+
+    # If no .lmntest, use the source .il directly (no transformation needed)
+    return $source_il unless -f $lmntest_file;
+
+    # Determine output path
+    my $build_dir = $ENV{TEST_BUILD_DIR};
+    my $output_il;
+    if ($build_dir) {
+        my $suite = basename(dirname($source_il));
+        my $case  = basename($source_il);
+        $output_il = "$build_dir/generated/$suite/$case";
+    } else {
+        $output_il = $source_il;
+    }
+
+    if (!-f $output_il || -M $output_il > -M $lmntest_file) {
+        # Create output directory if needed
+        my $output_dir = dirname($output_il);
+        make_path($output_dir) unless -d $output_dir;
+
         my $script_dir = dirname(__FILE__);
         my $awk_script = "$script_dir/create_testdata.awk";
-        
+
         # Create temporary .lmn file using AWK transformation
-        my $temp_lmn = $il_file;
-        $temp_lmn =~ s/\.il$/.lmn/;
-        
-        my $awk_cmd = "awk -f '$awk_script' '$lmntest_file' > '$temp_lmn'";
-        system($awk_cmd);
-        
+        my $temp_lmn = "$output_il.lmn";
+
+        system("awk -f '$awk_script' '$lmntest_file' > '$temp_lmn'");
+
         # Compile to .il using LMNtal compiler
-        my $lmntal_cmd = "java -cp '$lmntal_home/bin/lmntal.jar' runtime.FrontEnd --slimcode '$temp_lmn' > '$il_file'";
-        system($lmntal_cmd);
-        
-        # Clean up temporary .lmn file
+        system("java -cp '$lmntal_home/bin/lmntal.jar' runtime.FrontEnd --slimcode '$temp_lmn' > '$output_il'");
+
         unlink($temp_lmn);
     }
+
+    return $output_il;
 }
 
 print $count . ".." . ($#ARGV) . "\n";  # Subtract 1 since first arg is binary path
 for my $i (1..$#ARGV) {
 	$filename = $ARGV[$i];
-	
-	# Generate .il file if it doesn't exist
-	generate_il_file($filename);
-	
-	# Extract .lmntest filename from .il path to get expected output
+
+	# Generate .il file if needed and get the path to run SLIM on
+	my $il_to_run = generate_il_file($filename);
+
+	# Extract .lmntest filename from source .il path to get expected output
 	$lmntest_file = $filename;
 	$lmntest_file =~ s/\.il$/.lmntest/;
-	
+
 	my $expected_output = "";
 	my $computed_result = "";
-	
+
 	if (-f $lmntest_file) {
 		open (FILE, "< " . $lmntest_file);
 		@file = <FILE>;
@@ -69,53 +88,59 @@ for my $i (1..$#ARGV) {
 	} else {
 		$expected_output = "expected output";
 	}
-	
+
 	# For verbose mode, also run the original computation to see actual result
 	if ($ENV{VERBOSE} || $ENV{V}) {
-		# Generate .il file with just the original program (not create_testdata.awk)
-		my $orig_il_file = $filename;
-		$orig_il_file =~ s/\.il$/_orig.il/;
-		
+		my $build_dir = $ENV{TEST_BUILD_DIR};
+		my $orig_il_file;
+		if ($build_dir) {
+			my $suite = basename(dirname($filename));
+			my $case_base = basename($filename, '.il');
+			$orig_il_file = "$build_dir/generated/$suite/${case_base}_orig.il";
+			make_path("$build_dir/generated/$suite") unless -d "$build_dir/generated/$suite";
+		} else {
+			$orig_il_file = $filename;
+			$orig_il_file =~ s/\.il$/_orig.il/;
+		}
+
 		if (-f $lmntest_file) {
 			# Extract first line (original LMNtal program) from .lmntest file
 			open(my $test_fh, '<', $lmntest_file) or die "Cannot read $lmntest_file: $!";
 			my $lmntal_program = <$test_fh>;
 			close($test_fh);
 			chomp($lmntal_program);
-			
+
 			# Create temporary .lmn file with just the LMNtal program
-			my $temp_lmn = $orig_il_file;
-			$temp_lmn =~ s/\.il$/.lmn/;
-			
+			my $temp_lmn = "$orig_il_file.lmn";
+
 			open(my $lmn_fh, '>', $temp_lmn) or die "Cannot create $temp_lmn: $!";
 			print $lmn_fh $lmntal_program . "\n";
 			close($lmn_fh);
-			
+
 			# Compile to .il using LMNtal compiler
-			my $lmntal_cmd = "java -cp '$lmntal_home/bin/lmntal.jar' runtime.FrontEnd --slimcode '$temp_lmn' > '$orig_il_file'";
-			system($lmntal_cmd);
-			
+			system("java -cp '$lmntal_home/bin/lmntal.jar' runtime.FrontEnd --slimcode '$temp_lmn' > '$orig_il_file'");
+
 			# Run original computation to get actual result
 			my $orig_run = $lmntal_runtime . " --hide-ruleset " . $options ." ". $orig_il_file;
 			$computed_result = `$orig_run 2>&1`;
 			$computed_result =~ s/\n//;
 			$computed_result =~ s/\s*\.\s*$//;  # Remove trailing dot and whitespace
-			
+
 			# Clean up temporary files
 			unlink($temp_lmn);
 			unlink($orig_il_file);
 		}
 	}
-	
+
 	# Run the equivalence check (create_testdata.awk version)
-	$check_run = $lmntal_runtime . " --hide-ruleset " . $options ." ". $filename;
+	$check_run = $lmntal_runtime . " --hide-ruleset " . $options ." ". $il_to_run;
 	$checked = `$check_run 2>&1`;
 	my $exit_code = $? >> 8;
-	
+
 	# Clean up the actual output for display
 	my $display_output = $checked;
 	$display_output =~ s/\n//;
-	
+
 	# Check for segmentation fault or other runtime crashes
 	if ($exit_code != 0 || ($checked eq "" && $expected_output ne "")) {
 		print "not ok " . $count;
@@ -129,7 +154,7 @@ for my $i (1..$#ARGV) {
 		$count = $count + 1;
 		next;
 	}
-	
+
 	# Check if output starts with "ok" (generated by create_testdata.awk when test passes)
 	$result = index ($checked, "ok");
 

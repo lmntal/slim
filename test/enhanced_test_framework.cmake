@@ -60,7 +60,7 @@ function(add_lmntest_directory test_type test_dir)
         
         # Set test properties - VERBOSE/V will be inherited from environment
         set_tests_properties(${full_test_name} PROPERTIES
-            ENVIRONMENT "SLIM_BINARY=$<TARGET_FILE:slim>;LMNTAL_HOME=${LMNTAL_HOME};slim_CHECK_OPTIONS=${slim_CHECK_OPTIONS}"
+            ENVIRONMENT "SLIM_BINARY=$<TARGET_FILE:slim>;LMNTAL_HOME=${LMNTAL_HOME};slim_CHECK_OPTIONS=${slim_CHECK_OPTIONS};TEST_BUILD_DIR=${CMAKE_CURRENT_BINARY_DIR}/${test_dir}"
             TIMEOUT 30
             LABELS "${test_type};${test_suite};${test_case_name}"
         )
