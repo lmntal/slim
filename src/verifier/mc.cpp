@@ -207,7 +207,7 @@ static void mc_dump(LmnWorkerGroup *wp) {
   if (wp->workers_have_error())
     lmn_prof.found_err = TRUE;
 
-  if (lmn_env.trace_rule_name_only)
+  if (lmn_env.dump && lmn_env.trace_rule_name_only)
     Task::print_rule_apply_count();
 }
 
