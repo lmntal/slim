@@ -199,3 +199,4 @@ cd build && cmake .. -DCMAKE_VERBOSE_MAKEFILE=ON
 - Use dmalloc or valgrind for memory debugging during development
 - Non-deterministic tests are time-intensive - use slim_CHECK_ND=yes sparingly
 - CMake builds are out-of-source (build/ directory) - safe to delete anytime
+- 26 generated "computed 'neq(10.4000,10.4000)' matches expected ' yes. '".  Similar for #27, #42, #16.  Please examine them.
