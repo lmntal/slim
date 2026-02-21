@@ -1,0 +1,2 @@
+/usr/bin/ar qc liblmn_loader.a CMakeFiles/lmn_loader.dir/load.cpp.o CMakeFiles/lmn_loader.dir/il_parser.cpp.o CMakeFiles/lmn_loader.dir/il_lexer.cpp.o CMakeFiles/lmn_loader.dir/syntax.cpp.o CMakeFiles/lmn_loader.dir/byte_encoder.cpp.o CMakeFiles/lmn_loader.dir/translate.cpp.o CMakeFiles/lmn_loader.dir/translate_generated.cpp.o CMakeFiles/lmn_loader.dir/interpret_generated.cpp.o
+/usr/bin/ranlib liblmn_loader.a

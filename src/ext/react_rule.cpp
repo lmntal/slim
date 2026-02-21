@@ -116,7 +116,6 @@ void cb_react_ruleset_nd(LmnReactCxtRef &rc,
                          LmnAtomRef return_rule_mem_proxy, LmnLinkAttr return_rule_mem_proxy_link_attr,
                          LmnAtomRef react_judge_atom, LmnLinkAttr react_judge_link_attr)
 {
-  LmnMembraneRef rule_mem = LMN_PROXY_GET_MEM((LmnSymbolAtomRef)((LmnSymbolAtomRef)rule_mem_proxy)->get_link(0));
   LmnAtomRef in_mem = ((LmnSymbolAtomRef)graph_mem_proxy)->get_link(0);
   LmnMembraneRef graph_mem = LMN_PROXY_GET_MEM((LmnSymbolAtomRef)in_mem);
 
@@ -126,13 +125,16 @@ void cb_react_ruleset_nd(LmnReactCxtRef &rc,
   LmnSymbolAtomRef head = lmn_mem_newatom(mem, LMN_NIL_FUNCTOR);
   int pos = 0;
 
-  auto rulesets = &rule_mem->get_rulesets();
-  apply_rules_in_rulesets(mem, graph_mem, rulesets, &head, &pos);
+  if (LMN_IS_PROXY_FUNCTOR(((LmnSymbolAtomRef)rule_mem_proxy)->get_functor())) {
+    LmnMembraneRef rule_mem = LMN_PROXY_GET_MEM((LmnSymbolAtomRef)((LmnSymbolAtomRef)rule_mem_proxy)->get_link(0));
+    auto rulesets = &rule_mem->get_rulesets();
+    apply_rules_in_rulesets(mem, graph_mem, rulesets, &head, &pos);
 
 #ifdef USE_FIRSTCLASS_RULE
-  auto fstclass_rules = &rule_mem->get_firstclass_rulesets();
-  apply_rules_in_rulesets(mem, graph_mem, fstclass_rules, &head, &pos);
+    auto fstclass_rules = &rule_mem->get_firstclass_rulesets();
+    apply_rules_in_rulesets(mem, graph_mem, fstclass_rules, &head, &pos);
 #endif
+  }
 
   lmn_mem_newlink(mem, head, LMN_ATTR_MAKE_LINK(pos), pos,
                   react_judge_atom, react_judge_link_attr,

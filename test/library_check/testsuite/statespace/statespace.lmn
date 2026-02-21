@@ -25,6 +25,27 @@ tap_producer = {
     setup = { state_space.use. }.
 
     test_case = {
+      name = "react_nd_set with non-membrane rule arg (no segfault)".
+
+      // Passing [] (nil) instead of a membrane as Rule should return empty list,
+      // not crash with a segmentation fault (regression test for GitHub issue).
+      init = { ret = state_space.react_nd_set([], {a}, rules) }.
+
+      ruleset = {}.
+
+      stable = {
+        ret = [].
+      }.
+    }.
+
+    // ルールセットは等価性判定を行えないので削除
+    teardown = { state_space.use :- . rules({@p}) :- . }
+  }.
+
+  test_suite = {
+    setup = { state_space.use. }.
+
+    test_case = {
       name = "react_nd_set stable membrane test".
 
       init = {

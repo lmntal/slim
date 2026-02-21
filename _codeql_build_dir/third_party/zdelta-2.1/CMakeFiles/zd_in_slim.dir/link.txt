@@ -1,0 +1,2 @@
+/usr/bin/ar qc libzd_in_slim.a CMakeFiles/zd_in_slim.dir/deflate.c.o CMakeFiles/zd_in_slim.dir/infblock.c.o CMakeFiles/zd_in_slim.dir/infcodes.c.o CMakeFiles/zd_in_slim.dir/inffast.c.o CMakeFiles/zd_in_slim.dir/inflate.c.o CMakeFiles/zd_in_slim.dir/inftrees.c.o CMakeFiles/zd_in_slim.dir/infutil.c.o CMakeFiles/zd_in_slim.dir/adler32.c.o CMakeFiles/zd_in_slim.dir/trees.c.o CMakeFiles/zd_in_slim.dir/zd_mem.c.o CMakeFiles/zd_in_slim.dir/zdelta.c.o CMakeFiles/zd_in_slim.dir/zutil.c.o
+/usr/bin/ranlib libzd_in_slim.a

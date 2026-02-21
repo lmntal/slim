@@ -1,0 +1,2 @@
+/usr/bin/ar qc liblmn_ffi.a CMakeFiles/lmn_ffi.dir/jni_lmntal.cpp.o CMakeFiles/lmn_ffi.dir/lmntal_system_adapter.cpp.o
+/usr/bin/ranlib liblmn_ffi.a
