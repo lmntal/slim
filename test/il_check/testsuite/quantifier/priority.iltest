@@ -1,0 +1,98 @@
+// a,a,a,a,a,a,a.
+//            <4>a :- four. // high
+// (<^><2>a), <2>a :- two.  // normal
+//   (<^>a),    a :- one.  // low
+
+Compiled Ruleset @602
+Compiled Rule
+	--atommatch:
+	--memmatch:
+		spec           [1, 1]
+		jump           [L116, [0], [], []]
+	--guard:L116:
+		spec           [1, 1]
+		jump           [L117, [0], [], []]
+	--body:L117:
+		spec           [1, 8]
+		commit         ["_init", 0]
+		loadruleset    [0, @601]
+		newatom      [1, 0, 'a'_0]
+		newatom      [2, 0, 'a'_0]
+		newatom      [3, 0, 'a'_0]
+		newatom      [4, 0, 'a'_0]
+		newatom      [5, 0, 'a'_0]
+		newatom      [6, 0, 'a'_0]
+		newatom      [7, 0, 'a'_0]
+		proceed        []
+
+
+Compiled Ruleset @601
+Compiled Rule
+	--atommatch:
+	--memmatch:
+		spec           [1, 6]
+		findatom       [1, 0, 'a'_0]
+		findatom       [2, 0, 'a'_0]
+		neqatom        [2, 1]
+		findatom       [3, 0, 'a'_0]
+		neqatom        [3, 1]
+		neqatom        [3, 2]
+		findatom       [4, 0, 'a'_0]
+		neqatom        [4, 1]
+		neqatom        [4, 2]
+		neqatom        [4, 3]
+		commit         ["_aaaa", 0]
+		removeatom     [1, 0]
+		removeatom     [2, 0]
+		removeatom     [3, 0]
+		removeatom     [4, 0]
+		newatom        [5, 0, 'four'_0]
+		freeatom       [1]
+		freeatom       [2]
+		freeatom       [3]
+		freeatom       [4]
+		proceed        []
+
+Compiled Rule
+	--atommatch:
+	--memmatch:
+		spec           [1, 6]
+		findatom       [1, 0, 'a'_0]
+		findatom       [2, 0, 'a'_0]
+		neqatom        [2, 1]
+        not            [[
+            findatom       [3, 0, 'a'_0]
+		    neqatom        [3, 1]
+		    neqatom        [3, 2]
+            findatom       [4, 0, 'a'_0]
+		    neqatom        [4, 1]
+		    neqatom        [4, 2]
+		    neqatom        [4, 3]
+            proceed        []
+        ]]
+		commit         ["_aatw", 0]
+		removeatom     [1, 0]
+		removeatom     [2, 0]
+		newatom        [5, 0, 'two'_0]
+		freeatom       [1]
+		freeatom       [2]
+		proceed        []
+
+Compiled Rule
+	--atommatch:
+	--memmatch:
+		spec           [1, 4]
+		findatom       [1, 0, 'a'_0]
+        not            [[
+		    findatom       [2, 0, 'a'_0]
+		    neqatom        [2, 1]
+            proceed        []
+        ]]
+		commit         ["_aone", 0]
+		removeatom     [1, 0]
+		newatom        [3, 0, 'one'_0]
+		freeatom       [1]
+		proceed        []
+
+%%EXPECT%%
+four. two. one.

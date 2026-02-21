@@ -1,0 +1,79 @@
+// token,{a},{a}.
+// token,<0,2>({a,$p},<0,1>{a,$q}),<^>{$r} :- <0,2>({b,$p},<0,1>{c,$q}).
+
+Compiled Ruleset @602
+Compiled Rule
+	--atommatch:
+	--memmatch:
+		spec           [1, 1]
+		jump           [L106, [0], [], []]
+	--guard:L106:
+		spec           [1, 1]
+		jump           [L107, [0], [], []]
+	--body:L107:
+		spec           [1, 6]
+		commit         ["_init", 0]
+		newmem       [1, 0, 0]
+		newmem       [2, 0, 0]
+		loadruleset    [0, @601]
+		newatom      [3, 1, 'a'_0]
+		newatom      [4, 2, 'a'_0]
+		newatom      [5, 0, 'token'_0]
+		proceed        []
+
+
+Compiled Ruleset @601
+Compiled Rule
+	--atommatch:
+	--memmatch:
+		spec           [1, 13]
+		findatom       [1, 0, 'token'_0]
+		branch         [[
+			anymem         [2, 0, 0, null]
+			norules        [2]
+			findatom       [3, 2, 'a'_0]
+			branch         [[
+				anymem         [4, 0, 0, null]
+				neqmem         [4, 2]
+				norules        [4]
+				findatom       [5, 4, 'a'_0]
+				pushmap        [6, [4, 5]]
+            	failreturn     []
+			]]
+			pickmaps       [7, 6, 1]
+			pushmap        [8, [2, 3, 7]]
+            failreturn     []
+		]]
+		pickmaps       [9, 8, 2]
+		not            [[
+			anymem         [12, 0, 0, null]
+			mapneqmem      [12, [9, 2]]
+			mapneqmem      [12, [9, 7, 4]]
+			proceed        []
+		]]
+		commit         ["test", 0]
+		removeatom     [1, 0]
+		loop           [[
+			popmap         [9]
+			removeatom     [3, 2]
+			newatom        [10, 2, 'b'_0]
+			removeproxies  [2]
+			enqueuemem     [2]
+			insertproxies  [0, 2]
+			loop           [[
+				popmap         [7]
+				removeatom     [5, 4]
+				newatom        [11, 4, 'c'_0]
+				removeproxies  [4]
+				enqueuemem     [4]
+				insertproxies  [0, 4]
+				proceed        []
+			]]
+			proceed        []
+		]]
+		freeatom       [1]
+		proceed        []
+
+%%EXPECT%%
+3
+2

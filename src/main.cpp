@@ -143,7 +143,7 @@ static void usage(void) {
       "  --run-test           Run CUnit\n"
       "  --version            Prints version and exits.\n"
       "  --help               This Help.\n");
-  exit(1);
+  exit(0);
 }
 
 void ver_print_with_esc_code(FILE *f, char *str, int color) {
@@ -284,7 +284,7 @@ static void parse_options(int *optid, int argc, char *argv[]) {
     case 'v':
     case 1000:
       slim_version(stdout);
-      exit(1);
+      exit(0);
       break;
     case 'h':
     case 1001: /* help */ /* FALLTHROUGH */

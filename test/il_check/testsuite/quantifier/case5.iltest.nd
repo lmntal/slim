@@ -1,0 +1,47 @@
+// token,a,a,a.
+// token,<0,3>a :- <0,3>b.
+
+Compiled Ruleset @602
+Compiled Rule
+	--atommatch:
+	--memmatch:
+		spec           [1, 1]
+		jump           [L106, [0], [], []]
+	--guard:L106:
+		spec           [1, 1]
+		jump           [L107, [0], [], []]
+	--body:L107:
+		spec           [1, 5]
+		commit         ["_init", 0]
+		loadruleset    [0, @601]
+		newatom        [1, 0, 'token'_0]
+		newatom        [2, 0, 'a'_0]
+		newatom        [3, 0, 'a'_0]
+		newatom        [4, 0, 'a'_0]
+		proceed        []
+
+Compiled Ruleset @601
+Compiled Rule
+	--atommatch:
+	--memmatch:
+        spec           [1, 6]
+        findatom       [1, 0, 'token'_0]
+        branch         [[
+            findatom       [2, 0, 'a'_0]
+            pushmap        [3, [2]]
+            failreturn     []
+        ]]
+        pickmaps           [4, 3, 3]
+        commit         ["test", 0]
+        removeatom     [1, 0]
+        loop           [[
+            popmap         [4]
+            removeatom     [2, 0]
+            newatom        [5, 0, 'b'_0]
+            proceed        []
+        ]]
+        proceed        []
+
+%%EXPECT%%
+5
+4
