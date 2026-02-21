@@ -89,6 +89,7 @@ public:
   static void react_start_rulesets(LmnMembraneRef mem, Vector *rulesets);
   static BOOL react_all_rulesets(LmnReactCxtRef rc, LmnMembraneRef cur_mem);
   static struct Vector user_system_rulesets; /* system ruleset defined by user */ //ユーザーが書く部分となるとpublicにしておかざるを得ない
+  static void print_rule_apply_count();
   static HashSet *insertconnectors(slim::vm::RuleContext *rc, LmnMembraneRef mem,
                             const Vector *links);
 

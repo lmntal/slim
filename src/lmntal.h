@@ -228,6 +228,7 @@ enum OptimizeMode { OPT_NONE, OPT_MINIMIZE, OPT_MAXIMIZE };
 
 struct LmnEnv {
   BOOL trace;
+  BOOL trace_rule_name_only;
   BOOL show_proxy;
   BOOL show_ruleset;
   BOOL show_chr;

@@ -136,6 +136,7 @@ void lmn_stream_destroy() {
 /* lmn_env構造体の初期化 */
 LmnEnv::LmnEnv() {
   trace = FALSE;
+  this->trace_rule_name_only = FALSE;
   this->show_proxy = FALSE;
   this->show_chr = FALSE;
   this->show_ruleset = TRUE;
