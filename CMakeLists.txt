@@ -173,17 +173,28 @@ if(ENABLE_FIRSTCLASS_RULE)
     add_definitions(-DUSE_FIRSTCLASS_RULE=1)
 endif()
 
-# Get Git commit hash
+# Get Git commit hash (8 chars). Falls back to line 2 of ${CMAKE_SOURCE_DIR}/VERSION
+# which CI pre-populates with the hash before running cmake.
 execute_process(
-    COMMAND git show -s --format=%h
+    COMMAND git rev-parse --short=8 HEAD
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     OUTPUT_VARIABLE GIT_COMMIT_ID
     OUTPUT_STRIP_TRAILING_WHITESPACE
     ERROR_QUIET
+    RESULT_VARIABLE GIT_RESULT
 )
-if(NOT GIT_COMMIT_ID)
-    set(GIT_COMMIT_ID "unknown")
+if(NOT (GIT_RESULT EQUAL 0 AND GIT_COMMIT_ID))
+    if(EXISTS ${CMAKE_SOURCE_DIR}/VERSION)
+        file(READ ${CMAKE_SOURCE_DIR}/VERSION _version_contents)
+        string(REGEX MATCH "^[^\n]+\n([^\n]+)" _match "${_version_contents}")
+        set(GIT_COMMIT_ID "${CMAKE_MATCH_1}")
+        string(STRIP "${GIT_COMMIT_ID}" GIT_COMMIT_ID)
+    endif()
+    if(NOT GIT_COMMIT_ID)
+        set(GIT_COMMIT_ID "unknown")
+    endif()
 endif()
+file(WRITE ${CMAKE_BINARY_DIR}/COMMIT_HASH "${GIT_COMMIT_ID}\n")
 
 # Generate config header
 configure_file(
