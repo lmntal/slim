@@ -273,6 +273,15 @@ enum LmnInstruction {
 
   INSTR_PRINTINSTR,
 
+  /* QLMNtal */
+  INSTR_PUSHMAP,
+  INSTR_PICKMAPS,
+  INSTR_POPMAP,
+  INSTR_MAPNEQATOM,
+  INSTR_MAPNEQMEM,
+  INSTR_ANYATOM,
+  INSTR_EQMAPS,
+
   NUM_INSTRS // this must be the last
 };
 

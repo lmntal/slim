@@ -1,0 +1,63 @@
+// token,{a,b,b},{a,b},{a}.
+// token,<*>{a,b,$p1},<^>{b,$p2} :- <*>{a,b,$p1},{b,$p2},ok.
+
+Compiled Ruleset @602
+Compiled Rule
+	--atommatch:
+	--memmatch:
+		spec           [1, 1]
+		jump           [L106, [0], [], []]
+	--guard:L106:
+		spec           [1, 1]
+		jump           [L107, [0], [], []]
+	--body:L107:
+		spec           [1, 11]
+		commit         ["_init", 0]
+		newmem       [1, 0, 0]
+		newmem       [2, 0, 0]
+		newmem       [3, 0, 0]
+		loadruleset    [0, @601]
+		newatom      [4, 1, 'a'_0]
+		newatom      [5, 1, 'b'_0]
+		newatom      [6, 1, 'b'_0]
+		newatom      [7, 2, 'a'_0]
+		newatom      [8, 2, 'b'_0]
+		newatom      [9, 3, 'a'_0]
+		newatom      [10, 0, 'token'_0] // for 1 step
+		proceed        []
+
+
+Compiled Ruleset @601
+Compiled Rule
+	--atommatch:
+	--memmatch:
+		spec         [1, 13]
+		findatom     [1, 0, 'token'_0] // for 1 step
+		branch       [[
+			anymem       [2, 0, 0, null]
+			findatom     [3, 2, 'a'_0]
+			findatom     [4, 2, 'b'_0]
+			pushmap      [5, [2, 3, 4]]
+            failreturn   []
+		]]
+		pickmaps     [6, 5, -1]
+		not          [[
+			anymem       [7, 0, 0, null]
+			mapneqmem    [7, [6, 2]]
+			findatom     [8, 7, 'a'_0]
+			findatom     [9, 7, 'b'_0]
+			proceed      []
+		]]
+		not          [[
+			anymem       [10, 0, 0, null]
+			mapneqmem    [10, [6, 2]]
+			findatom     [11, 10, 'b'_0]
+			proceed      []
+		]]
+		commit       ["test", 0]
+		removeatom   [1, 0] // for 1 step
+		newatom      [12, 0, 'ok'_0]
+		proceed      []
+
+%%EXPECT%%
+ok. {a. }, {a. b. }, {a. b. b. }
