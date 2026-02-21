@@ -1,6 +1,6 @@
 name: C/C++ CI
 
-on: 
+on:
   push:
   workflow_dispatch:
 
@@ -33,14 +33,20 @@ jobs:
       CXX: ${{ matrix.cxx }}
       LMNTAL_HOME: ${{ github.workspace }}/lmntal-compiler
     steps:
-    - uses: actions/checkout@v4
-    - run: sudo apt -qq update
-    - run: sudo apt install -y ant re2c cmake build-essential bison ruby
-    - run: git clone https://github.com/lmntal/lmntal-compiler.git
-    - run: cd lmntal-compiler && ant && cd ..
-    - name: Write commit hash to VERSION
-      run: |
-        LINE1=$(head -1 VERSION)
-        printf '%s\n%s\n' "$LINE1" "${GITHUB_SHA:0:8}" > VERSION
-    - run: ./build-cmake.sh
-    - run: ./run-tests.sh --output-on-failure
+      - uses: actions/checkout@v4
+      - run: sudo apt -qq update
+      - run: sudo apt install -y ant re2c cmake build-essential bison ruby
+      - run: git clone https://github.com/lmntal/lmntal-compiler.git
+      - run: cd lmntal-compiler && ant && cd ..
+      - name: Write commit hash to VERSION
+        run: |
+          LINE1=$(head -1 VERSION)
+          printf '%s\n%s\n' "$LINE1" "${GITHUB_SHA:0:8}" > VERSION
+      - name: Commit and Push changes
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add VERSION
+          git diff --quiet && git diff --staged --quiet || (git commit -m "chore: update VERSION hash [skip ci]" && git push)
+      - run: ./build-cmake.sh
+      - run: ./run-tests.sh --output-on-failure
