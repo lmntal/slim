@@ -1,0 +1,74 @@
+// a,a,a,a,a,a,a,a.
+// <+>(a,a) :- <+>a.
+
+Compiled Ruleset @602
+Compiled Rule
+	--atommatch:
+	--memmatch:
+		spec           [1, 1]
+		jump           [L106, [0], [], []]
+	--guard:L106:
+		spec           [1, 1]
+		jump           [L107, [0], [], []]
+	--body:L107:
+		spec           [1, 9]
+		commit         ["_init", 0]
+		loadruleset    [0, @601]
+		newatom      [1, 0, 'a'_0]
+		newatom      [2, 0, 'a'_0]
+		newatom      [3, 0, 'a'_0]
+		newatom      [4, 0, 'a'_0]
+		newatom      [5, 0, 'a'_0]
+		newatom      [6, 0, 'a'_0]
+		newatom      [7, 0, 'a'_0]
+		newatom      [8, 0, 'a'_0]
+		proceed        []
+
+
+Compiled Ruleset @601
+Compiled Rule
+	--atommatch:
+	--memmatch:
+		spec           [1, 9]
+		findatom       [1, 0, 'a'_0]
+		findatom       [2, 0, 'a'_0]
+		neqatom        [2, 1]
+        branch         [[
+            findatom       [3, 0, 'a'_0]
+            neqatom        [3, 1]
+            neqatom        [3, 2]
+            findatom       [4, 0, 'a'_0]
+            neqatom        [4, 1]
+            neqatom        [4, 2]
+            neqatom        [4, 3]
+            pushmap        [5, [3, 4]]
+            failreturn     []
+        ]]
+        pickmaps       [6, 5, -1]
+        not            [[
+            findatom       [7, 0, 'a'_0]
+            neqatom        [7, 1]
+            neqatom        [7, 2]
+            mapneqatom     [7, [6, 3]]
+            mapneqatom     [7, [6, 4]]
+            findatom       [8, 0, 'a'_0]
+            neqatom        [8, 1]
+            neqatom        [8, 2]
+            mapneqatom     [8, [6, 3]]
+            mapneqatom     [8, [6, 4]]
+            neqatom        [8, 7]
+            proceed        []
+        ]]
+		commit         ["_aaaa", 0]
+		removeatom     [2, 0]
+		freeatom       [2]
+        loop           [[
+            popmap         [6]
+		    removeatom     [4, 0]
+		    freeatom       [4]
+            proceed        []
+        ]]
+		proceed        []
+
+%%EXPECT%%
+a.

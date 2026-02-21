@@ -1,0 +1,3150 @@
+Running tests from /home/ueda/slim/build...
+UpdateCTestConfiguration  from :/home/ueda/slim/build/DartConfiguration.tcl
+UpdateCTestConfiguration  from :/home/ueda/slim/build/DartConfiguration.tcl
+Test project /home/ueda/slim/build
+Constructing a list of tests
+Done constructing a list of tests
+Updating test list for fixtures
+Added 0 tests to meet fixture requirements
+Checking test dependency graph...
+Checking test dependency graph end
+test 1
+        Start   1: system_append_append1
+
+1: Test command: /home/ueda/slim/build/test/system_check/append_append1_run.sh
+1: Working Directory: /home/ueda/slim/test/system_check
+1: Environment variables: 
+1:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+1:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+1:  slim_CHECK_OPTIONS=
+1: Test timeout computed to be: 30
+1: 1..0
+  1/232 Test   #1: system_append_append1 ..............   Passed    0.01 sec
+test 2
+        Start   2: system_append_append2
+
+2: Test command: /home/ueda/slim/build/test/system_check/append_append2_run.sh
+2: Working Directory: /home/ueda/slim/test/system_check
+2: Environment variables: 
+2:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+2:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+2:  slim_CHECK_OPTIONS=
+2: Test timeout computed to be: 30
+2: 1..0
+  2/232 Test   #2: system_append_append2 ..............   Passed    0.01 sec
+test 3
+        Start   3: system_append_append3
+
+3: Test command: /home/ueda/slim/build/test/system_check/append_append3_run.sh
+3: Working Directory: /home/ueda/slim/test/system_check
+3: Environment variables: 
+3:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+3:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+3:  slim_CHECK_OPTIONS=
+3: Test timeout computed to be: 30
+3: 1..0
+  3/232 Test   #3: system_append_append3 ..............   Passed    0.01 sec
+test 4
+        Start   4: system_append_append4
+
+4: Test command: /home/ueda/slim/build/test/system_check/append_append4_run.sh
+4: Working Directory: /home/ueda/slim/test/system_check
+4: Environment variables: 
+4:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+4:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+4:  slim_CHECK_OPTIONS=
+4: Test timeout computed to be: 30
+4: 1..0
+  4/232 Test   #4: system_append_append4 ..............   Passed    0.01 sec
+test 5
+        Start   5: system_basic_basic1
+
+5: Test command: /home/ueda/slim/build/test/system_check/basic_basic1_run.sh
+5: Working Directory: /home/ueda/slim/test/system_check
+5: Environment variables: 
+5:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+5:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+5:  slim_CHECK_OPTIONS=
+5: Test timeout computed to be: 30
+5: 1..0
+  5/232 Test   #5: system_basic_basic1 ................   Passed    0.01 sec
+test 6
+        Start   6: system_basic_basic2
+
+6: Test command: /home/ueda/slim/build/test/system_check/basic_basic2_run.sh
+6: Working Directory: /home/ueda/slim/test/system_check
+6: Environment variables: 
+6:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+6:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+6:  slim_CHECK_OPTIONS=
+6: Test timeout computed to be: 30
+6: 1..0
+  6/232 Test   #6: system_basic_basic2 ................   Passed    0.01 sec
+test 7
+        Start   7: system_basic_basic3
+
+7: Test command: /home/ueda/slim/build/test/system_check/basic_basic3_run.sh
+7: Working Directory: /home/ueda/slim/test/system_check
+7: Environment variables: 
+7:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+7:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+7:  slim_CHECK_OPTIONS=
+7: Test timeout computed to be: 30
+7: 1..0
+  7/232 Test   #7: system_basic_basic3 ................   Passed    0.01 sec
+test 8
+        Start   8: system_basic_basic4
+
+8: Test command: /home/ueda/slim/build/test/system_check/basic_basic4_run.sh
+8: Working Directory: /home/ueda/slim/test/system_check
+8: Environment variables: 
+8:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+8:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+8:  slim_CHECK_OPTIONS=
+8: Test timeout computed to be: 30
+8: 1..0
+  8/232 Test   #8: system_basic_basic4 ................   Passed    0.01 sec
+test 9
+        Start   9: system_basic_basic5
+
+9: Test command: /home/ueda/slim/build/test/system_check/basic_basic5_run.sh
+9: Working Directory: /home/ueda/slim/test/system_check
+9: Environment variables: 
+9:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+9:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+9:  slim_CHECK_OPTIONS=
+9: Test timeout computed to be: 30
+9: 1..0
+  9/232 Test   #9: system_basic_basic5 ................   Passed    0.01 sec
+test 10
+        Start  10: system_count_case1
+
+10: Test command: /home/ueda/slim/build/test/system_check/count_case1_run.sh
+10: Working Directory: /home/ueda/slim/test/system_check
+10: Environment variables: 
+10:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+10:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+10:  slim_CHECK_OPTIONS=
+10: Test timeout computed to be: 30
+10: 1..0
+ 10/232 Test  #10: system_count_case1 .................   Passed    0.01 sec
+test 11
+        Start  11: system_count_case2
+
+11: Test command: /home/ueda/slim/build/test/system_check/count_case2_run.sh
+11: Working Directory: /home/ueda/slim/test/system_check
+11: Environment variables: 
+11:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+11:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+11:  slim_CHECK_OPTIONS=
+11: Test timeout computed to be: 30
+11: 1..0
+ 11/232 Test  #11: system_count_case2 .................   Passed    0.01 sec
+test 12
+        Start  12: system_count_case3
+
+12: Test command: /home/ueda/slim/build/test/system_check/count_case3_run.sh
+12: Working Directory: /home/ueda/slim/test/system_check
+12: Environment variables: 
+12:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+12:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+12:  slim_CHECK_OPTIONS=
+12: Test timeout computed to be: 30
+12: 1..0
+ 12/232 Test  #12: system_count_case3 .................   Passed    0.01 sec
+test 13
+        Start  13: system_cslmntal_context_add
+
+13: Test command: /home/ueda/slim/build/test/system_check/cslmntal_context_add_run.sh
+13: Working Directory: /home/ueda/slim/test/system_check
+13: Environment variables: 
+13:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+13:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+13:  slim_CHECK_OPTIONS=
+13: Test timeout computed to be: 30
+13: 1..0
+ 13/232 Test  #13: system_cslmntal_context_add ........   Passed    0.01 sec
+test 14
+        Start  14: system_cslmntal_isbinarytree
+
+14: Test command: /home/ueda/slim/build/test/system_check/cslmntal_isbinarytree_run.sh
+14: Working Directory: /home/ueda/slim/test/system_check
+14: Environment variables: 
+14:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+14:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+14:  slim_CHECK_OPTIONS=
+14: Test timeout computed to be: 30
+14: 1..0
+ 14/232 Test  #14: system_cslmntal_isbinarytree .......   Passed    0.01 sec
+test 15
+        Start  15: system_cslmntal_list_rmend
+
+15: Test command: /home/ueda/slim/build/test/system_check/cslmntal_list_rmend_run.sh
+15: Working Directory: /home/ueda/slim/test/system_check
+15: Environment variables: 
+15:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+15:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+15:  slim_CHECK_OPTIONS=
+15: Test timeout computed to be: 30
+15: 1..0
+ 15/232 Test  #15: system_cslmntal_list_rmend .........   Passed    0.01 sec
+test 16
+        Start  16: system_cslmntal_list_rmhead
+
+16: Test command: /home/ueda/slim/build/test/system_check/cslmntal_list_rmhead_run.sh
+16: Working Directory: /home/ueda/slim/test/system_check
+16: Environment variables: 
+16:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+16:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+16:  slim_CHECK_OPTIONS=
+16: Test timeout computed to be: 30
+16: 1..0
+ 16/232 Test  #16: system_cslmntal_list_rmhead ........   Passed    0.01 sec
+test 17
+        Start  17: system_cslmntal_list_sort
+
+17: Test command: /home/ueda/slim/build/test/system_check/cslmntal_list_sort_run.sh
+17: Working Directory: /home/ueda/slim/test/system_check
+17: Environment variables: 
+17:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+17:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+17:  slim_CHECK_OPTIONS=
+17: Test timeout computed to be: 30
+17: 1..0
+ 17/232 Test  #17: system_cslmntal_list_sort ..........   Passed    0.01 sec
+test 18
+        Start  18: system_cslmntal_skiplist1
+
+18: Test command: /home/ueda/slim/build/test/system_check/cslmntal_skiplist1_run.sh
+18: Working Directory: /home/ueda/slim/test/system_check
+18: Environment variables: 
+18:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+18:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+18:  slim_CHECK_OPTIONS=
+18: Test timeout computed to be: 30
+18: 1..0
+ 18/232 Test  #18: system_cslmntal_skiplist1 ..........   Passed    0.01 sec
+test 19
+        Start  19: system_cslmntal_skiplist2
+
+19: Test command: /home/ueda/slim/build/test/system_check/cslmntal_skiplist2_run.sh
+19: Working Directory: /home/ueda/slim/test/system_check
+19: Environment variables: 
+19:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+19:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+19:  slim_CHECK_OPTIONS=
+19: Test timeout computed to be: 30
+19: 1..0
+ 19/232 Test  #19: system_cslmntal_skiplist2 ..........   Passed    0.01 sec
+test 20
+        Start  20: system_cslmntal_skiplist3
+
+20: Test command: /home/ueda/slim/build/test/system_check/cslmntal_skiplist3_run.sh
+20: Working Directory: /home/ueda/slim/test/system_check
+20: Environment variables: 
+20:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+20:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+20:  slim_CHECK_OPTIONS=
+20: Test timeout computed to be: 30
+20: 1..0
+ 20/232 Test  #20: system_cslmntal_skiplist3 ..........   Passed    0.01 sec
+test 21
+        Start  21: system_guard_float_case1
+
+21: Test command: /home/ueda/slim/build/test/system_check/guard_float_case1_run.sh
+21: Working Directory: /home/ueda/slim/test/system_check
+21: Environment variables: 
+21:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+21:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+21:  slim_CHECK_OPTIONS=
+21: Test timeout computed to be: 30
+21: 1..0
+ 21/232 Test  #21: system_guard_float_case1 ...........   Passed    0.02 sec
+test 22
+        Start  22: system_guard_float_case10
+
+22: Test command: /home/ueda/slim/build/test/system_check/guard_float_case10_run.sh
+22: Working Directory: /home/ueda/slim/test/system_check
+22: Environment variables: 
+22:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+22:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+22:  slim_CHECK_OPTIONS=
+22: Test timeout computed to be: 30
+22: 1..0
+ 22/232 Test  #22: system_guard_float_case10 ..........   Passed    0.01 sec
+test 23
+        Start  23: system_guard_float_case11
+
+23: Test command: /home/ueda/slim/build/test/system_check/guard_float_case11_run.sh
+23: Working Directory: /home/ueda/slim/test/system_check
+23: Environment variables: 
+23:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+23:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+23:  slim_CHECK_OPTIONS=
+23: Test timeout computed to be: 30
+23: 1..0
+ 23/232 Test  #23: system_guard_float_case11 ..........   Passed    0.01 sec
+test 24
+        Start  24: system_guard_float_case12
+
+24: Test command: /home/ueda/slim/build/test/system_check/guard_float_case12_run.sh
+24: Working Directory: /home/ueda/slim/test/system_check
+24: Environment variables: 
+24:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+24:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+24:  slim_CHECK_OPTIONS=
+24: Test timeout computed to be: 30
+24: 1..0
+ 24/232 Test  #24: system_guard_float_case12 ..........   Passed    0.01 sec
+test 25
+        Start  25: system_guard_float_case13
+
+25: Test command: /home/ueda/slim/build/test/system_check/guard_float_case13_run.sh
+25: Working Directory: /home/ueda/slim/test/system_check
+25: Environment variables: 
+25:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+25:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+25:  slim_CHECK_OPTIONS=
+25: Test timeout computed to be: 30
+25: 1..0
+ 25/232 Test  #25: system_guard_float_case13 ..........   Passed    0.01 sec
+test 26
+        Start  26: system_guard_float_case14
+
+26: Test command: /home/ueda/slim/build/test/system_check/guard_float_case14_run.sh
+26: Working Directory: /home/ueda/slim/test/system_check
+26: Environment variables: 
+26:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+26:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+26:  slim_CHECK_OPTIONS=
+26: Test timeout computed to be: 30
+26: 1..0
+ 26/232 Test  #26: system_guard_float_case14 ..........   Passed    0.01 sec
+test 27
+        Start  27: system_guard_float_case15
+
+27: Test command: /home/ueda/slim/build/test/system_check/guard_float_case15_run.sh
+27: Working Directory: /home/ueda/slim/test/system_check
+27: Environment variables: 
+27:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+27:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+27:  slim_CHECK_OPTIONS=
+27: Test timeout computed to be: 30
+27: 1..0
+ 27/232 Test  #27: system_guard_float_case15 ..........   Passed    0.01 sec
+test 28
+        Start  28: system_guard_float_case2
+
+28: Test command: /home/ueda/slim/build/test/system_check/guard_float_case2_run.sh
+28: Working Directory: /home/ueda/slim/test/system_check
+28: Environment variables: 
+28:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+28:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+28:  slim_CHECK_OPTIONS=
+28: Test timeout computed to be: 30
+28: 1..0
+ 28/232 Test  #28: system_guard_float_case2 ...........   Passed    0.01 sec
+test 29
+        Start  29: system_guard_float_case3
+
+29: Test command: /home/ueda/slim/build/test/system_check/guard_float_case3_run.sh
+29: Working Directory: /home/ueda/slim/test/system_check
+29: Environment variables: 
+29:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+29:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+29:  slim_CHECK_OPTIONS=
+29: Test timeout computed to be: 30
+29: 1..0
+ 29/232 Test  #29: system_guard_float_case3 ...........   Passed    0.01 sec
+test 30
+        Start  30: system_guard_float_case4
+
+30: Test command: /home/ueda/slim/build/test/system_check/guard_float_case4_run.sh
+30: Working Directory: /home/ueda/slim/test/system_check
+30: Environment variables: 
+30:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+30:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+30:  slim_CHECK_OPTIONS=
+30: Test timeout computed to be: 30
+30: 1..0
+ 30/232 Test  #30: system_guard_float_case4 ...........   Passed    0.01 sec
+test 31
+        Start  31: system_guard_float_case5
+
+31: Test command: /home/ueda/slim/build/test/system_check/guard_float_case5_run.sh
+31: Working Directory: /home/ueda/slim/test/system_check
+31: Environment variables: 
+31:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+31:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+31:  slim_CHECK_OPTIONS=
+31: Test timeout computed to be: 30
+31: 1..0
+ 31/232 Test  #31: system_guard_float_case5 ...........   Passed    0.01 sec
+test 32
+        Start  32: system_guard_float_case6
+
+32: Test command: /home/ueda/slim/build/test/system_check/guard_float_case6_run.sh
+32: Working Directory: /home/ueda/slim/test/system_check
+32: Environment variables: 
+32:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+32:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+32:  slim_CHECK_OPTIONS=
+32: Test timeout computed to be: 30
+32: 1..0
+ 32/232 Test  #32: system_guard_float_case6 ...........   Passed    0.01 sec
+test 33
+        Start  33: system_guard_float_case7
+
+33: Test command: /home/ueda/slim/build/test/system_check/guard_float_case7_run.sh
+33: Working Directory: /home/ueda/slim/test/system_check
+33: Environment variables: 
+33:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+33:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+33:  slim_CHECK_OPTIONS=
+33: Test timeout computed to be: 30
+33: 1..0
+ 33/232 Test  #33: system_guard_float_case7 ...........   Passed    0.01 sec
+test 34
+        Start  34: system_guard_float_case8
+
+34: Test command: /home/ueda/slim/build/test/system_check/guard_float_case8_run.sh
+34: Working Directory: /home/ueda/slim/test/system_check
+34: Environment variables: 
+34:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+34:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+34:  slim_CHECK_OPTIONS=
+34: Test timeout computed to be: 30
+34: 1..0
+ 34/232 Test  #34: system_guard_float_case8 ...........   Passed    0.01 sec
+test 35
+        Start  35: system_guard_float_case9
+
+35: Test command: /home/ueda/slim/build/test/system_check/guard_float_case9_run.sh
+35: Working Directory: /home/ueda/slim/test/system_check
+35: Environment variables: 
+35:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+35:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+35:  slim_CHECK_OPTIONS=
+35: Test timeout computed to be: 30
+35: 1..0
+ 35/232 Test  #35: system_guard_float_case9 ...........   Passed    0.01 sec
+test 36
+        Start  36: system_guard_ground_case1
+
+36: Test command: /home/ueda/slim/build/test/system_check/guard_ground_case1_run.sh
+36: Working Directory: /home/ueda/slim/test/system_check
+36: Environment variables: 
+36:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+36:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+36:  slim_CHECK_OPTIONS=
+36: Test timeout computed to be: 30
+36: 1..0
+ 36/232 Test  #36: system_guard_ground_case1 ..........   Passed    0.01 sec
+test 37
+        Start  37: system_guard_ground_case10
+
+37: Test command: /home/ueda/slim/build/test/system_check/guard_ground_case10_run.sh
+37: Working Directory: /home/ueda/slim/test/system_check
+37: Environment variables: 
+37:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+37:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+37:  slim_CHECK_OPTIONS=
+37: Test timeout computed to be: 30
+37: 1..0
+ 37/232 Test  #37: system_guard_ground_case10 .........   Passed    0.01 sec
+test 38
+        Start  38: system_guard_ground_case11
+
+38: Test command: /home/ueda/slim/build/test/system_check/guard_ground_case11_run.sh
+38: Working Directory: /home/ueda/slim/test/system_check
+38: Environment variables: 
+38:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+38:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+38:  slim_CHECK_OPTIONS=
+38: Test timeout computed to be: 30
+38: 1..0
+ 38/232 Test  #38: system_guard_ground_case11 .........   Passed    0.01 sec
+test 39
+        Start  39: system_guard_ground_case12
+
+39: Test command: /home/ueda/slim/build/test/system_check/guard_ground_case12_run.sh
+39: Working Directory: /home/ueda/slim/test/system_check
+39: Environment variables: 
+39:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+39:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+39:  slim_CHECK_OPTIONS=
+39: Test timeout computed to be: 30
+39: 1..0
+ 39/232 Test  #39: system_guard_ground_case12 .........   Passed    0.01 sec
+test 40
+        Start  40: system_guard_ground_case13
+
+40: Test command: /home/ueda/slim/build/test/system_check/guard_ground_case13_run.sh
+40: Working Directory: /home/ueda/slim/test/system_check
+40: Environment variables: 
+40:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+40:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+40:  slim_CHECK_OPTIONS=
+40: Test timeout computed to be: 30
+40: 1..0
+ 40/232 Test  #40: system_guard_ground_case13 .........   Passed    0.01 sec
+test 41
+        Start  41: system_guard_ground_case14
+
+41: Test command: /home/ueda/slim/build/test/system_check/guard_ground_case14_run.sh
+41: Working Directory: /home/ueda/slim/test/system_check
+41: Environment variables: 
+41:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+41:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+41:  slim_CHECK_OPTIONS=
+41: Test timeout computed to be: 30
+41: 1..0
+ 41/232 Test  #41: system_guard_ground_case14 .........   Passed    0.01 sec
+test 42
+        Start  42: system_guard_ground_case15
+
+42: Test command: /home/ueda/slim/build/test/system_check/guard_ground_case15_run.sh
+42: Working Directory: /home/ueda/slim/test/system_check
+42: Environment variables: 
+42:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+42:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+42:  slim_CHECK_OPTIONS=
+42: Test timeout computed to be: 30
+42: 1..0
+ 42/232 Test  #42: system_guard_ground_case15 .........   Passed    0.01 sec
+test 43
+        Start  43: system_guard_ground_case16
+
+43: Test command: /home/ueda/slim/build/test/system_check/guard_ground_case16_run.sh
+43: Working Directory: /home/ueda/slim/test/system_check
+43: Environment variables: 
+43:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+43:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+43:  slim_CHECK_OPTIONS=
+43: Test timeout computed to be: 30
+43: 1..0
+ 43/232 Test  #43: system_guard_ground_case16 .........   Passed    0.01 sec
+test 44
+        Start  44: system_guard_ground_case17
+
+44: Test command: /home/ueda/slim/build/test/system_check/guard_ground_case17_run.sh
+44: Working Directory: /home/ueda/slim/test/system_check
+44: Environment variables: 
+44:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+44:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+44:  slim_CHECK_OPTIONS=
+44: Test timeout computed to be: 30
+44: 1..0
+ 44/232 Test  #44: system_guard_ground_case17 .........   Passed    0.02 sec
+test 45
+        Start  45: system_guard_ground_case18
+
+45: Test command: /home/ueda/slim/build/test/system_check/guard_ground_case18_run.sh
+45: Working Directory: /home/ueda/slim/test/system_check
+45: Environment variables: 
+45:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+45:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+45:  slim_CHECK_OPTIONS=
+45: Test timeout computed to be: 30
+45: 1..0
+ 45/232 Test  #45: system_guard_ground_case18 .........   Passed    0.01 sec
+test 46
+        Start  46: system_guard_ground_case19
+
+46: Test command: /home/ueda/slim/build/test/system_check/guard_ground_case19_run.sh
+46: Working Directory: /home/ueda/slim/test/system_check
+46: Environment variables: 
+46:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+46:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+46:  slim_CHECK_OPTIONS=
+46: Test timeout computed to be: 30
+46: 1..0
+ 46/232 Test  #46: system_guard_ground_case19 .........   Passed    0.01 sec
+test 47
+        Start  47: system_guard_ground_case2
+
+47: Test command: /home/ueda/slim/build/test/system_check/guard_ground_case2_run.sh
+47: Working Directory: /home/ueda/slim/test/system_check
+47: Environment variables: 
+47:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+47:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+47:  slim_CHECK_OPTIONS=
+47: Test timeout computed to be: 30
+47: 1..0
+ 47/232 Test  #47: system_guard_ground_case2 ..........   Passed    0.01 sec
+test 48
+        Start  48: system_guard_ground_case20
+
+48: Test command: /home/ueda/slim/build/test/system_check/guard_ground_case20_run.sh
+48: Working Directory: /home/ueda/slim/test/system_check
+48: Environment variables: 
+48:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+48:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+48:  slim_CHECK_OPTIONS=
+48: Test timeout computed to be: 30
+48: 1..0
+ 48/232 Test  #48: system_guard_ground_case20 .........   Passed    0.01 sec
+test 49
+        Start  49: system_guard_ground_case21
+
+49: Test command: /home/ueda/slim/build/test/system_check/guard_ground_case21_run.sh
+49: Working Directory: /home/ueda/slim/test/system_check
+49: Environment variables: 
+49:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+49:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+49:  slim_CHECK_OPTIONS=
+49: Test timeout computed to be: 30
+49: 1..0
+ 49/232 Test  #49: system_guard_ground_case21 .........   Passed    0.01 sec
+test 50
+        Start  50: system_guard_ground_case22
+
+50: Test command: /home/ueda/slim/build/test/system_check/guard_ground_case22_run.sh
+50: Working Directory: /home/ueda/slim/test/system_check
+50: Environment variables: 
+50:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+50:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+50:  slim_CHECK_OPTIONS=
+50: Test timeout computed to be: 30
+50: 1..0
+ 50/232 Test  #50: system_guard_ground_case22 .........   Passed    0.01 sec
+test 51
+        Start  51: system_guard_ground_case23
+
+51: Test command: /home/ueda/slim/build/test/system_check/guard_ground_case23_run.sh
+51: Working Directory: /home/ueda/slim/test/system_check
+51: Environment variables: 
+51:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+51:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+51:  slim_CHECK_OPTIONS=
+51: Test timeout computed to be: 30
+51: 1..0
+ 51/232 Test  #51: system_guard_ground_case23 .........   Passed    0.01 sec
+test 52
+        Start  52: system_guard_ground_case24
+
+52: Test command: /home/ueda/slim/build/test/system_check/guard_ground_case24_run.sh
+52: Working Directory: /home/ueda/slim/test/system_check
+52: Environment variables: 
+52:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+52:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+52:  slim_CHECK_OPTIONS=
+52: Test timeout computed to be: 30
+52: 1..0
+ 52/232 Test  #52: system_guard_ground_case24 .........   Passed    0.01 sec
+test 53
+        Start  53: system_guard_ground_case25
+
+53: Test command: /home/ueda/slim/build/test/system_check/guard_ground_case25_run.sh
+53: Working Directory: /home/ueda/slim/test/system_check
+53: Environment variables: 
+53:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+53:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+53:  slim_CHECK_OPTIONS=
+53: Test timeout computed to be: 30
+53: 1..0
+ 53/232 Test  #53: system_guard_ground_case25 .........   Passed    0.01 sec
+test 54
+        Start  54: system_guard_ground_case26
+
+54: Test command: /home/ueda/slim/build/test/system_check/guard_ground_case26_run.sh
+54: Working Directory: /home/ueda/slim/test/system_check
+54: Environment variables: 
+54:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+54:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+54:  slim_CHECK_OPTIONS=
+54: Test timeout computed to be: 30
+54: 1..0
+ 54/232 Test  #54: system_guard_ground_case26 .........   Passed    0.01 sec
+test 55
+        Start  55: system_guard_ground_case27
+
+55: Test command: /home/ueda/slim/build/test/system_check/guard_ground_case27_run.sh
+55: Working Directory: /home/ueda/slim/test/system_check
+55: Environment variables: 
+55:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+55:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+55:  slim_CHECK_OPTIONS=
+55: Test timeout computed to be: 30
+55: 1..0
+ 55/232 Test  #55: system_guard_ground_case27 .........   Passed    0.01 sec
+test 56
+        Start  56: system_guard_ground_case28
+
+56: Test command: /home/ueda/slim/build/test/system_check/guard_ground_case28_run.sh
+56: Working Directory: /home/ueda/slim/test/system_check
+56: Environment variables: 
+56:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+56:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+56:  slim_CHECK_OPTIONS=
+56: Test timeout computed to be: 30
+56: 1..0
+ 56/232 Test  #56: system_guard_ground_case28 .........   Passed    0.01 sec
+test 57
+        Start  57: system_guard_ground_case29
+
+57: Test command: /home/ueda/slim/build/test/system_check/guard_ground_case29_run.sh
+57: Working Directory: /home/ueda/slim/test/system_check
+57: Environment variables: 
+57:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+57:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+57:  slim_CHECK_OPTIONS=
+57: Test timeout computed to be: 30
+57: 1..0
+ 57/232 Test  #57: system_guard_ground_case29 .........   Passed    0.01 sec
+test 58
+        Start  58: system_guard_ground_case3
+
+58: Test command: /home/ueda/slim/build/test/system_check/guard_ground_case3_run.sh
+58: Working Directory: /home/ueda/slim/test/system_check
+58: Environment variables: 
+58:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+58:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+58:  slim_CHECK_OPTIONS=
+58: Test timeout computed to be: 30
+58: 1..0
+ 58/232 Test  #58: system_guard_ground_case3 ..........   Passed    0.01 sec
+test 59
+        Start  59: system_guard_ground_case30
+
+59: Test command: /home/ueda/slim/build/test/system_check/guard_ground_case30_run.sh
+59: Working Directory: /home/ueda/slim/test/system_check
+59: Environment variables: 
+59:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+59:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+59:  slim_CHECK_OPTIONS=
+59: Test timeout computed to be: 30
+59: 1..0
+ 59/232 Test  #59: system_guard_ground_case30 .........   Passed    0.01 sec
+test 60
+        Start  60: system_guard_ground_case31
+
+60: Test command: /home/ueda/slim/build/test/system_check/guard_ground_case31_run.sh
+60: Working Directory: /home/ueda/slim/test/system_check
+60: Environment variables: 
+60:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+60:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+60:  slim_CHECK_OPTIONS=
+60: Test timeout computed to be: 30
+60: 1..0
+ 60/232 Test  #60: system_guard_ground_case31 .........   Passed    0.01 sec
+test 61
+        Start  61: system_guard_ground_case4
+
+61: Test command: /home/ueda/slim/build/test/system_check/guard_ground_case4_run.sh
+61: Working Directory: /home/ueda/slim/test/system_check
+61: Environment variables: 
+61:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+61:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+61:  slim_CHECK_OPTIONS=
+61: Test timeout computed to be: 30
+61: 1..0
+ 61/232 Test  #61: system_guard_ground_case4 ..........   Passed    0.01 sec
+test 62
+        Start  62: system_guard_ground_case5
+
+62: Test command: /home/ueda/slim/build/test/system_check/guard_ground_case5_run.sh
+62: Working Directory: /home/ueda/slim/test/system_check
+62: Environment variables: 
+62:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+62:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+62:  slim_CHECK_OPTIONS=
+62: Test timeout computed to be: 30
+62: 1..0
+ 62/232 Test  #62: system_guard_ground_case5 ..........   Passed    0.01 sec
+test 63
+        Start  63: system_guard_ground_case6
+
+63: Test command: /home/ueda/slim/build/test/system_check/guard_ground_case6_run.sh
+63: Working Directory: /home/ueda/slim/test/system_check
+63: Environment variables: 
+63:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+63:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+63:  slim_CHECK_OPTIONS=
+63: Test timeout computed to be: 30
+63: 1..0
+ 63/232 Test  #63: system_guard_ground_case6 ..........   Passed    0.01 sec
+test 64
+        Start  64: system_guard_ground_case7
+
+64: Test command: /home/ueda/slim/build/test/system_check/guard_ground_case7_run.sh
+64: Working Directory: /home/ueda/slim/test/system_check
+64: Environment variables: 
+64:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+64:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+64:  slim_CHECK_OPTIONS=
+64: Test timeout computed to be: 30
+64: 1..0
+ 64/232 Test  #64: system_guard_ground_case7 ..........   Passed    0.01 sec
+test 65
+        Start  65: system_guard_ground_case8
+
+65: Test command: /home/ueda/slim/build/test/system_check/guard_ground_case8_run.sh
+65: Working Directory: /home/ueda/slim/test/system_check
+65: Environment variables: 
+65:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+65:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+65:  slim_CHECK_OPTIONS=
+65: Test timeout computed to be: 30
+65: 1..0
+ 65/232 Test  #65: system_guard_ground_case8 ..........   Passed    0.01 sec
+test 66
+        Start  66: system_guard_ground_case9
+
+66: Test command: /home/ueda/slim/build/test/system_check/guard_ground_case9_run.sh
+66: Working Directory: /home/ueda/slim/test/system_check
+66: Environment variables: 
+66:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+66:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+66:  slim_CHECK_OPTIONS=
+66: Test timeout computed to be: 30
+66: 1..0
+ 66/232 Test  #66: system_guard_ground_case9 ..........   Passed    0.01 sec
+test 67
+        Start  67: system_guard_ground_multi_case1
+
+67: Test command: /home/ueda/slim/build/test/system_check/guard_ground_multi_case1_run.sh
+67: Working Directory: /home/ueda/slim/test/system_check
+67: Environment variables: 
+67:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+67:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+67:  slim_CHECK_OPTIONS=
+67: Test timeout computed to be: 30
+67: 1..0
+ 67/232 Test  #67: system_guard_ground_multi_case1 ....   Passed    0.01 sec
+test 68
+        Start  68: system_guard_ground_multi_case10
+
+68: Test command: /home/ueda/slim/build/test/system_check/guard_ground_multi_case10_run.sh
+68: Working Directory: /home/ueda/slim/test/system_check
+68: Environment variables: 
+68:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+68:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+68:  slim_CHECK_OPTIONS=
+68: Test timeout computed to be: 30
+68: 1..0
+ 68/232 Test  #68: system_guard_ground_multi_case10 ...   Passed    0.01 sec
+test 69
+        Start  69: system_guard_ground_multi_case11
+
+69: Test command: /home/ueda/slim/build/test/system_check/guard_ground_multi_case11_run.sh
+69: Working Directory: /home/ueda/slim/test/system_check
+69: Environment variables: 
+69:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+69:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+69:  slim_CHECK_OPTIONS=
+69: Test timeout computed to be: 30
+69: 1..0
+ 69/232 Test  #69: system_guard_ground_multi_case11 ...   Passed    0.01 sec
+test 70
+        Start  70: system_guard_ground_multi_case12
+
+70: Test command: /home/ueda/slim/build/test/system_check/guard_ground_multi_case12_run.sh
+70: Working Directory: /home/ueda/slim/test/system_check
+70: Environment variables: 
+70:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+70:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+70:  slim_CHECK_OPTIONS=
+70: Test timeout computed to be: 30
+70: 1..0
+ 70/232 Test  #70: system_guard_ground_multi_case12 ...   Passed    0.01 sec
+test 71
+        Start  71: system_guard_ground_multi_case13
+
+71: Test command: /home/ueda/slim/build/test/system_check/guard_ground_multi_case13_run.sh
+71: Working Directory: /home/ueda/slim/test/system_check
+71: Environment variables: 
+71:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+71:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+71:  slim_CHECK_OPTIONS=
+71: Test timeout computed to be: 30
+71: 1..0
+ 71/232 Test  #71: system_guard_ground_multi_case13 ...   Passed    0.01 sec
+test 72
+        Start  72: system_guard_ground_multi_case14
+
+72: Test command: /home/ueda/slim/build/test/system_check/guard_ground_multi_case14_run.sh
+72: Working Directory: /home/ueda/slim/test/system_check
+72: Environment variables: 
+72:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+72:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+72:  slim_CHECK_OPTIONS=
+72: Test timeout computed to be: 30
+72: 1..0
+ 72/232 Test  #72: system_guard_ground_multi_case14 ...   Passed    0.01 sec
+test 73
+        Start  73: system_guard_ground_multi_case15
+
+73: Test command: /home/ueda/slim/build/test/system_check/guard_ground_multi_case15_run.sh
+73: Working Directory: /home/ueda/slim/test/system_check
+73: Environment variables: 
+73:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+73:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+73:  slim_CHECK_OPTIONS=
+73: Test timeout computed to be: 30
+73: 1..0
+ 73/232 Test  #73: system_guard_ground_multi_case15 ...   Passed    0.01 sec
+test 74
+        Start  74: system_guard_ground_multi_case16
+
+74: Test command: /home/ueda/slim/build/test/system_check/guard_ground_multi_case16_run.sh
+74: Working Directory: /home/ueda/slim/test/system_check
+74: Environment variables: 
+74:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+74:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+74:  slim_CHECK_OPTIONS=
+74: Test timeout computed to be: 30
+74: 1..0
+ 74/232 Test  #74: system_guard_ground_multi_case16 ...   Passed    0.01 sec
+test 75
+        Start  75: system_guard_ground_multi_case2
+
+75: Test command: /home/ueda/slim/build/test/system_check/guard_ground_multi_case2_run.sh
+75: Working Directory: /home/ueda/slim/test/system_check
+75: Environment variables: 
+75:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+75:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+75:  slim_CHECK_OPTIONS=
+75: Test timeout computed to be: 30
+75: 1..0
+ 75/232 Test  #75: system_guard_ground_multi_case2 ....   Passed    0.01 sec
+test 76
+        Start  76: system_guard_ground_multi_case3
+
+76: Test command: /home/ueda/slim/build/test/system_check/guard_ground_multi_case3_run.sh
+76: Working Directory: /home/ueda/slim/test/system_check
+76: Environment variables: 
+76:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+76:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+76:  slim_CHECK_OPTIONS=
+76: Test timeout computed to be: 30
+76: 1..0
+ 76/232 Test  #76: system_guard_ground_multi_case3 ....   Passed    0.01 sec
+test 77
+        Start  77: system_guard_ground_multi_case4
+
+77: Test command: /home/ueda/slim/build/test/system_check/guard_ground_multi_case4_run.sh
+77: Working Directory: /home/ueda/slim/test/system_check
+77: Environment variables: 
+77:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+77:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+77:  slim_CHECK_OPTIONS=
+77: Test timeout computed to be: 30
+77: 1..0
+ 77/232 Test  #77: system_guard_ground_multi_case4 ....   Passed    0.01 sec
+test 78
+        Start  78: system_guard_ground_multi_case5
+
+78: Test command: /home/ueda/slim/build/test/system_check/guard_ground_multi_case5_run.sh
+78: Working Directory: /home/ueda/slim/test/system_check
+78: Environment variables: 
+78:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+78:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+78:  slim_CHECK_OPTIONS=
+78: Test timeout computed to be: 30
+78: 1..0
+ 78/232 Test  #78: system_guard_ground_multi_case5 ....   Passed    0.01 sec
+test 79
+        Start  79: system_guard_ground_multi_case6
+
+79: Test command: /home/ueda/slim/build/test/system_check/guard_ground_multi_case6_run.sh
+79: Working Directory: /home/ueda/slim/test/system_check
+79: Environment variables: 
+79:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+79:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+79:  slim_CHECK_OPTIONS=
+79: Test timeout computed to be: 30
+79: 1..0
+ 79/232 Test  #79: system_guard_ground_multi_case6 ....   Passed    0.01 sec
+test 80
+        Start  80: system_guard_ground_multi_case7
+
+80: Test command: /home/ueda/slim/build/test/system_check/guard_ground_multi_case7_run.sh
+80: Working Directory: /home/ueda/slim/test/system_check
+80: Environment variables: 
+80:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+80:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+80:  slim_CHECK_OPTIONS=
+80: Test timeout computed to be: 30
+80: 1..0
+ 80/232 Test  #80: system_guard_ground_multi_case7 ....   Passed    0.01 sec
+test 81
+        Start  81: system_guard_ground_multi_case8
+
+81: Test command: /home/ueda/slim/build/test/system_check/guard_ground_multi_case8_run.sh
+81: Working Directory: /home/ueda/slim/test/system_check
+81: Environment variables: 
+81:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+81:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+81:  slim_CHECK_OPTIONS=
+81: Test timeout computed to be: 30
+81: 1..0
+ 81/232 Test  #81: system_guard_ground_multi_case8 ....   Passed    0.01 sec
+test 82
+        Start  82: system_guard_ground_multi_case9
+
+82: Test command: /home/ueda/slim/build/test/system_check/guard_ground_multi_case9_run.sh
+82: Working Directory: /home/ueda/slim/test/system_check
+82: Environment variables: 
+82:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+82:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+82:  slim_CHECK_OPTIONS=
+82: Test timeout computed to be: 30
+82: 1..0
+ 82/232 Test  #82: system_guard_ground_multi_case9 ....   Passed    0.01 sec
+test 83
+        Start  83: system_guard_int_case1
+
+83: Test command: /home/ueda/slim/build/test/system_check/guard_int_case1_run.sh
+83: Working Directory: /home/ueda/slim/test/system_check
+83: Environment variables: 
+83:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+83:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+83:  slim_CHECK_OPTIONS=
+83: Test timeout computed to be: 30
+83: 1..0
+ 83/232 Test  #83: system_guard_int_case1 .............   Passed    0.01 sec
+test 84
+        Start  84: system_guard_int_case10
+
+84: Test command: /home/ueda/slim/build/test/system_check/guard_int_case10_run.sh
+84: Working Directory: /home/ueda/slim/test/system_check
+84: Environment variables: 
+84:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+84:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+84:  slim_CHECK_OPTIONS=
+84: Test timeout computed to be: 30
+84: 1..0
+ 84/232 Test  #84: system_guard_int_case10 ............   Passed    0.01 sec
+test 85
+        Start  85: system_guard_int_case11
+
+85: Test command: /home/ueda/slim/build/test/system_check/guard_int_case11_run.sh
+85: Working Directory: /home/ueda/slim/test/system_check
+85: Environment variables: 
+85:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+85:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+85:  slim_CHECK_OPTIONS=
+85: Test timeout computed to be: 30
+85: 1..0
+ 85/232 Test  #85: system_guard_int_case11 ............   Passed    0.01 sec
+test 86
+        Start  86: system_guard_int_case12
+
+86: Test command: /home/ueda/slim/build/test/system_check/guard_int_case12_run.sh
+86: Working Directory: /home/ueda/slim/test/system_check
+86: Environment variables: 
+86:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+86:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+86:  slim_CHECK_OPTIONS=
+86: Test timeout computed to be: 30
+86: 1..0
+ 86/232 Test  #86: system_guard_int_case12 ............   Passed    0.01 sec
+test 87
+        Start  87: system_guard_int_case13
+
+87: Test command: /home/ueda/slim/build/test/system_check/guard_int_case13_run.sh
+87: Working Directory: /home/ueda/slim/test/system_check
+87: Environment variables: 
+87:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+87:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+87:  slim_CHECK_OPTIONS=
+87: Test timeout computed to be: 30
+87: 1..0
+ 87/232 Test  #87: system_guard_int_case13 ............   Passed    0.01 sec
+test 88
+        Start  88: system_guard_int_case14
+
+88: Test command: /home/ueda/slim/build/test/system_check/guard_int_case14_run.sh
+88: Working Directory: /home/ueda/slim/test/system_check
+88: Environment variables: 
+88:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+88:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+88:  slim_CHECK_OPTIONS=
+88: Test timeout computed to be: 30
+88: 1..0
+ 88/232 Test  #88: system_guard_int_case14 ............   Passed    0.01 sec
+test 89
+        Start  89: system_guard_int_case15
+
+89: Test command: /home/ueda/slim/build/test/system_check/guard_int_case15_run.sh
+89: Working Directory: /home/ueda/slim/test/system_check
+89: Environment variables: 
+89:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+89:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+89:  slim_CHECK_OPTIONS=
+89: Test timeout computed to be: 30
+89: 1..0
+ 89/232 Test  #89: system_guard_int_case15 ............   Passed    0.01 sec
+test 90
+        Start  90: system_guard_int_case16
+
+90: Test command: /home/ueda/slim/build/test/system_check/guard_int_case16_run.sh
+90: Working Directory: /home/ueda/slim/test/system_check
+90: Environment variables: 
+90:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+90:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+90:  slim_CHECK_OPTIONS=
+90: Test timeout computed to be: 30
+90: 1..0
+ 90/232 Test  #90: system_guard_int_case16 ............   Passed    0.01 sec
+test 91
+        Start  91: system_guard_int_case17
+
+91: Test command: /home/ueda/slim/build/test/system_check/guard_int_case17_run.sh
+91: Working Directory: /home/ueda/slim/test/system_check
+91: Environment variables: 
+91:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+91:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+91:  slim_CHECK_OPTIONS=
+91: Test timeout computed to be: 30
+91: 1..0
+ 91/232 Test  #91: system_guard_int_case17 ............   Passed    0.01 sec
+test 92
+        Start  92: system_guard_int_case18
+
+92: Test command: /home/ueda/slim/build/test/system_check/guard_int_case18_run.sh
+92: Working Directory: /home/ueda/slim/test/system_check
+92: Environment variables: 
+92:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+92:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+92:  slim_CHECK_OPTIONS=
+92: Test timeout computed to be: 30
+92: 1..0
+ 92/232 Test  #92: system_guard_int_case18 ............   Passed    0.01 sec
+test 93
+        Start  93: system_guard_int_case19
+
+93: Test command: /home/ueda/slim/build/test/system_check/guard_int_case19_run.sh
+93: Working Directory: /home/ueda/slim/test/system_check
+93: Environment variables: 
+93:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+93:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+93:  slim_CHECK_OPTIONS=
+93: Test timeout computed to be: 30
+93: 1..0
+ 93/232 Test  #93: system_guard_int_case19 ............   Passed    0.01 sec
+test 94
+        Start  94: system_guard_int_case2
+
+94: Test command: /home/ueda/slim/build/test/system_check/guard_int_case2_run.sh
+94: Working Directory: /home/ueda/slim/test/system_check
+94: Environment variables: 
+94:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+94:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+94:  slim_CHECK_OPTIONS=
+94: Test timeout computed to be: 30
+94: 1..0
+ 94/232 Test  #94: system_guard_int_case2 .............   Passed    0.01 sec
+test 95
+        Start  95: system_guard_int_case20
+
+95: Test command: /home/ueda/slim/build/test/system_check/guard_int_case20_run.sh
+95: Working Directory: /home/ueda/slim/test/system_check
+95: Environment variables: 
+95:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+95:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+95:  slim_CHECK_OPTIONS=
+95: Test timeout computed to be: 30
+95: 1..0
+ 95/232 Test  #95: system_guard_int_case20 ............   Passed    0.01 sec
+test 96
+        Start  96: system_guard_int_case21
+
+96: Test command: /home/ueda/slim/build/test/system_check/guard_int_case21_run.sh
+96: Working Directory: /home/ueda/slim/test/system_check
+96: Environment variables: 
+96:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+96:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+96:  slim_CHECK_OPTIONS=
+96: Test timeout computed to be: 30
+96: 1..0
+ 96/232 Test  #96: system_guard_int_case21 ............   Passed    0.01 sec
+test 97
+        Start  97: system_guard_int_case22
+
+97: Test command: /home/ueda/slim/build/test/system_check/guard_int_case22_run.sh
+97: Working Directory: /home/ueda/slim/test/system_check
+97: Environment variables: 
+97:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+97:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+97:  slim_CHECK_OPTIONS=
+97: Test timeout computed to be: 30
+97: 1..0
+ 97/232 Test  #97: system_guard_int_case22 ............   Passed    0.01 sec
+test 98
+        Start  98: system_guard_int_case3
+
+98: Test command: /home/ueda/slim/build/test/system_check/guard_int_case3_run.sh
+98: Working Directory: /home/ueda/slim/test/system_check
+98: Environment variables: 
+98:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+98:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+98:  slim_CHECK_OPTIONS=
+98: Test timeout computed to be: 30
+98: 1..0
+ 98/232 Test  #98: system_guard_int_case3 .............   Passed    0.01 sec
+test 99
+        Start  99: system_guard_int_case4
+
+99: Test command: /home/ueda/slim/build/test/system_check/guard_int_case4_run.sh
+99: Working Directory: /home/ueda/slim/test/system_check
+99: Environment variables: 
+99:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+99:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+99:  slim_CHECK_OPTIONS=
+99: Test timeout computed to be: 30
+99: 1..0
+ 99/232 Test  #99: system_guard_int_case4 .............   Passed    0.01 sec
+test 100
+        Start 100: system_guard_int_case5
+
+100: Test command: /home/ueda/slim/build/test/system_check/guard_int_case5_run.sh
+100: Working Directory: /home/ueda/slim/test/system_check
+100: Environment variables: 
+100:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+100:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+100:  slim_CHECK_OPTIONS=
+100: Test timeout computed to be: 30
+100: 1..0
+100/232 Test #100: system_guard_int_case5 .............   Passed    0.01 sec
+test 101
+        Start 101: system_guard_int_case6
+
+101: Test command: /home/ueda/slim/build/test/system_check/guard_int_case6_run.sh
+101: Working Directory: /home/ueda/slim/test/system_check
+101: Environment variables: 
+101:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+101:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+101:  slim_CHECK_OPTIONS=
+101: Test timeout computed to be: 30
+101: 1..0
+101/232 Test #101: system_guard_int_case6 .............   Passed    0.01 sec
+test 102
+        Start 102: system_guard_int_case7
+
+102: Test command: /home/ueda/slim/build/test/system_check/guard_int_case7_run.sh
+102: Working Directory: /home/ueda/slim/test/system_check
+102: Environment variables: 
+102:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+102:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+102:  slim_CHECK_OPTIONS=
+102: Test timeout computed to be: 30
+102: 1..0
+102/232 Test #102: system_guard_int_case7 .............   Passed    0.01 sec
+test 103
+        Start 103: system_guard_int_case8
+
+103: Test command: /home/ueda/slim/build/test/system_check/guard_int_case8_run.sh
+103: Working Directory: /home/ueda/slim/test/system_check
+103: Environment variables: 
+103:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+103:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+103:  slim_CHECK_OPTIONS=
+103: Test timeout computed to be: 30
+103: 1..0
+103/232 Test #103: system_guard_int_case8 .............   Passed    0.01 sec
+test 104
+        Start 104: system_guard_int_case9
+
+104: Test command: /home/ueda/slim/build/test/system_check/guard_int_case9_run.sh
+104: Working Directory: /home/ueda/slim/test/system_check
+104: Environment variables: 
+104:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+104:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+104:  slim_CHECK_OPTIONS=
+104: Test timeout computed to be: 30
+104: 1..0
+104/232 Test #104: system_guard_int_case9 .............   Passed    0.01 sec
+test 105
+        Start 105: system_guard_string_case1
+
+105: Test command: /home/ueda/slim/build/test/system_check/guard_string_case1_run.sh
+105: Working Directory: /home/ueda/slim/test/system_check
+105: Environment variables: 
+105:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+105:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+105:  slim_CHECK_OPTIONS=
+105: Test timeout computed to be: 30
+105: 1..0
+105/232 Test #105: system_guard_string_case1 ..........   Passed    0.01 sec
+test 106
+        Start 106: system_guard_string_case2
+
+106: Test command: /home/ueda/slim/build/test/system_check/guard_string_case2_run.sh
+106: Working Directory: /home/ueda/slim/test/system_check
+106: Environment variables: 
+106:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+106:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+106:  slim_CHECK_OPTIONS=
+106: Test timeout computed to be: 30
+106: 1..0
+106/232 Test #106: system_guard_string_case2 ..........   Passed    0.01 sec
+test 107
+        Start 107: system_guard_string_case3
+
+107: Test command: /home/ueda/slim/build/test/system_check/guard_string_case3_run.sh
+107: Working Directory: /home/ueda/slim/test/system_check
+107: Environment variables: 
+107:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+107:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+107:  slim_CHECK_OPTIONS=
+107: Test timeout computed to be: 30
+107: 1..0
+107/232 Test #107: system_guard_string_case3 ..........   Passed    0.01 sec
+test 108
+        Start 108: system_guard_string_case4
+
+108: Test command: /home/ueda/slim/build/test/system_check/guard_string_case4_run.sh
+108: Working Directory: /home/ueda/slim/test/system_check
+108: Environment variables: 
+108:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+108:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+108:  slim_CHECK_OPTIONS=
+108: Test timeout computed to be: 30
+108: 1..0
+108/232 Test #108: system_guard_string_case4 ..........   Passed    0.01 sec
+test 109
+        Start 109: system_guard_string_case5
+
+109: Test command: /home/ueda/slim/build/test/system_check/guard_string_case5_run.sh
+109: Working Directory: /home/ueda/slim/test/system_check
+109: Environment variables: 
+109:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+109:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+109:  slim_CHECK_OPTIONS=
+109: Test timeout computed to be: 30
+109: 1..0
+109/232 Test #109: system_guard_string_case5 ..........   Passed    0.01 sec
+test 110
+        Start 110: system_guard_string_case6
+
+110: Test command: /home/ueda/slim/build/test/system_check/guard_string_case6_run.sh
+110: Working Directory: /home/ueda/slim/test/system_check
+110: Environment variables: 
+110:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+110:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+110:  slim_CHECK_OPTIONS=
+110: Test timeout computed to be: 30
+110: 1..0
+110/232 Test #110: system_guard_string_case6 ..........   Passed    0.01 sec
+test 111
+        Start 111: system_guard_unary_case1
+
+111: Test command: /home/ueda/slim/build/test/system_check/guard_unary_case1_run.sh
+111: Working Directory: /home/ueda/slim/test/system_check
+111: Environment variables: 
+111:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+111:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+111:  slim_CHECK_OPTIONS=
+111: Test timeout computed to be: 30
+111: 1..0
+111/232 Test #111: system_guard_unary_case1 ...........   Passed    0.01 sec
+test 112
+        Start 112: system_guard_unary_case2
+
+112: Test command: /home/ueda/slim/build/test/system_check/guard_unary_case2_run.sh
+112: Working Directory: /home/ueda/slim/test/system_check
+112: Environment variables: 
+112:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+112:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+112:  slim_CHECK_OPTIONS=
+112: Test timeout computed to be: 30
+112: 1..0
+112/232 Test #112: system_guard_unary_case2 ...........   Passed    0.01 sec
+test 113
+        Start 113: system_guard_unary_case3
+
+113: Test command: /home/ueda/slim/build/test/system_check/guard_unary_case3_run.sh
+113: Working Directory: /home/ueda/slim/test/system_check
+113: Environment variables: 
+113:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+113:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+113:  slim_CHECK_OPTIONS=
+113: Test timeout computed to be: 30
+113: 1..0
+113/232 Test #113: system_guard_unary_case3 ...........   Passed    0.01 sec
+test 114
+        Start 114: system_guard_unary_case4
+
+114: Test command: /home/ueda/slim/build/test/system_check/guard_unary_case4_run.sh
+114: Working Directory: /home/ueda/slim/test/system_check
+114: Environment variables: 
+114:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+114:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+114:  slim_CHECK_OPTIONS=
+114: Test timeout computed to be: 30
+114: 1..0
+114/232 Test #114: system_guard_unary_case4 ...........   Passed    0.01 sec
+test 115
+        Start 115: system_mem_name_case1
+
+115: Test command: /home/ueda/slim/build/test/system_check/mem_name_case1_run.sh
+115: Working Directory: /home/ueda/slim/test/system_check
+115: Environment variables: 
+115:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+115:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+115:  slim_CHECK_OPTIONS=
+115: Test timeout computed to be: 30
+115: 1..0
+115/232 Test #115: system_mem_name_case1 ..............   Passed    0.01 sec
+test 116
+        Start 116: system_mem_name_case2
+
+116: Test command: /home/ueda/slim/build/test/system_check/mem_name_case2_run.sh
+116: Working Directory: /home/ueda/slim/test/system_check
+116: Environment variables: 
+116:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+116:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+116:  slim_CHECK_OPTIONS=
+116: Test timeout computed to be: 30
+116: 1..0
+116/232 Test #116: system_mem_name_case2 ..............   Passed    0.01 sec
+test 117
+        Start 117: system_miscellaneous_case1
+
+117: Test command: /home/ueda/slim/build/test/system_check/miscellaneous_case1_run.sh
+117: Working Directory: /home/ueda/slim/test/system_check
+117: Environment variables: 
+117:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+117:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+117:  slim_CHECK_OPTIONS=
+117: Test timeout computed to be: 30
+117: 1..0
+117/232 Test #117: system_miscellaneous_case1 .........   Passed    0.01 sec
+test 118
+        Start 118: system_miscellaneous_case10
+
+118: Test command: /home/ueda/slim/build/test/system_check/miscellaneous_case10_run.sh
+118: Working Directory: /home/ueda/slim/test/system_check
+118: Environment variables: 
+118:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+118:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+118:  slim_CHECK_OPTIONS=
+118: Test timeout computed to be: 30
+118: 1..0
+118/232 Test #118: system_miscellaneous_case10 ........   Passed    0.01 sec
+test 119
+        Start 119: system_miscellaneous_case11
+
+119: Test command: /home/ueda/slim/build/test/system_check/miscellaneous_case11_run.sh
+119: Working Directory: /home/ueda/slim/test/system_check
+119: Environment variables: 
+119:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+119:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+119:  slim_CHECK_OPTIONS=
+119: Test timeout computed to be: 30
+119: 1..0
+119/232 Test #119: system_miscellaneous_case11 ........   Passed    0.01 sec
+test 120
+        Start 120: system_miscellaneous_case12
+
+120: Test command: /home/ueda/slim/build/test/system_check/miscellaneous_case12_run.sh
+120: Working Directory: /home/ueda/slim/test/system_check
+120: Environment variables: 
+120:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+120:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+120:  slim_CHECK_OPTIONS=
+120: Test timeout computed to be: 30
+120: 1..0
+120/232 Test #120: system_miscellaneous_case12 ........   Passed    0.01 sec
+test 121
+        Start 121: system_miscellaneous_case13
+
+121: Test command: /home/ueda/slim/build/test/system_check/miscellaneous_case13_run.sh
+121: Working Directory: /home/ueda/slim/test/system_check
+121: Environment variables: 
+121:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+121:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+121:  slim_CHECK_OPTIONS=
+121: Test timeout computed to be: 30
+121: 1..0
+121/232 Test #121: system_miscellaneous_case13 ........   Passed    0.01 sec
+test 122
+        Start 122: system_miscellaneous_case14
+
+122: Test command: /home/ueda/slim/build/test/system_check/miscellaneous_case14_run.sh
+122: Working Directory: /home/ueda/slim/test/system_check
+122: Environment variables: 
+122:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+122:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+122:  slim_CHECK_OPTIONS=
+122: Test timeout computed to be: 30
+122: 1..0
+122/232 Test #122: system_miscellaneous_case14 ........   Passed    0.01 sec
+test 123
+        Start 123: system_miscellaneous_case15
+
+123: Test command: /home/ueda/slim/build/test/system_check/miscellaneous_case15_run.sh
+123: Working Directory: /home/ueda/slim/test/system_check
+123: Environment variables: 
+123:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+123:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+123:  slim_CHECK_OPTIONS=
+123: Test timeout computed to be: 30
+123: 1..0
+123/232 Test #123: system_miscellaneous_case15 ........   Passed    0.01 sec
+test 124
+        Start 124: system_miscellaneous_case16
+
+124: Test command: /home/ueda/slim/build/test/system_check/miscellaneous_case16_run.sh
+124: Working Directory: /home/ueda/slim/test/system_check
+124: Environment variables: 
+124:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+124:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+124:  slim_CHECK_OPTIONS=
+124: Test timeout computed to be: 30
+124: 1..0
+124/232 Test #124: system_miscellaneous_case16 ........   Passed    0.01 sec
+test 125
+        Start 125: system_miscellaneous_case17
+
+125: Test command: /home/ueda/slim/build/test/system_check/miscellaneous_case17_run.sh
+125: Working Directory: /home/ueda/slim/test/system_check
+125: Environment variables: 
+125:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+125:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+125:  slim_CHECK_OPTIONS=
+125: Test timeout computed to be: 30
+125: 1..0
+125/232 Test #125: system_miscellaneous_case17 ........   Passed    0.01 sec
+test 126
+        Start 126: system_miscellaneous_case18
+
+126: Test command: /home/ueda/slim/build/test/system_check/miscellaneous_case18_run.sh
+126: Working Directory: /home/ueda/slim/test/system_check
+126: Environment variables: 
+126:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+126:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+126:  slim_CHECK_OPTIONS=
+126: Test timeout computed to be: 30
+126: 1..0
+126/232 Test #126: system_miscellaneous_case18 ........   Passed    0.01 sec
+test 127
+        Start 127: system_miscellaneous_case19
+
+127: Test command: /home/ueda/slim/build/test/system_check/miscellaneous_case19_run.sh
+127: Working Directory: /home/ueda/slim/test/system_check
+127: Environment variables: 
+127:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+127:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+127:  slim_CHECK_OPTIONS=
+127: Test timeout computed to be: 30
+127: 1..0
+127/232 Test #127: system_miscellaneous_case19 ........   Passed    0.01 sec
+test 128
+        Start 128: system_miscellaneous_case2
+
+128: Test command: /home/ueda/slim/build/test/system_check/miscellaneous_case2_run.sh
+128: Working Directory: /home/ueda/slim/test/system_check
+128: Environment variables: 
+128:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+128:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+128:  slim_CHECK_OPTIONS=
+128: Test timeout computed to be: 30
+128: 1..0
+128/232 Test #128: system_miscellaneous_case2 .........   Passed    0.01 sec
+test 129
+        Start 129: system_miscellaneous_case20
+
+129: Test command: /home/ueda/slim/build/test/system_check/miscellaneous_case20_run.sh
+129: Working Directory: /home/ueda/slim/test/system_check
+129: Environment variables: 
+129:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+129:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+129:  slim_CHECK_OPTIONS=
+129: Test timeout computed to be: 30
+129: 1..0
+129/232 Test #129: system_miscellaneous_case20 ........   Passed    0.01 sec
+test 130
+        Start 130: system_miscellaneous_case3
+
+130: Test command: /home/ueda/slim/build/test/system_check/miscellaneous_case3_run.sh
+130: Working Directory: /home/ueda/slim/test/system_check
+130: Environment variables: 
+130:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+130:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+130:  slim_CHECK_OPTIONS=
+130: Test timeout computed to be: 30
+130: 1..0
+130/232 Test #130: system_miscellaneous_case3 .........   Passed    0.01 sec
+test 131
+        Start 131: system_miscellaneous_case4
+
+131: Test command: /home/ueda/slim/build/test/system_check/miscellaneous_case4_run.sh
+131: Working Directory: /home/ueda/slim/test/system_check
+131: Environment variables: 
+131:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+131:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+131:  slim_CHECK_OPTIONS=
+131: Test timeout computed to be: 30
+131: 1..0
+131/232 Test #131: system_miscellaneous_case4 .........   Passed    0.01 sec
+test 132
+        Start 132: system_miscellaneous_case5
+
+132: Test command: /home/ueda/slim/build/test/system_check/miscellaneous_case5_run.sh
+132: Working Directory: /home/ueda/slim/test/system_check
+132: Environment variables: 
+132:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+132:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+132:  slim_CHECK_OPTIONS=
+132: Test timeout computed to be: 30
+132: 1..0
+132/232 Test #132: system_miscellaneous_case5 .........   Passed    0.01 sec
+test 133
+        Start 133: system_miscellaneous_case6
+
+133: Test command: /home/ueda/slim/build/test/system_check/miscellaneous_case6_run.sh
+133: Working Directory: /home/ueda/slim/test/system_check
+133: Environment variables: 
+133:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+133:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+133:  slim_CHECK_OPTIONS=
+133: Test timeout computed to be: 30
+133: 1..0
+133/232 Test #133: system_miscellaneous_case6 .........   Passed    0.01 sec
+test 134
+        Start 134: system_miscellaneous_case7
+
+134: Test command: /home/ueda/slim/build/test/system_check/miscellaneous_case7_run.sh
+134: Working Directory: /home/ueda/slim/test/system_check
+134: Environment variables: 
+134:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+134:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+134:  slim_CHECK_OPTIONS=
+134: Test timeout computed to be: 30
+134: 1..0
+134/232 Test #134: system_miscellaneous_case7 .........   Passed    0.01 sec
+test 135
+        Start 135: system_miscellaneous_case8
+
+135: Test command: /home/ueda/slim/build/test/system_check/miscellaneous_case8_run.sh
+135: Working Directory: /home/ueda/slim/test/system_check
+135: Environment variables: 
+135:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+135:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+135:  slim_CHECK_OPTIONS=
+135: Test timeout computed to be: 30
+135: 1..0
+135/232 Test #135: system_miscellaneous_case8 .........   Passed    0.01 sec
+test 136
+        Start 136: system_miscellaneous_case9
+
+136: Test command: /home/ueda/slim/build/test/system_check/miscellaneous_case9_run.sh
+136: Working Directory: /home/ueda/slim/test/system_check
+136: Environment variables: 
+136:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+136:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+136:  slim_CHECK_OPTIONS=
+136: Test timeout computed to be: 30
+136: 1..0
+136/232 Test #136: system_miscellaneous_case9 .........   Passed    0.01 sec
+test 137
+        Start 137: system_proccxt_case1
+
+137: Test command: /home/ueda/slim/build/test/system_check/proccxt_case1_run.sh
+137: Working Directory: /home/ueda/slim/test/system_check
+137: Environment variables: 
+137:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+137:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+137:  slim_CHECK_OPTIONS=
+137: Test timeout computed to be: 30
+137: 1..0
+137/232 Test #137: system_proccxt_case1 ...............   Passed    0.02 sec
+test 138
+        Start 138: system_proccxt_case10
+
+138: Test command: /home/ueda/slim/build/test/system_check/proccxt_case10_run.sh
+138: Working Directory: /home/ueda/slim/test/system_check
+138: Environment variables: 
+138:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+138:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+138:  slim_CHECK_OPTIONS=
+138: Test timeout computed to be: 30
+138: 1..0
+138/232 Test #138: system_proccxt_case10 ..............   Passed    0.02 sec
+test 139
+        Start 139: system_proccxt_case11
+
+139: Test command: /home/ueda/slim/build/test/system_check/proccxt_case11_run.sh
+139: Working Directory: /home/ueda/slim/test/system_check
+139: Environment variables: 
+139:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+139:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+139:  slim_CHECK_OPTIONS=
+139: Test timeout computed to be: 30
+139: 1..0
+139/232 Test #139: system_proccxt_case11 ..............   Passed    0.02 sec
+test 140
+        Start 140: system_proccxt_case12
+
+140: Test command: /home/ueda/slim/build/test/system_check/proccxt_case12_run.sh
+140: Working Directory: /home/ueda/slim/test/system_check
+140: Environment variables: 
+140:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+140:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+140:  slim_CHECK_OPTIONS=
+140: Test timeout computed to be: 30
+140: 1..0
+140/232 Test #140: system_proccxt_case12 ..............   Passed    0.01 sec
+test 141
+        Start 141: system_proccxt_case13
+
+141: Test command: /home/ueda/slim/build/test/system_check/proccxt_case13_run.sh
+141: Working Directory: /home/ueda/slim/test/system_check
+141: Environment variables: 
+141:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+141:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+141:  slim_CHECK_OPTIONS=
+141: Test timeout computed to be: 30
+141: 1..0
+141/232 Test #141: system_proccxt_case13 ..............   Passed    0.01 sec
+test 142
+        Start 142: system_proccxt_case14
+
+142: Test command: /home/ueda/slim/build/test/system_check/proccxt_case14_run.sh
+142: Working Directory: /home/ueda/slim/test/system_check
+142: Environment variables: 
+142:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+142:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+142:  slim_CHECK_OPTIONS=
+142: Test timeout computed to be: 30
+142: 1..0
+142/232 Test #142: system_proccxt_case14 ..............   Passed    0.01 sec
+test 143
+        Start 143: system_proccxt_case2
+
+143: Test command: /home/ueda/slim/build/test/system_check/proccxt_case2_run.sh
+143: Working Directory: /home/ueda/slim/test/system_check
+143: Environment variables: 
+143:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+143:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+143:  slim_CHECK_OPTIONS=
+143: Test timeout computed to be: 30
+143: 1..0
+143/232 Test #143: system_proccxt_case2 ...............   Passed    0.01 sec
+test 144
+        Start 144: system_proccxt_case3
+
+144: Test command: /home/ueda/slim/build/test/system_check/proccxt_case3_run.sh
+144: Working Directory: /home/ueda/slim/test/system_check
+144: Environment variables: 
+144:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+144:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+144:  slim_CHECK_OPTIONS=
+144: Test timeout computed to be: 30
+144: 1..0
+144/232 Test #144: system_proccxt_case3 ...............   Passed    0.01 sec
+test 145
+        Start 145: system_proccxt_case4
+
+145: Test command: /home/ueda/slim/build/test/system_check/proccxt_case4_run.sh
+145: Working Directory: /home/ueda/slim/test/system_check
+145: Environment variables: 
+145:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+145:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+145:  slim_CHECK_OPTIONS=
+145: Test timeout computed to be: 30
+145: 1..0
+145/232 Test #145: system_proccxt_case4 ...............   Passed    0.01 sec
+test 146
+        Start 146: system_proccxt_case5
+
+146: Test command: /home/ueda/slim/build/test/system_check/proccxt_case5_run.sh
+146: Working Directory: /home/ueda/slim/test/system_check
+146: Environment variables: 
+146:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+146:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+146:  slim_CHECK_OPTIONS=
+146: Test timeout computed to be: 30
+146: 1..0
+146/232 Test #146: system_proccxt_case5 ...............   Passed    0.01 sec
+test 147
+        Start 147: system_proccxt_case6
+
+147: Test command: /home/ueda/slim/build/test/system_check/proccxt_case6_run.sh
+147: Working Directory: /home/ueda/slim/test/system_check
+147: Environment variables: 
+147:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+147:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+147:  slim_CHECK_OPTIONS=
+147: Test timeout computed to be: 30
+147: 1..0
+147/232 Test #147: system_proccxt_case6 ...............   Passed    0.01 sec
+test 148
+        Start 148: system_proccxt_case7
+
+148: Test command: /home/ueda/slim/build/test/system_check/proccxt_case7_run.sh
+148: Working Directory: /home/ueda/slim/test/system_check
+148: Environment variables: 
+148:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+148:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+148:  slim_CHECK_OPTIONS=
+148: Test timeout computed to be: 30
+148: 1..0
+148/232 Test #148: system_proccxt_case7 ...............   Passed    0.01 sec
+test 149
+        Start 149: system_proccxt_case8
+
+149: Test command: /home/ueda/slim/build/test/system_check/proccxt_case8_run.sh
+149: Working Directory: /home/ueda/slim/test/system_check
+149: Environment variables: 
+149:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+149:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+149:  slim_CHECK_OPTIONS=
+149: Test timeout computed to be: 30
+149: 1..0
+149/232 Test #149: system_proccxt_case8 ...............   Passed    0.01 sec
+test 150
+        Start 150: system_proccxt_case9
+
+150: Test command: /home/ueda/slim/build/test/system_check/proccxt_case9_run.sh
+150: Working Directory: /home/ueda/slim/test/system_check
+150: Environment variables: 
+150:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+150:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+150:  slim_CHECK_OPTIONS=
+150: Test timeout computed to be: 30
+150: 1..0
+150/232 Test #150: system_proccxt_case9 ...............   Passed    0.01 sec
+test 151
+        Start 151: system_proccxt_free_case1
+
+151: Test command: /home/ueda/slim/build/test/system_check/proccxt_free_case1_run.sh
+151: Working Directory: /home/ueda/slim/test/system_check
+151: Environment variables: 
+151:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+151:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+151:  slim_CHECK_OPTIONS=
+151: Test timeout computed to be: 30
+151: 1..0
+151/232 Test #151: system_proccxt_free_case1 ..........   Passed    0.01 sec
+test 152
+        Start 152: system_proccxt_free_case2
+
+152: Test command: /home/ueda/slim/build/test/system_check/proccxt_free_case2_run.sh
+152: Working Directory: /home/ueda/slim/test/system_check
+152: Environment variables: 
+152:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+152:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+152:  slim_CHECK_OPTIONS=
+152: Test timeout computed to be: 30
+152: 1..0
+152/232 Test #152: system_proccxt_free_case2 ..........   Passed    0.01 sec
+test 153
+        Start 153: system_proccxt_free_case3
+
+153: Test command: /home/ueda/slim/build/test/system_check/proccxt_free_case3_run.sh
+153: Working Directory: /home/ueda/slim/test/system_check
+153: Environment variables: 
+153:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+153:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+153:  slim_CHECK_OPTIONS=
+153: Test timeout computed to be: 30
+153: 1..0
+153/232 Test #153: system_proccxt_free_case3 ..........   Passed    0.01 sec
+test 154
+        Start 154: system_proccxt_free_case4
+
+154: Test command: /home/ueda/slim/build/test/system_check/proccxt_free_case4_run.sh
+154: Working Directory: /home/ueda/slim/test/system_check
+154: Environment variables: 
+154:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+154:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+154:  slim_CHECK_OPTIONS=
+154: Test timeout computed to be: 30
+154: 1..0
+154/232 Test #154: system_proccxt_free_case4 ..........   Passed    0.01 sec
+test 155
+        Start 155: system_proxyatom_case1
+
+155: Test command: /home/ueda/slim/build/test/system_check/proxyatom_case1_run.sh
+155: Working Directory: /home/ueda/slim/test/system_check
+155: Environment variables: 
+155:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+155:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+155:  slim_CHECK_OPTIONS=
+155: Test timeout computed to be: 30
+155: 1..0
+155/232 Test #155: system_proxyatom_case1 .............   Passed    0.01 sec
+test 156
+        Start 156: system_proxyatom_case2
+
+156: Test command: /home/ueda/slim/build/test/system_check/proxyatom_case2_run.sh
+156: Working Directory: /home/ueda/slim/test/system_check
+156: Environment variables: 
+156:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+156:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+156:  slim_CHECK_OPTIONS=
+156: Test timeout computed to be: 30
+156: 1..0
+156/232 Test #156: system_proxyatom_case2 .............   Passed    0.01 sec
+test 157
+        Start 157: system_proxyatom_case3
+
+157: Test command: /home/ueda/slim/build/test/system_check/proxyatom_case3_run.sh
+157: Working Directory: /home/ueda/slim/test/system_check
+157: Environment variables: 
+157:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+157:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+157:  slim_CHECK_OPTIONS=
+157: Test timeout computed to be: 30
+157: 1..0
+157/232 Test #157: system_proxyatom_case3 .............   Passed    0.01 sec
+test 158
+        Start 158: system_rulecxt_case1
+
+158: Test command: /home/ueda/slim/build/test/system_check/rulecxt_case1_run.sh
+158: Working Directory: /home/ueda/slim/test/system_check
+158: Environment variables: 
+158:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+158:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+158:  slim_CHECK_OPTIONS=
+158: Test timeout computed to be: 30
+158: 1..0
+158/232 Test #158: system_rulecxt_case1 ...............   Passed    0.01 sec
+test 159
+        Start 159: system_simpagation_case1
+
+159: Test command: /home/ueda/slim/build/test/system_check/simpagation_case1_run.sh
+159: Working Directory: /home/ueda/slim/test/system_check
+159: Environment variables: 
+159:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+159:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+159:  slim_CHECK_OPTIONS=
+159: Test timeout computed to be: 30
+159: 1..0
+159/232 Test #159: system_simpagation_case1 ...........   Passed    0.01 sec
+test 160
+        Start 160: system_simpagation_case2
+
+160: Test command: /home/ueda/slim/build/test/system_check/simpagation_case2_run.sh
+160: Working Directory: /home/ueda/slim/test/system_check
+160: Environment variables: 
+160:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+160:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+160:  slim_CHECK_OPTIONS=
+160: Test timeout computed to be: 30
+160: 1..0
+160/232 Test #160: system_simpagation_case2 ...........   Passed    0.01 sec
+test 161
+        Start 161: system_unification_case1
+
+161: Test command: /home/ueda/slim/build/test/system_check/unification_case1_run.sh
+161: Working Directory: /home/ueda/slim/test/system_check
+161: Environment variables: 
+161:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+161:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+161:  slim_CHECK_OPTIONS=
+161: Test timeout computed to be: 30
+161: 1..0
+161/232 Test #161: system_unification_case1 ...........   Passed    0.01 sec
+test 162
+        Start 162: system_unification_case2
+
+162: Test command: /home/ueda/slim/build/test/system_check/unification_case2_run.sh
+162: Working Directory: /home/ueda/slim/test/system_check
+162: Environment variables: 
+162:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+162:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+162:  slim_CHECK_OPTIONS=
+162: Test timeout computed to be: 30
+162: 1..0
+162/232 Test #162: system_unification_case2 ...........   Passed    0.01 sec
+test 163
+        Start 163: system_unification_case3
+
+163: Test command: /home/ueda/slim/build/test/system_check/unification_case3_run.sh
+163: Working Directory: /home/ueda/slim/test/system_check
+163: Environment variables: 
+163:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+163:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+163:  slim_CHECK_OPTIONS=
+163: Test timeout computed to be: 30
+163: 1..0
+163/232 Test #163: system_unification_case3 ...........   Passed    0.01 sec
+test 164
+        Start 164: system_unification_case4
+
+164: Test command: /home/ueda/slim/build/test/system_check/unification_case4_run.sh
+164: Working Directory: /home/ueda/slim/test/system_check
+164: Environment variables: 
+164:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+164:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+164:  slim_CHECK_OPTIONS=
+164: Test timeout computed to be: 30
+164: 1..0
+164/232 Test #164: system_unification_case4 ...........   Passed    0.01 sec
+test 165
+        Start 165: system_unification_case5
+
+165: Test command: /home/ueda/slim/build/test/system_check/unification_case5_run.sh
+165: Working Directory: /home/ueda/slim/test/system_check
+165: Environment variables: 
+165:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+165:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+165:  slim_CHECK_OPTIONS=
+165: Test timeout computed to be: 30
+165: 1..0
+165/232 Test #165: system_unification_case5 ...........   Passed    0.01 sec
+test 166
+        Start 166: system_unification_case6
+
+166: Test command: /home/ueda/slim/build/test/system_check/unification_case6_run.sh
+166: Working Directory: /home/ueda/slim/test/system_check
+166: Environment variables: 
+166:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+166:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+166:  slim_CHECK_OPTIONS=
+166: Test timeout computed to be: 30
+166: 1..0
+166/232 Test #166: system_unification_case6 ...........   Passed    0.01 sec
+test 167
+        Start 167: system_unification_case7
+
+167: Test command: /home/ueda/slim/build/test/system_check/unification_case7_run.sh
+167: Working Directory: /home/ueda/slim/test/system_check
+167: Environment variables: 
+167:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+167:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+167:  slim_CHECK_OPTIONS=
+167: Test timeout computed to be: 30
+167: 1..0
+167/232 Test #167: system_unification_case7 ...........   Passed    0.01 sec
+test 168
+        Start 168: system_unification_case8
+
+168: Test command: /home/ueda/slim/build/test/system_check/unification_case8_run.sh
+168: Working Directory: /home/ueda/slim/test/system_check
+168: Environment variables: 
+168:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+168:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+168:  slim_CHECK_OPTIONS=
+168: Test timeout computed to be: 30
+168: 1..0
+168/232 Test #168: system_unification_case8 ...........   Passed    0.01 sec
+test 169
+        Start 169: system_unification_case9
+
+169: Test command: /home/ueda/slim/build/test/system_check/unification_case9_run.sh
+169: Working Directory: /home/ueda/slim/test/system_check
+169: Environment variables: 
+169:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+169:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+169:  slim_CHECK_OPTIONS=
+169: Test timeout computed to be: 30
+169: 1..0
+169/232 Test #169: system_unification_case9 ...........   Passed    0.01 sec
+test 170
+        Start 170: system_uniq_case1
+
+170: Test command: /home/ueda/slim/build/test/system_check/uniq_case1_run.sh
+170: Working Directory: /home/ueda/slim/test/system_check
+170: Environment variables: 
+170:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+170:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+170:  slim_CHECK_OPTIONS=
+170: Test timeout computed to be: 30
+170: 1..0
+170/232 Test #170: system_uniq_case1 ..................   Passed    0.01 sec
+test 171
+        Start 171: system_uniq_case2
+
+171: Test command: /home/ueda/slim/build/test/system_check/uniq_case2_run.sh
+171: Working Directory: /home/ueda/slim/test/system_check
+171: Environment variables: 
+171:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+171:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+171:  slim_CHECK_OPTIONS=
+171: Test timeout computed to be: 30
+171: 1..0
+171/232 Test #171: system_uniq_case2 ..................   Passed    0.01 sec
+test 172
+        Start 172: system_uniq_case3
+
+172: Test command: /home/ueda/slim/build/test/system_check/uniq_case3_run.sh
+172: Working Directory: /home/ueda/slim/test/system_check
+172: Environment variables: 
+172:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+172:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+172:  slim_CHECK_OPTIONS=
+172: Test timeout computed to be: 30
+172: 1..0
+172/232 Test #172: system_uniq_case3 ..................   Passed    0.01 sec
+test 173
+        Start 173: system_uniq_case4
+
+173: Test command: /home/ueda/slim/build/test/system_check/uniq_case4_run.sh
+173: Working Directory: /home/ueda/slim/test/system_check
+173: Environment variables: 
+173:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+173:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+173:  slim_CHECK_OPTIONS=
+173: Test timeout computed to be: 30
+173: 1..0
+173/232 Test #173: system_uniq_case4 ..................   Passed    0.01 sec
+test 174
+        Start 174: system_uniq_case5
+
+174: Test command: /home/ueda/slim/build/test/system_check/uniq_case5_run.sh
+174: Working Directory: /home/ueda/slim/test/system_check
+174: Environment variables: 
+174:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+174:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+174:  slim_CHECK_OPTIONS=
+174: Test timeout computed to be: 30
+174: 1..0
+174/232 Test #174: system_uniq_case5 ..................   Passed    0.01 sec
+test 175
+        Start 175: system_uniq_case6
+
+175: Test command: /home/ueda/slim/build/test/system_check/uniq_case6_run.sh
+175: Working Directory: /home/ueda/slim/test/system_check
+175: Environment variables: 
+175:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+175:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+175:  slim_CHECK_OPTIONS=
+175: Test timeout computed to be: 30
+175: 1..0
+175/232 Test #175: system_uniq_case6 ..................   Passed    0.01 sec
+test 224
+        Start 224: compile_lib_integer
+
+224: Test command: /usr/bin/cmake "--build" "/home/ueda/slim/build" "--target" "compile_lib_testsuite_integer_integer_set"
+224: Working Directory: /home/ueda/slim/build/test/library_check
+224: Test timeout computed to be: 10000000
+224: Built target compile_lib_testsuite_integer_integer_set
+176/232 Test #224: compile_lib_integer ................   Passed    0.15 sec
+test 176
+        Start 176: library_integer
+
+176: Test command: /home/ueda/slim/test/library_check/testsuite/integer/check.sh
+176: Working Directory: /home/ueda/slim/test/library_check
+176: Environment variables: 
+176:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+176:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+176:  slim_CHECK_OPTIONS=
+176:  SLIM_BINARY=/home/ueda/slim/build/bin/slim
+176:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+176: Test timeout computed to be: 30
+176: ok  - integer.set case 1
+176: ok  - integer.set case 2
+176: ok  - integer.set case 3
+176: ok  - integer.set case 4
+176: 1..4
+176: # unit_test.use. @24. @48. @54. 
+177/232 Test #176: library_integer ....................   Passed    0.04 sec
+test 226
+        Start 226: compile_lib_mell
+
+226: Test command: /usr/bin/cmake "--build" "/home/ueda/slim/build" "--target" "compile_lib_testsuite_mell_mell"
+226: Working Directory: /home/ueda/slim/build/test/library_check
+226: Test timeout computed to be: 10000000
+226: Built target compile_lib_testsuite_mell_mell
+178/232 Test #226: compile_lib_mell ...................   Passed    0.13 sec
+test 177
+        Start 177: library_mell
+
+177: Test command: /home/ueda/slim/test/library_check/testsuite/mell/check.sh
+177: Working Directory: /home/ueda/slim/test/library_check
+177: Environment variables: 
+177:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+177:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+177:  slim_CHECK_OPTIONS=
+177:  SLIM_BINARY=/home/ueda/slim/build/bin/slim
+177:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+177: Test timeout computed to be: 30
+177: ok  - mell.delete case 3
+177: ok  - mell.delete case 2
+177: ok  - mell.delete case 1
+177: ok  - mell.copy case 5
+177: ok  - mell.copy case 4
+177: ok  - mell.copy case 3
+177: ok  - mell.copy case 2
+177: ok  - mell.copy case 1
+177: 1..8
+177: # unit_test.use. @24. @48. @54. 
+179/232 Test #177: library_mell .......................   Passed    0.04 sec
+test 228
+        Start 228: compile_lib_nlmem
+
+228: Test command: /usr/bin/cmake "--build" "/home/ueda/slim/build" "--target" "compile_lib_testsuite_nlmem_nlmem"
+228: Working Directory: /home/ueda/slim/build/test/library_check
+228: Test timeout computed to be: 10000000
+228: [100%] Built target compile_lib_testsuite_nlmem_nlmem
+180/232 Test #228: compile_lib_nlmem ..................   Passed    0.13 sec
+test 178
+        Start 178: library_nlmem
+
+178: Test command: /home/ueda/slim/test/library_check/testsuite/nlmem/check.sh
+178: Working Directory: /home/ueda/slim/test/library_check
+178: Environment variables: 
+178:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+178:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+178:  slim_CHECK_OPTIONS=
+178:  SLIM_BINARY=/home/ueda/slim/build/bin/slim
+178:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+178: Test timeout computed to be: 30
+178: ok  - nlmem.kill case 1
+178: ok  - nlmem.copy case 1
+178: 1..2
+178: # unit_test.use. @24. @48. @54. 
+181/232 Test #178: library_nlmem ......................   Passed    0.04 sec
+test 230
+        Start 230: compile_lib_set
+
+230: Test command: /usr/bin/cmake "--build" "/home/ueda/slim/build" "--target" "compile_lib_testsuite_set_set"
+230: Working Directory: /home/ueda/slim/build/test/library_check
+230: Test timeout computed to be: 10000000
+230: Built target compile_lib_testsuite_set_set
+182/232 Test #230: compile_lib_set ....................   Passed    0.13 sec
+test 179
+        Start 179: library_set
+
+179: Test command: /home/ueda/slim/test/library_check/testsuite/set/check.sh
+179: Working Directory: /home/ueda/slim/test/library_check
+179: Environment variables: 
+179:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+179:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+179:  slim_CHECK_OPTIONS=
+179:  SLIM_BINARY=/home/ueda/slim/build/bin/slim
+179:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+179: Test timeout computed to be: 30
+179: ok  - set copy case 1
+179: ok  - union set case 1
+179: ok  - intersect set case 1
+179: ok  - diff set case 1
+179: ok  - set to list case 2
+179: ok  - set to list case 1
+179: ok  - set erase case 2
+179: ok  - set erase case 1
+179: ok  - tuple set case 4
+179: ok  - tuple set case 3
+179: ok  - tuple set case 2
+179: ok  - tuple set case 1
+179: ok  - membrane set case 2
+179: ok  - membrane set case 1
+179: ok  - integer set case 2
+179: ok  - integer set case 1
+179: 1..16
+179: # unit_test.use. @24. @48. @54. 
+183/232 Test #179: library_set ........................   Passed    0.05 sec
+test 232
+        Start 232: compile_lib_statespace
+
+232: Test command: /usr/bin/cmake "--build" "/home/ueda/slim/build" "--target" "compile_lib_testsuite_statespace_statespace"
+232: Working Directory: /home/ueda/slim/build/test/library_check
+232: Test timeout computed to be: 10000000
+232: Built target compile_lib_testsuite_statespace_statespace
+184/232 Test #232: compile_lib_statespace .............   Passed    0.14 sec
+test 180
+        Start 180: library_statespace
+
+180: Test command: /home/ueda/slim/test/library_check/testsuite/statespace/check.sh
+180: Working Directory: /home/ueda/slim/test/library_check
+180: Environment variables: 
+180:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+180:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+180:  slim_CHECK_OPTIONS=
+180:  SLIM_BINARY=/home/ueda/slim/build/bin/slim
+180:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+180: Test timeout computed to be: 30
+180: ok  - react_nd_set case 1
+180: ok  - react_nd_set stable membrane test
+180: 1..2
+180: # unit_test.use. @24. @48. @54. 
+185/232 Test #180: library_statespace .................   Passed    0.04 sec
+test 182
+        Start 182: compile_append
+
+182: Test command: /usr/bin/cmake "--build" "/home/ueda/slim/build" "--target" "compile_testsuite_append_append1" "compile_testsuite_append_append2" "compile_testsuite_append_append3" "compile_testsuite_append_append4"
+182: Working Directory: /home/ueda/slim/build/test/system_check
+182: Test timeout computed to be: 10000000
+182: [100%] Built target compile_testsuite_append_append1
+182: Built target compile_testsuite_append_append2
+182: Built target compile_testsuite_append_append3
+182: [100%] Built target compile_testsuite_append_append4
+186/232 Test #182: compile_append .....................   Passed    0.45 sec
+test 181
+        Start 181: system_append
+
+181: Test command: /home/ueda/slim/test/system_check/testsuite/append/check.sh
+181: Working Directory: /home/ueda/slim/test/system_check
+181: Environment variables: 
+181:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+181:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+181: Test timeout computed to be: 10000000
+181: 1..3
+181: not ok 1 - '' should be 'expected output'
+181: not ok 2 - '' should be 'expected output'
+181: not ok 3 - '' should be 'expected output'
+187/232 Test #181: system_append ......................   Passed    0.01 sec
+test 184
+        Start 184: compile_basic
+
+184: Test command: /usr/bin/cmake "--build" "/home/ueda/slim/build" "--target" "compile_testsuite_basic_basic1" "compile_testsuite_basic_basic2" "compile_testsuite_basic_basic3" "compile_testsuite_basic_basic4" "compile_testsuite_basic_basic5"
+184: Working Directory: /home/ueda/slim/build/test/system_check
+184: Test timeout computed to be: 10000000
+184: Built target compile_testsuite_basic_basic1
+184: Built target compile_testsuite_basic_basic2
+184: [100%] Built target compile_testsuite_basic_basic3
+184: Built target compile_testsuite_basic_basic4
+184: Built target compile_testsuite_basic_basic5
+188/232 Test #184: compile_basic ......................   Passed    0.57 sec
+test 183
+        Start 183: system_basic
+
+183: Test command: /home/ueda/slim/test/system_check/testsuite/basic/check.sh
+183: Working Directory: /home/ueda/slim/test/system_check
+183: Environment variables: 
+183:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+183:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+183: Test timeout computed to be: 10000000
+183: 1..4
+183: not ok 1 - '' should be 'expected output'
+183: not ok 2 - '' should be 'expected output'
+183: not ok 3 - '' should be 'expected output'
+183: not ok 4 - '' should be 'expected output'
+189/232 Test #183: system_basic .......................   Passed    0.02 sec
+test 186
+        Start 186: compile_count
+
+186: Test command: /usr/bin/cmake "--build" "/home/ueda/slim/build" "--target" "compile_testsuite_count_case1" "compile_testsuite_count_case2" "compile_testsuite_count_case3"
+186: Working Directory: /home/ueda/slim/build/test/system_check
+186: Test timeout computed to be: 10000000
+186: [100%] Built target compile_testsuite_count_case1
+186: Built target compile_testsuite_count_case2
+186: Built target compile_testsuite_count_case3
+190/232 Test #186: compile_count ......................   Passed    0.35 sec
+test 185
+        Start 185: system_count
+
+185: Test command: /home/ueda/slim/test/system_check/testsuite/count/check.sh
+185: Working Directory: /home/ueda/slim/test/system_check
+185: Environment variables: 
+185:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+185:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+185: Test timeout computed to be: 10000000
+185: 1..2
+185: not ok 1 - '' should be 'expected output'
+185: not ok 2 - '' should be 'expected output'
+191/232 Test #185: system_count .......................   Passed    0.01 sec
+test 188
+        Start 188: compile_cslmntal
+
+188: Test command: /usr/bin/cmake "--build" "/home/ueda/slim/build" "--target" "compile_testsuite_cslmntal_context_add" "compile_testsuite_cslmntal_isbinarytree" "compile_testsuite_cslmntal_list_rmend" "compile_testsuite_cslmntal_list_rmhead" "compile_testsuite_cslmntal_list_sort" "compile_testsuite_cslmntal_skiplist1" "compile_testsuite_cslmntal_skiplist2" "compile_testsuite_cslmntal_skiplist3"
+188: Working Directory: /home/ueda/slim/build/test/system_check
+188: Test timeout computed to be: 10000000
+188: [100%] Built target compile_testsuite_cslmntal_context_add
+188: Built target compile_testsuite_cslmntal_isbinarytree
+188: Built target compile_testsuite_cslmntal_list_rmend
+188: [100%] Built target compile_testsuite_cslmntal_list_rmhead
+188: Built target compile_testsuite_cslmntal_list_sort
+188: Built target compile_testsuite_cslmntal_skiplist1
+188: [100%] Built target compile_testsuite_cslmntal_skiplist2
+188: Built target compile_testsuite_cslmntal_skiplist3
+192/232 Test #188: compile_cslmntal ...................   Passed    0.92 sec
+test 187
+        Start 187: system_cslmntal
+
+187: Test command: /home/ueda/slim/test/system_check/testsuite/cslmntal/check.sh
+187: Working Directory: /home/ueda/slim/test/system_check
+187: Environment variables: 
+187:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+187:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+187: Test timeout computed to be: 10000000
+187: 1..7
+187: not ok 1 - '' should be 'expected output'
+187: not ok 2 - '' should be 'expected output'
+187: not ok 3 - '' should be 'expected output'
+187: not ok 4 - '' should be 'expected output'
+187: not ok 5 - '' should be 'expected output'
+187: not ok 6 - '' should be 'expected output'
+187: not ok 7 - '' should be 'expected output'
+193/232 Test #187: system_cslmntal ....................   Passed    0.02 sec
+test 190
+        Start 190: compile_guard_float
+
+190: Test command: /usr/bin/cmake "--build" "/home/ueda/slim/build" "--target" "compile_testsuite_guard_float_case1" "compile_testsuite_guard_float_case10" "compile_testsuite_guard_float_case11" "compile_testsuite_guard_float_case12" "compile_testsuite_guard_float_case13" "compile_testsuite_guard_float_case14" "compile_testsuite_guard_float_case15" "compile_testsuite_guard_float_case2" "compile_testsuite_guard_float_case3" "compile_testsuite_guard_float_case4" "compile_testsuite_guard_float_case5" "compile_testsuite_guard_float_case6" "compile_testsuite_guard_float_case7" "compile_testsuite_guard_float_case8" "compile_testsuite_guard_float_case9"
+190: Working Directory: /home/ueda/slim/build/test/system_check
+190: Test timeout computed to be: 10000000
+190: Built target compile_testsuite_guard_float_case1
+190: [100%] Built target compile_testsuite_guard_float_case10
+190: Built target compile_testsuite_guard_float_case11
+190: Built target compile_testsuite_guard_float_case12
+190: [100%] Built target compile_testsuite_guard_float_case13
+190: Built target compile_testsuite_guard_float_case14
+190: Built target compile_testsuite_guard_float_case15
+190: [100%] Built target compile_testsuite_guard_float_case2
+190: Built target compile_testsuite_guard_float_case3
+190: Built target compile_testsuite_guard_float_case4
+190: [100%] Built target compile_testsuite_guard_float_case5
+190: Built target compile_testsuite_guard_float_case6
+190: Built target compile_testsuite_guard_float_case7
+190: [100%] Built target compile_testsuite_guard_float_case8
+190: Built target compile_testsuite_guard_float_case9
+194/232 Test #190: compile_guard_float ................   Passed    1.74 sec
+test 189
+        Start 189: system_guard_float
+
+189: Test command: /home/ueda/slim/test/system_check/testsuite/guard_float/check.sh
+189: Working Directory: /home/ueda/slim/test/system_check
+189: Environment variables: 
+189:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+189:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+189: Test timeout computed to be: 10000000
+189: 1..14
+189: not ok 1 - '' should be 'expected output'
+189: not ok 2 - '' should be 'expected output'
+189: not ok 3 - '' should be 'expected output'
+189: not ok 4 - '' should be 'expected output'
+189: not ok 5 - '' should be 'expected output'
+189: not ok 6 - '' should be 'expected output'
+189: not ok 7 - '' should be 'expected output'
+189: not ok 8 - '' should be 'expected output'
+189: not ok 9 - '' should be 'expected output'
+189: not ok 10 - '' should be 'expected output'
+189: not ok 11 - '' should be 'expected output'
+189: not ok 12 - '' should be 'expected output'
+189: not ok 13 - '' should be 'expected output'
+189: not ok 14 - '' should be 'expected output'
+195/232 Test #189: system_guard_float .................   Passed    0.02 sec
+test 192
+        Start 192: compile_guard_ground
+
+192: Test command: /usr/bin/cmake "--build" "/home/ueda/slim/build" "--target" "compile_testsuite_guard_ground_case1" "compile_testsuite_guard_ground_case10" "compile_testsuite_guard_ground_case11" "compile_testsuite_guard_ground_case12" "compile_testsuite_guard_ground_case13" "compile_testsuite_guard_ground_case14" "compile_testsuite_guard_ground_case15" "compile_testsuite_guard_ground_case16" "compile_testsuite_guard_ground_case17" "compile_testsuite_guard_ground_case18" "compile_testsuite_guard_ground_case19" "compile_testsuite_guard_ground_case2" "compile_testsuite_guard_ground_case20" "compile_testsuite_guard_ground_case21" "compile_testsuite_guard_ground_case22" "compile_testsuite_guard_ground_case23" "compile_testsuite_guard_ground_case24" "compile_testsuite_guard_ground_case25" "compile_testsuite_guard_ground_case26" "compile_testsuite_guard_ground_case27" "compile_testsuite_guard_ground_case28" "compile_testsuite_guard_ground_case29" "compile_testsuite_guard_ground_case3" "compile_testsuite_guard_ground_case30" "compile_testsuite_guard_ground_case31" "compile_testsuite_guard_ground_case4" "compile_testsuite_guard_ground_case5" "compile_testsuite_guard_ground_case6" "compile_testsuite_guard_ground_case7" "compile_testsuite_guard_ground_case8" "compile_testsuite_guard_ground_case9"
+192: Working Directory: /home/ueda/slim/build/test/system_check
+192: Test timeout computed to be: 10000000
+192: Built target compile_testsuite_guard_ground_case1
+192: [100%] Built target compile_testsuite_guard_ground_case10
+192: Built target compile_testsuite_guard_ground_case11
+192: Built target compile_testsuite_guard_ground_case12
+192: [100%] Built target compile_testsuite_guard_ground_case13
+192: Built target compile_testsuite_guard_ground_case14
+192: Built target compile_testsuite_guard_ground_case15
+192: [100%] Built target compile_testsuite_guard_ground_case16
+192: Built target compile_testsuite_guard_ground_case17
+192: Built target compile_testsuite_guard_ground_case18
+192: [100%] Built target compile_testsuite_guard_ground_case19
+192: Built target compile_testsuite_guard_ground_case2
+192: Built target compile_testsuite_guard_ground_case20
+192: [100%] Built target compile_testsuite_guard_ground_case21
+192: Built target compile_testsuite_guard_ground_case22
+192: Built target compile_testsuite_guard_ground_case23
+192: [100%] Built target compile_testsuite_guard_ground_case24
+192: Built target compile_testsuite_guard_ground_case25
+192: Built target compile_testsuite_guard_ground_case26
+192: [100%] Built target compile_testsuite_guard_ground_case27
+192: Built target compile_testsuite_guard_ground_case28
+192: Built target compile_testsuite_guard_ground_case29
+192: [100%] Built target compile_testsuite_guard_ground_case3
+192: Built target compile_testsuite_guard_ground_case30
+192: Built target compile_testsuite_guard_ground_case31
+192: [100%] Built target compile_testsuite_guard_ground_case4
+192: Built target compile_testsuite_guard_ground_case5
+192: Built target compile_testsuite_guard_ground_case6
+192: [100%] Built target compile_testsuite_guard_ground_case7
+192: Built target compile_testsuite_guard_ground_case8
+192: Built target compile_testsuite_guard_ground_case9
+196/232 Test #192: compile_guard_ground ...............   Passed    3.22 sec
+test 191
+        Start 191: system_guard_ground
+
+191: Test command: /home/ueda/slim/test/system_check/testsuite/guard_ground/check.sh
+191: Working Directory: /home/ueda/slim/test/system_check
+191: Environment variables: 
+191:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+191:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+191: Test timeout computed to be: 10000000
+191: 1..30
+191: not ok 1 - '' should be 'expected output'
+191: not ok 2 - '' should be 'expected output'
+191: not ok 3 - '' should be 'expected output'
+191: not ok 4 - '' should be 'expected output'
+191: not ok 5 - '' should be 'expected output'
+191: not ok 6 - '' should be 'expected output'
+191: not ok 7 - '' should be 'expected output'
+191: not ok 8 - '' should be 'expected output'
+191: not ok 9 - '' should be 'expected output'
+191: not ok 10 - '' should be 'expected output'
+191: not ok 11 - '' should be 'expected output'
+191: not ok 12 - '' should be 'expected output'
+191: not ok 13 - '' should be 'expected output'
+191: not ok 14 - '' should be 'expected output'
+191: not ok 15 - '' should be 'expected output'
+191: not ok 16 - '' should be 'expected output'
+191: not ok 17 - '' should be 'expected output'
+191: not ok 18 - '' should be 'expected output'
+191: not ok 19 - '' should be 'expected output'
+191: not ok 20 - '' should be 'expected output'
+191: not ok 21 - '' should be 'expected output'
+191: not ok 22 - '' should be 'expected output'
+191: not ok 23 - '' should be 'expected output'
+191: not ok 24 - '' should be 'expected output'
+191: not ok 25 - '' should be 'expected output'
+191: not ok 26 - '' should be 'expected output'
+191: not ok 27 - '' should be 'expected output'
+191: not ok 28 - '' should be 'expected output'
+191: not ok 29 - '' should be 'expected output'
+191: not ok 30 - '' should be 'expected output'
+197/232 Test #191: system_guard_ground ................   Passed    0.03 sec
+test 194
+        Start 194: compile_guard_ground_multi
+
+194: Test command: /usr/bin/cmake "--build" "/home/ueda/slim/build" "--target" "compile_testsuite_guard_ground_multi_case1" "compile_testsuite_guard_ground_multi_case10" "compile_testsuite_guard_ground_multi_case11" "compile_testsuite_guard_ground_multi_case12" "compile_testsuite_guard_ground_multi_case13" "compile_testsuite_guard_ground_multi_case14" "compile_testsuite_guard_ground_multi_case15" "compile_testsuite_guard_ground_multi_case16" "compile_testsuite_guard_ground_multi_case2" "compile_testsuite_guard_ground_multi_case3" "compile_testsuite_guard_ground_multi_case4" "compile_testsuite_guard_ground_multi_case5" "compile_testsuite_guard_ground_multi_case6" "compile_testsuite_guard_ground_multi_case7" "compile_testsuite_guard_ground_multi_case8" "compile_testsuite_guard_ground_multi_case9"
+194: Working Directory: /home/ueda/slim/build/test/system_check
+194: Test timeout computed to be: 10000000
+194: [100%] Built target compile_testsuite_guard_ground_multi_case1
+194: Built target compile_testsuite_guard_ground_multi_case10
+194: Built target compile_testsuite_guard_ground_multi_case11
+194: [100%] Built target compile_testsuite_guard_ground_multi_case12
+194: Built target compile_testsuite_guard_ground_multi_case13
+194: Built target compile_testsuite_guard_ground_multi_case14
+194: [100%] Built target compile_testsuite_guard_ground_multi_case15
+194: Built target compile_testsuite_guard_ground_multi_case16
+194: Built target compile_testsuite_guard_ground_multi_case2
+194: [100%] Built target compile_testsuite_guard_ground_multi_case3
+194: Built target compile_testsuite_guard_ground_multi_case4
+194: Built target compile_testsuite_guard_ground_multi_case5
+194: [100%] Built target compile_testsuite_guard_ground_multi_case6
+194: Built target compile_testsuite_guard_ground_multi_case7
+194: Built target compile_testsuite_guard_ground_multi_case8
+194: [100%] Built target compile_testsuite_guard_ground_multi_case9
+198/232 Test #194: compile_guard_ground_multi .........   Passed    1.64 sec
+test 193
+        Start 193: system_guard_ground_multi
+
+193: Test command: /home/ueda/slim/test/system_check/testsuite/guard_ground_multi/check.sh
+193: Working Directory: /home/ueda/slim/test/system_check
+193: Environment variables: 
+193:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+193:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+193: Test timeout computed to be: 10000000
+193: 1..15
+193: not ok 1 - '' should be 'expected output'
+193: not ok 2 - '' should be 'expected output'
+193: not ok 3 - '' should be 'expected output'
+193: not ok 4 - '' should be 'expected output'
+193: not ok 5 - '' should be 'expected output'
+193: not ok 6 - '' should be 'expected output'
+193: not ok 7 - '' should be 'expected output'
+193: not ok 8 - '' should be 'expected output'
+193: not ok 9 - '' should be 'expected output'
+193: not ok 10 - '' should be 'expected output'
+193: not ok 11 - '' should be 'expected output'
+193: not ok 12 - '' should be 'expected output'
+193: not ok 13 - '' should be 'expected output'
+193: not ok 14 - '' should be 'expected output'
+193: not ok 15 - '' should be 'expected output'
+199/232 Test #193: system_guard_ground_multi ..........   Passed    0.02 sec
+test 196
+        Start 196: compile_guard_int
+
+196: Test command: /usr/bin/cmake "--build" "/home/ueda/slim/build" "--target" "compile_testsuite_guard_int_case1" "compile_testsuite_guard_int_case10" "compile_testsuite_guard_int_case11" "compile_testsuite_guard_int_case12" "compile_testsuite_guard_int_case13" "compile_testsuite_guard_int_case14" "compile_testsuite_guard_int_case15" "compile_testsuite_guard_int_case16" "compile_testsuite_guard_int_case17" "compile_testsuite_guard_int_case18" "compile_testsuite_guard_int_case19" "compile_testsuite_guard_int_case2" "compile_testsuite_guard_int_case20" "compile_testsuite_guard_int_case21" "compile_testsuite_guard_int_case22" "compile_testsuite_guard_int_case3" "compile_testsuite_guard_int_case4" "compile_testsuite_guard_int_case5" "compile_testsuite_guard_int_case6" "compile_testsuite_guard_int_case7" "compile_testsuite_guard_int_case8" "compile_testsuite_guard_int_case9"
+196: Working Directory: /home/ueda/slim/build/test/system_check
+196: Test timeout computed to be: 10000000
+196: Built target compile_testsuite_guard_int_case1
+196: Built target compile_testsuite_guard_int_case10
+196: [100%] Built target compile_testsuite_guard_int_case11
+196: Built target compile_testsuite_guard_int_case12
+196: Built target compile_testsuite_guard_int_case13
+196: [100%] Built target compile_testsuite_guard_int_case14
+196: Built target compile_testsuite_guard_int_case15
+196: Built target compile_testsuite_guard_int_case16
+196: [100%] Built target compile_testsuite_guard_int_case17
+196: Built target compile_testsuite_guard_int_case18
+196: Built target compile_testsuite_guard_int_case19
+196: [100%] Built target compile_testsuite_guard_int_case2
+196: Built target compile_testsuite_guard_int_case20
+196: Built target compile_testsuite_guard_int_case21
+196: Built target compile_testsuite_guard_int_case22
+196: [100%] Built target compile_testsuite_guard_int_case3
+196: Built target compile_testsuite_guard_int_case4
+196: Built target compile_testsuite_guard_int_case5
+196: [100%] Built target compile_testsuite_guard_int_case6
+196: Built target compile_testsuite_guard_int_case7
+196: Built target compile_testsuite_guard_int_case8
+196: [100%] Built target compile_testsuite_guard_int_case9
+200/232 Test #196: compile_guard_int ..................   Passed    2.30 sec
+test 195
+        Start 195: system_guard_int
+
+195: Test command: /home/ueda/slim/test/system_check/testsuite/guard_int/check.sh
+195: Working Directory: /home/ueda/slim/test/system_check
+195: Environment variables: 
+195:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+195:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+195: Test timeout computed to be: 10000000
+195: 1..21
+195: not ok 1 - '' should be 'expected output'
+195: not ok 2 - '' should be 'expected output'
+195: not ok 3 - '' should be 'expected output'
+195: not ok 4 - '' should be 'expected output'
+195: not ok 5 - '' should be 'expected output'
+195: not ok 6 - '' should be 'expected output'
+195: not ok 7 - '' should be 'expected output'
+195: not ok 8 - '' should be 'expected output'
+195: not ok 9 - '' should be 'expected output'
+195: not ok 10 - '' should be 'expected output'
+195: not ok 11 - '' should be 'expected output'
+195: not ok 12 - '' should be 'expected output'
+195: not ok 13 - '' should be 'expected output'
+195: not ok 14 - '' should be 'expected output'
+195: not ok 15 - '' should be 'expected output'
+195: not ok 16 - '' should be 'expected output'
+195: not ok 17 - '' should be 'expected output'
+195: not ok 18 - '' should be 'expected output'
+195: not ok 19 - '' should be 'expected output'
+195: not ok 20 - '' should be 'expected output'
+195: not ok 21 - '' should be 'expected output'
+201/232 Test #195: system_guard_int ...................   Passed    0.03 sec
+test 198
+        Start 198: compile_guard_string
+
+198: Test command: /usr/bin/cmake "--build" "/home/ueda/slim/build" "--target" "compile_testsuite_guard_string_case1" "compile_testsuite_guard_string_case2" "compile_testsuite_guard_string_case3" "compile_testsuite_guard_string_case4" "compile_testsuite_guard_string_case5" "compile_testsuite_guard_string_case6"
+198: Working Directory: /home/ueda/slim/build/test/system_check
+198: Test timeout computed to be: 10000000
+198: Built target compile_testsuite_guard_string_case1
+198: Built target compile_testsuite_guard_string_case2
+198: [100%] Built target compile_testsuite_guard_string_case3
+198: Built target compile_testsuite_guard_string_case4
+198: Built target compile_testsuite_guard_string_case5
+198: [100%] Built target compile_testsuite_guard_string_case6
+202/232 Test #198: compile_guard_string ...............   Passed    0.66 sec
+test 197
+        Start 197: system_guard_string
+
+197: Test command: /home/ueda/slim/test/system_check/testsuite/guard_string/check.sh
+197: Working Directory: /home/ueda/slim/test/system_check
+197: Environment variables: 
+197:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+197:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+197: Test timeout computed to be: 10000000
+197: 1..5
+197: not ok 1 - '' should be 'expected output'
+197: not ok 2 - '' should be 'expected output'
+197: not ok 3 - '' should be 'expected output'
+197: not ok 4 - '' should be 'expected output'
+197: not ok 5 - '' should be 'expected output'
+203/232 Test #197: system_guard_string ................   Passed    0.02 sec
+test 200
+        Start 200: compile_guard_unary
+
+200: Test command: /usr/bin/cmake "--build" "/home/ueda/slim/build" "--target" "compile_testsuite_guard_unary_case1" "compile_testsuite_guard_unary_case2" "compile_testsuite_guard_unary_case3" "compile_testsuite_guard_unary_case4"
+200: Working Directory: /home/ueda/slim/build/test/system_check
+200: Test timeout computed to be: 10000000
+200: Built target compile_testsuite_guard_unary_case1
+200: Built target compile_testsuite_guard_unary_case2
+200: [100%] Built target compile_testsuite_guard_unary_case3
+200: Built target compile_testsuite_guard_unary_case4
+204/232 Test #200: compile_guard_unary ................   Passed    0.45 sec
+test 199
+        Start 199: system_guard_unary
+
+199: Test command: /home/ueda/slim/test/system_check/testsuite/guard_unary/check.sh
+199: Working Directory: /home/ueda/slim/test/system_check
+199: Environment variables: 
+199:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+199:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+199: Test timeout computed to be: 10000000
+199: 1..3
+199: not ok 1 - '' should be 'expected output'
+199: not ok 2 - '' should be 'expected output'
+199: not ok 3 - '' should be 'expected output'
+205/232 Test #199: system_guard_unary .................   Passed    0.01 sec
+test 201
+        Start 201: system_hyperlink
+
+201: Test command: /home/ueda/slim/test/system_check/testsuite/hyperlink/check.sh
+201: Working Directory: /home/ueda/slim/test/system_check
+201: Environment variables: 
+201:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+201:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+201: Test timeout computed to be: 10000000
+201: 1..4
+201: not ok 1 - '' should be 'expected output'
+201: not ok 2 - '' should be 'expected output'
+201: not ok 3 - '' should be 'expected output'
+201: not ok 4 - '' should be 'expected output'
+206/232 Test #201: system_hyperlink ...................   Passed    0.02 sec
+test 203
+        Start 203: compile_mem_name
+
+203: Test command: /usr/bin/cmake "--build" "/home/ueda/slim/build" "--target" "compile_testsuite_mem_name_case1" "compile_testsuite_mem_name_case2"
+203: Working Directory: /home/ueda/slim/build/test/system_check
+203: Test timeout computed to be: 10000000
+203: Built target compile_testsuite_mem_name_case1
+203: [100%] Built target compile_testsuite_mem_name_case2
+207/232 Test #203: compile_mem_name ...................   Passed    0.24 sec
+test 202
+        Start 202: system_mem_name
+
+202: Test command: /home/ueda/slim/test/system_check/testsuite/mem_name/check.sh
+202: Working Directory: /home/ueda/slim/test/system_check
+202: Environment variables: 
+202:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+202:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+202: Test timeout computed to be: 10000000
+202: 1..1
+202: not ok 1 - '' should be 'expected output'
+208/232 Test #202: system_mem_name ....................   Passed    0.01 sec
+test 205
+        Start 205: compile_miscellaneous
+
+205: Test command: /usr/bin/cmake "--build" "/home/ueda/slim/build" "--target" "compile_testsuite_miscellaneous_case1" "compile_testsuite_miscellaneous_case10" "compile_testsuite_miscellaneous_case11" "compile_testsuite_miscellaneous_case12" "compile_testsuite_miscellaneous_case13" "compile_testsuite_miscellaneous_case14" "compile_testsuite_miscellaneous_case15" "compile_testsuite_miscellaneous_case16" "compile_testsuite_miscellaneous_case17" "compile_testsuite_miscellaneous_case18" "compile_testsuite_miscellaneous_case19" "compile_testsuite_miscellaneous_case2" "compile_testsuite_miscellaneous_case20" "compile_testsuite_miscellaneous_case3" "compile_testsuite_miscellaneous_case4" "compile_testsuite_miscellaneous_case5" "compile_testsuite_miscellaneous_case6" "compile_testsuite_miscellaneous_case7" "compile_testsuite_miscellaneous_case8" "compile_testsuite_miscellaneous_case9"
+205: Working Directory: /home/ueda/slim/build/test/system_check
+205: Test timeout computed to be: 10000000
+205: Built target compile_testsuite_miscellaneous_case1
+205: Built target compile_testsuite_miscellaneous_case10
+205: [100%] Built target compile_testsuite_miscellaneous_case11
+205: Built target compile_testsuite_miscellaneous_case12
+205: Built target compile_testsuite_miscellaneous_case13
+205: [100%] Built target compile_testsuite_miscellaneous_case14
+205: Built target compile_testsuite_miscellaneous_case15
+205: Built target compile_testsuite_miscellaneous_case16
+205: [100%] Built target compile_testsuite_miscellaneous_case17
+205: Built target compile_testsuite_miscellaneous_case18
+205: Built target compile_testsuite_miscellaneous_case19
+205: [100%] Built target compile_testsuite_miscellaneous_case2
+205: Built target compile_testsuite_miscellaneous_case20
+205: Built target compile_testsuite_miscellaneous_case3
+205: [100%] Built target compile_testsuite_miscellaneous_case4
+205: Built target compile_testsuite_miscellaneous_case5
+205: Built target compile_testsuite_miscellaneous_case6
+205: [100%] Built target compile_testsuite_miscellaneous_case7
+205: Built target compile_testsuite_miscellaneous_case8
+205: Built target compile_testsuite_miscellaneous_case9
+209/232 Test #205: compile_miscellaneous ..............   Passed    2.09 sec
+test 204
+        Start 204: system_miscellaneous
+
+204: Test command: /home/ueda/slim/test/system_check/testsuite/miscellaneous/check.sh
+204: Working Directory: /home/ueda/slim/test/system_check
+204: Environment variables: 
+204:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+204:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+204: Test timeout computed to be: 10000000
+204: 1..19
+204: not ok 1 - '' should be 'expected output'
+204: not ok 2 - '' should be 'expected output'
+204: not ok 3 - '' should be 'expected output'
+204: not ok 4 - '' should be 'expected output'
+204: not ok 5 - '' should be 'expected output'
+204: not ok 6 - '' should be 'expected output'
+204: not ok 7 - '' should be 'expected output'
+204: not ok 8 - '' should be 'expected output'
+204: not ok 9 - '' should be 'expected output'
+204: not ok 10 - '' should be 'expected output'
+204: not ok 11 - '' should be 'expected output'
+204: not ok 12 - '' should be 'expected output'
+204: not ok 13 - '' should be 'expected output'
+204: not ok 14 - '' should be 'expected output'
+204: not ok 15 - '' should be 'expected output'
+204: not ok 16 - '' should be 'expected output'
+204: not ok 17 - '' should be 'expected output'
+204: not ok 18 - '' should be 'expected output'
+204: not ok 19 - '' should be 'expected output'
+210/232 Test #204: system_miscellaneous ...............   Passed    0.02 sec
+test 207
+        Start 207: compile_proccxt
+
+207: Test command: /usr/bin/cmake "--build" "/home/ueda/slim/build" "--target" "compile_testsuite_proccxt_case1" "compile_testsuite_proccxt_case10" "compile_testsuite_proccxt_case11" "compile_testsuite_proccxt_case12" "compile_testsuite_proccxt_case13" "compile_testsuite_proccxt_case14" "compile_testsuite_proccxt_case2" "compile_testsuite_proccxt_case3" "compile_testsuite_proccxt_case4" "compile_testsuite_proccxt_case5" "compile_testsuite_proccxt_case6" "compile_testsuite_proccxt_case7" "compile_testsuite_proccxt_case8" "compile_testsuite_proccxt_case9"
+207: Working Directory: /home/ueda/slim/build/test/system_check
+207: Test timeout computed to be: 10000000
+207: [100%] Built target compile_testsuite_proccxt_case1
+207: Built target compile_testsuite_proccxt_case10
+207: Built target compile_testsuite_proccxt_case11
+207: [100%] Built target compile_testsuite_proccxt_case12
+207: Built target compile_testsuite_proccxt_case13
+207: Built target compile_testsuite_proccxt_case14
+207: [100%] Built target compile_testsuite_proccxt_case2
+207: Built target compile_testsuite_proccxt_case3
+207: Built target compile_testsuite_proccxt_case4
+207: [100%] Built target compile_testsuite_proccxt_case5
+207: Built target compile_testsuite_proccxt_case6
+207: Built target compile_testsuite_proccxt_case7
+207: [100%] Built target compile_testsuite_proccxt_case8
+207: Built target compile_testsuite_proccxt_case9
+211/232 Test #207: compile_proccxt ....................   Passed    1.46 sec
+test 206
+        Start 206: system_proccxt
+
+206: Test command: /home/ueda/slim/test/system_check/testsuite/proccxt/check.sh
+206: Working Directory: /home/ueda/slim/test/system_check
+206: Environment variables: 
+206:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+206:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+206: Test timeout computed to be: 10000000
+206: 1..13
+206: not ok 1 - '' should be 'expected output'
+206: not ok 2 - '' should be 'expected output'
+206: not ok 3 - '' should be 'expected output'
+206: not ok 4 - '' should be 'expected output'
+206: not ok 5 - '' should be 'expected output'
+206: not ok 6 - '' should be 'expected output'
+206: not ok 7 - '' should be 'expected output'
+206: not ok 8 - '' should be 'expected output'
+206: not ok 9 - '' should be 'expected output'
+206: not ok 10 - '' should be 'expected output'
+206: not ok 11 - '' should be 'expected output'
+206: not ok 12 - '' should be 'expected output'
+206: not ok 13 - '' should be 'expected output'
+212/232 Test #206: system_proccxt .....................   Passed    0.03 sec
+test 209
+        Start 209: compile_proccxt_free
+
+209: Test command: /usr/bin/cmake "--build" "/home/ueda/slim/build" "--target" "compile_testsuite_proccxt_free_case1" "compile_testsuite_proccxt_free_case2" "compile_testsuite_proccxt_free_case3" "compile_testsuite_proccxt_free_case4"
+209: Working Directory: /home/ueda/slim/build/test/system_check
+209: Test timeout computed to be: 10000000
+209: Built target compile_testsuite_proccxt_free_case1
+209: [100%] Built target compile_testsuite_proccxt_free_case2
+209: Built target compile_testsuite_proccxt_free_case3
+209: Built target compile_testsuite_proccxt_free_case4
+213/232 Test #209: compile_proccxt_free ...............   Passed    0.57 sec
+test 208
+        Start 208: system_proccxt_free
+
+208: Test command: /home/ueda/slim/test/system_check/testsuite/proccxt_free/check.sh
+208: Working Directory: /home/ueda/slim/test/system_check
+208: Environment variables: 
+208:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+208:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+208: Test timeout computed to be: 10000000
+208: 1..3
+208: not ok 1 - '' should be 'expected output'
+208: not ok 2 - '' should be 'expected output'
+208: not ok 3 - '' should be 'expected output'
+214/232 Test #208: system_proccxt_free ................   Passed    0.02 sec
+test 211
+        Start 211: compile_proxyatom
+
+211: Test command: /usr/bin/cmake "--build" "/home/ueda/slim/build" "--target" "compile_testsuite_proxyatom_case1" "compile_testsuite_proxyatom_case2" "compile_testsuite_proxyatom_case3"
+211: Working Directory: /home/ueda/slim/build/test/system_check
+211: Test timeout computed to be: 10000000
+211: [100%] Built target compile_testsuite_proxyatom_case1
+211: Built target compile_testsuite_proxyatom_case2
+211: Built target compile_testsuite_proxyatom_case3
+215/232 Test #211: compile_proxyatom ..................   Passed    0.44 sec
+test 210
+        Start 210: system_proxyatom
+
+210: Test command: /home/ueda/slim/test/system_check/testsuite/proxyatom/check.sh
+210: Working Directory: /home/ueda/slim/test/system_check
+210: Environment variables: 
+210:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+210:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+210: Test timeout computed to be: 10000000
+210: 1..2
+210: not ok 1 - '' should be 'expected output'
+210: not ok 2 - '' should be 'expected output'
+216/232 Test #210: system_proxyatom ...................   Passed    0.01 sec
+test 213
+        Start 213: compile_rulecxt
+
+213: Test command: /usr/bin/cmake "--build" "/home/ueda/slim/build" "--target" "compile_testsuite_rulecxt_case1"
+213: Working Directory: /home/ueda/slim/build/test/system_check
+213: Test timeout computed to be: 10000000
+213: [100%] Built target compile_testsuite_rulecxt_case1
+217/232 Test #213: compile_rulecxt ....................   Passed    0.14 sec
+test 212
+        Start 212: system_rulecxt
+
+212: Test command: /home/ueda/slim/test/system_check/testsuite/rulecxt/check.sh
+212: Working Directory: /home/ueda/slim/test/system_check
+212: Environment variables: 
+212:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+212:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+212: Test timeout computed to be: 10000000
+212: 1..0
+218/232 Test #212: system_rulecxt .....................   Passed    0.01 sec
+test 215
+        Start 215: compile_simpagation
+
+215: Test command: /usr/bin/cmake "--build" "/home/ueda/slim/build" "--target" "compile_testsuite_simpagation_case1" "compile_testsuite_simpagation_case2"
+215: Working Directory: /home/ueda/slim/build/test/system_check
+215: Test timeout computed to be: 10000000
+215: Built target compile_testsuite_simpagation_case1
+215: Built target compile_testsuite_simpagation_case2
+219/232 Test #215: compile_simpagation ................   Passed    0.25 sec
+test 214
+        Start 214: system_simpagation
+
+214: Test command: /home/ueda/slim/test/system_check/testsuite/simpagation/check.sh
+214: Working Directory: /home/ueda/slim/test/system_check
+214: Environment variables: 
+214:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+214:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+214: Test timeout computed to be: 10000000
+214: 1..1
+214: not ok 1 - '' should be 'expected output'
+220/232 Test #214: system_simpagation .................   Passed    0.01 sec
+test 217
+        Start 217: compile_unification
+
+217: Test command: /usr/bin/cmake "--build" "/home/ueda/slim/build" "--target" "compile_testsuite_unification_case1" "compile_testsuite_unification_case2" "compile_testsuite_unification_case3" "compile_testsuite_unification_case4" "compile_testsuite_unification_case5" "compile_testsuite_unification_case6" "compile_testsuite_unification_case7" "compile_testsuite_unification_case8" "compile_testsuite_unification_case9"
+217: Working Directory: /home/ueda/slim/build/test/system_check
+217: Test timeout computed to be: 10000000
+217: [100%] Built target compile_testsuite_unification_case1
+217: Built target compile_testsuite_unification_case2
+217: Built target compile_testsuite_unification_case3
+217: [100%] Built target compile_testsuite_unification_case4
+217: Built target compile_testsuite_unification_case5
+217: Built target compile_testsuite_unification_case6
+217: [100%] Built target compile_testsuite_unification_case7
+217: Built target compile_testsuite_unification_case8
+217: Built target compile_testsuite_unification_case9
+221/232 Test #217: compile_unification ................   Passed    1.18 sec
+test 216
+        Start 216: system_unification
+
+216: Test command: /home/ueda/slim/test/system_check/testsuite/unification/check.sh
+216: Working Directory: /home/ueda/slim/test/system_check
+216: Environment variables: 
+216:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+216:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+216: Test timeout computed to be: 10000000
+216: 1..8
+216: not ok 1 - '' should be 'expected output'
+216: not ok 2 - '' should be 'expected output'
+216: not ok 3 - '' should be 'expected output'
+216: not ok 4 - '' should be 'expected output'
+216: not ok 5 - '' should be 'expected output'
+216: not ok 6 - '' should be 'expected output'
+216: not ok 7 - '' should be 'expected output'
+216: not ok 8 - '' should be 'expected output'
+222/232 Test #216: system_unification .................   Passed    0.02 sec
+test 219
+        Start 219: compile_uniq
+
+219: Test command: /usr/bin/cmake "--build" "/home/ueda/slim/build" "--target" "compile_testsuite_uniq_case1" "compile_testsuite_uniq_case2" "compile_testsuite_uniq_case3" "compile_testsuite_uniq_case4" "compile_testsuite_uniq_case5" "compile_testsuite_uniq_case6"
+219: Working Directory: /home/ueda/slim/build/test/system_check
+219: Test timeout computed to be: 10000000
+219: [100%] Built target compile_testsuite_uniq_case1
+219: Built target compile_testsuite_uniq_case2
+219: Built target compile_testsuite_uniq_case3
+219: [100%] Built target compile_testsuite_uniq_case4
+219: Built target compile_testsuite_uniq_case5
+219: Built target compile_testsuite_uniq_case6
+223/232 Test #219: compile_uniq .......................   Passed    0.66 sec
+test 218
+        Start 218: system_uniq
+
+218: Test command: /home/ueda/slim/test/system_check/testsuite/uniq/check.sh
+218: Working Directory: /home/ueda/slim/test/system_check
+218: Environment variables: 
+218:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+218:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+218: Test timeout computed to be: 10000000
+218: 1..5
+218: not ok 1 - '' should be 'expected output'
+218: not ok 2 - '' should be 'expected output'
+218: not ok 3 - '' should be 'expected output'
+218: not ok 4 - '' should be 'expected output'
+218: not ok 5 - '' should be 'expected output'
+224/232 Test #218: system_uniq ........................   Passed    0.02 sec
+test 220
+        Start 220: statespace_advanced
+
+220: Test command: /home/ueda/slim/build/test/statespace/advanced_wrapper.sh
+220: Working Directory: /home/ueda/slim/test/statespace
+220: Environment variables: 
+220:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+220:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+220: Test timeout computed to be: 10000000
+220: 1..0 # SKIP statespace tests require slim_CHECK_ND=yes
+225/232 Test #220: statespace_advanced ................   Passed    0.00 sec
+test 221
+        Start 221: statespace_basic
+
+221: Test command: /home/ueda/slim/build/test/statespace/basic_wrapper.sh
+221: Working Directory: /home/ueda/slim/test/statespace
+221: Environment variables: 
+221:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+221:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+221: Test timeout computed to be: 10000000
+221: 1..0 # SKIP statespace tests require slim_CHECK_ND=yes
+226/232 Test #221: statespace_basic ...................   Passed    0.00 sec
+test 222
+        Start 222: statespace_hyperlink
+
+222: Test command: /home/ueda/slim/build/test/statespace/hyperlink_wrapper.sh
+222: Working Directory: /home/ueda/slim/test/statespace
+222: Environment variables: 
+222:  SLIM_BINARY=/home/ueda/slim/build/src/slim
+222:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+222: Test timeout computed to be: 10000000
+222: 1..0 # SKIP statespace tests require slim_CHECK_ND=yes
+227/232 Test #222: statespace_hyperlink ...............   Passed    0.00 sec
+test 223
+        Start 223: library_integer
+
+223: Test command: /home/ueda/slim/test/library_check/testsuite/integer/check.sh
+223: Working Directory: /home/ueda/slim/test/library_check
+223: Environment variables: 
+223:  SLIM_BINARY=/home/ueda/slim/build/bin/slim
+223:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+223: Test timeout computed to be: 10000000
+223: ok  - integer.set case 1
+223: ok  - integer.set case 2
+223: ok  - integer.set case 3
+223: ok  - integer.set case 4
+223: 1..4
+223: # unit_test.use. @24. @48. @54. 
+228/232 Test #223: library_integer ....................   Passed    0.03 sec
+test 225
+        Start 225: library_mell
+
+225: Test command: /home/ueda/slim/test/library_check/testsuite/mell/check.sh
+225: Working Directory: /home/ueda/slim/test/library_check
+225: Environment variables: 
+225:  SLIM_BINARY=/home/ueda/slim/build/bin/slim
+225:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+225: Test timeout computed to be: 10000000
+225: ok  - mell.delete case 3
+225: ok  - mell.delete case 2
+225: ok  - mell.delete case 1
+225: ok  - mell.copy case 5
+225: ok  - mell.copy case 4
+225: ok  - mell.copy case 3
+225: ok  - mell.copy case 2
+225: ok  - mell.copy case 1
+225: 1..8
+225: # unit_test.use. @24. @48. @54. 
+229/232 Test #225: library_mell .......................   Passed    0.04 sec
+test 227
+        Start 227: library_nlmem
+
+227: Test command: /home/ueda/slim/test/library_check/testsuite/nlmem/check.sh
+227: Working Directory: /home/ueda/slim/test/library_check
+227: Environment variables: 
+227:  SLIM_BINARY=/home/ueda/slim/build/bin/slim
+227:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+227: Test timeout computed to be: 10000000
+227: ok  - nlmem.kill case 1
+227: ok  - nlmem.copy case 1
+227: 1..2
+227: # unit_test.use. @24. @48. @54. 
+230/232 Test #227: library_nlmem ......................   Passed    0.03 sec
+test 229
+        Start 229: library_set
+
+229: Test command: /home/ueda/slim/test/library_check/testsuite/set/check.sh
+229: Working Directory: /home/ueda/slim/test/library_check
+229: Environment variables: 
+229:  SLIM_BINARY=/home/ueda/slim/build/bin/slim
+229:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+229: Test timeout computed to be: 10000000
+229: ok  - set copy case 1
+229: ok  - union set case 1
+229: ok  - intersect set case 1
+229: ok  - diff set case 1
+229: ok  - set to list case 2
+229: ok  - set to list case 1
+229: ok  - set erase case 2
+229: ok  - set erase case 1
+229: ok  - tuple set case 4
+229: ok  - tuple set case 3
+229: ok  - tuple set case 2
+229: ok  - tuple set case 1
+229: ok  - membrane set case 2
+229: ok  - membrane set case 1
+229: ok  - integer set case 2
+229: ok  - integer set case 1
+229: 1..16
+229: # unit_test.use. @24. @48. @54. 
+231/232 Test #229: library_set ........................   Passed    0.05 sec
+test 231
+        Start 231: library_statespace
+
+231: Test command: /home/ueda/slim/test/library_check/testsuite/statespace/check.sh
+231: Working Directory: /home/ueda/slim/test/library_check
+231: Environment variables: 
+231:  SLIM_BINARY=/home/ueda/slim/build/bin/slim
+231:  LMNTAL_HOME=/home/ueda/LMNtal/lmntal-compiler
+231: Test timeout computed to be: 10000000
+231: ok  - react_nd_set case 1
+231: ok  - react_nd_set stable membrane test
+231: 1..2
+231: # unit_test.use. @24. @48. @54. 
+232/232 Test #231: library_statespace .................   Passed    0.04 sec
+
+100% tests passed, 0 tests failed out of 232
+
+Label Time Summary:
+append                =   0.05 sec*proc (4 tests)
+append1               =   0.01 sec*proc (1 test)
+append2               =   0.01 sec*proc (1 test)
+append3               =   0.01 sec*proc (1 test)
+append4               =   0.01 sec*proc (1 test)
+basic                 =   0.06 sec*proc (5 tests)
+basic1                =   0.01 sec*proc (1 test)
+basic2                =   0.01 sec*proc (1 test)
+basic3                =   0.01 sec*proc (1 test)
+basic4                =   0.01 sec*proc (1 test)
+basic5                =   0.01 sec*proc (1 test)
+case1                 =   0.20 sec*proc (16 tests)
+case10                =   0.08 sec*proc (6 tests)
+case11                =   0.08 sec*proc (6 tests)
+case12                =   0.07 sec*proc (6 tests)
+case13                =   0.07 sec*proc (6 tests)
+case14                =   0.07 sec*proc (6 tests)
+case15                =   0.06 sec*proc (5 tests)
+case16                =   0.05 sec*proc (4 tests)
+case17                =   0.04 sec*proc (3 tests)
+case18                =   0.04 sec*proc (3 tests)
+case19                =   0.04 sec*proc (3 tests)
+case2                 =   0.18 sec*proc (15 tests)
+case20                =   0.04 sec*proc (3 tests)
+case21                =   0.02 sec*proc (2 tests)
+case22                =   0.02 sec*proc (2 tests)
+case23                =   0.01 sec*proc (1 test)
+case24                =   0.01 sec*proc (1 test)
+case25                =   0.01 sec*proc (1 test)
+case26                =   0.01 sec*proc (1 test)
+case27                =   0.01 sec*proc (1 test)
+case28                =   0.01 sec*proc (1 test)
+case29                =   0.01 sec*proc (1 test)
+case3                 =   0.16 sec*proc (13 tests)
+case30                =   0.01 sec*proc (1 test)
+case31                =   0.01 sec*proc (1 test)
+case4                 =   0.14 sec*proc (11 tests)
+case5                 =   0.11 sec*proc (9 tests)
+case6                 =   0.11 sec*proc (9 tests)
+case7                 =   0.09 sec*proc (7 tests)
+case8                 =   0.09 sec*proc (7 tests)
+case9                 =   0.09 sec*proc (7 tests)
+context_add           =   0.01 sec*proc (1 test)
+count                 =   0.03 sec*proc (3 tests)
+cslmntal              =   0.10 sec*proc (8 tests)
+guard_float           =   0.19 sec*proc (15 tests)
+guard_ground          =   0.39 sec*proc (31 tests)
+guard_ground_multi    =   0.19 sec*proc (16 tests)
+guard_int             =   0.27 sec*proc (22 tests)
+guard_string          =   0.08 sec*proc (6 tests)
+guard_unary           =   0.05 sec*proc (4 tests)
+integer               =   0.04 sec*proc (1 test)
+isbinarytree          =   0.01 sec*proc (1 test)
+library               =   0.20 sec*proc (5 tests)
+list_rmend            =   0.01 sec*proc (1 test)
+list_rmhead           =   0.01 sec*proc (1 test)
+list_sort             =   0.01 sec*proc (1 test)
+mell                  =   0.04 sec*proc (1 test)
+mem_name              =   0.02 sec*proc (2 tests)
+miscellaneous         =   0.25 sec*proc (20 tests)
+nlmem                 =   0.04 sec*proc (1 test)
+proccxt               =   0.19 sec*proc (14 tests)
+proccxt_free          =   0.05 sec*proc (4 tests)
+proxyatom             =   0.04 sec*proc (3 tests)
+rulecxt               =   0.01 sec*proc (1 test)
+set                   =   0.05 sec*proc (1 test)
+simpagation           =   0.02 sec*proc (2 tests)
+skiplist1             =   0.01 sec*proc (1 test)
+skiplist2             =   0.01 sec*proc (1 test)
+skiplist3             =   0.01 sec*proc (1 test)
+statespace            =   0.04 sec*proc (1 test)
+system                =   2.18 sec*proc (175 tests)
+unification           =   0.11 sec*proc (9 tests)
+uniq                  =   0.07 sec*proc (6 tests)
+
+Total Test time (real) =  23.06 sec

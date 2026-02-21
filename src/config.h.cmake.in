@@ -1,0 +1,72 @@
+#ifndef GOOGLE_PERFTOOLS_CONFIG_H_
+#define GOOGLE_PERFTOOLS_CONFIG_H_
+
+/* Project name */
+#define PACKAGE_NAME "@PACKAGE_NAME@"
+
+/* Project version */
+#define SLIM_VERSION "@SLIM_VERSION@"
+
+/* Bug report email */
+#define PACKAGE_BUGREPORT "@PACKAGE_BUGREPORT@"
+
+/* Processor count */
+#define HAVE_PROCESSOR_ELEMENTS @PROCESSOR_COUNT@
+
+/* Define to 1 if you have atomic compare and swap */
+#cmakedefine HAVE_ATOMIC_CAS 1
+
+/* Define to 1 if you have atomic add */
+#cmakedefine HAVE_ATOMIC_ADD 1
+
+/* Define to 1 if you have __thread */
+#cmakedefine HAVE___THREAD 1
+
+/* Define to 1 if you have sys/time.h */
+#cmakedefine HAVE_SYS_TIME_H 1
+
+/* Define to 1 if you have sched.h */
+#cmakedefine HAVE_SCHED_H 1
+
+/* Define to 1 if you have syscall.h */
+#cmakedefine HAVE_SYSCALL_H 1
+
+/* Define to 1 if you have omp.h */
+#cmakedefine HAVE_OMP_H 1
+
+/* Define to 1 if you have execinfo.h */
+#cmakedefine HAVE_EXECINFO_H 1
+
+/* Define to 1 if you have pthread library */
+#cmakedefine HAVE_LIBPTHREAD 1
+
+/* Size of long */
+#define SIZEOF_LONG @SIZEOF_LONG@
+
+/* Size of void* */
+#define SIZEOF_VOID_P @SIZEOF_VOID_P@
+
+/* Size of double */
+#define SIZEOF_DOUBLE @SIZEOF_DOUBLE@
+
+/* Size of uintptr_t */
+#define SIZEOF_UINTPTR_T @SIZEOF_UINTPTR_T@
+
+/* Build options */
+#cmakedefine DEBUG 1
+#cmakedefine DEVEL 1
+#cmakedefine PROFILE 1
+#cmakedefine USE_JNI 1
+#cmakedefine HAVE_TCMALLOC 1
+#cmakedefine HAVE_GPERFTOOLS 1
+#cmakedefine KWBT_OPT 1
+#cmakedefine USE_CUNIT 1
+#cmakedefine MINIMAL_STATE 1
+#cmakedefine USE_FIRSTCLASS_RULE 1
+
+/* C99 format macros */
+#ifndef __STDC_FORMAT_MACROS
+# define __STDC_FORMAT_MACROS 1
+#endif
+
+#endif  /* #ifndef GOOGLE_PERFTOOLS_CONFIG_H_ */

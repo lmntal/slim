@@ -39,7 +39,7 @@
 
 #include "stack_trace.hpp"
 
-#include "config.h"  // for DEBUG macro
+#include "lmntal.h"  // for config.h and DEBUG macro
 
 #include <map>
 #ifdef DEBUG

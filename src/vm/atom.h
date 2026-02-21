@@ -126,7 +126,8 @@ enum LmnLinkAttribute {
       LMN_ATTR_FLAG | 0x04U, /**< @deprecated constant string literal */
   LMN_CONST_DBL_ATTR =
       LMN_ATTR_FLAG | 0x05U, /**< @deprecated constant double literal */
-  LMN_HL_ATTR = LMN_ATTR_FLAG | 0x0aU /**< exclamation atom */
+  LMN_HL_ATTR = LMN_ATTR_FLAG | 0x0aU, /**< exclamation atom */
+  LMN_CARD_ATTR = LMN_ATTR_FLAG | 0x0bU /**< cardinality */ /* QLMNtal */
 };
 
 #include "element/element.h"

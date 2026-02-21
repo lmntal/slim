@@ -1,0 +1,87 @@
+{
+    "version": 3,
+    "configurePresets": [
+        {
+            "name": "default",
+            "displayName": "Default Release",
+            "description": "Default release build",
+            "binaryDir": "${sourceDir}/build-release",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/build-release"
+            }
+        },
+        {
+            "name": "debug",
+            "displayName": "Debug Build",
+            "description": "Debug build with symbols",
+            "binaryDir": "${sourceDir}/build-debug",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "ENABLE_DEBUG": "ON",
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/build-debug"
+            }
+        },
+        {
+            "name": "devel",
+            "displayName": "Development Build",
+            "description": "Development build with extra warnings",
+            "binaryDir": "${sourceDir}/build-devel",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "ENABLE_DEBUG": "ON",
+                "ENABLE_DEVEL": "ON",
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/build-devel"
+            }
+        },
+        {
+            "name": "performance",
+            "displayName": "Performance Build",
+            "description": "Optimized build with tcmalloc",
+            "binaryDir": "${sourceDir}/build-performance",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "ENABLE_TCMALLOC": "ON",
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/build-performance"
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "default",
+            "configurePreset": "default",
+            "jobs": 0
+        },
+        {
+            "name": "debug",
+            "configurePreset": "debug", 
+            "jobs": 0
+        },
+        {
+            "name": "devel",
+            "configurePreset": "devel",
+            "jobs": 0
+        },
+        {
+            "name": "performance",
+            "configurePreset": "performance",
+            "jobs": 0
+        }
+    ],
+    "testPresets": [
+        {
+            "name": "default",
+            "configurePreset": "default",
+            "output": {
+                "outputOnFailure": true
+            }
+        },
+        {
+            "name": "debug",
+            "configurePreset": "debug",
+            "output": {
+                "outputOnFailure": true
+            }
+        }
+    ]
+}

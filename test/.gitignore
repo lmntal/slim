@@ -1,0 +1,4 @@
+# Generated .il files from LMNtal compilation during testing
+# These should not be tracked as they are generated on-demand
+system_check/testsuite/**/*.il
+library_check/testsuite/**/*.il

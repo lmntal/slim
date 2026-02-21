@@ -47,13 +47,17 @@
 #include "verifier/runtime_status.h"
 #include "verifier/verifier.h"
 #include "interactive_debug.hpp"
+#include "cardinality.hpp" // QLMNtal
 
 #ifdef USE_FIRSTCLASS_RULE
 #include "firstclass_rule.h"
 #endif
 
 #include <algorithm>
-#include <iostream> 
+#include <iostream>
+#include <mutex>
+#include <unordered_map>
+#include <vector>
 typedef void (*callback_0)(LmnReactCxtRef, LmnMembraneRef);
 typedef void (*callback_1)(LmnReactCxtRef, LmnMembraneRef, LmnAtomRef,
                            LmnLinkAttr);
@@ -89,6 +93,25 @@ typedef void (*callback_8)(LmnReactCxtRef, LmnMembraneRef, LmnAtomRef,
                            LmnLinkAttr, LmnAtomRef, LmnLinkAttr);
 
 struct Vector user_system_rulesets; /* system ruleset defined by user */
+
+static std::unordered_map<lmn_interned_str, unsigned int> rule_apply_count;
+static std::mutex rule_apply_count_mutex;
+
+void Task::print_rule_apply_count() {
+  if (lmn_env.output_format == JSON) return;
+  std::vector<std::pair<lmn_interned_str, unsigned int>> sorted(
+      rule_apply_count.begin(), rule_apply_count.end());
+  std::sort(sorted.begin(), sorted.end(),
+            [](const std::pair<lmn_interned_str, unsigned int> &a,
+               const std::pair<lmn_interned_str, unsigned int> &b) {
+              return std::string(lmn_id_to_name(a.first)) <
+                     std::string(lmn_id_to_name(b.first));
+            });
+  fprintf(stdout, "\n[Applied Rules]\n");
+  for (auto &kv : sorted)
+    fprintf(stdout, "%s: %u\n", lmn_id_to_name(kv.first), kv.second);
+  rule_apply_count.clear();
+}
 
 /**
   Javaによる処理系ではリンクはリンクオブジェクトで表現するが、SLIMでは
@@ -223,7 +246,7 @@ void Task::lmn_run(Vector *start_rulesets) {
     InteractiveDebugger::get_instance().start_session_on_entry();
   }
 
-  if (lmn_env.trace) {
+  if (lmn_env.trace && !lmn_env.trace_rule_name_only) {
     if (lmn_env.show_laststep_only) {
       mrc->increment_reaction_count();
     } else {
@@ -250,9 +273,7 @@ void Task::lmn_run(Vector *start_rulesets) {
     InteractiveDebugger::get_instance().finish_debugging();
   }
 
-  if (lmn_env
-          .dump) { /* lmntalではioモジュールがあるけど必ず実行結果を出力するプログラミング言語,
-                      で良い?? */
+  if (lmn_env.dump) {
     if (lmn_env.sp_dump_format == LMN_SYNTAX) {
       fprintf(stdout, "finish.\n");
     } else {
@@ -456,8 +477,15 @@ BOOL Task::react_rule(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule) {
 
   profile_finish_trial();
 
+  if (lmn_env.trace_rule_name_only && result && !rc->is_zerostep
+      && rule->name != ANONYMOUS
+      && lmn_env.output_format != JSON
+      && (rc->has_mode(REACT_MEM_ORIENTED) || rc->has_mode(REACT_ND))) {
+    fprintf(stdout, "---> %s\n", lmn_id_to_name(rule->name));
+  }
+
   if (rc->has_mode(REACT_MEM_ORIENTED) && !rc->is_zerostep) {
-    if (lmn_env.trace && result) {
+    if (lmn_env.trace && result && !lmn_env.trace_rule_name_only) {
       if (lmn_env.sp_dump_format == LMN_SYNTAX) {
         lmn_dump_mem_stdout(rc->get_global_root());
         fprintf(stdout, ".\n");
@@ -1129,6 +1157,7 @@ static bool push_updated_hl_cmems
  */
 bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
                                          bool &stop) {
+
   if (lmn_env.interactive_debug) {
     InteractiveDebugger::get_instance().break_on_instruction(this);
   }
@@ -1288,32 +1317,32 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
   }
   case INSTR_COMMIT: {
     lmn_interned_str rule_name;
-
+    
     READ_VAL(lmn_interned_str, instr, rule_name);
     SKIP_VAL(LmnLineNum, instr);
-
+    
     if (lmn_env.findatom_parallel_mode) {
       lmn_fatal("Couldn't find sync instruction!!");
     }
-
-#ifdef KWBT_OPT
+    
+    #ifdef KWBT_OPT
     {
       LmnInstrVar cost;
       READ_VAL(LmnInstrVar, instr, cost);
       rule->cost = cost;
     }
-#endif
+    #endif
 
     rule->name = rule_name;
 
     profile_apply();
-
+    
     /*
-     * MC mode
-     *
-     * グローバル変数global_rootに格納されているグローバルルート膜をコピーして
-     * そのコピーに対してボディ命令を適用する．
-     * その際に変数配列の情報もコピー前のものからコピー後のものへと書き換える．
+    * MC mode
+    *
+    * グローバル変数global_rootに格納されているグローバルルート膜をコピーして
+    * そのコピーに対してボディ命令を適用する．
+    * その際に変数配列の情報もコピー前のものからコピー後のものへと書き換える．
      *
      * CONTRACT: COMMIT命令に到達したルールはマッチング検査に成功している
      */
@@ -1321,22 +1350,27 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
       auto mcrc = dynamic_cast<MCReactContext *>(rc);
       ProcessID org_next_id = env_next_id();
 
+      if (lmn_env.trace_rule_name_only && rule->name != ANONYMOUS) {
+        std::lock_guard<std::mutex> lock(rule_apply_count_mutex);
+        rule_apply_count[rule->name]++;
+      }
+
       if (mcrc->has_optmode(DeltaMembrane)) {
         /** >>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<< **/
         /** >>>>>>>> enable delta-membrane <<<<<<< **/
         /** >>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<< **/
         struct MemDeltaRoot *d =
-            new MemDeltaRoot(rc->get_global_root(), rule, env_next_id());
+        new MemDeltaRoot(rc->get_global_root(), rule, env_next_id());
         RC_ND_SET_MEM_DELTA_ROOT(rc, d);
-
+        
         /* dmem_commit/revertとの整合性を保つため,
-         * uniq処理の特殊性を吸収しておく */
+        * uniq処理の特殊性を吸収しておく */
         rule->undo_history();
-
+        
         if (mcrc->has_optmode(DynamicPartialOrderReduction)) {
           dpor_transition_gen_LHS(RC_POR_DATA(rc), d, rc);
         }
-
+        
         dmem_interpret(rc, rule, instr);
         dmem_root_finish(d);
 
@@ -1346,14 +1380,14 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
           } else {
             mc_react_cxt_add_mem_delta(mcrc, d, rule);
           }
-
+          
           /* サクセッサへの差分オブジェクトが複数できあがることになるが,
-           * 差分オブジェクト間では生成したプロセスのIDに重複があってはならない.
-           */
-          RC_ND_SET_MEM_DELTA_ROOT(rc, NULL);
-          return FALSE;
+          * 差分オブジェクト間では生成したプロセスのIDに重複があってはならない.
+          */
+         RC_ND_SET_MEM_DELTA_ROOT(rc, NULL);
+         return FALSE;
         }
-
+        
         mc_react_cxt_add_mem_delta(mcrc, d, rule);
         RC_ND_SET_MEM_DELTA_ROOT(rc, NULL);
       } else {
@@ -1363,18 +1397,18 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
         ProcessTableRef copymap;
         LmnMembraneRef tmp_global_root;
         unsigned int i, n;
-
+        
 #ifdef PROFILE
         if (lmn_env.profile_level >= 3) {
           profile_start_timer(PROFILE_TIME__STATE_COPY_IN_COMMIT);
         }
-#endif
-
+        #endif
+        
         tmp_global_root = lmn_mem_copy_with_map_ex(rc->get_global_root(), &copymap);
-
+        
         /** 変数配列および属性配列のコピー */
         auto v = LmnRegisterArray(rc->capacity());
-
+        
         /** copymapの情報を基に変数配列を書換える */
         for (i = 0; i < rc->capacity(); i++) {
           LmnWord t;
@@ -1387,7 +1421,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
               /* data-atom */
               if (r->register_at() == LMN_HL_ATTR) {
                 if (proc_tbl_get_by_hlink(
-                        copymap,
+                  copymap,
                         lmn_hyperlink_at_to_hl((LmnSymbolAtomRef)rc->wt(i)),
                         &t)) {
                   r->register_set_wt((LmnWord)((HyperLink *)t)->hl_to_at());
@@ -1397,10 +1431,10 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
                 }
               } else {
                 r->register_set_wt((LmnWord)lmn_copy_data_atom(
-                    (LmnAtom)rc->wt(i), r->register_at()));
+                  (LmnAtom)rc->wt(i), r->register_at()));
               }
             } else if (proc_tbl_get_by_atom(copymap,
-                                            (LmnSymbolAtomRef)rc->wt(i), &t)) {
+              (LmnSymbolAtomRef)rc->wt(i), &t)) {
               /* symbol-atom */
               r->register_set_wt((LmnWord)t);
             } else {
@@ -1408,7 +1442,7 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
             }
           } else if (r->register_tt() == TT_MEM) {
             if (rc->wt(i) ==
-                (LmnWord)rc->get_global_root()) { /* グローバルルート膜 */
+            (LmnWord)rc->get_global_root()) { /* グローバルルート膜 */
               r->register_set_wt((LmnWord)tmp_global_root);
             } else if (proc_tbl_get_by_mem(copymap, (LmnMembraneRef)rc->wt(i),
                                            &t)) {
@@ -1418,6 +1452,12 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
               //              v[i].wt = wt(rc, i); //
               //              allocmem命令の場合はTT_OTHERになっている(2014-05-08
               //              ueda)
+            }
+          } else if (LMN_ATTR_IS_CARD(r->register_at())) { /* QLMNtal */
+            if (replace_in_card_by_tbl(copymap, (LmnCardRef)rc->wt(i), &t)) {
+              r->register_set_wt((LmnWord)t);
+            } else {
+              t = 0;
             }
           } else { /* TT_OTHER */
             r->register_set_wt(rc->wt(i));
@@ -1430,32 +1470,32 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
         rc->warray_set(std::move(v));
 
 #ifdef PROFILE
-        if (lmn_env.profile_level >= 3) {
-          profile_finish_timer(PROFILE_TIME__STATE_COPY_IN_COMMIT);
-        }
+if (lmn_env.profile_level >= 3) {
+  profile_finish_timer(PROFILE_TIME__STATE_COPY_IN_COMMIT);
+}
 #endif
 
-        this->push_stackframe([=](interpreter &itr, bool result) {
-          react_zerostep_recursive(
-              rc, tmp_global_root); /**< 0stepルールを適用する */
-          mc_react_cxt_add_expanded(mcrc, tmp_global_root, rule);
-
-          rule->undo_history();
-
-          rc->warray_set(std::move(*tmp));
-          if (!rc->keep_process_id_in_nd_mode)
+this->push_stackframe([=](interpreter &itr, bool result) {
+  react_zerostep_recursive(
+    rc, tmp_global_root); /**< 0stepルールを適用する */
+    mc_react_cxt_add_expanded(mcrc, tmp_global_root, rule);
+    
+    rule->undo_history();
+    
+    rc->warray_set(std::move(*tmp));
+    if (!rc->keep_process_id_in_nd_mode)
             env_set_next_id(org_next_id);
-          delete tmp;
-          return command_result::Failure;
-        });
-        break;
-      }
-
-      return FALSE; /* matching backtrack! */
-    } else if (rc->has_mode(REACT_PROPERTY)) {
-      return TRUE; /* propertyはmatchingのみ */
+            delete tmp;
+            return command_result::Failure;
+          });
+          break;
+        }
+        
+        return FALSE; /* matching backtrack! */
+      } else if (rc->has_mode(REACT_PROPERTY)) {
+        return TRUE; /* propertyはmatchingのみ */
     }
-
+    
     break;
   }
   case INSTR_FINDATOM: {
@@ -1465,39 +1505,39 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     READ_VAL(LmnInstrVar, instr, atomi);
     READ_VAL(LmnInstrVar, instr, memi);
     READ_VAL(LmnLinkAttr, instr, attr);
-
+    
     if (LMN_ATTR_IS_DATA(attr))
-      throw std::runtime_error("cannot find data atoms.");
-
+    throw std::runtime_error("cannot find data atoms.");
+    
     if (lmn_env.find_atom_parallel)
-      return false;
+    return false;
 
     LmnFunctor f;
     READ_VAL(LmnFunctor, instr, f);
     auto mem = (LmnMembraneRef)rc->wt(memi);
-
+    
     if (rc_hlink_opt(atomi, rc)) {
       /* hyperlink の接続関係を利用したルールマッチング最適化 */
       if (!rc->get_hl_sameproccxt())
-        rc->prepare_hl_spc();
+      rc->prepare_hl_spc();
       auto spc =
-          (SameProcCxt *)hashtbl_get(rc->get_hl_sameproccxt(), (HashKeyType)atomi);
+      (SameProcCxt *)hashtbl_get(rc->get_hl_sameproccxt(), (HashKeyType)atomi);
       findatom_through_hyperlink(rc, rule, instr, spc, mem, f, atomi);
     } else {
       if(lmn_env.history_management) findatom_history_management(rule, mem, f, atomi);
       else findatom(rc, rule, instr, mem, f, atomi);
     }
-
+    
     return false; // false driven loop
   }
   case INSTR_FINDATOM2: {
     LmnInstrVar atomi, memi, findatomid;
     LmnLinkAttr attr;
-
+    
     if (rc->has_mode(REACT_ND) && !rc->is_zerostep) {
       lmn_fatal("This mode:exhaustive search can't use instruction:FindAtom2");
     }
-
+    
     READ_VAL(LmnInstrVar, instr, atomi);
     READ_VAL(LmnInstrVar, instr, memi);
     READ_VAL(LmnInstrVar, instr, findatomid);
@@ -2492,7 +2532,6 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
 #endif
     lmn_mem_remove_atom((LmnMembraneRef)rc->wt(memi), (LmnAtomRef)rc->wt(atomi),
                         rc->at(atomi));
-
     break;
   }
   case INSTR_FREEATOM: {
@@ -4665,6 +4704,121 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
   case INSTR_FREESET: {
     // TODO:
     SKIP_VAL(LmnInstrVar, instr);
+    break;
+  }
+  /* QLMNtal */
+  case INSTR_PUSHMAP: {
+    LmnInstrVar dstqueue;
+    READ_VAL(LmnInstrVar, instr, dstqueue);
+    LmnInstrVar argnum;
+    READ_VAL(LmnInstrVar, instr, argnum);
+    auto map = CardMap();
+    for (int i; i < argnum; i++) {
+      LmnInstrVar regi;
+      READ_VAL(LmnInstrVar, instr, regi);
+      LmnRegister reg_clone = this->rc->work_array[regi];
+      map.push_back(std::make_pair((size_t)regi, reg_clone));
+    }
+    if (!LMN_ATTR_IS_CARD(this->rc->reg(dstqueue).register_at())) {
+      LmnCardRef card;
+      card = new LmnCard(CardQueue());
+      this->rc->reg(dstqueue) = {(LmnWord)card, LMN_CARD_ATTR, TT_OTHER};
+    }
+    ((LmnCardRef)(this->rc->wt(dstqueue)))->push_map(map);
+    break;
+  }
+  /* QLMNtal */
+  case INSTR_PICKMAPS: {
+    LmnInstrVar dstqueue, srcqueue, max;
+    READ_VAL(LmnInstrVar, instr, dstqueue);
+    READ_VAL(LmnInstrVar, instr, srcqueue);
+    READ_VAL(LmnInstrVar, instr, max);
+    std::vector<LmnRegister> picked_maps_regs;
+    if (LMN_ATTR_IS_CARD(this->rc->reg(srcqueue).register_at())) {
+      picked_maps_regs = ((LmnCardRef)(this->rc->wt(srcqueue)))->calc_picked_maps_regs(max);
+      ((LmnCardRef)(this->rc->wt(srcqueue)))->reset_queue();
+    } else {
+      LmnCardRef card;
+      card = new LmnCard(CardQueue());
+      picked_maps_regs = std::vector<LmnRegister>{{(LmnWord)card, LMN_CARD_ATTR, TT_OTHER}};
+    }
+    this->false_driven_enumerate(dstqueue, std::move(picked_maps_regs));
+    return FALSE;
+  }
+  /* QLMNtal */
+  case INSTR_POPMAP: {
+    LmnInstrVar srcqueue;
+    READ_VAL(LmnInstrVar, instr, srcqueue);
+    int queue_size = ((LmnCardRef)(this->rc->wt(srcqueue)))->get_queue().size();
+    int pop_index = ((LmnCardRef)(this->rc->wt(srcqueue)))->get_pop_index();
+    if (LMN_ATTR_IS_CARD(this->rc->reg(srcqueue).register_at()) && queue_size > pop_index){
+      CardMap map = ((LmnCardRef)(this->rc->wt(srcqueue)))->pop_map();
+      for (CardPair pair: map) {
+        this->rc->work_array[pair.first] = pair.second; 
+      }
+      break;
+    } else {
+      ((LmnCardRef)(this->rc->wt(srcqueue)))->set_pop_index(0);
+      return FALSE;
+    }
+  }
+  /* QLMNtal */
+  case INSTR_MAPNEQATOM: {
+    LmnInstrVar atom1;
+    READ_VAL(LmnInstrVar, instr, atom1);
+    LmnInstrVar argnum;
+    READ_VAL(LmnInstrVar, instr, argnum);
+    auto atom2list = std::vector<size_t>(argnum);
+    for (int i; i < argnum; i++){
+      LmnInstrVar regi;
+      READ_VAL(LmnInstrVar, instr, regi);
+      atom2list[i] = regi;
+    }
+    size_t atom2list_head = atom2list[0];
+    atom2list.erase(atom2list.begin());
+    if (!mapneqatom(atom1, atom2list, this->rc, this->rc->reg(atom2list_head))) {
+      return FALSE;
+    }
+    break;
+  }
+  /* QLMNtal */
+  case INSTR_MAPNEQMEM: {
+    LmnInstrVar mem1;
+    READ_VAL(LmnInstrVar, instr, mem1);
+    LmnInstrVar argnum;
+    READ_VAL(LmnInstrVar, instr, argnum);
+    auto mem2list = std::vector<size_t>(argnum);
+    for (int i; i < argnum; i++){
+      LmnInstrVar regi;
+      READ_VAL(LmnInstrVar, instr, regi);
+      mem2list[i] = regi;
+    }
+    size_t mem2list_head = mem2list[0];
+    mem2list.erase(mem2list.begin());
+    if (!mapneqmem(mem1, mem2list, this->rc, this->rc->reg(mem2list_head))) {
+      return FALSE;
+    }
+    break;
+  }
+  /* QLMNtal */
+  case INSTR_ANYATOM: {
+    LmnInstrVar dstatom, srcmem;
+    READ_VAL(LmnInstrVar, instr, dstatom);
+    READ_VAL(LmnInstrVar, instr, srcmem);
+    auto mem = (LmnMembraneRef)rc->wt(srcmem);
+    anyatom(mem, dstatom);
+    return FALSE;
+  }
+  /* QLMNtal */
+  case INSTR_EQMAPS: {
+    LmnInstrVar queue1_reg, queue2_reg;
+    READ_VAL(LmnInstrVar, instr, queue1_reg);
+    READ_VAL(LmnInstrVar, instr, queue2_reg);
+    CardQueue queue1 = ((LmnCardRef)(this->rc->wt(queue1_reg)))->get_queue();
+    CardQueue queue2 = ((LmnCardRef)(this->rc->wt(queue2_reg)))->get_queue();
+    if (!eqmaps(queue1, queue2)) {
+      return FALSE;
+    }
     break;
   }
   default:

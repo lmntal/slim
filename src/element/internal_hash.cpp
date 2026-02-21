@@ -44,7 +44,7 @@
  */
 
 #include "internal_hash.h"
-#include "../config.h"
+#include "lmntal.h" // config.h
 #include "util.h"
 #include <assert.h>
 #include <stdio.h>

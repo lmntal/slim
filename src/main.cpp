@@ -85,6 +85,8 @@ static void usage(void) {
       "from LMNtal\n"
       "  -t                   (RT) Show execution path\n"
       "                       (MC) Show state space\n"
+      "  --tr                 (RT) Show only applied rule names\n"
+      "                       (MC) Show applied rule names with application counts\n"
       "  --hide-ruleset       Hide ruleset from result\n"
       "  --shuffle-rule       (RT) Apply rules randomly\n"
       "  --shuffle-atom       (RT) Choose atoms to be applied randomly\n"
@@ -141,7 +143,7 @@ static void usage(void) {
       "  --run-test           Run CUnit\n"
       "  --version            Prints version and exits.\n"
       "  --help               This Help.\n");
-  exit(1);
+  exit(0);
 }
 
 void ver_print_with_esc_code(FILE *f, char *str, int color) {
@@ -243,6 +245,7 @@ static void parse_options(int *optid, int argc, char *argv[]) {
                                   {"shuffle-atom",0,0,6081},
                                   {"shuffle",0,0,6082},
                                   {"interactive-debug", 0, 0, 6090},
+                                  {"tr", 0, 0, 6091},
                                   {0, 0, 0, 0}};
 
   while ((c = getopt_long(argc, argv, "+dvhtI:O::p::", long_options,
@@ -281,7 +284,7 @@ static void parse_options(int *optid, int argc, char *argv[]) {
     case 'v':
     case 1000:
       slim_version(stdout);
-      exit(1);
+      exit(0);
       break;
     case 'h':
     case 1001: /* help */ /* FALLTHROUGH */
@@ -609,6 +612,9 @@ static void parse_options(int *optid, int argc, char *argv[]) {
       break;
     case 6090:
       lmn_env.interactive_debug = TRUE;
+      break;
+    case 6091:
+      lmn_env.trace_rule_name_only = TRUE;
       break;
     case 'I':
       lmn_env.load_path[lmn_env.load_path_num++] = optarg;
