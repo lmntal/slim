@@ -32,8 +32,8 @@ function(add_lmntest_directory test_type test_dir)
             file(APPEND ${wrapper_script} "  exit 0\n")
             file(APPEND ${wrapper_script} "fi\n")
             file(APPEND ${wrapper_script} "cd ${CMAKE_CURRENT_SOURCE_DIR}/${test_dir}\n")
-            file(APPEND ${wrapper_script} "./check.pl /testsuite/${test_suite}/${test_case_name}\n")
-
+            file(APPEND ${wrapper_script} "./check.pl \"$SLIM_BINARY\" \"${CMAKE_CURRENT_SOURCE_DIR}/${test_dir}/testsuite/${test_suite}/${test_case_name}.il\"\n")
+            
             # Make wrapper executable with proper permissions
             file(COPY ${wrapper_script}
                  DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/${test_dir}
@@ -46,18 +46,21 @@ function(add_lmntest_directory test_type test_dir)
             set(individual_script "${CMAKE_CURRENT_BINARY_DIR}/${test_dir}/${test_suite}_${test_case_name}_run.sh")
             file(WRITE ${individual_script} "#!/bin/bash\n")
             file(APPEND ${individual_script} "cd ${CMAKE_CURRENT_SOURCE_DIR}/${test_dir}\n")
-            file(APPEND ${individual_script} "./check.pl /testsuite/${test_suite}/${test_case_name}\n")
-
+            file(APPEND ${individual_script} "# Inherit VERBOSE environment variable\n")
+            file(APPEND ${individual_script} "export VERBOSE=\"\${VERBOSE}\"\n") 
+            file(APPEND ${individual_script} "export V=\"\${V}\"\n")
+            file(APPEND ${individual_script} "./check.pl \"$SLIM_BINARY\" \"${CMAKE_CURRENT_SOURCE_DIR}/${test_dir}/testsuite/${test_suite}/${test_case_name}.il\"\n")
+            
             # Make script executable directly
             execute_process(COMMAND chmod +x ${individual_script})
 
             # Add test using individual script
             add_test(NAME ${full_test_name} COMMAND ${individual_script} WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${test_dir})
         endif()
-
-        # Set test properties
+        
+        # Set test properties - VERBOSE/V will be inherited from environment
         set_tests_properties(${full_test_name} PROPERTIES
-            ENVIRONMENT "SLIM_BINARY=$<TARGET_FILE:slim>;LMNTAL_HOME=${LMNTAL_HOME};slim_CHECK_OPTIONS=${slim_CHECK_OPTIONS}"
+            ENVIRONMENT "SLIM_BINARY=$<TARGET_FILE:slim>;LMNTAL_HOME=${LMNTAL_HOME};slim_CHECK_OPTIONS=${slim_CHECK_OPTIONS};TEST_BUILD_DIR=${CMAKE_CURRENT_BINARY_DIR}/${test_dir}"
             TIMEOUT 30
             LABELS "${test_type};${test_suite};${test_case_name}"
         )
@@ -132,31 +135,47 @@ function(add_check_script_tests test_type test_dir)
 
         # Create unique test name
         set(full_test_name "${test_type}_${test_suite}")
-
-        # Handle statespace tests specially - they need slim_CHECK_ND wrapper
+        
+        # Handle statespace tests specially - only heavy advanced tests need slim_CHECK_ND wrapper
         if(test_type STREQUAL "statespace")
-            # Create wrapper script that checks slim_CHECK_ND
-            set(wrapper_script "${CMAKE_CURRENT_BINARY_DIR}/${test_dir}/${test_suite}_wrapper.sh")
-            file(WRITE ${wrapper_script} "#!/bin/bash\n")
-            file(APPEND ${wrapper_script} "if [ \"$slim_CHECK_ND\" != \"yes\" ]; then\n")
-            file(APPEND ${wrapper_script} "  echo \"1..0 # SKIP statespace tests require slim_CHECK_ND=yes\"\n")
-            file(APPEND ${wrapper_script} "  exit 0\n")
-            file(APPEND ${wrapper_script} "fi\n")
-            file(APPEND ${wrapper_script} "exec ${check_script}\n")
-
-            # Make wrapper executable with proper permissions
-            file(COPY ${wrapper_script}
-                 DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/${test_dir}
-                 FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
-
-            # Add test using wrapper script
-            add_test(NAME ${full_test_name} COMMAND ${wrapper_script} WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${test_dir})
+            # Simple statespace tests (basic, hyperlink) should run without wrapper
+            # Only advanced tests need the slim_CHECK_ND wrapper
+            if(test_suite STREQUAL "advanced")
+                # Check if the check.sh script already handles slim_CHECK_ND internally
+                file(READ ${check_script} script_content)
+                string(FIND "${script_content}" "slim_CHECK_ND" has_nd_check)
+                
+                if(has_nd_check GREATER_EQUAL 0)
+                    # Script already handles slim_CHECK_ND - use it directly
+                    add_test(NAME ${full_test_name} COMMAND ${check_script} WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${test_dir})
+                else()
+                    # Create wrapper for advanced tests that don't have their own check
+                    set(wrapper_script "${CMAKE_CURRENT_BINARY_DIR}/${test_dir}/${test_suite}_wrapper.sh")
+                    file(WRITE ${wrapper_script} "#!/bin/bash\n")
+                    file(APPEND ${wrapper_script} "if [ \"$slim_CHECK_ND\" != \"yes\" ]; then\n")
+                    file(APPEND ${wrapper_script} "  echo \"1..0 # SKIP statespace tests require slim_CHECK_ND=yes\"\n")
+                    file(APPEND ${wrapper_script} "  exit 0\n")
+                    file(APPEND ${wrapper_script} "fi\n")
+                    file(APPEND ${wrapper_script} "exec ${check_script}\n")
+                    
+                    # Make wrapper executable with proper permissions
+                    file(COPY ${wrapper_script}
+                         DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/${test_dir}
+                         FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+                    
+                    # Add test using wrapper script
+                    add_test(NAME ${full_test_name} COMMAND ${wrapper_script} WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${test_dir})
+                endif()
+            else()
+                # Simple statespace tests (basic, hyperlink) - run directly
+                add_test(NAME ${full_test_name} COMMAND ${check_script} WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${test_dir})
+            endif()
         else()
             # Add test using original check.sh script
             add_test(NAME ${full_test_name} COMMAND ${check_script} WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${test_dir})
         endif()
-
-        # Set test properties
+        
+        # Set test properties - VERBOSE/V will be inherited from environment
         set_tests_properties(${full_test_name} PROPERTIES
             ENVIRONMENT "SLIM_BINARY=$<TARGET_FILE:slim>;LMNTAL_HOME=${LMNTAL_HOME};slim_CHECK_OPTIONS=${slim_CHECK_OPTIONS}"
             TIMEOUT 30

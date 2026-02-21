@@ -54,7 +54,10 @@
 #endif
 
 #include <algorithm>
-#include <iostream> 
+#include <iostream>
+#include <mutex>
+#include <unordered_map>
+#include <vector>
 typedef void (*callback_0)(LmnReactCxtRef, LmnMembraneRef);
 typedef void (*callback_1)(LmnReactCxtRef, LmnMembraneRef, LmnAtomRef,
                            LmnLinkAttr);
@@ -90,6 +93,25 @@ typedef void (*callback_8)(LmnReactCxtRef, LmnMembraneRef, LmnAtomRef,
                            LmnLinkAttr, LmnAtomRef, LmnLinkAttr);
 
 struct Vector user_system_rulesets; /* system ruleset defined by user */
+
+static std::unordered_map<lmn_interned_str, unsigned int> rule_apply_count;
+static std::mutex rule_apply_count_mutex;
+
+void Task::print_rule_apply_count() {
+  if (lmn_env.output_format == JSON) return;
+  std::vector<std::pair<lmn_interned_str, unsigned int>> sorted(
+      rule_apply_count.begin(), rule_apply_count.end());
+  std::sort(sorted.begin(), sorted.end(),
+            [](const std::pair<lmn_interned_str, unsigned int> &a,
+               const std::pair<lmn_interned_str, unsigned int> &b) {
+              return std::string(lmn_id_to_name(a.first)) <
+                     std::string(lmn_id_to_name(b.first));
+            });
+  fprintf(stdout, "\n[Applied Rules]\n");
+  for (auto &kv : sorted)
+    fprintf(stdout, "%s: %u\n", lmn_id_to_name(kv.first), kv.second);
+  rule_apply_count.clear();
+}
 
 /**
   Javaによる処理系ではリンクはリンクオブジェクトで表現するが、SLIMでは
@@ -224,7 +246,7 @@ void Task::lmn_run(Vector *start_rulesets) {
     InteractiveDebugger::get_instance().start_session_on_entry();
   }
 
-  if (lmn_env.trace) {
+  if (lmn_env.trace && !lmn_env.trace_rule_name_only) {
     if (lmn_env.show_laststep_only) {
       mrc->increment_reaction_count();
     } else {
@@ -250,9 +272,7 @@ void Task::lmn_run(Vector *start_rulesets) {
     InteractiveDebugger::get_instance().finish_debugging();
   }
 
-  if (lmn_env
-          .dump) { /* lmntalではioモジュールがあるけど必ず実行結果を出力するプログラミング言語,
-                      で良い?? */
+  if (lmn_env.dump) {
     if (lmn_env.sp_dump_format == LMN_SYNTAX) {
       fprintf(stdout, "finish.\n");
     } else {
@@ -441,8 +461,15 @@ BOOL Task::react_rule(LmnReactCxtRef rc, LmnMembraneRef mem, LmnRuleRef rule) {
 
   profile_finish_trial();
 
+  if (lmn_env.trace_rule_name_only && result && !rc->is_zerostep
+      && rule->name != ANONYMOUS
+      && lmn_env.output_format != JSON
+      && (rc->has_mode(REACT_MEM_ORIENTED) || rc->has_mode(REACT_ND))) {
+    fprintf(stdout, "---> %s\n", lmn_id_to_name(rule->name));
+  }
+
   if (rc->has_mode(REACT_MEM_ORIENTED) && !rc->is_zerostep) {
-    if (lmn_env.trace && result) {
+    if (lmn_env.trace && result && !lmn_env.trace_rule_name_only) {
       if (lmn_env.sp_dump_format == LMN_SYNTAX) {
         lmn_dump_mem_stdout(rc->get_global_root());
         fprintf(stdout, ".\n");
@@ -1306,7 +1333,12 @@ bool slim::vm::interpreter::exec_command(LmnReactCxt *rc, LmnRuleRef rule,
     if (rc->has_mode(REACT_ND) && !rc->is_zerostep) {
       auto mcrc = dynamic_cast<MCReactContext *>(rc);
       ProcessID org_next_id = env_next_id();
-      
+
+      if (lmn_env.trace_rule_name_only && rule->name != ANONYMOUS) {
+        std::lock_guard<std::mutex> lock(rule_apply_count_mutex);
+        rule_apply_count[rule->name]++;
+      }
+
       if (mcrc->has_optmode(DeltaMembrane)) {
         /** >>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<< **/
         /** >>>>>>>> enable delta-membrane <<<<<<< **/

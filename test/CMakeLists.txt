@@ -14,10 +14,10 @@ function(add_tap_test test_name test_script)
 endfunction()
 
 # Add subdirectories for different test types
-add_subdirectory(system_check)
 add_subdirectory(statespace)
-add_subdirectory(library_check)
 add_subdirectory(il_check)
+# add_subdirectory(system_check)  # Disabled: legacy group tests - now using enhanced individual tests
+# add_subdirectory(library_check)  # Disabled: duplicate library tests - now using enhanced framework
 
 # Set environment variables for tests
 set(ENV{slim_CHECK_OPTIONS} "")

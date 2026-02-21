@@ -11,5 +11,5 @@ NR == 3 && $0 ~ /ok/ {
 }
 
 NR == 3 && $0 ~ /ng/ {
-	print ", ok :- ng. ok."
+	print " :- ng."
 }
