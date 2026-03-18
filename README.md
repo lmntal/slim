@@ -1,9 +1,7 @@
 # SLIM - Slim LMNtal IMprementation
 
-_Every dinosaur has a time when he or she is a small, tiny child..._
-
 This is a runtime and a model checker for the
-[LMNtal (pronounced "elemental")](https://www.ueda.info.waseda.ac.jp/lmntal) language.
+[LMNtal (pronounced "elemental")](https://github.com/lmntal/lmntal-compiler/wiki) language.
 
 ## Getting started
 
