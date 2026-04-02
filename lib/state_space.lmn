@@ -60,4 +60,6 @@
 
   Ret = state_space.state_map_find(Map, $key, Res) :- class(Map, "state_map"), int($key) |
 	'$callback'('cb_state_map_state_find', Map, $key, Res, Ret).
+
+  Ret = state_space.powerset(Mem) :- '$callback'('cb_powerset', Mem, Ret).
 }.

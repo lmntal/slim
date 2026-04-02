@@ -172,6 +172,20 @@ void LmnStateMap::cb_state_map_state_find(LmnReactCxtRef rc, LmnMembraneRef mem,
   mem->add_child_mem(new_mem);
 }
 
+/*
+ * Powerset API
+ */
+void cb_powerset(LmnReactCxtRef rc, LmnMembraneRef mem,
+                  LmnAtomRef mem_proxy, LmnLinkAttr mem_proxy_link_attr,
+                  LmnAtomRef ret_atom, LmnLinkAttr ret_atom_link_attr) {
+  LmnMembraneRef m = LMN_PROXY_GET_MEM((LmnSymbolAtomRef)((LmnSymbolAtomRef)mem_proxy)->get_link(0));
+  LmnSymbolAtomRef head = lmn_mem_newatom(mem, LMN_NIL_FUNCTOR);
+  lmn_mem_newlink(mem, head, LMN_ATTR_MAKE_LINK(0), 0,
+                  ret_atom, ret_atom_link_attr,
+                  LMN_ATTR_GET_VALUE(ret_atom_link_attr));
+          
+}
+
 /*----------------------------------------------------------------------
  * Initialization
  */
@@ -197,4 +211,5 @@ void LmnStateMap::init_state_map(void) {
   CCallback::lmn_register_c_fun("cb_state_map_id_find", (void *)cb_state_map_id_find, 4);
   CCallback::lmn_register_c_fun("cb_state_map_state_find", (void *)cb_state_map_state_find,
                      4);
+  CCallback::lmn_register_c_fun("cb_powerset", (void *)cb_powerset, 2);
 }
