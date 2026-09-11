@@ -184,6 +184,24 @@ slim/
 2. **Environment**: Set LMNTAL_HOME for compilation-dependent tests
 3. **Permissions**: Ensure test scripts are executable
 
+### macOS (M1–M4 / Apple Silicon)
+
+1. **bison**: macOS ships bison 2.3 in `/usr/bin`, which fails the project's
+   `Bison 3.0+` check. Install a current bison via Homebrew and put it ahead of
+   `/usr/bin` on `PATH`:
+   ```bash
+   brew install cmake bison re2c ruby ant
+   export PATH="$(brew --prefix bison)/bin:$PATH"
+   ```
+2. **OpenMP**: stock Apple Clang has no OpenMP support. `find_package(OpenMP)` is
+   optional in `CMakeLists.txt`, so the build just proceeds without it unless you
+   `brew install libomp` and point CMake at it.
+3. **LMNTAL_HOME**: same requirement as Linux — build `lmntal-compiler` with
+   `ant` first (requires a JDK) and point `LMNTAL_HOME` at it.
+4. **libdl**: `CMakeLists.txt` does `find_library(dl REQUIRED)`. This normally
+   resolves against the SDK's `libdl.tbd` stub, but if configure fails specifically
+   on `dl`, that's the first place to look.
+
 ## Performance
 
 The CMake build system typically provides:
