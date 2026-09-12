@@ -103,13 +103,13 @@ void lmntal_build_cmd(char **program, char **ret_args[], va_list opt_args)
   /* opt_argsにある引数を追加 */
   while (TRUE) {
     char *p = va_arg(opt_args, char*);
-    if (!p)
+    if (p == nullptr)
       break;
     add_arg(args, p);
   }
 
   /* 最後の要素は0で終端する */
-  args->push(0);
+  args->push((LmnWord)0);
   { /* vectorの要素をコピー */
     unsigned int i;
     *ret_args = LMN_CALLOC(char *, args->get_num());
@@ -123,7 +123,7 @@ void lmntal_build_cmd(char **program, char **ret_args[], va_list opt_args)
 
 /* LMNtalソースコードのファイルを中間言語にコンパイルし結果のストリームを返す*/
 file_ptr lmntal_compile_file(const char *filename) {
-  return file_ptr(run_lmntal_system(0 /*dummy*/, OPT_SLIM_CODE, filename, 0),
+  return file_ptr(run_lmntal_system(0 /*dummy*/, OPT_SLIM_CODE, filename, nullptr),
                   fclose);
 }
 
@@ -135,13 +135,13 @@ file_ptr lmntal_compile_rule_str(const char *rule_str)
                            OPT_COMPILE_RULE,
                            OPT_EVAL,
                            rule_str,
-                           0), fclose);
+                           nullptr), fclose);
 }
 
 /* LMNtal systemを呼び出す。プログラムを呼び出し時に渡す引数を
-   可変長引数で受け取る。引数の最後は 0 でなければならない。
+   可変長引数で受け取る。引数の最後は nullptr でなければならない。
    e.g.
-     run_lmntal_system(0, "-O3", "--compileonly", 0);
+     run_lmntal_system(0, "-O3", "--compileonly", nullptr);
 */
 FILE *run_lmntal_system(int dummy, ... )
 {
